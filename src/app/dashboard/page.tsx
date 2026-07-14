@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import NavyHeader from "@/components/ui/NavyHeader";
 import TaskCard from "@/components/ui/TaskCard";
 import BottomNav from "@/components/ui/BottomNav";
@@ -103,44 +105,126 @@ function Stage6() {
   );
 }
 
-const STAGE_COMPONENTS: Record<number, React.ReactNode> = {
-  1: <Stage1 />,
-  2: <Stage2 />,
-  3: <Stage3 />,
-  4: <Stage4 />,
-  5: <Stage5 />,
-  6: <Stage6 />,
+const STAGE_COMPONENTS: Record<number, React.ComponentType> = {
+  1: Stage1,
+  2: Stage2,
+  3: Stage3,
+  4: Stage4,
+  5: Stage5,
+  6: Stage6,
 };
 
+const DESKTOP_TABS = [
+  { href: "/dashboard", label: "מפת הדרכים", icon: "⊞" },
+  { href: "/chat", label: "AI Co-pilot", icon: "◎" },
+  { href: "/squad", label: "קהילה", icon: "◈" },
+  { href: "/contact", label: "רכזת", icon: "◉" },
+];
+
+function DevSwitcher({
+  currentStage,
+  setCurrentStage,
+}: {
+  currentStage: number;
+  setCurrentStage: (s: number) => void;
+}) {
+  if (process.env.NODE_ENV !== "development") return null;
+  return (
+    <div className="px-4 py-2 flex gap-1 flex-wrap justify-center">
+      {[1, 2, 3, 4, 5, 6].map((s) => (
+        <button
+          key={s}
+          onClick={() => setCurrentStage(s)}
+          className="text-[10px] px-2 py-1 rounded border border-navy text-navy"
+          style={{
+            background: s === currentStage ? "#023e8a" : undefined,
+            color: s === currentStage ? "#fff" : undefined,
+          }}
+        >
+          {s}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-  // בפרודקשן: currentStage יגיע מ-Supabase
   const [currentStage, setCurrentStage] = useState(MOCK_USER.stage);
+  const pathname = usePathname();
+
+  const StageContent = STAGE_COMPONENTS[currentStage];
 
   return (
-    <div className="w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
-      <NavyHeader userName={MOCK_USER.name} currentStage={currentStage} />
-
-      <div className="flex-1 px-[22px] py-6">
-        {STAGE_COMPONENTS[currentStage]}
+    <>
+      {/* ====== MOBILE (מוסתר על md+) ====== */}
+      <div className="md:hidden w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
+        <NavyHeader userName={MOCK_USER.name} currentStage={currentStage} />
+        <div className="flex-1 px-[22px] py-6 pb-[84px]">
+          <StageContent />
+        </div>
+        <DevSwitcher currentStage={currentStage} setCurrentStage={setCurrentStage} />
       </div>
 
-      {/* Dev-only stage switcher — להסרה בפרודקשן */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="px-4 pb-2 flex gap-1 flex-wrap justify-center">
-          {[1, 2, 3, 4, 5, 6].map((s) => (
-            <button
-              key={s}
-              onClick={() => setCurrentStage(s)}
-              className="text-[10px] px-2 py-1 rounded border border-navy text-navy"
-              style={{ background: s === currentStage ? "#023e8a" : undefined, color: s === currentStage ? "#fff" : undefined }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* ====== DESKTOP (מוסתר על mobile) ====== */}
+      <div className="hidden md:flex w-full min-h-screen">
 
+        {/* Sidebar — ימין (RTL: ילד ראשון = ימין) */}
+        <aside className="w-[240px] shrink-0 bg-navy text-white flex flex-col sticky top-0 h-screen overflow-y-auto">
+          <div className="px-7 pt-10 pb-6 border-b border-[rgba(255,255,255,0.1)]">
+            <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold mb-4">
+              techcareerly
+            </div>
+            <div className="text-[13px] opacity-60 mb-1">ברוכה הבאה,</div>
+            <div
+              className="text-[22px] font-bold"
+              style={{ fontFamily: "'Noto Serif Hebrew', serif" }}
+            >
+              {MOCK_USER.name}
+            </div>
+          </div>
+
+          <nav className="flex-1 py-4">
+            {DESKTOP_TABS.map((item) => {
+              const active = pathname?.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 py-[11px] text-[14px] font-medium"
+                  style={{
+                    paddingRight: "28px",
+                    paddingLeft: "28px",
+                    borderLeft: active ? "3px solid #fb8500" : "3px solid transparent",
+                    background: active ? "rgba(255,255,255,0.1)" : undefined,
+                    color: active ? "#fff" : "rgba(255,255,255,0.55)",
+                  }}
+                >
+                  <span className="text-[17px]">{item.icon}</span>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="px-7 pb-7 text-[11px] opacity-25">© 2026 טק-קריירה</div>
+        </aside>
+
+        {/* Main — שמאל (RTL: ילד שני = שמאל) */}
+        <main className="flex-1 bg-cream overflow-y-auto">
+          <div className="max-w-[680px] mx-auto py-10 px-8">
+            <div className="rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(2,62,138,0.1)] mb-6">
+              <NavyHeader userName={MOCK_USER.name} currentStage={currentStage} />
+            </div>
+            <div className="bg-card rounded-2xl px-8 py-6 shadow-[0_2px_8px_rgba(2,62,138,0.06)]">
+              <StageContent />
+            </div>
+            <DevSwitcher currentStage={currentStage} setCurrentStage={setCurrentStage} />
+          </div>
+        </main>
+      </div>
+
+      {/* Bottom nav — fixed, נסתר על desktop */}
       <BottomNav />
-    </div>
+    </>
   );
 }

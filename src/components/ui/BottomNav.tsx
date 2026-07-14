@@ -13,7 +13,7 @@ export default function BottomNav() {
   const path = usePathname();
 
   return (
-    <div className="flex border-t border-[rgba(2,62,138,0.1)] bg-card">
+    <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden flex border-t border-[rgba(2,62,138,0.1)] bg-card" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       {TABS.map((tab) => {
         const active = path.startsWith(tab.href);
         return (
@@ -37,6 +37,6 @@ export default function BottomNav() {
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }

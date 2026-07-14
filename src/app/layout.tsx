@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl" className="h-full">
-      <body className="min-h-full bg-cream flex flex-col items-center">
+      <body className="min-h-full bg-cream flex flex-col items-center md:items-stretch">
         {children}
       </body>
     </html>
