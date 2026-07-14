@@ -365,40 +365,91 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   }
 
-  return (
-    <div className="w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
-      <OnboardingHeader
-        step={step}
-        onBack={() => setStep((s) => (s - 1) as Step)}
-      />
+  const header = (
+    <OnboardingHeader
+      step={step}
+      onBack={() => setStep((s) => (s - 1) as Step)}
+    />
+  );
 
-      <div className="flex-1 overflow-y-auto">
-        {step === 1 && (
-          <Step1
-            name={name} setName={setName}
-            age={age} setAge={setAge}
-            region={region} setRegion={setRegion}
-            onNext={() => setStep(2)}
-          />
-        )}
-        {step === 2 && (
-          <Step2
-            name={name}
-            score={score} setScore={setScore}
-            onNext={() => setStep(3)}
-          />
-        )}
-        {step === 3 && (
-          <Step3
-            name={name}
-            domain={domain} setDomain={setDomain}
-            onNext={() => setStep(4)}
-          />
-        )}
-        {step === 4 && (
-          <Step4 name={name} onDone={handleDone} />
-        )}
+  const stepContent = (
+    <>
+      {step === 1 && (
+        <Step1
+          name={name} setName={setName}
+          age={age} setAge={setAge}
+          region={region} setRegion={setRegion}
+          onNext={() => setStep(2)}
+        />
+      )}
+      {step === 2 && (
+        <Step2
+          name={name}
+          score={score} setScore={setScore}
+          onNext={() => setStep(3)}
+        />
+      )}
+      {step === 3 && (
+        <Step3
+          name={name}
+          domain={domain} setDomain={setDomain}
+          onNext={() => setStep(4)}
+        />
+      )}
+      {step === 4 && (
+        <Step4 name={name} onDone={handleDone} />
+      )}
+    </>
+  );
+
+  const BRANDING_BULLETS = ["הכרת עולם הטק", "התאמת מסלול אישי", "ליווי עד רישום"];
+
+  return (
+    <>
+      {/* ====== MOBILE ====== */}
+      <div className="md:hidden w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
+        {header}
+        <div className="flex-1 overflow-y-auto">{stepContent}</div>
       </div>
-    </div>
+
+      {/* ====== DESKTOP ====== */}
+      <div className="hidden md:flex w-full min-h-screen">
+        {/* Branding panel — ימין (RTL first child) */}
+        <aside className="w-[420px] shrink-0 bg-navy text-white flex flex-col justify-center px-14">
+          <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold mb-10">
+            techcareerly
+          </div>
+          <div
+            className="text-[32px] font-bold leading-tight mb-4"
+            style={{ fontFamily: "'Noto Serif Hebrew', serif" }}
+          >
+            מצאי את המסלול שלך להייטק
+          </div>
+          <div className="text-[15px] opacity-65 leading-relaxed mb-10">
+            תוכנית טק-קריירה מלווה צעירות ממשפחות יוצאי אתיופיה למסלולי לימוד בהייטק.
+          </div>
+          {BRANDING_BULLETS.map((item) => (
+            <div key={item} className="flex items-center gap-3 mb-4">
+              <div
+                className="w-[8px] h-[8px] rounded-full flex-shrink-0"
+                style={{ background: "#fb8500" }}
+              />
+              <div className="text-[14px] opacity-80">{item}</div>
+            </div>
+          ))}
+        </aside>
+
+        {/* Form panel — שמאל (RTL second child) */}
+        <main className="flex-1 bg-cream flex items-center justify-center p-10 overflow-y-auto">
+          <div
+            className="w-full max-w-[480px] bg-card rounded-2xl overflow-hidden"
+            style={{ boxShadow: "0 8px 32px rgba(2,62,138,0.12)" }}
+          >
+            {header}
+            {stepContent}
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
