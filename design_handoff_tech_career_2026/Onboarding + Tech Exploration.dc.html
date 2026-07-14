@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;500;600;700;800&family=Noto+Serif+Hebrew:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#f2ede6;font-family:'Noto Sans Hebrew',sans-serif}
+  ::-webkit-scrollbar{display:none}
+  *{font-family:'Noto Sans Hebrew',sans-serif}
+  a{color:#023e8a}
+  a:hover{color:#fb8500}
+  @keyframes cardFade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes popIn{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px) translateX(-50%)}to{opacity:1;transform:translateY(0) translateX(-50%)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#f2ede6;display:flex;justify-content:center;padding:36px 16px;box-sizing:border-box">
+  <div style="width:390px;max-width:100%">
+
+    <div style="display:flex;gap:6px;background:#fff;border:1px solid rgba(2,62,138,.12);border-radius:12px;padding:5px;margin-bottom:14px">
+      <div onClick="{{ goOnboarding }}" style="flex:1;text-align:center;padding:10px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;background:{{ tabOnbBg }};color:{{ tabOnbColor }}">אונבורדינג · שלב 1</div>
+      <div onClick="{{ goExplore }}" style="flex:1;text-align:center;padding:10px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;background:{{ tabExpBg }};color:{{ tabExpColor }}">חקר תחומים · שלב 3</div>
+    </div>
+
+    <div style="width:100%;height:844px;background:#fbf9f5;border-radius:28px;box-shadow:0 20px 50px rgba(2,62,138,.16);overflow:hidden;position:relative;border:1px solid rgba(2,62,138,.08)">
+      <div style="height:100%;overflow-y:auto;position:relative;color:#1c1c1c" dir="rtl">
+
+        <div style="position:relative;z-index:1;padding:26px 22px 40px">
+
+          <!-- ================= ONBOARDING ================= -->
+          <sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ true }}">
+            <div>
+
+              <sc-if value="{{ showLogin }}" hint-placeholder-val="{{ true }}">
+                <div key="login" style="animation:cardFade .35s ease;padding-top:36px">
+                  <div style="width:44px;height:44px;border-radius:11px;background:#023e8a;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Noto Serif Hebrew',serif;font-size:15px;font-weight:700">טק</div>
+                  <div style="font-family:'Noto Serif Hebrew',serif;font-size:24px;font-weight:700;margin-top:20px;color:#1c1c1c">בואי נתחיל</div>
+                  <div style="font-size:13.5px;color:rgba(0,0,0,.55);margin-top:6px;line-height:1.6">התחברות מהירה עם מספר הטלפון שלך — נשלח לך קוד אימות ב-SMS</div>
+
+                  <div style="margin-top:26px">
+                    <div style="font-size:12px;font-weight:700;color:rgba(0,0,0,.55);margin-bottom:6px">מספר טלפון</div>
+                    <input value="{{ phoneVal }}" onChange="{{ setPhone }}" placeholder="05X-XXXXXXX" style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(2,62,138,.18);border-radius:12px;padding:15px;color:#1c1c1c;font-size:15px;text-align:right;outline:none"/>
+                  </div>
+
+                  <div onClick="{{ submitLogin }}" style="margin-top:16px;background:#023e8a;text-align:center;padding:16px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:#fff">שליחת קוד אימות</div>
+                  <div style="font-size:11.5px;color:rgba(0,0,0,.4);margin-top:14px;line-height:1.5">בהמשך את/ה מאשר/ת את תנאי השימוש ומדיניות הפרטיות</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showOtp }}" hint-placeholder-val="{{ false }}">
+                <div key="otp" style="animation:cardFade .35s ease;padding-top:8px">
+                  <div onClick="{{ backToLogin }}" style="width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid rgba(2,62,138,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#023e8a">◀</div>
+
+                  <div style="font-family:'Noto Serif Hebrew',serif;font-size:21px;font-weight:700;margin-top:22px;color:#1c1c1c">אימות מספר טלפון</div>
+                  <div style="font-size:13px;color:rgba(0,0,0,.55);margin-top:6px;line-height:1.6">מסיבות פרטיות ואבטחת מידע, שלחנו קוד בן 4 ספרות למספר {{ phoneVal }}</div>
+
+                  <input value="{{ otpVal }}" onChange="{{ setOtp }}" placeholder="----" maxlength="4" style="width:200px;margin:22px auto 0;display:block;box-sizing:border-box;background:#fff;border:1.5px solid {{ otpBorder }};border-radius:12px;padding:16px;color:#023e8a;font-size:26px;font-weight:800;letter-spacing:14px;text-align:center;outline:none"/>
+
+                  <sc-if value="{{ otpError }}" hint-placeholder-val="{{ false }}">
+                    <div style="color:#c0392b;font-size:12.5px;font-weight:700;margin-top:10px;text-align:center">קוד שגוי — נסי שוב (רמז: 1234)</div>
+                  </sc-if>
+
+                  <div onClick="{{ verifyOtp }}" style="margin-top:22px;background:#023e8a;text-align:center;padding:16px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:#fff">אימות קוד</div>
+                  <div onClick="{{ resendOtp }}" style="margin-top:14px;font-size:12.5px;color:#023e8a;font-weight:700;cursor:pointer;text-align:center">שליחת קוד חדש</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showQuestionnaire }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="display:flex;gap:6px;margin-top:2px">
+                    <sc-for list="{{ qDots }}" as="dot" hint-placeholder-count="3">
+                      <div style="flex:1;height:4px;border-radius:2px;background:{{ dot.color }}"></div>
+                    </sc-for>
+                  </div>
+
+                  <sc-if value="{{ showQ1 }}" hint-placeholder-val="{{ false }}">
+                    <div key="q1" style="animation:cardFade .35s ease;margin-top:22px">
+                      <div style="font-size:11.5px;font-weight:700;color:#fb8500">שאלה 1 מתוך 3</div>
+                      <div style="font-family:'Noto Serif Hebrew',serif;font-size:20px;font-weight:700;margin-top:6px;color:#1c1c1c">קצת עלייך</div>
+                      <div style="background:#fff;border:1px solid rgba(2,62,138,.1);border-radius:16px;padding:18px;margin-top:16px">
+                        <div style="font-size:12.5px;font-weight:700;color:rgba(0,0,0,.55);margin-bottom:6px">גיל</div>
+                        <input value="{{ ageVal }}" onChange="{{ setAge }}" placeholder="לדוגמה: 27" style="width:100%;box-sizing:border-box;background:#fbf9f5;border:1px solid rgba(2,62,138,.12);border-radius:10px;padding:13px;color:#1c1c1c;font-size:14.5px;outline:none"/>
+                        <div style="font-size:12.5px;font-weight:700;color:rgba(0,0,0,.55);margin:16px 0 6px">איזור מגורים</div>
+                        <select value="{{ locationVal }}" onChange="{{ setLocation }}" style="width:100%;box-sizing:border-box;background:#fbf9f5;border:1px solid rgba(2,62,138,.12);border-radius:10px;padding:13px;color:#1c1c1c;font-size:14.5px;outline:none">
+                          <option value="">בחר/י אזור</option>
+                          <option value="tlv">גוש דן</option>
+                          <option value="jlm">ירושלים והסביבה</option>
+                          <option value="north">צפון</option>
+                          <option value="south">דרום</option>
+                          <option value="other">אחר</option>
+                        </select>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ showQ2 }}" hint-placeholder-val="{{ false }}">
+                    <div key="q2" style="animation:cardFade .35s ease;margin-top:22px">
+                      <div style="font-size:11.5px;font-weight:700;color:#fb8500">שאלה 2 מתוך 3</div>
+                      <div style="font-family:'Noto Serif Hebrew',serif;font-size:20px;font-weight:700;margin-top:6px;color:#1c1c1c">כמה את/ה מכיר/ה את עולם ההייטק?</div>
+                      <div style="background:#fff;border:1px solid rgba(2,62,138,.1);border-radius:16px;padding:22px 18px;margin-top:16px;text-align:center">
+                        <div style="font-size:42px;font-weight:800;color:#023e8a">{{ familiarity }}</div>
+                        <div style="font-size:12px;color:rgba(0,0,0,.5);margin-top:2px">מתוך 10</div>
+                        <input type="range" min="1" max="10" step="1" value="{{ familiarity }}" onChange="{{ setFamiliarity }}" style="width:100%;margin-top:18px"/>
+                        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:rgba(0,0,0,.45);margin-top:4px">
+                          <span>מתחיל/ה לגמרי</span>
+                          <span>כבר בעניינים</span>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ showQ3 }}" hint-placeholder-val="{{ false }}">
+                    <div key="q3" style="animation:cardFade .35s ease;margin-top:22px">
+                      <div style="font-size:11.5px;font-weight:700;color:#fb8500">שאלה 3 מתוך 3</div>
+                      <div style="font-family:'Noto Serif Hebrew',serif;font-size:20px;font-weight:700;margin-top:6px;color:#1c1c1c">מה הכי מסקרן אותך כרגע?</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+                        <sc-for list="{{ curiosityDomains }}" as="d" hint-placeholder-count="9">
+                          <div onClick="{{ d.select }}" style="border:1.5px solid {{ d.border }};background:{{ d.bg }};border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;color:#1c1c1c">{{ d.label }}</div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <div style="display:flex;gap:10px;margin-top:26px">
+                    <sc-if value="{{ qShowBack }}" hint-placeholder-val="{{ false }}">
+                      <div onClick="{{ qBack }}" style="flex:1;text-align:center;padding:14px;border-radius:12px;font-size:13.5px;font-weight:700;background:#fff;border:1px solid rgba(2,62,138,.15);cursor:pointer;color:#023e8a">חזרה</div>
+                    </sc-if>
+                    <div onClick="{{ qNext }}" style="flex:2;text-align:center;padding:14px;border-radius:12px;font-size:13.5px;font-weight:700;background:#023e8a;color:#fff;cursor:pointer;opacity:{{ qNextEnabled }}">המשך</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showWaiting }}" hint-placeholder-val="{{ false }}">
+                <div key="waiting" style="animation:cardFade .35s ease">
+                  <div style="font-family:'Noto Serif Hebrew',serif;font-size:21px;font-weight:700;color:#1c1c1c">היי נועה, הנתונים נקלטו בהצלחה.</div>
+                  <div style="font-size:13px;color:rgba(0,0,0,.55);margin-top:6px;line-height:1.6">עוד רגע נקבע את מפגש האינטייק הפרונטלי שלך — קודם, סרטון קצר מהצוות</div>
+
+                  <div style="margin-top:18px;border-radius:14px;overflow:hidden;border:1px solid rgba(2,62,138,.12)">
+                    <div style="aspect-ratio:16/9;background:#eef1f6;display:flex;align-items:center;justify-content:center">
+                      <div style="width:52px;height:52px;border-radius:50%;background:#023e8a;display:flex;align-items:center;justify-content:center">
+                        <div style="width:0;height:0;border-top:9px solid transparent;border-bottom:9px solid transparent;border-right:14px solid #fff;margin-right:-3px"></div>
+                      </div>
+                    </div>
+                    <div style="padding:10px 12px;background:#fff;font-size:12.5px;font-weight:600;color:#1c1c1c">הצוות שלנו מחכה לך · וידאו 60 שניות</div>
+                  </div>
+
+                  <div style="font-size:13px;font-weight:700;color:rgba(0,0,0,.55);margin:22px 0 10px">קביעת מועד למפגש האינטייק</div>
+                  <sc-if value="{{ meetingConfirmed }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:#fff6ea;border:1px solid #fb8500;border-radius:14px;padding:16px;text-align:center;animation:popIn .3s ease;margin-bottom:12px">
+                      <div style="width:30px;height:30px;border-radius:50%;background:#fb8500;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;margin:0 auto">✓</div>
+                      <div style="font-size:14px;font-weight:700;margin-top:8px;color:#023e8a">נקבע: {{ confirmText }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="background:#fff;border:1px solid rgba(2,62,138,.1);border-radius:14px;padding:16px">
+                    <div style="font-size:11.5px;font-weight:700;color:rgba(0,0,0,.5);margin-bottom:8px">בחר/י יום</div>
+                    <div style="display:flex;gap:6px">
+                      <sc-for list="{{ calendarDays }}" as="day" hint-placeholder-count="5">
+                        <div onClick="{{ day.select }}" style="flex:1;text-align:center;padding:10px 4px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;background:{{ day.bg }};color:{{ day.color }};border:1px solid {{ day.border }}">{{ day.label }}</div>
+                      </sc-for>
+                    </div>
+                    <div style="font-size:11.5px;font-weight:700;color:rgba(0,0,0,.5);margin:16px 0 8px">בחר/י שעה</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ timeSlots }}" as="slot" hint-placeholder-count="4">
+                        <div onClick="{{ slot.select }}" style="padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:{{ slot.bg }};color:{{ slot.color }};border:1px solid {{ slot.border }}">{{ slot.label }}</div>
+                      </sc-for>
+                    </div>
+                    <div onClick="{{ bookMeeting }}" style="margin-top:16px;background:#fb8500;text-align:center;padding:13px;border-radius:11px;font-size:13.5px;font-weight:700;cursor:pointer;color:#fff">קביעת פגישה</div>
+                  </div>
+                </div>
+              </sc-if>
+
+            </div>
+          </sc-if>
+
+          <!-- ================= TECH EXPLORATION ================= -->
+          <sc-if value="{{ isExplore }}" hint-placeholder-val="{{ false }}">
+            <div>
+
+              <sc-if value="{{ showDomainGrid }}" hint-placeholder-val="{{ true }}">
+                <div key="grid" style="animation:cardFade .35s ease">
+                  <div style="font-size:11.5px;font-weight:700;color:rgba(0,0,0,.5);letter-spacing:.02em">שלב 3 · חקר תחומים</div>
+                  <div style="font-family:'Noto Serif Hebrew',serif;font-size:20px;font-weight:700;margin-top:4px;color:#1c1c1c">באיזה תחום תרצי להתנסות?</div>
+                  <div style="font-size:12.5px;color:rgba(0,0,0,.55);margin-top:4px;line-height:1.6">כל תחום כולל סרטון קצר ומשימת התנסות אמיתית</div>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">
+                    <sc-for list="{{ domainsGrid }}" as="d" hint-placeholder-count="9">
+                      <div onClick="{{ d.open }}" style="background:#fff;border:1px solid rgba(2,62,138,.1);border-radius:14px;padding:14px;cursor:pointer">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                          <div style="width:36px;height:36px;border-radius:10px;background:{{ d.badgeBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800">{{ d.mono }}</div>
+                          <sc-if value="{{ d.soon }}" hint-placeholder-val="{{ false }}">
+                            <div style="background:rgba(2,62,138,.08);border-radius:6px;padding:3px 7px;font-size:9.5px;font-weight:700;color:#023e8a">בקרוב</div>
+                          </sc-if>
+                        </div>
+                        <div style="font-size:13px;font-weight:700;margin-top:12px;line-height:1.3;color:#1c1c1c">{{ d.label }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showDomainDetail }}" hint-placeholder-val="{{ false }}">
+                <div key="detail" style="animation:cardFade .35s ease">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div onClick="{{ closeDomain }}" style="width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid rgba(2,62,138,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#023e8a">◀</div>
+                    <div style="font-size:12.5px;font-weight:700;color:rgba(0,0,0,.5)">{{ activeDomain.label }}</div>
+                  </div>
+
+                  <sc-if value="{{ showIntro }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:18px">
+                      <div style="width:44px;height:44px;border-radius:11px;background:{{ activeDomain.badgeBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800">{{ activeDomain.mono }}</div>
+                      <div style="font-family:'Noto Serif Hebrew',serif;font-size:21px;font-weight:700;margin-top:14px;color:#1c1c1c">{{ activeDomain.label }}</div>
+                      <div style="font-size:13px;color:rgba(0,0,0,.6);line-height:1.7;margin-top:8px">{{ activeDomain.blurb }}</div>
+
+                      <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(2,62,138,.12);margin-top:16px">
+                        <div style="aspect-ratio:16/9;background:#eef1f6;display:flex;align-items:center;justify-content:center">
+                          <div style="width:48px;height:48px;border-radius:50%;background:#023e8a;display:flex;align-items:center;justify-content:center">
+                            <div style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-right:13px solid #fff;margin-right:-3px"></div>
+                          </div>
+                        </div>
+                        <div style="padding:10px 12px;background:#fff;font-size:12px;font-weight:600;color:#1c1c1c">חשיפה קצרה ל{{ activeDomain.label }} · 90 שניות</div>
+                      </div>
+
+                      <div onClick="{{ startTask }}" style="margin-top:18px;background:#023e8a;text-align:center;padding:15px;border-radius:12px;font-size:14.5px;font-weight:700;cursor:pointer;color:#fff">למשימת ההתנסות</div>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ showTask }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:18px">
+
+                      <sc-if value="{{ isCodeTask }}" hint-placeholder-val="{{ false }}">
+                        <div>
+                          <div style="font-size:15.5px;font-weight:700;color:#1c1c1c">יש באג בפונקציה הזו — מוצאת אותו?</div>
+                          <div dir="ltr" style="text-align:left;background:#1c2531;color:#9fd6ff;border-radius:12px;padding:14px;margin-top:12px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.7;white-space:pre">{{ codeSnippet }}</div>
+                          <div style="font-size:12.5px;color:rgba(0,0,0,.6);margin-top:12px">מה בעייתי כאן? כתבי במילים שלך:</div>
+                          <input value="{{ codeAnswer }}" onChange="{{ setCodeAnswer }}" placeholder="לדוגמה: הלולאה עוברת גבול..." style="width:100%;box-sizing:border-box;background:#fff;border:1px solid rgba(2,62,138,.18);border-radius:11px;padding:13px;color:#1c1c1c;font-size:13.5px;margin-top:8px;outline:none"/>
+                          <div onClick="{{ checkCode }}" style="margin-top:12px;background:#023e8a;text-align:center;padding:13px;border-radius:11px;font-size:13.5px;font-weight:700;cursor:pointer;color:#fff">בדיקת תשובה</div>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ isCyberTask }}" hint-placeholder-val="{{ false }}">
+                        <div>
+                          <div style="font-size:15.5px;font-weight:700;color:#1c1c1c">נתחי את יומן השרת — אילו שורות חשודות?</div>
+                          <div style="font-size:12.5px;color:rgba(0,0,0,.6);margin-top:6px">לחצי על כל שורה שנראית לך חלק מתקיפה</div>
+                          <div dir="ltr" style="text-align:left;display:flex;flex-direction:column;gap:6px;margin-top:12px">
+                            <sc-for list="{{ logLines }}" as="line" hint-placeholder-count="5">
+                              <div onClick="{{ line.toggle }}" style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:{{ line.bg }};border:1px solid {{ line.border }};border-radius:8px;padding:9px 10px;cursor:pointer;color:#1c1c1c">{{ line.text }}</div>
+                            </sc-for>
+                          </div>
+                          <div onClick="{{ checkCyber }}" style="margin-top:14px;background:#023e8a;text-align:center;padding:13px;border-radius:11px;font-size:13.5px;font-weight:700;cursor:pointer;color:#fff">שליחת ניתוח</div>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ isAutoTask }}" hint-placeholder-val="{{ false }}">
+                        <div>
+                          <div style="font-size:15.5px;font-weight:700;color:#1c1c1c">בני את סדר הפעולות הנכון באוטומציה</div>
+                          <div style="font-size:12.5px;color:rgba(0,0,0,.6);margin-top:6px">לחצי על השלבים בסדר הנכון</div>
+
+                          <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px">
+                            <sc-for list="{{ builtSequence }}" as="s" hint-placeholder-count="4">
+                              <div style="background:#eaf1fb;border:1px solid rgba(2,62,138,.25);border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:600;color:#023e8a">{{ s.n }}. {{ s.label }}</div>
+                            </sc-for>
+                          </div>
+
+                          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+                            <sc-for list="{{ availableSteps }}" as="s" hint-placeholder-count="4">
+                              <div onClick="{{ s.pick }}" style="background:#fff;border:1px solid rgba(2,62,138,.15);border-radius:10px;padding:9px 12px;font-size:12.5px;cursor:pointer;color:#1c1c1c">{{ s.label }}</div>
+                            </sc-for>
+                          </div>
+
+                          <div style="display:flex;gap:10px;margin-top:14px">
+                            <div onClick="{{ resetAuto }}" style="flex:1;text-align:center;padding:12px;border-radius:11px;font-size:12.5px;font-weight:700;background:#fff;border:1px solid rgba(2,62,138,.15);cursor:pointer;color:#023e8a">איפוס</div>
+                            <div onClick="{{ checkAuto }}" style="flex:2;text-align:center;padding:12px;border-radius:11px;font-size:12.5px;font-weight:700;background:#023e8a;cursor:pointer;color:#fff">בדיקת סדר</div>
+                          </div>
+                        </div>
+                      </sc-if>
+
+                      <sc-if value="{{ showResultBad }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top:14px;background:#fff6ea;border:1px solid #fb8500;border-radius:12px;padding:13px;font-size:12.5px;color:#8a5000">עוד לא מדויק ({{ wrongAttempts }} ניסיונות) — נסי שוב, או בקשי עזרה למטה</div>
+                      </sc-if>
+                      <sc-if value="{{ showResultGood }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top:14px;background:#eef8f0;border:1px solid #6fbf8a;border-radius:12px;padding:14px;animation:popIn .3s ease">
+                          <div style="font-size:13.5px;font-weight:700;color:#2e7d46">מדויק</div>
+                          <div style="font-size:12.5px;color:rgba(0,0,0,.65);margin-top:4px;line-height:1.6">{{ activeDomain.explain }}</div>
+                        </div>
+                      </sc-if>
+
+                      <div onClick="{{ openHelp }}" style="margin-top:16px;text-align:center;background:#fff;border:1px solid rgba(2,62,138,.15);border-radius:999px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;color:#023e8a">בקשת עזרה</div>
+
+                      <div style="margin-top:22px">
+                        <div onClick="{{ toggleJson }}" style="font-size:11.5px;font-weight:700;color:rgba(0,0,0,.5);cursor:pointer">Payload ל-Make.com / Monday.com {{ jsonArrow }}</div>
+                        <sc-if value="{{ jsonOpen }}" hint-placeholder-val="{{ false }}">
+                          <div dir="ltr" style="text-align:left;background:#1c2531;border-radius:11px;padding:12px;margin-top:8px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;line-height:1.6;color:#9fd6ff;white-space:pre-wrap">{{ jsonPreview }}</div>
+                          <div onClick="{{ sendPayload }}" style="margin-top:8px;background:#fff;border:1px solid rgba(2,62,138,.18);text-align:center;padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;color:#023e8a">שליחת Payload (סימולציה)</div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showDomainSoon }}" hint-placeholder-val="{{ false }}">
+                <div key="soon" style="animation:cardFade .35s ease;padding-top:8px">
+                  <div onClick="{{ closeDomain }}" style="width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid rgba(2,62,138,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#023e8a">◀</div>
+                  <div style="text-align:center;padding-top:60px">
+                    <div style="width:44px;height:44px;border-radius:11px;background:{{ activeDomain.badgeBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;margin:0 auto">{{ activeDomain.mono }}</div>
+                    <div style="font-family:'Noto Serif Hebrew',serif;font-size:18px;font-weight:700;margin-top:14px;color:#1c1c1c">{{ activeDomain.label }} — בקרוב</div>
+                    <div style="font-size:12.5px;color:rgba(0,0,0,.55);margin-top:6px;line-height:1.6">משימת ההתנסות בתחום הזה בפיתוח.<br>בינתיים אפשר להתנסות בקוד, סייבר או אוטומציות.</div>
+                  </div>
+                </div>
+              </sc-if>
+
+            </div>
+          </sc-if>
+
+        </div>
+
+        <sc-if value="{{ helpOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;background:rgba(28,28,28,.45);z-index:5;display:flex;align-items:flex-end" onClick="{{ closeHelp }}">
+            <div onClick="{{ stopProp }}" style="width:100%;background:#fbf9f5;border-top:1px solid rgba(2,62,138,.12);border-radius:20px 20px 0 0;padding:20px;box-shadow:0 -20px 40px rgba(0,0,0,.2);animation:cardFade .3s ease">
+              <div style="width:36px;height:4px;background:rgba(0,0,0,.15);border-radius:2px;margin:0 auto 14px"></div>
+
+              <sc-if value="{{ helpLayerAI }}" hint-placeholder-val="{{ true }}">
+                <div>
+                  <div style="font-size:13.5px;font-weight:700;color:#023e8a">AI Co-pilot</div>
+                  <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:240px;overflow-y:auto">
+                    <sc-for list="{{ hintMessages }}" as="hm" hint-placeholder-count="1">
+                      <div style="background:#fff;border:1px solid rgba(2,62,138,.1);border-radius:11px 11px 11px 3px;padding:10px 12px;font-size:12.5px;line-height:1.5;align-self:flex-start;max-width:90%;color:#1c1c1c">{{ hm.text }}</div>
+                    </sc-for>
+                  </div>
+                  <div onClick="{{ nextHint }}" style="margin-top:14px;background:#eaf1fb;border:1px solid rgba(2,62,138,.25);text-align:center;padding:12px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;color:#023e8a">{{ hintButtonLabel }}</div>
+                  <sc-if value="{{ showEscalateBtn }}" hint-placeholder-val="{{ false }}">
+                    <div onClick="{{ escalate }}" style="margin-top:8px;text-align:center;padding:12px;border-radius:11px;font-size:12.5px;font-weight:700;cursor:pointer;color:rgba(0,0,0,.55);border:1px dashed rgba(0,0,0,.2)">זה לא עוזר — אני רוצה מדריך/ה אנושי/ת</div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ helpLayerHuman }}" hint-placeholder-val="{{ false }}">
+                <div style="text-align:center">
+                  <div style="font-size:14.5px;font-weight:700;color:#1c1c1c">הועברת לתור עזרה אנושי</div>
+                  <div style="font-size:12.5px;color:rgba(0,0,0,.6);margin-top:6px;line-height:1.6">מדריך/ה יצטרפו לצ'אט בקרוב · מקום {{ queuePos }} בתור</div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;bottom:20px;left:50%;background:#1c1c1c;color:#fff;padding:12px 18px;border-radius:11px;font-size:12.5px;font-weight:700;z-index:6;animation:toastIn .3s ease;white-space:nowrap">הנתונים נשלחו ל-Monday.com / Make.com</div>
+        </sc-if>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    rootTab: 'onboarding',
+    onbStep: 0, // 0 login, 0.5 otp (handled via otpOpen), 1-3 questionnaire, 4 waiting
+    otpOpen: false,
+    phone: '',
+    otp: '',
+    otpError: false,
+    age: '',
+    location: '',
+    familiarity: 5,
+    curiosity: null,
+    calDay: null,
+    calSlot: null,
+    meetingConfirmed: false,
+
+    activeDomainKey: null,
+    taskPhase: 'intro',
+    codeAnswer: '',
+    logFlags: {},
+    autoOrder: [],
+    wrongAttempts: 0,
+    resultState: null,
+    helpOpen: false,
+    helpLayer: 'ai',
+    hintsUsed: 0,
+    jsonOpen: false,
+    toastVisible: false,
+  };
+
+  domainDefs = [
+    { key: 'cyber', label: 'סייבר', mono: 'סב', badgeBg: '#023e8a', blurb: 'זיהוי איומים והגנה על מערכות — כמו בלש דיגיטלי שמחפש עקבות חשודות.', explain: 'שלוש כניסות כושלות ואז הצלחה מיידית מאותה כתובת IP הן דפוס קלאסי של ניחוש סיסמה (Brute Force).', built: true },
+    { key: 'code', label: 'קוד', mono: 'קד', badgeBg: '#fb8500', blurb: 'כתיבת קוד שפותר בעיות אמיתיות — ולפעמים, תיקון קוד של מישהו אחר.', explain: 'התנאי i <= prices.length גורם ללולאה לגשת לאיבר שלא קיים במערך (prices[length] הוא undefined), מה שהופך את sum ל-NaN.', built: true },
+    { key: 'automation', label: 'אוטומציות AI', mono: 'או', badgeBg: '#1c1c1c', blurb: 'בניית תהליכים אוטומטיים שחוסכים לעסקים שעות עבודה ידנית.', explain: 'הסדר הנכון: קלוט טריגר, בדוק תנאי, בצע פעולה, שמור תיעוד. כל אוטומציה בנויה מהיגיון כזה.', built: true },
+    { key: 'data', label: 'דאטה', mono: 'דא', badgeBg: '#023e8a', built: false },
+    { key: 'ux', label: 'UX/UI', mono: 'UX', badgeBg: '#fb8500', built: false },
+    { key: 'marketing', label: 'שיווק דיגיטלי', mono: 'שי', badgeBg: '#1c1c1c', built: false },
+    { key: 'ai_org', label: 'הטמעת AI בארגונים', mono: 'AI', badgeBg: '#023e8a', built: false },
+    { key: 'networks', label: 'רשתות', mono: 'רש', badgeBg: '#fb8500', built: false },
+    { key: 'qa', label: 'QA', mono: 'QA', badgeBg: '#1c1c1c', built: false },
+  ];
+
+  codeSnippet = 'function total(prices) {\n  let sum = 0;\n  for (let i = 0; i <= prices.length; i++) {\n    sum += prices[i];\n  }\n  return sum;\n}';
+  codeKeywords = ['<=', 'undefined', 'nan', 'גבול', 'אינדקס', 'מחוץ', 'חורג', 'אורך'];
+
+  logLineDefs = [
+    { id: 'l1', text: '10:02:01 41.23.6.9 login FAILED user=admin', suspicious: true },
+    { id: 'l2', text: '10:02:03 41.23.6.9 login FAILED user=admin', suspicious: true },
+    { id: 'l3', text: '10:02:05 41.23.6.9 login SUCCESS user=admin', suspicious: true },
+    { id: 'l4', text: '10:05:00 88.12.4.2 login SUCCESS user=noa', suspicious: false },
+    { id: 'l5', text: '10:06:12 88.12.4.2 logout user=noa', suspicious: false },
+  ];
+
+  autoStepDefs = [
+    { id: 's1', label: 'קלוט טריגר: מייל חדש הגיע', order: 0 },
+    { id: 's2', label: 'בדוק אם השולח ברשימת VIP', order: 1 },
+    { id: 's3', label: 'שלח התראה בסלאק לצוות', order: 2 },
+    { id: 's4', label: 'שמור את המייל בתיקיית ארכיון', order: 3 },
+  ];
+
+  hintDefs = {
+    cyber: ['שימי לב לזמנים הקרובים מאוד אחד לשני מאותה כתובת IP.', 'נסיון כושל ואחריו מיד הצלחה — זה דגל אדום קלאסי.'],
+    code: ['מה קורה כשה-index בלולאה שווה בדיוק לאורך המערך?', 'נסי להריץ מנטלית עם מערך של 2 מחירים בלבד — מה קורה באיטרציה השלישית?'],
+    automation: ['מה חייב לקרות ראשון, לפני שאפשר לבדוק כל תנאי?', 'שמירה בארכיון היא כמעט תמיד הצעד האחרון בתהליך.'],
+  };
+
+  goRoot(tab) { this.setState({ rootTab: tab }); }
+
+  setPhone(e) { this.setState({ phone: e.target.value }); }
+  submitLogin() { this.setState({ otpOpen: true, otp: '', otpError: false }); }
+  backToLogin() { this.setState({ otpOpen: false }); }
+  setOtp(e) { this.setState({ otp: e.target.value, otpError: false }); }
+  resendOtp() { this.setState({ otp: '', otpError: false }); }
+  verifyOtp() {
+    if (this.state.otp === '1234') {
+      this.setState({ onbStep: 1, otpOpen: false });
+    } else {
+      this.setState({ otpError: true });
+    }
+  }
+
+  setAge(e) { this.setState({ age: e.target.value }); }
+  setLocation(e) { this.setState({ location: e.target.value }); }
+  setFamiliarity(e) { this.setState({ familiarity: Number(e.target.value) }); }
+  selectCuriosity(key) { this.setState({ curiosity: key }); }
+  qNext() { this.setState(s => ({ onbStep: Math.min(s.onbStep + 1, 4) })); }
+  qBack() { this.setState(s => ({ onbStep: Math.max(s.onbStep - 1, 1) })); }
+  selectDay(id) { this.setState({ calDay: id }); }
+  selectSlot(id) { this.setState({ calSlot: id }); }
+  bookMeeting() {
+    if (!this.state.calDay && this.state.calDay !== 0) return;
+    if (!this.state.calSlot) return;
+    this.setState({ meetingConfirmed: true });
+  }
+
+  openDomain(key) {
+    this.setState({ activeDomainKey: key, taskPhase: 'intro', codeAnswer: '', logFlags: {}, autoOrder: [], wrongAttempts: 0, resultState: null, hintsUsed: 0, helpLayer: 'ai', jsonOpen: false });
+  }
+  closeDomain() { this.setState({ activeDomainKey: null }); }
+  startTask() { this.setState({ taskPhase: 'task' }); }
+
+  setCodeAnswer(e) { this.setState({ codeAnswer: e.target.value }); }
+  checkCode() {
+    const val = this.state.codeAnswer.toLowerCase();
+    const ok = this.codeKeywords.some(k => val.includes(k));
+    this.setState(s => ok ? { resultState: 'good' } : { resultState: 'bad', wrongAttempts: s.wrongAttempts + 1 });
+  }
+
+  toggleLogLine(id) {
+    this.setState(s => ({ logFlags: { ...s.logFlags, [id]: !s.logFlags[id] } }));
+  }
+  checkCyber() {
+    const correct = this.logLineDefs.filter(l => l.suspicious).map(l => l.id).sort().join(',');
+    const flagged = Object.keys(this.state.logFlags).filter(k => this.state.logFlags[k]).sort().join(',');
+    const ok = correct === flagged;
+    this.setState(s => ok ? { resultState: 'good' } : { resultState: 'bad', wrongAttempts: s.wrongAttempts + 1 });
+  }
+
+  pickAutoStep(id) {
+    this.setState(s => s.autoOrder.includes(id) ? s : { autoOrder: [...s.autoOrder, id] });
+  }
+  resetAuto() { this.setState({ autoOrder: [], resultState: null }); }
+  checkAuto() {
+    const correctOrder = [...this.autoStepDefs].sort((a, b) => a.order - b.order).map(s => s.id);
+    const ok = this.state.autoOrder.length === correctOrder.length && this.state.autoOrder.every((id, i) => id === correctOrder[i]);
+    this.setState(s => ok ? { resultState: 'good' } : { resultState: 'bad', wrongAttempts: s.wrongAttempts + 1 });
+  }
+
+  openHelp() { this.setState({ helpOpen: true }); }
+  closeHelp() { this.setState({ helpOpen: false }); }
+  nextHint() {
+    const domain = this.state.activeDomainKey;
+    const hints = this.hintDefs[domain] || [];
+    this.setState(s => ({ hintsUsed: Math.min(s.hintsUsed + 1, hints.length) }));
+  }
+  escalate() { this.setState({ helpLayer: 'human' }); }
+
+  toggleJson() { this.setState(s => ({ jsonOpen: !s.jsonOpen })); }
+  sendPayload() {
+    this.setState({ toastVisible: true });
+    setTimeout(() => this.setState({ toastVisible: false }), 2600);
+  }
+
+  renderVals() {
+    const s = this.state;
+
+    const isOnboarding = s.rootTab === 'onboarding';
+    const isExplore = s.rootTab === 'explore';
+
+    const showLogin = s.onbStep === 0 && !s.otpOpen;
+    const showOtp = s.onbStep === 0 && s.otpOpen;
+    const showQuestionnaire = s.onbStep >= 1 && s.onbStep <= 3;
+    const showWaiting = s.onbStep === 4;
+    const qDots = [1, 2, 3].map(i => ({ color: i <= s.onbStep ? '#fb8500' : 'rgba(2,62,138,.12)' }));
+
+    const curiosityDomains = this.domainDefs.map(d => ({
+      label: d.label,
+      select: () => this.selectCuriosity(d.key),
+      border: s.curiosity === d.key ? '#fb8500' : 'rgba(2,62,138,.15)',
+      bg: s.curiosity === d.key ? '#fff6ea' : '#fff',
+    }));
+    const qNextEnabled = (s.onbStep === 3 && !s.curiosity) ? 0.4 : 1;
+
+    const dayDefs = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳'];
+    const calendarDays = dayDefs.map((label, i) => ({
+      label, select: () => this.selectDay(i),
+      bg: s.calDay === i ? '#fb8500' : '#fff',
+      color: s.calDay === i ? '#fff' : 'rgba(0,0,0,.7)',
+      border: s.calDay === i ? '#fb8500' : 'rgba(2,62,138,.15)',
+    }));
+    const slotDefs = ['09:00', '11:00', '14:00', '16:00'];
+    const timeSlots = slotDefs.map(label => ({
+      label, select: () => this.selectSlot(label),
+      bg: s.calSlot === label ? '#fb8500' : '#fff',
+      color: s.calSlot === label ? '#fff' : 'rgba(0,0,0,.7)',
+      border: s.calSlot === label ? '#fb8500' : 'rgba(2,62,138,.15)',
+    }));
+    const confirmText = (s.calDay != null && s.calSlot) ? `יום ${dayDefs[s.calDay]}, שעה ${s.calSlot}` : '';
+
+    const activeDomainDef = this.domainDefs.find(d => d.key === s.activeDomainKey) || null;
+    const showDomainGrid = isExplore && !s.activeDomainKey;
+    const showDomainDetail = isExplore && !!s.activeDomainKey && activeDomainDef && activeDomainDef.built;
+    const showDomainSoon = isExplore && !!s.activeDomainKey && activeDomainDef && !activeDomainDef.built;
+
+    const domainsGrid = this.domainDefs.map(d => ({
+      label: d.label, mono: d.mono, badgeBg: d.badgeBg, soon: !d.built,
+      open: () => this.openDomain(d.key),
+    }));
+
+    const showIntro = s.taskPhase === 'intro';
+    const showTask = s.taskPhase === 'task';
+    const isCodeTask = s.activeDomainKey === 'code';
+    const isCyberTask = s.activeDomainKey === 'cyber';
+    const isAutoTask = s.activeDomainKey === 'automation';
+
+    const logLines = this.logLineDefs.map(l => ({
+      text: l.text,
+      toggle: () => this.toggleLogLine(l.id),
+      bg: s.logFlags[l.id] ? '#fff6ea' : '#fff',
+      border: s.logFlags[l.id] ? '#fb8500' : 'rgba(2,62,138,.12)',
+    }));
+
+    const builtSequence = s.autoOrder.map((id, i) => ({ n: i + 1, label: this.autoStepDefs.find(d => d.id === id).label }));
+    const availableSteps = this.autoStepDefs.filter(d => !s.autoOrder.includes(d.id)).map(d => ({ label: d.label, pick: () => this.pickAutoStep(d.id) }));
+
+    const showResultGood = s.resultState === 'good';
+    const showResultBad = s.resultState === 'bad';
+
+    const domainHints = this.hintDefs[s.activeDomainKey] || [];
+    const hintMessages = domainHints.slice(0, Math.max(s.hintsUsed, 1)).map((text, i) => ({ text: i === 0 && s.hintsUsed === 0 ? 'לחצי על "רמז נוסף" כדי לקבל כיוון — לא את הפתרון עצמו' : text }));
+    const helpLayerAI = s.helpLayer === 'ai';
+    const helpLayerHuman = s.helpLayer === 'human';
+    const hintButtonLabel = s.hintsUsed >= domainHints.length ? 'זהו, ניסינו את כל הרמזים' : 'רמז נוסף';
+    const showEscalateBtn = s.wrongAttempts >= 3 || s.hintsUsed >= domainHints.length;
+
+    const payload = {
+      selectedDomain: s.activeDomainKey,
+      engagementLevel: s.wrongAttempts === 0 && s.resultState === 'good' ? 'high' : s.wrongAttempts >= 3 ? 'struggling' : 'medium',
+      hintsUsed: s.hintsUsed,
+      wrongAttempts: s.wrongAttempts,
+      learningBlockers: s.wrongAttempts >= 3 ? [`קושי בתחום ${activeDomainDef ? activeDomainDef.label : ''}`] : [],
+      status: s.resultState || 'in_progress',
+      timestamp: new Date().toISOString(),
+    };
+
+    return {
+      tabOnbBg: isOnboarding ? '#023e8a' : 'transparent', tabOnbColor: isOnboarding ? '#fff' : 'rgba(0,0,0,.5)',
+      tabExpBg: isExplore ? '#023e8a' : 'transparent', tabExpColor: isExplore ? '#fff' : 'rgba(0,0,0,.5)',
+      goOnboarding: () => this.goRoot('onboarding'),
+      goExplore: () => this.goRoot('explore'),
+      isOnboarding, isExplore,
+
+      showLogin, showOtp, showQuestionnaire, showWaiting,
+      phoneVal: s.phone, setPhone: (e) => this.setPhone(e), submitLogin: () => this.submitLogin(),
+      otpVal: s.otp, setOtp: (e) => this.setOtp(e), verifyOtp: () => this.verifyOtp(), backToLogin: () => this.backToLogin(), resendOtp: () => this.resendOtp(),
+      otpError: s.otpError, otpBorder: s.otpError ? '#c0392b' : 'rgba(2,62,138,.2)',
+      qDots,
+      showQ1: s.onbStep === 1, showQ2: s.onbStep === 2, showQ3: s.onbStep === 3,
+      ageVal: s.age, setAge: (e) => this.setAge(e),
+      locationVal: s.location, setLocation: (e) => this.setLocation(e),
+      familiarity: s.familiarity, setFamiliarity: (e) => this.setFamiliarity(e),
+      curiosityDomains,
+      qShowBack: s.onbStep > 1, qBack: () => this.qBack(), qNext: () => this.qNext(), qNextEnabled,
+      calendarDays, timeSlots, bookMeeting: () => this.bookMeeting(), meetingConfirmed: s.meetingConfirmed, confirmText,
+
+      showDomainGrid, domainsGrid,
+      showDomainDetail, showDomainSoon,
+      activeDomain: activeDomainDef || { label: '', mono: '', badgeBg: '#023e8a', blurb: '', explain: '' },
+      closeDomain: () => this.closeDomain(),
+      showIntro, showTask, startTask: () => this.startTask(),
+      isCodeTask, isCyberTask, isAutoTask,
+      codeSnippet: this.codeSnippet, codeAnswer: s.codeAnswer, setCodeAnswer: (e) => this.setCodeAnswer(e), checkCode: () => this.checkCode(),
+      logLines, checkCyber: () => this.checkCyber(),
+      builtSequence, availableSteps, resetAuto: () => this.resetAuto(), checkAuto: () => this.checkAuto(),
+      showResultGood, showResultBad, wrongAttempts: s.wrongAttempts,
+
+      openHelp: () => this.openHelp(), closeHelp: () => this.closeHelp(), stopProp: (e) => e.stopPropagation(),
+      helpOpen: s.helpOpen, helpLayerAI, helpLayerHuman,
+      hintMessages, nextHint: () => this.nextHint(), hintButtonLabel, showEscalateBtn, escalate: () => this.escalate(),
+      queuePos: 2,
+
+      jsonOpen: s.jsonOpen, toggleJson: () => this.toggleJson(), jsonArrow: s.jsonOpen ? '▲' : '▼',
+      jsonPreview: JSON.stringify(payload, null, 2),
+      sendPayload: () => this.sendPayload(),
+      toastVisible: s.toastVisible,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

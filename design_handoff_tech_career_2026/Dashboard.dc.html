@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;500;600;700;800&family=Noto+Serif+Hebrew:wght@500;600;700&family=Assistant:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#f2ede6;font-family:'Noto Sans Hebrew',sans-serif}
+  .dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(2,62,138,.1);scroll-margin-top:16px}
+  .dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+  .dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#023e8a;color:#fff;border-radius:4px;text-decoration:none}
+  .dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}
+  .dv-opts{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}
+  .dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+  .dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(2,62,138,.1);color:#023e8a;border-radius:5px;text-decoration:none}
+  .dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+  .dv-card{max-width:100%;background:#fff;border-radius:36px;box-shadow:0 20px 50px rgba(2,62,138,.18);overflow:hidden}
+  .dv-opt:target .dv-oid{background:#fb8500;color:#fff}
+  .dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+  @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+  @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">מפת הדרכים — עמוד השלב הסופי (עליון מ-<a class="dv-oid" href="#1a">1a</a> + גוף מ-<a class="dv-oid" href="#1b">1b</a>)</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="4a">
+      <div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>שילוב: הירו + נקודות התקדמות מ-1a, תוכן אנושי מ-1b</div>
+      <div class="dv-card" style="width:390px;height:844px">
+        <div style="height:100%;overflow-y:auto;position:relative;font-family:'Noto Sans Hebrew',sans-serif" dir="rtl">
+
+          <div style="background:linear-gradient(160deg,#023e8a,#01296b);padding:28px 24px 64px;color:#fff;position:relative">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+              <div>
+                <div style="font-size:13px;opacity:.7">שלום, נועה 👋</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-size:22px;font-weight:600;margin-top:2px">מפת הדרכים שלך</div>
+              </div>
+              <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;border:1px solid rgba(255,255,255,.25)">נש</div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:0">
+              <sc-for list="{{ stages }}" as="stage" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;flex:{{ stage.isLast }}">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:34px">
+                    <div style="width:{{ stage.dotSize }}px;height:{{ stage.dotSize }}px;border-radius:50%;background:{{ stage.dotBg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:{{ stage.dotColor }};border:{{ stage.dotBorder }};box-shadow:{{ stage.dotShadow }}">{{ stage.num }}</div>
+                  </div>
+                  <sc-if value="{{ stage.showLine }}" hint-placeholder-val="{{ true }}">
+                    <div style="height:2px;flex:1;min-width:10px;background:{{ stage.lineColor }};margin:0 -2px"></div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="text-align:center;margin-top:14px;font-size:12.5px;opacity:.75">שלב {{ currentStageNum }} מתוך 6</div>
+          </div>
+
+          <div style="background:#fbf9f5;margin-top:-36px;border-radius:28px 28px 0 0;position:relative;min-height:520px;padding:26px 22px 110px">
+
+            <div style="background:linear-gradient(160deg,#023e8a,#01296b);border-radius:22px;padding:20px;color:#fff;position:relative;overflow:hidden">
+              <div style="position:absolute;left:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
+              <div style="font-size:12px;opacity:.75">{{ currentStage.title }}</div>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:14px">
+                <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">ד</div>
+                <div style="flex:1">
+                  <div style="font-family:'Noto Serif Hebrew',serif;font-size:16px;font-weight:700">המפגש הבא: דנה, הרכזת שלך</div>
+                  <div style="font-size:12.5px;opacity:.8;margin-top:2px">יום ג׳ · 14:00 · פגישה פרונטלית</div>
+                </div>
+              </div>
+              <div style="margin-top:16px;background:#fb8500;text-align:center;padding:11px;border-radius:12px;font-size:13.5px;font-weight:700;cursor:pointer">אישור הגעה למפגש</div>
+            </div>
+
+            <div style="margin-top:24px;font-size:13px;font-weight:700;color:rgba(0,0,0,.55)">המשימות שלך לשלב זה</div>
+            <div style="display:flex;flex-direction:column;margin-top:8px">
+              <sc-for list="{{ tasksFinal }}" as="task" hint-placeholder-count="4">
+                <div onClick="{{ task.toggle }}" style="display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid rgba(2,62,138,.08);cursor:pointer">
+                  <div style="width:24px;height:24px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:{{ task.circleBorder }};background:{{ task.circleBg }};transition:all .15s">
+                    <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}">
+                      <span style="color:#fff;font-size:12px;font-weight:800;animation:pop .25s ease">✓</span>
+                    </sc-if>
+                  </div>
+                  <div style="flex:1;font-size:14.5px;font-weight:500;color:{{ task.textColor }};text-decoration:{{ task.strike }}">{{ task.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ allDoneFinal }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:18px;border:1px solid #fb8500;background:#fff6ea;border-radius:16px;padding:18px;text-align:center;animation:slideUp .35s ease">
+                <div style="font-size:24px">🎉</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-weight:700;font-size:16px;color:#023e8a;margin-top:4px">כל הכבוד, נועה!</div>
+                <div style="font-size:12.5px;color:rgba(0,0,0,.6);margin-top:2px">כל המשימות בשלב {{ currentStageNum }} הושלמו</div>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <div style="position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:flex-end">
+            <div style="background:#fff;color:#023e8a;border:1.5px solid #023e8a;border-radius:999px;padding:13px 20px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 24px rgba(2,62,138,.15);font-size:13.5px;font-weight:700;cursor:pointer">
+              <span style="font-size:16px">💬</span>
+              <span>שאלה? דברי עם ה-AI</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">המשך אפשרי: "השתמשי בפריסה הזו כבסיס לכל 6 השלבים" · "הוסיפי מעבר/אנימציה כשעוברים שלב" · "תני לזה להיות ברירת המחדל והמשיכי משם ל-Learning"</p>
+</section>
+
+<section class="dv-turn" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">כיוון חדש — Midnight Glass + חקר תחומים (8 שלבים)</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="3a">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Glassmorphism כהה · מסלול שלי + חקר תחומים</div>
+      <div class="dv-card" style="width:390px;height:844px;background:#0a192f">
+        <div style="height:100%;overflow-y:auto;position:relative;font-family:'Assistant',sans-serif;color:#eef2f8" dir="rtl">
+
+          <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0">
+            <div style="position:absolute;top:-80px;right:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(56,145,255,.28),transparent 70%);filter:blur(10px)"></div>
+            <div style="position:absolute;bottom:120px;left:-90px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(251,133,0,.14),transparent 70%);filter:blur(10px)"></div>
+            <div style="position:absolute;top:340px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(2,62,138,.35),transparent 70%);filter:blur(10px)"></div>
+          </div>
+
+          <div style="position:relative;z-index:1;padding:24px 20px 100px">
+
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div>
+                <div style="font-size:13px;color:rgba(238,242,248,.55)">בוקר טוב ☀️</div>
+                <div style="font-family:'Assistant',sans-serif;font-size:24px;font-weight:800;margin-top:2px">נועה</div>
+              </div>
+              <div style="background:rgba(255,255,255,.06);border:1px solid rgba(251,133,0,.4);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;color:#fb8500;backdrop-filter:blur(12px);white-space:nowrap">שלב {{ v2CurrentNum }} מתוך {{ v2Total }}</div>
+            </div>
+
+            <sc-if value="{{ isPathScreen }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <div style="font-size:12.5px;font-weight:700;color:rgba(238,242,248,.5);margin:26px 0 10px;letter-spacing:.02em">הבא בתור</div>
+
+                <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-inline-end:3px solid #fb8500;border-radius:20px;padding:20px;backdrop-filter:blur(16px);box-shadow:0 12px 32px rgba(0,0,0,.35)">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:46px;height:46px;border-radius:14px;background:rgba(56,145,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🎯</div>
+                    <div style="flex:1">
+                      <div style="font-size:11px;font-weight:700;color:#fb8500">שלב {{ v2CurrentNum }}</div>
+                      <div style="font-family:'Assistant',sans-serif;font-size:16.5px;font-weight:700;margin-top:2px;line-height:1.4">{{ v2CurrentStage }}</div>
+                    </div>
+                  </div>
+                  <div style="font-size:13px;color:rgba(238,242,248,.65);line-height:1.6;margin-top:12px">קבעי מועד למפגש עם היועצ/ת שלך, ותכיני שאלות על תחומי ההייטק שמעניינים אותך.</div>
+                  <div onClick="{{ v2MarkDone }}" style="margin-top:16px;background:linear-gradient(160deg,#3891ff,#023e8a);text-align:center;padding:15px;border-radius:14px;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(56,145,255,.3)">סמן/י כהושלם</div>
+                </div>
+
+                <div style="font-size:12.5px;font-weight:700;color:rgba(238,242,248,.5);margin:26px 0 12px;letter-spacing:.02em">המסע שלי</div>
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ v2Journey }}" as="step" hint-placeholder-count="8">
+                    <div style="display:flex;gap:12px">
+                      <div style="display:flex;flex-direction:column;align-items:center;width:16px">
+                        <div style="width:{{ step.dotSize }}px;height:{{ step.dotSize }}px;border-radius:50%;background:{{ step.dotColor }};flex-shrink:0;margin-top:3px;box-shadow:{{ step.dotGlow }}"></div>
+                        <sc-if value="{{ step.showLine }}" hint-placeholder-val="{{ true }}">
+                          <div style="width:2px;flex:1;min-height:22px;background:{{ step.lineColor }}"></div>
+                        </sc-if>
+                      </div>
+                      <div style="padding-bottom:18px;flex:1">
+                        <div style="font-size:13.5px;font-weight:{{ step.weight }};color:{{ step.textColor }};line-height:1.4">{{ step.title }}</div>
+                        <sc-if value="{{ step.isCurrent }}" hint-placeholder-val="{{ false }}">
+                          <div style="font-size:11.5px;color:#fb8500;font-weight:700;margin-top:2px">אתה כאן עכשיו</div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showExploreList }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="font-size:12.5px;font-weight:700;color:rgba(238,242,248,.5);margin:26px 0 4px;letter-spacing:.02em">שלב 3 · חקר תחומים</div>
+                <div style="font-family:'Assistant',sans-serif;font-size:19px;font-weight:800">גלה את תחום ההייטק שלך</div>
+                <div style="font-size:12.5px;color:rgba(238,242,248,.55);margin-top:4px;line-height:1.6">התנסי בסימולציות קצרות — המערכת לומדת מה מעניין אותך</div>
+
+                <sc-if value="{{ nudgeVisible }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:16px;background:rgba(251,133,0,.12);border:1px solid rgba(251,133,0,.4);border-radius:14px;padding:12px 14px;font-size:12.5px;color:#ffd8a8;display:flex;align-items:center;gap:8px;animation:slideUp .3s ease">
+                    <span>🔔</span>
+                    <span>נשלח עדכון ליועצת: מעורבות גבוהה זוהתה ב־{{ nudgeDomain }}</span>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px">
+                  <sc-for list="{{ simModules }}" as="mod" hint-placeholder-count="4">
+                    <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px;backdrop-filter:blur(16px)">
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <div style="width:42px;height:42px;border-radius:12px;background:{{ mod.iconBg }};display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">{{ mod.icon }}</div>
+                        <div style="flex:1">
+                          <div style="font-size:14.5px;font-weight:700">{{ mod.label }}</div>
+                          <div style="font-size:11.5px;color:rgba(238,242,248,.5);margin-top:1px">{{ mod.desc }}</div>
+                        </div>
+                        <div onClick="{{ mod.tryIt }}" style="background:rgba(56,145,255,.18);border:1px solid rgba(56,145,255,.4);border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:700;color:#8fc4ff;cursor:pointer;white-space:nowrap">{{ mod.ctaLabel }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="font-size:12.5px;font-weight:700;color:rgba(238,242,248,.5);margin:22px 0 10px;letter-spacing:.02em">רמת עניין לפי תחום</div>
+                <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px">
+                  <canvas ref="{{ chartRef }}" width="700" height="240" style="width:100%;height:80px;display:block"></canvas>
+                </div>
+
+                <div style="font-size:12.5px;font-weight:700;color:rgba(238,242,248,.5);margin:22px 0 10px;letter-spacing:.02em">AI Co-pilot</div>
+                <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px">
+                  <div style="align-self:flex-start;max-width:82%;background:rgba(255,255,255,.08);border-radius:14px 14px 14px 4px;padding:10px 13px;font-size:13px;line-height:1.5">היי נועה! שמתי לב שהתנסית בכמה סימולציות. מה הכי דיבר אליך?</div>
+                  <div style="align-self:flex-end;max-width:82%;background:linear-gradient(160deg,#3891ff,#023e8a);border-radius:14px 14px 4px 14px;padding:10px 13px;font-size:13px;line-height:1.5">חשבתי שדאטה יהיה משעמם, אבל דווקא נהניתי</div>
+                  <div style="align-self:flex-start;max-width:82%;background:rgba(255,255,255,.08);border-radius:14px 14px 14px 4px;padding:10px 13px;font-size:13px;line-height:1.5">מעולה לדעת 🙂 זה בדיוק סוג התובנות שאעביר ליועצת שלך לקראת השיחה הבאה</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:7px 12px;font-size:12px;cursor:pointer">ספר לי עוד על דאטה</div>
+                    <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:7px 12px;font-size:12px;cursor:pointer">מה עם סייבר?</div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showQaFlow }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:24px">
+                  <div onClick="{{ qaClose }}" style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px">◀</div>
+                  <div style="flex:1">
+                    <div style="font-size:11px;color:rgba(238,242,248,.5);font-weight:700">מסלול היכרות · בדיקות תוכנה (QA)</div>
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:6px;margin-top:14px">
+                  <sc-for list="{{ qaDots }}" as="dot" hint-placeholder-count="4">
+                    <div style="flex:1;height:4px;border-radius:2px;background:{{ dot.color }}"></div>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ qaStep0 }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin-top:18px">
+                    <div style="width:52px;height:52px;border-radius:16px;background:rgba(120,200,140,.18);display:flex;align-items:center;justify-content:center;font-size:24px">🐞</div>
+                    <div style="font-family:'Assistant',sans-serif;font-size:20px;font-weight:800;margin-top:12px">מה זה בעצם בדיקות תוכנה?</div>
+                    <div style="font-size:13.5px;color:rgba(238,242,248,.7);line-height:1.7;margin-top:10px">בודק/ת תוכנה (QA) הוא/היא מי שאחראי/ת לוודא שהאפליקציה עובדת כמו שצריך — לפני שהיא מגיעה למשתמשים. במקום לכתוב קוד, את/ה חושב/ת כמו בלש/ית: מחפש/ת דברים שלא עובדים, לא ברורים, או פשוט "מרגישים לא נכון".</div>
+                    <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px;margin-top:14px">
+                      <div style="font-size:12.5px;font-weight:700;color:#8fe0a8">יום בחיים של בודק/ת QA</div>
+                      <div style="font-size:12.5px;color:rgba(238,242,248,.65);line-height:1.8;margin-top:6px">• עוברים על פיצ׳ר חדש שהמפתחים בנו<br>• מנסים "לשבור" אותו בכל דרך אפשרית<br>• מתעדים כל באג שנמצא בדוח ברור<br>• עובדים צמוד עם מפתחים כדי לתקן</div>
+                    </div>
+
+                    <div style="font-size:12.5px;font-weight:700;color:rgba(238,242,248,.5);margin:18px 0 10px;letter-spacing:.02em">כדאי לצפות</div>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                      <a href="https://www.youtube.com/results?search_query=what+is+software+qa+testing" target="_blank" style="text-decoration:none;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;color:inherit">
+                        <div style="width:64px;height:44px;border-radius:10px;background:repeating-linear-gradient(135deg,rgba(120,200,140,.25),rgba(120,200,140,.25) 6px,rgba(120,200,140,.12) 6px,rgba(120,200,140,.12) 12px);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px">▶</div>
+                        <div style="flex:1">
+                          <div style="font-size:13px;font-weight:600">מה זה בכלל QA? — הסבר של 4 דקות</div>
+                          <div style="font-size:11px;color:rgba(238,242,248,.45);margin-top:2px">וידאו · 4:12</div>
+                        </div>
+                      </a>
+                      <a href="https://www.youtube.com/results?search_query=day+in+the+life+qa+tester" target="_blank" style="text-decoration:none;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px;color:inherit">
+                        <div style="width:64px;height:44px;border-radius:10px;background:repeating-linear-gradient(135deg,rgba(56,145,255,.25),rgba(56,145,255,.25) 6px,rgba(56,145,255,.12) 6px,rgba(56,145,255,.12) 12px);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px">▶</div>
+                        <div style="flex:1">
+                          <div style="font-size:13px;font-weight:600">יום עבודה טיפוסי של בודקת QA</div>
+                          <div style="font-size:11px;color:rgba(238,242,248,.45);margin-top:2px">וידאו · 7:03</div>
+                        </div>
+                      </a>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ qaStep1 }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:18px">
+                    <div style="font-family:'Assistant',sans-serif;font-size:19px;font-weight:800">כמה מושגים בסיסיים</div>
+                    <div style="font-size:12.5px;color:rgba(238,242,248,.55);margin-top:4px;line-height:1.6">בלי ז'רגון מסובך — רק מה שצריך כדי להבין את המשימה הבאה</div>
+
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+                      <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px">
+                        <div style="font-size:13.5px;font-weight:700;color:#8fc4ff">🐛 מה זה "באג"?</div>
+                        <div style="font-size:12.5px;color:rgba(238,242,248,.65);line-height:1.6;margin-top:4px">כל דבר באפליקציה שלא מתנהג כמו שהתכננו — מכפתור שלא עובד ועד טקסט שקשה לקרוא.</div>
+                      </div>
+                      <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px">
+                        <div style="font-size:13.5px;font-weight:700;color:#8fc4ff">✋ בדיקה ידנית מול אוטומטית</div>
+                        <div style="font-size:12.5px;color:rgba(238,242,248,.65);line-height:1.6;margin-top:4px">בדיקה ידנית = אדם עובר על האפליקציה בעצמו. אוטומטית = תוכנה שרצה בדיקות שוב ושוב, כל הזמן.</div>
+                      </div>
+                      <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px">
+                        <div style="font-size:13.5px;font-weight:700;color:#8fc4ff">📋 מהו "Test Case"?</div>
+                        <div style="font-size:12.5px;color:rgba(238,242,248,.65);line-height:1.6;margin-top:4px">רשימת צעדים בדוקה שבודקים חוזרים עליה, כדי לוודא שפיצ'ר מסוים עובד כמו שצריך בכל פעם מחדש.</div>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ qaStep2 }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:18px">
+                    <div style="font-family:'Assistant',sans-serif;font-size:19px;font-weight:800">משימת התנסות: מצא/י את הבאגים</div>
+                    <div style="font-size:12.5px;color:rgba(238,242,248,.55);margin-top:4px;line-height:1.6">להלן טופס הרשמה לדוגמה. לחצ/י על כל בעיה שאת/ה מזהה — בדיוק כמו בודק/ת QA אמיתי/ת.</div>
+
+                    <div style="background:#f4f1eb;border-radius:16px;padding:16px;margin-top:16px;color:#1c1c1c">
+                      <div style="font-size:13px;font-weight:700;color:#023e8a;margin-bottom:10px">הרשמה לניוזלטר</div>
+                      <div onClick="{{ qaBug1.toggle }}" style="border:2px solid {{ qaBug1.color }};border-radius:10px;padding:10px;margin-bottom:8px;font-size:16px;font-weight:800;color:#444;cursor:pointer;position:relative">שם מלא<sc-if value="{{ qaBug1.found }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:8px;top:8px;font-size:12px;color:#c0392b">🐞 טקסט ענק מדי</span></sc-if></div>
+                      <div onClick="{{ qaBug2.toggle }}" style="border:1px solid {{ qaBug2.color }};border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px;color:#ccc;cursor:pointer;position:relative">email...<sc-if value="{{ qaBug2.found }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:8px;top:8px;font-size:12px;color:#c0392b">🐞 placeholder לא קריא</span></sc-if></div>
+                      <div style="border:1px solid rgba(0,0,0,.15);border-radius:10px;padding:10px;margin-bottom:12px;font-size:13px;color:#999">כתובת אימייל</div>
+                      <div onClick="{{ qaBug3.toggle }}" style="background:{{ qaBug3.color }};color:#fff;text-align:center;padding:11px;border-radius:14px;font-size:12px;cursor:pointer;position:relative">שלח<sc-if value="{{ qaBug3.found }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:8px;top:-18px;font-size:12px;color:#c0392b;white-space:nowrap">🐞 אין אישור שנשלח בהצלחה</span></sc-if></div>
+                    </div>
+
+                    <div style="margin-top:14px;font-size:13px;font-weight:700;color:#8fe0a8">מצאת {{ qaFoundCount }} מתוך 3 באגים</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ qaStep3 }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:18px;text-align:center">
+                    <div style="font-size:34px">✨</div>
+                    <div style="font-family:'Assistant',sans-serif;font-size:19px;font-weight:800;margin-top:8px">איך הרגשת עם המשימה?</div>
+                    <div style="font-size:12.5px;color:rgba(238,242,248,.55);margin-top:4px">התגובה שלך תעזור ליועצת להתאים לך המלצות</div>
+                    <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+                      <sc-for list="{{ qaReactions }}" as="r" hint-placeholder-count="3">
+                        <div onClick="{{ r.select }}" style="border:1.5px solid {{ r.border }};background:{{ r.bg }};border-radius:14px;padding:13px;font-size:14px;font-weight:600;cursor:pointer">{{ r.label }}</div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex;gap:10px;margin-top:24px">
+                  <sc-if value="{{ qaShowBack }}" hint-placeholder-val="{{ false }}">
+                    <div onClick="{{ qaBack }}" style="flex:1;text-align:center;padding:14px;border-radius:14px;font-size:13.5px;font-weight:700;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);cursor:pointer">חזרה</div>
+                  </sc-if>
+                  <div onClick="{{ qaNext }}" style="flex:2;text-align:center;padding:14px;border-radius:14px;font-size:13.5px;font-weight:700;background:linear-gradient(160deg,#3891ff,#023e8a);cursor:pointer">{{ qaNextLabel }}</div>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <div style="position:absolute;bottom:16px;left:16px;right:16px;z-index:2;background:rgba(16,28,48,.7);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(20px);border-radius:20px;display:flex;padding:10px 6px;box-shadow:0 12px 30px rgba(0,0,0,.4)">
+            <sc-for list="{{ v2NavItems }}" as="nav" hint-placeholder-count="4">
+              <div onClick="{{ nav.onClick }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0">
+                <span style="font-size:17px;opacity:{{ nav.opacity }}">{{ nav.icon }}</span>
+                <span style="font-size:10px;font-weight:700;color:{{ nav.color }}">{{ nav.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">המשך אפשרי: "החזירי את המידע האנושי (יועצת/מפגש) גם ל-<a class="dv-oid" href="#3a">3a</a>" · "הוסיפי אנימציית מעבר בין הטאבים" · "בני מסך Learning מלא בסגנון הזה"</p>
+</section>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">מיקוד ב"צעד הבא" יחיד — בהשראת <a class="dv-oid" href="#1a">1a</a></span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>"הבא בתור" + ניווט תחתון</div>
+      <div class="dv-card" style="width:390px;height:844px">
+        <div style="height:100%;overflow-y:auto;position:relative;background:#fbf9f5;font-family:'Noto Sans Hebrew',sans-serif;padding-bottom:78px" dir="rtl">
+
+          <div style="background:linear-gradient(160deg,#023e8a,#01296b);padding:26px 24px 40px;color:#fff;position:relative;overflow:hidden;border-radius:0 0 32px 32px">
+            <div style="position:absolute;left:-40px;bottom:-60px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.05)"></div>
+            <div style="position:absolute;right:-20px;top:-40px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05)"></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1">
+              <div>
+                <div style="font-size:13px;opacity:.7">בוקר טוב ☀️</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-size:23px;font-weight:600;margin-top:2px">נועה</div>
+              </div>
+              <div style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:600">שלב {{ currentStageNum }} מתוך 6</div>
+            </div>
+          </div>
+
+          <div style="padding:0 22px;margin-top:-16px;position:relative;z-index:1">
+            <div style="font-size:13px;font-weight:700;color:rgba(0,0,0,.5);margin:22px 0 10px">הצעד הבא שלך</div>
+
+            <div style="background:#fff;border-radius:22px;padding:20px;box-shadow:0 12px 30px rgba(2,62,138,.14);border:1px solid rgba(2,62,138,.06)">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div style="width:52px;height:52px;border-radius:16px;background:rgba(2,62,138,.08);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📝</div>
+                <div style="flex:1">
+                  <div style="font-size:11.5px;font-weight:700;color:#fb8500;letter-spacing:.02em">{{ currentStage.title }}</div>
+                  <div style="font-family:'Noto Serif Hebrew',serif;font-size:16.5px;font-weight:700;color:#1c1c1c;margin-top:3px">{{ nextTask.label }}</div>
+                </div>
+              </div>
+              <div onClick="{{ nextTask.toggle }}" style="margin-top:16px;background:#023e8a;color:#fff;text-align:center;padding:14px;border-radius:14px;font-size:14.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+                <span>{{ nextTask.ctaLabel }}</span>
+                <span style="font-size:16px">◀</span>
+              </div>
+            </div>
+
+            <sc-if value="{{ allDoneC }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;background:#fb8500;border-radius:18px;padding:20px;text-align:center;color:#fff;animation:slideUp .35s ease">
+                <div style="font-size:26px">🎉</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-weight:700;font-size:17px;margin-top:6px">כל הכבוד, נועה!</div>
+                <div style="font-size:13px;opacity:.9;margin-top:4px">סיימת את כל הצעדים בשלב {{ currentStageNum }} — עוברים לשלב הבא</div>
+              </div>
+            </sc-if>
+
+            <div style="margin-top:22px;font-size:13px;font-weight:700;color:rgba(0,0,0,.5)">המסע שלך</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column">
+              <sc-for list="{{ journeySteps }}" as="step" hint-placeholder-count="6">
+                <div style="display:flex;gap:12px">
+                  <div style="display:flex;flex-direction:column;align-items:center;width:14px">
+                    <div style="width:12px;height:12px;border-radius:50%;background:{{ step.dotColor }};flex-shrink:0;margin-top:3px"></div>
+                    <sc-if value="{{ step.showLine }}" hint-placeholder-val="{{ true }}">
+                      <div style="width:2px;flex:1;min-height:26px;background-image:linear-gradient(to bottom,{{ step.lineColor }} 60%,transparent 0);background-size:2px 8px;background-repeat:repeat-y"></div>
+                    </sc-if>
+                  </div>
+                  <div style="padding-bottom:22px;flex:1">
+                    <div style="font-size:13.5px;font-weight:{{ step.weight }};color:{{ step.textColor }}">{{ step.title }}</div>
+                    <sc-if value="{{ step.isCurrent }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:12px;color:#fb8500;font-weight:600;margin-top:2px">אתה כאן עכשיו</div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid rgba(2,62,138,.08);display:flex;padding:10px 12px 14px">
+            <sc-for list="{{ navItems }}" as="nav" hint-placeholder-count="4">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer">
+                <span style="font-size:18px;opacity:{{ nav.opacity }}">{{ nav.icon }}</span>
+                <span style="font-size:10.5px;font-weight:600;color:{{ nav.color }}">{{ nav.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">המשך אפשרי: "תני ל-<a class="dv-oid" href="#2a">2a</a> אנימציית מעבר בין שלבים" · "השתמשי בפריסה הזו גם למסך Learning" · "עוד גרסה עם פוקוס יחיד אבל בלי ניווט תחתון"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Dashboard — מפת הדרכים</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>שכבת-על נבטית + גיליון תוכן</div>
+      <div class="dv-card" style="width:390px;height:844px">
+        <div style="height:100%;overflow-y:auto;position:relative;font-family:'Noto Sans Hebrew',sans-serif" dir="rtl">
+
+          <div style="background:linear-gradient(160deg,#023e8a,#01296b);padding:28px 24px 64px;color:#fff;position:relative">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+              <div>
+                <div style="font-size:13px;opacity:.7">שלום, נועה 👋</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-size:22px;font-weight:600;margin-top:2px">מפת הדרכים שלך</div>
+              </div>
+              <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;border:1px solid rgba(255,255,255,.25)">נש</div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:0">
+              <sc-for list="{{ stages }}" as="stage" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;flex:{{ stage.isLast }}">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:34px">
+                    <div style="width:{{ stage.dotSize }}px;height:{{ stage.dotSize }}px;border-radius:50%;background:{{ stage.dotBg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:{{ stage.dotColor }};border:{{ stage.dotBorder }};box-shadow:{{ stage.dotShadow }}">{{ stage.num }}</div>
+                  </div>
+                  <sc-if value="{{ stage.showLine }}" hint-placeholder-val="{{ true }}">
+                    <div style="height:2px;flex:1;min-width:10px;background:{{ stage.lineColor }};margin:0 -2px"></div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="text-align:center;margin-top:14px;font-size:12.5px;opacity:.75">שלב {{ currentStageNum }} מתוך 6</div>
+          </div>
+
+          <div style="background:#fbf9f5;margin-top:-36px;border-radius:28px 28px 0 0;position:relative;min-height:520px;padding:26px 22px 110px">
+            <div style="font-family:'Noto Serif Hebrew',serif;font-size:19px;font-weight:700;color:#1c1c1c">{{ currentStage.title }}</div>
+            <div style="font-size:13px;color:rgba(0,0,0,.5);margin-top:4px;line-height:1.6">משימות השלב הנוכחי — סמני כשמשלימים</div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+              <sc-for list="{{ tasksA }}" as="task" hint-placeholder-count="4">
+                <div onClick="{{ task.toggle }}" style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid rgba(2,62,138,.08);border-radius:16px;padding:16px 16px;cursor:pointer;box-shadow:0 1px 2px rgba(2,62,138,.04)">
+                  <div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:{{ task.circleBorder }};background:{{ task.circleBg }};transition:all .15s">
+                    <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}">
+                      <span style="color:#fff;font-size:13px;font-weight:800;animation:pop .25s ease">✓</span>
+                    </sc-if>
+                  </div>
+                  <div style="flex:1;font-size:14.5px;font-weight:500;color:{{ task.textColor }};text-decoration:{{ task.strike }}">{{ task.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ allDoneA }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:20px;background:#fb8500;border-radius:18px;padding:20px;text-align:center;color:#fff;animation:slideUp .35s ease">
+                <div style="font-size:26px">🎉</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-weight:700;font-size:17px;margin-top:6px">כל הכבוד, נועה!</div>
+                <div style="font-size:13px;opacity:.9;margin-top:4px">השלמת את כל המשימות בשלב {{ currentStageNum }}</div>
+              </div>
+            </sc-if>
+
+            <div style="margin-top:24px;background:#fff;border:1px dashed rgba(2,62,138,.25);border-radius:16px;padding:16px;display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(2,62,138,.08);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px">📅</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:700;color:#023e8a">המפגש הבא שלך</div>
+                <div style="font-size:12.5px;color:rgba(0,0,0,.55);margin-top:2px">עם דנה, הרכזת שלך · יום ג׳, 14:00</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:flex-end">
+            <div style="background:#023e8a;color:#fff;border-radius:999px;padding:14px 22px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 24px rgba(2,62,138,.4);font-size:14px;font-weight:600;cursor:pointer">
+              <span>שאל את ה-AI</span>
+              <span style="font-size:16px">💬</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>מוקד אנושי + פס התקדמות דק</div>
+      <div class="dv-card" style="width:390px;height:844px">
+        <div style="height:100%;overflow-y:auto;background:#fbf9f5;font-family:'Noto Sans Hebrew',sans-serif;position:relative" dir="rtl">
+
+          <div style="padding:22px 22px 16px;background:#fff;border-bottom:1px solid rgba(2,62,138,.08);position:sticky;top:0;z-index:2">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-size:12.5px;color:rgba(0,0,0,.5)">שלום, נועה</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-size:18px;font-weight:700;color:#023e8a;margin-top:2px">מפת הדרכים שלך</div>
+              </div>
+              <div style="background:#fb8500;color:#fff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px">שלב {{ currentStageNum }}/6</div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:5px;margin-top:16px">
+              <sc-for list="{{ stagesCompact }}" as="stage" hint-placeholder-count="6">
+                <div style="flex:1;height:6px;border-radius:3px;background:{{ stage.barColor }}"></div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="padding:22px 22px 110px">
+
+            <div style="background:linear-gradient(160deg,#023e8a,#01296b);border-radius:22px;padding:20px;color:#fff;position:relative;overflow:hidden">
+              <div style="position:absolute;left:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
+              <div style="font-size:12px;opacity:.75">{{ currentStage.title }}</div>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:14px">
+                <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">ד</div>
+                <div style="flex:1">
+                  <div style="font-family:'Noto Serif Hebrew',serif;font-size:16px;font-weight:700">המפגש הבא: דנה, הרכזת שלך</div>
+                  <div style="font-size:12.5px;opacity:.8;margin-top:2px">יום ג׳ · 14:00 · פגישה פרונטלית</div>
+                </div>
+              </div>
+              <div style="margin-top:16px;background:#fb8500;text-align:center;padding:11px;border-radius:12px;font-size:13.5px;font-weight:700;cursor:pointer">אישור הגעה למפגש</div>
+            </div>
+
+            <div style="margin-top:24px;font-size:13px;font-weight:700;color:rgba(0,0,0,.55)">המשימות שלך לשלב זה</div>
+            <div style="display:flex;flex-direction:column;margin-top:8px">
+              <sc-for list="{{ tasksB }}" as="task" hint-placeholder-count="4">
+                <div onClick="{{ task.toggle }}" style="display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid rgba(2,62,138,.08);cursor:pointer">
+                  <div style="width:24px;height:24px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:{{ task.circleBorder }};background:{{ task.circleBg }};transition:all .15s">
+                    <sc-if value="{{ task.done }}" hint-placeholder-val="{{ false }}">
+                      <span style="color:#fff;font-size:12px;font-weight:800;animation:pop .25s ease">✓</span>
+                    </sc-if>
+                  </div>
+                  <div style="flex:1;font-size:14.5px;font-weight:500;color:{{ task.textColor }};text-decoration:{{ task.strike }}">{{ task.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ allDoneB }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:18px;border:1px solid #fb8500;background:#fff6ea;border-radius:16px;padding:18px;text-align:center;animation:slideUp .35s ease">
+                <div style="font-size:24px">🎉</div>
+                <div style="font-family:'Noto Serif Hebrew',serif;font-weight:700;font-size:16px;color:#023e8a;margin-top:4px">כל הכבוד, נועה!</div>
+                <div style="font-size:12.5px;color:rgba(0,0,0,.6);margin-top:2px">כל המשימות בשלב {{ currentStageNum }} הושלמו</div>
+              </div>
+            </sc-if>
+
+          </div>
+
+          <div style="position:absolute;bottom:20px;left:20px;right:20px;display:flex;justify-content:flex-end">
+            <div style="background:#fff;color:#023e8a;border:1.5px solid #023e8a;border-radius:999px;padding:13px 20px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 24px rgba(2,62,138,.15);font-size:13.5px;font-weight:700;cursor:pointer">
+              <span style="font-size:16px">💬</span>
+              <span>שאלה? דברי עם ה-AI</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">המשך אפשרי: "הפכי את <a class="dv-oid" href="#1a">1a</a> לצבע רקע חם יותר" · "הוסיפי מסך Learning בסגנון <a class="dv-oid" href="#1b">1b</a>" · "שלב הבא: AI Chat"</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    tasksA: [
+      { label: 'קביעת מועד לפגישה עם הרכזת', done: true },
+      { label: 'מילוי שאלון היכרות מקוצר', done: true },
+      { label: 'הגעה למפגש הפתיחה', done: false },
+      { label: 'חתימה על "מפת הדרכים" האישית', done: false },
+    ],
+    tasksB: [
+      { label: 'קביעת מועד לפגישה עם הרכזת', done: true },
+      { label: 'מילוי שאלון היכרות מקוצר', done: true },
+      { label: 'הגעה למפגש הפתיחה', done: false },
+      { label: 'חתימה על "מפת הדרכים" האישית', done: false },
+    ],
+    tasksC: [
+      { label: 'קביעת מועד לפגישה עם הרכזת', done: true },
+      { label: 'מילוי שאלון היכרות מקוצר', done: true },
+      { label: 'הגעה למפגש הפתיחה', done: false },
+      { label: 'חתימה על "מפת הדרכים" האישית', done: false },
+    ],
+    activeTabV2: 'path',
+    v2StageIdx: 1,
+    simTries: { coding: 0, cyber: 0, data: 0 },
+    nudgeVisible: false,
+    nudgeDomain: '',
+    qaFlowOpen: false,
+    qaStep: 0,
+    qaBugs: { b1: false, b2: false, b3: false },
+    qaReaction: null,
+    tasksFinal: [
+      { label: 'קביעת מועד לפגישה עם הרכזת', done: true },
+      { label: 'מילוי שאלון היכרות מקוצר', done: true },
+      { label: 'הגעה למפגש הפתיחה', done: false },
+      { label: 'חתימה על "מפת הדרכים" האישית', done: false },
+    ],
+  };
+
+  chartRef = (typeof React !== 'undefined' && React.createRef) ? React.createRef() : { current: null };
+
+  v2StageDefs = [
+    'היכרות ראשונית ויציאה לדרך',
+    'מפגש ראשון עם היועצ/ת לימודים - תחומי ההייטק',
+    'היכרות עם תחומי ההייטק השונים (חקר תחומים)',
+    'מפגש שני עם היועצ/ת לימודים - מסלולי לימוד',
+    'היכרות עם מסלולי ומוסדות הלימוד',
+    'מפגש שלישי עם היועצ/ת לימודים - הכנות אחרונות להרשמה ללימודים',
+    'הכנה ללימודים: מלגות, הרשמה וכל מה שצריך',
+    'הרשמה ללימודים!',
+  ];
+
+  simModuleDefs = [
+    { key: 'qa', label: 'בדיקות תוכנה (QA)', icon: '🐞', desc: 'מסלול היכרות מלא · 4 שלבים', iconBg: 'rgba(120,200,140,.18)' },
+    { key: 'coding', label: 'קוד', icon: '💻', desc: 'סימולציית תכנות קצרה', iconBg: 'rgba(56,145,255,.18)' },
+    { key: 'cyber', label: 'סייבר', icon: '🛡️', desc: 'תרגיל זיהוי איום', iconBg: 'rgba(2,62,138,.3)' },
+    { key: 'data', label: 'דאטה', icon: '📊', desc: 'ניתוח דאטה-סט לדוגמה', iconBg: 'rgba(251,133,0,.16)' },
+  ];
+
+  setTabV2(tab) {
+    this.setState({ activeTabV2: tab, qaFlowOpen: false, qaStep: 0 });
+  }
+
+  openQaFlow() {
+    this.setState({ qaFlowOpen: true, qaStep: 0 });
+  }
+
+  closeQaFlow() {
+    this.setState({ qaFlowOpen: false, qaStep: 0 });
+  }
+
+  qaGoNext() {
+    this.setState(s => ({ qaStep: Math.min(s.qaStep + 1, 3) }));
+  }
+
+  qaGoBack() {
+    this.setState(s => ({ qaStep: Math.max(s.qaStep - 1, 0) }));
+  }
+
+  toggleQaBug(key) {
+    this.setState(s => ({ qaBugs: { ...s.qaBugs, [key]: !s.qaBugs[key] } }));
+  }
+
+  setQaReaction(val) {
+    this.setState({ qaReaction: val });
+  }
+
+  markV2Done() {
+    this.setState(s => ({ v2StageIdx: Math.min(s.v2StageIdx + 1, this.v2StageDefs.length - 1) }));
+  }
+
+  tryModule(key, label) {
+    this.setState(s => {
+      const tries = { ...s.simTries, [key]: s.simTries[key] + 1 };
+      return { simTries: tries };
+    }, () => {
+      if (this.state.simTries[key] === 3) {
+        this.setState({ nudgeVisible: true, nudgeDomain: label });
+        setTimeout(() => this.setState({ nudgeVisible: false }), 3200);
+      }
+      this.drawChart();
+    });
+  }
+
+  drawChart() {
+    const canvas = this.chartRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const tries = this.state.simTries;
+    const vals = [tries.coding, tries.cyber, tries.data];
+    const labels = ['קוד', 'סייבר', 'דאטה'];
+    const colors = ['#3891ff', '#5b7fd6', '#fb8500'];
+    const max = Math.max(4, ...vals);
+    const barW = w / vals.length * 0.4;
+    const gap = w / vals.length;
+    ctx.font = '22px Assistant, sans-serif';
+    ctx.textAlign = 'center';
+    vals.forEach((v, i) => {
+      const bh = (v / max) * (h - 50);
+      const x = gap * i + gap / 2 - barW / 2;
+      const y = h - 30 - bh;
+      ctx.fillStyle = colors[i];
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x, y, barW, bh, 6) : ctx.rect(x, y, barW, bh);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(238,242,248,.7)';
+      ctx.fillText(labels[i], gap * i + gap / 2, h - 10);
+    });
+  }
+
+  componentDidMount() {
+    this.drawChart();
+  }
+
+  stageDefs = [
+    'אונבורדינג וסינון ראשוני',
+    'מפגש אינטייק פרונטלי',
+    'חשיפה וסימולציה טכנולוגית',
+    'בחירת מסלול ומוסד לימודים',
+    'הכנה פיננסית ומלגות',
+    'אימות רישום ויציאה לדרך',
+  ];
+
+  currentStageIdx = 1; // 0-indexed -> stage 2
+
+  toggle(key, i) {
+    this.setState(s => {
+      const list = s[key].map((t, idx) => idx === i ? { ...t, done: !t.done } : t);
+      return { [key]: list };
+    });
+  }
+
+  renderVals() {
+    const cur = this.currentStageIdx;
+
+    const stages = this.stageDefs.map((title, i) => {
+      const done = i < cur;
+      const active = i === cur;
+      return {
+        num: i + 1,
+        isLast: i === this.stageDefs.length - 1 ? '0 0 0 0' : '1',
+        showLine: i < this.stageDefs.length - 1,
+        dotSize: active ? 30 : 24,
+        dotBg: done ? '#fb8500' : active ? '#fff' : 'rgba(255,255,255,.15)',
+        dotColor: done ? '#fff' : active ? '#023e8a' : 'rgba(255,255,255,.6)',
+        dotBorder: active ? '2px solid #fb8500' : 'none',
+        dotShadow: active ? '0 0 0 4px rgba(251,133,0,.25)' : 'none',
+        lineColor: done ? '#fb8500' : 'rgba(255,255,255,.2)',
+      };
+    });
+
+    const stagesCompact = this.stageDefs.map((_, i) => ({
+      barColor: i < cur ? '#fb8500' : i === cur ? '#023e8a' : 'rgba(2,62,138,.12)',
+    }));
+
+    const mkTasks = (key) => this.state[key].map((t, i) => ({
+      label: t.label,
+      done: t.done,
+      circleBg: t.done ? '#023e8a' : '#fff',
+      circleBorder: t.done ? '2px solid #023e8a' : '2px solid rgba(2,62,138,.25)',
+      textColor: t.done ? 'rgba(0,0,0,.4)' : '#1c1c1c',
+      strike: t.done ? 'line-through' : 'none',
+      toggle: () => this.toggle(key, i),
+    }));
+
+    const allDoneA = this.state.tasksA.every(t => t.done);
+    const allDoneB = this.state.tasksB.every(t => t.done);
+    const allDoneC = this.state.tasksC.every(t => t.done);
+    const allDoneFinal = this.state.tasksFinal.every(t => t.done);
+
+    const firstUndoneIdx = this.state.tasksC.findIndex(t => !t.done);
+    const nextTask = firstUndoneIdx === -1
+      ? { label: 'כל הצעדים בשלב זה הושלמו', ctaLabel: 'למעבר לשלב הבא', toggle: () => {} }
+      : { label: this.state.tasksC[firstUndoneIdx].label, ctaLabel: 'סמני כהושלם', toggle: () => this.toggle('tasksC', firstUndoneIdx) };
+
+    const journeySteps = this.stageDefs.map((title, i) => ({
+      title,
+      isCurrent: i === cur,
+      showLine: i < this.stageDefs.length - 1,
+      dotColor: i < cur ? '#fb8500' : i === cur ? '#023e8a' : 'rgba(2,62,138,.2)',
+      lineColor: i < cur ? '#fb8500' : 'rgba(2,62,138,.2)',
+      weight: i === cur ? 700 : 500,
+      textColor: i === cur ? '#023e8a' : i < cur ? 'rgba(0,0,0,.4)' : 'rgba(0,0,0,.6)',
+    }));
+
+    const navItems = [
+      { icon: '🗺️', label: 'מפת דרכים', opacity: 1, color: '#023e8a' },
+      { icon: '📚', label: 'למידה', opacity: .45, color: 'rgba(0,0,0,.45)' },
+      { icon: '❤️', label: 'Squad', opacity: .45, color: 'rgba(0,0,0,.45)' },
+      { icon: '👤', label: 'פרופיל', opacity: .45, color: 'rgba(0,0,0,.45)' },
+    ];
+
+    // --- v2 (turn 3 / midnight glass) ---
+    const v2Idx = this.state.v2StageIdx;
+    const v2Journey = this.v2StageDefs.map((title, i) => {
+      const done = i < v2Idx, active = i === v2Idx;
+      return {
+        title,
+        isCurrent: active,
+        showLine: i < this.v2StageDefs.length - 1,
+        dotSize: active ? 14 : 12,
+        dotColor: done ? '#fb8500' : active ? '#3891ff' : 'rgba(238,242,248,.15)',
+        dotGlow: active ? '0 0 0 5px rgba(56,145,255,.25)' : 'none',
+        lineColor: done ? '#fb8500' : 'rgba(238,242,248,.12)',
+        weight: active ? 700 : 500,
+        textColor: active ? '#eef2f8' : done ? 'rgba(238,242,248,.55)' : 'rgba(238,242,248,.35)',
+      };
+    });
+
+    const simModules = this.simModuleDefs.map(m => ({
+      ...m,
+      ctaLabel: m.key === 'qa' ? 'כניסה למסלול' : 'התנסה',
+      tryIt: m.key === 'qa' ? () => this.openQaFlow() : () => this.tryModule(m.key, m.label),
+    }));
+
+    const v2NavItems = [
+      { icon: '🗺️', label: 'מסלול שלי', opacity: this.state.activeTabV2 === 'path' ? 1 : .4, color: this.state.activeTabV2 === 'path' ? '#3891ff' : 'rgba(238,242,248,.5)', onClick: () => this.setTabV2('path') },
+      { icon: '🧭', label: 'גלה', opacity: this.state.activeTabV2 === 'explore' ? 1 : .4, color: this.state.activeTabV2 === 'explore' ? '#3891ff' : 'rgba(238,242,248,.5)', onClick: () => this.setTabV2('explore') },
+      { icon: '👥', label: 'קהילה', opacity: .4, color: 'rgba(238,242,248,.5)', onClick: () => {} },
+      { icon: '👤', label: 'פרופיל', opacity: .4, color: 'rgba(238,242,248,.5)', onClick: () => {} },
+    ];
+
+    // --- QA deep-dive flow ---
+    const qaBugsFoundCount = Object.values(this.state.qaBugs).filter(Boolean).length;
+    const qaStep = this.state.qaStep;
+    const qaDots = [0, 1, 2, 3].map(i => ({ color: i <= qaStep ? '#8fe0a8' : 'rgba(238,242,248,.15)' }));
+    const bugStyle = (found) => (found ? '#8fe0a8' : 'rgba(0,0,0,.15)');
+    const qaReactionDefs = [
+      { key: 'interesting', label: '😃 מעניין אותי, רוצה עוד' },
+      { key: 'challenging', label: '🤔 מאתגר, אבל בסדר' },
+      { key: 'notforme', label: '😕 כנראה שלא בשבילי' },
+    ];
+    const qaReactions = qaReactionDefs.map(r => ({
+      label: r.label,
+      select: () => this.setQaReaction(r.key),
+      border: this.state.qaReaction === r.key ? '#8fe0a8' : 'rgba(255,255,255,.15)',
+      bg: this.state.qaReaction === r.key ? 'rgba(120,200,140,.14)' : 'rgba(255,255,255,.05)',
+    }));
+
+    return {
+      stages,
+      stagesCompact,
+      currentStageNum: cur + 1,
+      currentStage: { title: this.stageDefs[cur] },
+      tasksA: mkTasks('tasksA'),
+      tasksB: mkTasks('tasksB'),
+      tasksFinal: mkTasks('tasksFinal'),
+      allDoneA,
+      allDoneB,
+      allDoneC,
+      allDoneFinal,
+      nextTask,
+      journeySteps,
+      navItems,
+      isPathScreen: this.state.activeTabV2 === 'path',
+      showExploreList: this.state.activeTabV2 === 'explore' && !this.state.qaFlowOpen,
+      showQaFlow: this.state.activeTabV2 === 'explore' && this.state.qaFlowOpen,
+      qaClose: () => this.closeQaFlow(),
+      qaDots,
+      qaStep0: qaStep === 0,
+      qaStep1: qaStep === 1,
+      qaStep2: qaStep === 2,
+      qaStep3: qaStep === 3,
+      qaBug1: { found: this.state.qaBugs.b1, color: bugStyle(this.state.qaBugs.b1), toggle: () => this.toggleQaBug('b1') },
+      qaBug2: { found: this.state.qaBugs.b2, color: bugStyle(this.state.qaBugs.b2), toggle: () => this.toggleQaBug('b2') },
+      qaBug3: { found: this.state.qaBugs.b3, color: bugStyle(this.state.qaBugs.b3), toggle: () => this.toggleQaBug('b3') },
+      qaFoundCount: qaBugsFoundCount,
+      qaReactions,
+      qaShowBack: qaStep > 0,
+      qaNextLabel: qaStep === 3 ? 'סיום, חזרה לחקר תחומים' : 'המשך',
+      qaNext: () => qaStep === 3 ? this.closeQaFlow() : this.qaGoNext(),
+      qaBack: () => this.qaGoBack(),
+      v2CurrentNum: v2Idx + 1,
+      v2Total: this.v2StageDefs.length,
+      v2CurrentStage: this.v2StageDefs[v2Idx],
+      v2MarkDone: () => this.markV2Done(),
+      v2Journey,
+      simModules,
+      nudgeVisible: this.state.nudgeVisible,
+      nudgeDomain: this.state.nudgeDomain,
+      chartRef: this.chartRef,
+      v2NavItems,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
