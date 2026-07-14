@@ -1,4 +1,4 @@
-# טק-קריירה 2026 — הוראות לקלוד
+# Techcareerly — הוראות לקלוד
 
 ## מה הפרויקט הזה?
 
@@ -53,6 +53,15 @@
 
 ---
 
+## מצב הפרויקט
+
+- **Production:** https://hasifaapp.vercel.app
+- **GitHub:** https://github.com/natirot86-coder/techcareerly
+- **Stack:** Next.js 16 + Tailwind v4 + TypeScript
+- **Backend:** ישראל (Israelman) — Supabase, Auth, Make.com
+- **State כרגע:** mock מקומי — אין חיבור לבקאנד עדיין
+- **מוכן:** Dashboard כל 6 שלבים + קומפוננטות משותפות
+
 ## כללים לעבודה
 
 - שפת הקוד: **אנגלית** (משתנים, פונקציות, קבצים)
@@ -60,3 +69,5 @@
 - סגנון קוד: פונקציונלי, נקי, ללא over-engineering
 - לפני כל שינוי גדול — קרא את הקבצים הרלוונטים קודם
 - PRD.md הוא מקור האמת לארכיטקטורה
+- README.md מתעדכן אחרי כל שלב
+- שלב שלב — לא לבנות מסך הבא לפני אישור
