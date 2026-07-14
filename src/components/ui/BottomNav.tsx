@@ -1,0 +1,42 @@
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const TABS = [
+  { href: "/dashboard", label: "מפה", icon: "⊞" },
+  { href: "/chat", label: "Co-pilot", icon: "◎" },
+  { href: "/squad", label: "קהילה", icon: "◈" },
+  { href: "/contact", label: "רכזת", icon: "◉" },
+];
+
+export default function BottomNav() {
+  const path = usePathname();
+
+  return (
+    <div className="flex border-t border-[rgba(2,62,138,0.1)] bg-card">
+      {TABS.map((tab) => {
+        const active = path.startsWith(tab.href);
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className="flex-1 flex flex-col items-center py-3 gap-[3px]"
+          >
+            <span
+              className="text-[18px]"
+              style={{ color: active ? "#023e8a" : "rgba(0,0,0,0.3)" }}
+            >
+              {tab.icon}
+            </span>
+            <span
+              className="text-[10.5px] font-bold"
+              style={{ color: active ? "#023e8a" : "rgba(0,0,0,0.35)" }}
+            >
+              {tab.label}
+            </span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
