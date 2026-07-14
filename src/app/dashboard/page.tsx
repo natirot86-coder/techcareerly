@@ -1,16 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import NavyHeader from "@/components/ui/NavyHeader";
+import MonogramBadge from "@/components/ui/MonogramBadge";
 import TaskCard from "@/components/ui/TaskCard";
 import BottomNav from "@/components/ui/BottomNav";
 import Button from "@/components/ui/Button";
+import Toast from "@/components/ui/Toast";
 
-// Mock state — ישראל יחבר ל-Supabase
-const MOCK_USER = { name: "נועה", stage: 1 };
+const FALLBACK_USER = "נועה";
 
-// --- Stage 1 ---
+// ─── Stage 1 ──────────────────────────────────────────────────────────────────
 function Stage1() {
   return (
     <div className="flex flex-col gap-[10px]">
@@ -18,16 +19,44 @@ function Stage1() {
       <TaskCard label="הורדת האפליקציה" status="done" />
       <TaskCard label="מילוי שאלון בסיס" status="done" />
       <TaskCard label="המתנה לאישור הרכזת" status="in-progress" />
-      <div className="border border-dashed border-[rgba(2,62,138,0.2)] rounded-xl p-4 mt-2 text-center text-[13px] text-[rgba(0,0,0,0.5)]">
-        הרכזת תיצור איתך קשר בקרוב
+
+      {/* Upgraded waiting card */}
+      <div
+        className="rounded-xl p-4 mt-2 flex flex-col gap-3"
+        style={{
+          background: "rgba(2,62,138,0.04)",
+          border: "1px solid rgba(2,62,138,0.1)",
+        }}
+      >
+        <div>
+          <div className="text-[13.5px] font-bold text-navy">הרכזת שלנו בטיפול בבקשתך</div>
+          <div className="text-[12.5px] mt-1" style={{ color: "rgba(0,0,0,0.5)" }}>
+            בדרך כלל מגיבים תוך יום עסקים
+          </div>
+        </div>
+        <a
+          href="https://wa.me/972500000000"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 border rounded-xl px-4 py-[10px] text-[13px] font-bold"
+          style={{ borderColor: "rgba(2,62,138,0.2)", color: "#023e8a", background: "#fff" }}
+        >
+          שלחי הודעת WhatsApp לרכזת
+        </a>
       </div>
     </div>
   );
 }
 
-// --- Stage 2 ---
-function Stage2() {
+// ─── Stage 2 ──────────────────────────────────────────────────────────────────
+function Stage2({ onConfirm }: { onConfirm: () => void }) {
   const [confirmed, setConfirmed] = useState(false);
+
+  function handleConfirm() {
+    setConfirmed(true);
+    onConfirm();
+  }
+
   return (
     <div className="flex flex-col gap-[10px]">
       <div className="bg-white border border-[rgba(2,62,138,0.08)] rounded-xl p-4">
@@ -35,10 +64,7 @@ function Stage2() {
         <div className="text-[15px] font-bold text-navy">מפגש אינטייק עם דנה</div>
         <div className="text-[13px] text-[rgba(0,0,0,0.5)] mt-1">יום ב׳ · 14:00 · פגישה פרונטלית</div>
         <div className="mt-3">
-          <Button
-            variant={confirmed ? "outline" : "orange"}
-            onClick={() => setConfirmed(true)}
-          >
+          <Button variant={confirmed ? "outline" : "orange"} onClick={handleConfirm}>
             {confirmed ? "הגעה אושרה ✓" : "אישור הגעה למפגש"}
           </Button>
         </div>
@@ -50,7 +76,7 @@ function Stage2() {
   );
 }
 
-// --- Stage 3 ---
+// ─── Stage 3 ──────────────────────────────────────────────────────────────────
 function Stage3() {
   return (
     <div className="flex flex-col gap-[10px]">
@@ -62,7 +88,7 @@ function Stage3() {
   );
 }
 
-// --- Stage 4 ---
+// ─── Stage 4 ──────────────────────────────────────────────────────────────────
 function Stage4() {
   return (
     <div className="flex flex-col gap-[10px]">
@@ -78,7 +104,7 @@ function Stage4() {
   );
 }
 
-// --- Stage 5 ---
+// ─── Stage 5 ──────────────────────────────────────────────────────────────────
 function Stage5() {
   return (
     <div className="flex flex-col gap-[10px]">
@@ -90,7 +116,7 @@ function Stage5() {
   );
 }
 
-// --- Stage 6 ---
+// ─── Stage 6 ──────────────────────────────────────────────────────────────────
 function Stage6() {
   return (
     <div className="flex flex-col gap-[10px]">
@@ -105,15 +131,7 @@ function Stage6() {
   );
 }
 
-const STAGE_COMPONENTS: Record<number, React.ComponentType> = {
-  1: Stage1,
-  2: Stage2,
-  3: Stage3,
-  4: Stage4,
-  5: Stage5,
-  6: Stage6,
-};
-
+// ─── Desktop sidebar tabs ─────────────────────────────────────────────────────
 const DESKTOP_TABS = [
   { href: "/dashboard", label: "מפת הדרכים", icon: "⊞" },
   { href: "/chat", label: "AI Co-pilot", icon: "◎" },
@@ -121,13 +139,8 @@ const DESKTOP_TABS = [
   { href: "/contact", label: "רכזת", icon: "◉" },
 ];
 
-function DevSwitcher({
-  currentStage,
-  setCurrentStage,
-}: {
-  currentStage: number;
-  setCurrentStage: (s: number) => void;
-}) {
+// ─── Dev switcher ─────────────────────────────────────────────────────────────
+function DevSwitcher({ currentStage, setCurrentStage }: { currentStage: number; setCurrentStage: (s: number) => void }) {
   if (process.env.NODE_ENV !== "development") return null;
   return (
     <div className="px-4 py-2 flex gap-1 flex-wrap justify-center">
@@ -148,38 +161,70 @@ function DevSwitcher({
   );
 }
 
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const [currentStage, setCurrentStage] = useState(MOCK_USER.stage);
+  const [currentStage, setCurrentStage] = useState(1);
+  const [userName, setUserName] = useState(FALLBACK_USER);
+  const [showToast, setShowToast] = useState(false);
   const pathname = usePathname();
 
-  const StageContent = STAGE_COMPONENTS[currentStage];
+  // קרא שם מ-localStorage (מ-Onboarding)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("user-name");
+      if (saved) setUserName(saved);
+    }
+  }, []);
+
+  function renderStage() {
+    switch (currentStage) {
+      case 1: return <Stage1 />;
+      case 2: return <Stage2 onConfirm={() => setShowToast(true)} />;
+      case 3: return <Stage3 />;
+      case 4: return <Stage4 />;
+      case 5: return <Stage5 />;
+      case 6: return <Stage6 />;
+      default: return null;
+    }
+  }
 
   return (
     <>
-      {/* ====== MOBILE (מוסתר על md+) ====== */}
+      {showToast && (
+        <Toast
+          message="הגעתך אושרה! נתראה ביום ב׳"
+          onDone={() => setShowToast(false)}
+        />
+      )}
+
+      {/* ====== MOBILE ====== */}
       <div className="md:hidden w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
-        <NavyHeader userName={MOCK_USER.name} currentStage={currentStage} />
+        <NavyHeader userName={userName} currentStage={currentStage} />
         <div className="flex-1 px-[22px] py-6 pb-[84px]">
-          <StageContent />
+          {renderStage()}
         </div>
         <DevSwitcher currentStage={currentStage} setCurrentStage={setCurrentStage} />
       </div>
 
-      {/* ====== DESKTOP (מוסתר על mobile) ====== */}
+      {/* ====== DESKTOP ====== */}
       <div className="hidden md:flex w-full min-h-screen">
-
-        {/* Sidebar — ימין (RTL: ילד ראשון = ימין) */}
+        {/* Sidebar (RTL: first child = right) */}
         <aside className="w-[240px] shrink-0 bg-navy text-white flex flex-col sticky top-0 h-screen overflow-y-auto">
           <div className="px-7 pt-10 pb-6 border-b border-[rgba(255,255,255,0.1)]">
-            <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold mb-4">
+            <div className="text-[10px] uppercase tracking-widest opacity-40 font-bold mb-5">
               techcareerly
             </div>
-            <div className="text-[13px] opacity-60 mb-1">ברוכה הבאה,</div>
-            <div
-              className="text-[22px] font-bold"
-              style={{ fontFamily: "'Noto Serif Hebrew', serif" }}
-            >
-              {MOCK_USER.name}
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="text-[13px] opacity-60 mb-1">ברוכה הבאה,</div>
+                <div
+                  className="text-[20px] font-bold"
+                  style={{ fontFamily: "'Noto Serif Hebrew', serif" }}
+                >
+                  {userName}
+                </div>
+              </div>
+              <MonogramBadge initials={userName[0] ?? "נ"} color="orange" size={38} />
             </div>
           </div>
 
@@ -209,21 +254,20 @@ export default function DashboardPage() {
           <div className="px-7 pb-7 text-[11px] opacity-25">© 2026 טק-קריירה</div>
         </aside>
 
-        {/* Main — שמאל (RTL: ילד שני = שמאל) */}
+        {/* Main (RTL: second child = left) */}
         <main className="flex-1 bg-cream overflow-y-auto">
           <div className="max-w-[680px] mx-auto py-10 px-8">
             <div className="rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(2,62,138,0.1)] mb-6">
-              <NavyHeader userName={MOCK_USER.name} currentStage={currentStage} />
+              <NavyHeader userName={userName} currentStage={currentStage} />
             </div>
             <div className="bg-card rounded-2xl px-8 py-6 shadow-[0_2px_8px_rgba(2,62,138,0.06)]">
-              <StageContent />
+              {renderStage()}
             </div>
             <DevSwitcher currentStage={currentStage} setCurrentStage={setCurrentStage} />
           </div>
         </main>
       </div>
 
-      {/* Bottom nav — fixed, נסתר על desktop */}
       <BottomNav />
     </>
   );

@@ -2,7 +2,7 @@ interface Props {
   currentStage: number; // 1-6
 }
 
-const STAGES = ["טרום אינטייק", "אינטייק", "חשיפה", "מסלול לימודים", "לוגיסטיקה", "רישום"];
+const LABELS = ["הרשמה", "אינטייק", "חשיפה", "מסלול", "מימון", "רישום"];
 
 export default function ProgressDots({ currentStage }: Props) {
   return (
@@ -48,9 +48,22 @@ export default function ProgressDots({ currentStage }: Props) {
           );
         })}
       </div>
-      {/* Caption */}
-      <div className="text-center mt-2 text-[11.5px] opacity-75">
-        שלב {currentStage} מתוך 6 · {STAGES[currentStage - 1]}
+
+      {/* Labels row */}
+      <div className="flex mt-[7px]">
+        {[1, 2, 3, 4, 5, 6].map((n) => {
+          const active = n === currentStage;
+          return (
+            <div key={n} style={{ flex: n < 6 ? 1 : "none" }} className="flex justify-start">
+              <span
+                className="text-[8px] font-bold leading-none"
+                style={{ color: "#fff", opacity: active ? 1 : 0.45 }}
+              >
+                {LABELS[n - 1]}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
