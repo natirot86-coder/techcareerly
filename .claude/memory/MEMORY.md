@@ -3,7 +3,9 @@
 ## מצב הפרויקט
 - שלב: **פיתוח פרונטאנד** (ללא בקאנד)
 - Next.js + Tailwind v4 + TypeScript הוקם ✓
-- GitHub: עוד לא הוקם
+- GitHub: https://github.com/natirot86-coder/techcareerly ✓
+- Vercel (production): https://hasifaapp.vercel.app ✓
+- Dashboard כל 6 שלבים מוכן ✓
 
 ## שם האפליקציה
 - **techcareerly** (זמני, יתעדכן)

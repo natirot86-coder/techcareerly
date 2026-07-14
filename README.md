@@ -13,6 +13,10 @@ Web App שמלווה משתתפי טק-קריירה (יוצאי אתיופיה) 
 
 ---
 
+## קישורים
+- **Production:** https://hasifaapp.vercel.app
+- **GitHub:** https://github.com/natirot86-coder/techcareerly
+
 ## התחלה מהירה
 
 ```bash
