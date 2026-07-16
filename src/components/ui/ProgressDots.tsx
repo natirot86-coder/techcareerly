@@ -2,7 +2,7 @@ interface Props {
   currentStage: number; // 1-6
 }
 
-const LABELS = ["הרשמה", "אינטייק", "חשיפה", "מסלול", "מימון", "רישום"];
+const LABELS = ["הרשמה", "פגישת פתיחה", "טעימות הייטק", "מסלולי לימוד", "צ׳קליסט", "הרשמה ללימוד"];
 
 export default function ProgressDots({ currentStage }: Props) {
   return (

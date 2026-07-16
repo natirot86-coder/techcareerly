@@ -14,9 +14,9 @@ export default function NavyHeader({ userName, currentStage }: Props) {
           <div className="text-[13px] opacity-70">ברוכה הבאה, {userName}</div>
           <div
             className="text-[20px] font-bold mt-1"
-            style={{ fontFamily: "'Noto Serif Hebrew', serif" }}
+            style={{ fontFamily: "'Heebo', sans-serif", fontWeight: 900 }}
           >
-            מפת הדרכים שלך
+            המסע שלי
           </div>
         </div>
         <MonogramBadge initials={userName[0] ?? "נ"} color="orange" size={40} />

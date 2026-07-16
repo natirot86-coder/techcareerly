@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "/dashboard", label: "מפה", icon: "⊞" },
+  { href: "/dashboard", label: "המסע", icon: "⊞" },
   { href: "/chat", label: "Co-pilot", icon: "◎" },
   { href: "/squad", label: "קהילה", icon: "◈" },
   { href: "/contact", label: "רכזת", icon: "◉" },

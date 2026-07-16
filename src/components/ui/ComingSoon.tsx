@@ -13,7 +13,7 @@ export default function ComingSoon({ title, subtitle, icon }: Props) {
       <div className="bg-navy text-white px-[22px] pt-[26px] pb-[26px]">
         <div
           className="text-[20px] font-bold"
-          style={{ fontFamily: "'Noto Serif Hebrew', serif" }}
+          style={{ fontFamily: "'Heebo', sans-serif", fontWeight: 900 }}
         >
           {title}
         </div>
@@ -32,7 +32,7 @@ export default function ComingSoon({ title, subtitle, icon }: Props) {
         {/* Title */}
         <div
           className="text-[28px] font-bold text-navy"
-          style={{ fontFamily: "'Noto Serif Hebrew', serif" }}
+          style={{ fontFamily: "'Heebo', sans-serif", fontWeight: 900 }}
         >
           בקרוב
         </div>

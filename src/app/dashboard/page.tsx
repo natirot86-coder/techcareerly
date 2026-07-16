@@ -80,7 +80,21 @@ function Stage2({ onConfirm }: { onConfirm: () => void }) {
 function Stage3() {
   return (
     <div className="flex flex-col gap-[10px]">
-      <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mb-1">המשימות שלך</div>
+      {/* CTA to explore page */}
+      <Link
+        href="/explore"
+        className="block rounded-xl p-4"
+        style={{ background: "rgba(251,133,0,0.07)", border: "1px solid rgba(251,133,0,0.22)" }}
+      >
+        <div className="text-[13.5px] font-bold text-navy mb-[3px]">טעימות הייטק — 6 תחומים</div>
+        <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>
+          נסה סימולציות קצרות וגלה מה מדליק אותך
+        </div>
+        <div className="text-[12px] font-bold mt-2" style={{ color: "#fb8500" }}>
+          כנס לחקור ←
+        </div>
+      </Link>
+      <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mt-1">ההתקדמות שלך</div>
       <TaskCard label="השלמת סימולציית קוד" status="done" progress={100} />
       <TaskCard label="השלמת סימולציית סייבר" status="pending" progress={60} />
       <TaskCard label="קריאה על תחום הדאטה" status="pending" progress={0} />
@@ -133,7 +147,7 @@ function Stage6() {
 
 // ─── Desktop sidebar tabs ─────────────────────────────────────────────────────
 const DESKTOP_TABS = [
-  { href: "/dashboard", label: "מפת הדרכים", icon: "⊞" },
+  { href: "/dashboard", label: "המסע שלי", icon: "⊞" },
   { href: "/chat", label: "AI Co-pilot", icon: "◎" },
   { href: "/squad", label: "קהילה", icon: "◈" },
   { href: "/contact", label: "רכזת", icon: "◉" },
@@ -143,7 +157,7 @@ const DESKTOP_TABS = [
 function DevSwitcher({ currentStage, setCurrentStage }: { currentStage: number; setCurrentStage: (s: number) => void }) {
   if (process.env.NODE_ENV !== "development") return null;
   return (
-    <div className="px-4 py-2 flex gap-1 flex-wrap justify-center">
+    <div className="px-4 py-2 flex gap-1 flex-wrap justify-center items-center">
       {[1, 2, 3, 4, 5, 6].map((s) => (
         <button
           key={s}
@@ -157,6 +171,13 @@ function DevSwitcher({ currentStage, setCurrentStage }: { currentStage: number; 
           {s}
         </button>
       ))}
+      <a
+        href="/onboarding?reset=1"
+        className="text-[10px] px-2 py-1 rounded border ml-2"
+        style={{ borderColor: "#fb8500", color: "#fb8500" }}
+      >
+        אונבורדינג ↺
+      </a>
     </div>
   );
 }
