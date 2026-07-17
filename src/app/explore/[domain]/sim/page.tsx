@@ -492,25 +492,24 @@ function SequenceInteraction({
   const [sequence, setSequence] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
-  const complete = sequence.length === step.items.length;
-  const correct =
-    complete && sequence.every((idx, pos) => idx === step.correctOrder[pos]);
-
   function tapItem(i: number) {
     if (submitted || sequence.includes(i)) return;
-    const next = [...sequence, i];
-    setSequence(next);
-    if (next.length === step.items.length) {
-      const isCorrect = next.every((idx, pos) => idx === step.correctOrder[pos]);
-      setSubmitted(true);
-      onAnswer(isCorrect);
-    }
+    setSequence((prev) => [...prev, i]);
+  }
+
+  function submit() {
+    if (submitted || sequence.length !== step.items.length) return;
+    const isCorrect = sequence.every((idx, pos) => idx === step.correctOrder[pos]);
+    setSubmitted(true);
+    onAnswer(isCorrect);
   }
 
   function reset() {
     setSequence([]);
     setSubmitted(false);
   }
+
+  const complete = sequence.length === step.items.length;
 
   return (
     <div>
@@ -556,15 +555,32 @@ function SequenceInteraction({
         })}
       </div>
 
-      {!submitted && sequence.length > 0 && (
-        <button
-          type="button"
-          onClick={reset}
-          className="text-[12px] font-bold"
-          style={{ color: "rgba(0,0,0,0.38)" }}
-        >
-          אפסי ← התחלי מחדש
-        </button>
+      {!submitted && (
+        <div className="flex items-center gap-3 mt-1">
+          {sequence.length > 0 && (
+            <button
+              type="button"
+              onClick={reset}
+              className="text-[12px] font-bold"
+              style={{ color: "rgba(0,0,0,0.38)" }}
+            >
+              אפסי
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!complete}
+            className="flex-1 py-[12px] rounded-xl text-[14px] font-bold transition-all"
+            style={{
+              background: complete ? "#023e8a" : "rgba(0,0,0,0.06)",
+              color: complete ? "#fff" : "rgba(0,0,0,0.3)",
+              fontFamily: "'Heebo', sans-serif",
+            }}
+          >
+            {complete ? "בדקי את הסדר ✓" : `בחרי עוד ${step.items.length - sequence.length}`}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -779,6 +795,7 @@ function SimFlow({ onComplete }: { onComplete: (score: number, answers: boolean[
   const [lastCorrect, setLastCorrect] = useState(false);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
+  const feedbackRef = React.useRef<HTMLDivElement>(null);
 
   const step = STEPS[stepIndex];
 
@@ -787,6 +804,9 @@ function SimFlow({ onComplete }: { onComplete: (score: number, answers: boolean[
     setAnswered(true);
     if (correct) setScore((s) => s + 1);
     setAnswers((prev) => [...prev, correct]);
+    setTimeout(() => {
+      feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
   }
 
   function handleNext() {
@@ -850,7 +870,7 @@ function SimFlow({ onComplete }: { onComplete: (score: number, answers: boolean[
 
       {/* Feedback */}
       {answered && (
-        <div className="px-[22px]">
+        <div ref={feedbackRef} className="px-[22px]">
           <div
             className="rounded-xl px-4 py-3 text-[12.5px] leading-[1.55] mb-3"
             style={{
