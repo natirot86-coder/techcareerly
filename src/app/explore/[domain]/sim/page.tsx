@@ -665,7 +665,7 @@ function ChoiceInteraction({
 // RESULT SCREEN — גרף צמיחה + קריירה
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ResultScreen({ score, answers }: { score: number; answers: boolean[] }) {
+function ResultScreen({ score, answers, nextDomain }: { score: number; answers: boolean[]; nextDomain: string | null }) {
   const pct = Math.round((score / STEPS.length) * 100);
   const great = score >= 5;
 
@@ -775,11 +775,11 @@ function ResultScreen({ score, answers }: { score: number; answers: boolean[] })
       </div>
 
       <Link
-        href="/explore"
+        href={nextDomain ? `/explore/${nextDomain}` : "/explore"}
         className="block w-full text-center py-[14px] rounded-xl text-white font-bold text-[15px] mb-4"
         style={{ background: "#fb8500", fontFamily: "'Heebo', sans-serif" }}
       >
-        המשך במסלול ←
+        {nextDomain ? `לתחום הבא ←` : "חזרה למסלול ←"}
       </Link>
     </div>
   );
@@ -912,11 +912,25 @@ function SimFlow({ onComplete }: { onComplete: (score: number, answers: boolean[
 // PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
+function getNextDomain(currentDomain: string): string | null {
+  try {
+    const saved = localStorage.getItem("explore-ranking");
+    if (!saved) return null;
+    const ranking: string[] = JSON.parse(saved);
+    const idx = ranking.indexOf(currentDomain);
+    if (idx === -1 || idx === ranking.length - 1) return null;
+    return ranking[idx + 1];
+  } catch {
+    return null;
+  }
+}
+
 export default function SimPage() {
   const { domain } = useParams();
   const [done, setDone] = useState(false);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
+  const [nextDomain, setNextDomain] = useState<string | null>(null);
 
   if (domain !== "code") {
     return (
@@ -949,12 +963,13 @@ export default function SimPage() {
 
         <div className="flex-1 overflow-y-auto">
           {done ? (
-            <ResultScreen score={score} answers={answers} />
+            <ResultScreen score={score} answers={answers} nextDomain={nextDomain} />
           ) : (
             <SimFlow
               onComplete={(s, a) => {
                 setScore(s);
                 setAnswers(a);
+                setNextDomain(getNextDomain(domain as string));
                 setDone(true);
               }}
             />
