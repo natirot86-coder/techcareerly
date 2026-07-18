@@ -862,9 +862,9 @@ function SimFlow({ onComplete }: { onComplete: (score: number, answers: boolean[
       {/* Interaction */}
       <div className="px-[22px] mb-4">
         {step.kind === "sequence" ? (
-          <SequenceInteraction step={step} onAnswer={handleAnswer} />
+          <SequenceInteraction key={stepIndex} step={step} onAnswer={handleAnswer} />
         ) : (
-          <ChoiceInteraction step={step} onAnswer={handleAnswer} />
+          <ChoiceInteraction key={stepIndex} step={step} onAnswer={handleAnswer} />
         )}
       </div>
 
