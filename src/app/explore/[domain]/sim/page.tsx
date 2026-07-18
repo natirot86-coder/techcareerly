@@ -209,14 +209,14 @@ const S3: ChoiceStep = {
             >
               {row.input}
             </div>
-            <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.28)" }}>→</div>
+            <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.28)" }}>←</div>
             <div
               className="rounded-xl px-3 py-2 text-[12px] font-bold text-center flex-1"
               style={{ background: "#3b82f6", color: "#fff" }}
             >
               create_greeting
             </div>
-            <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.28)" }}>→</div>
+            <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.28)" }}>←</div>
             <div
               className="rounded-xl px-3 py-2 text-[11.5px] font-bold font-mono shrink-0"
               style={{ background: "rgba(34,197,94,0.1)", border: "1.5px solid #22c55e", color: "#15803d" }}
