@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -92,12 +92,22 @@ export default function ExplorePage() {
   const [ranking, setRanking] = useState<string[]>([]);
   const [phase, setPhase] = useState<Phase>("rank");
 
-  function toggleRank(id: string) {
-    if (ranking.includes(id)) {
-      setRanking(ranking.filter((r) => r !== id));
-    } else {
-      setRanking([...ranking, id]);
+  // Restore ranking from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("explore-ranking");
+    if (saved) {
+      const parsed: string[] = JSON.parse(saved);
+      setRanking(parsed);
+      if (parsed.length === DOMAINS.length) setPhase("path");
     }
+  }, []);
+
+  function toggleRank(id: string) {
+    const next = ranking.includes(id)
+      ? ranking.filter((r) => r !== id)
+      : [...ranking, id];
+    setRanking(next);
+    localStorage.setItem("explore-ranking", JSON.stringify(next));
   }
 
   function getRank(id: string): number | null {
@@ -119,7 +129,7 @@ export default function ExplorePage() {
           <div className="bg-navy text-white px-[22px] pt-[26px] pb-[30px] shrink-0">
             <button
               type="button"
-              onClick={() => setPhase("rank")}
+              onClick={() => { setPhase("rank"); localStorage.removeItem("explore-ranking"); setRanking([]); }}
               className="text-[12px] font-bold block mb-5"
               style={{ opacity: 0.6 }}
             >
@@ -279,7 +289,7 @@ export default function ExplorePage() {
         >
           <button
             type="button"
-            onClick={() => setPhase("path")}
+            onClick={() => { setPhase("path"); localStorage.setItem("explore-ranking", JSON.stringify(ranking)); }}
             disabled={!allRanked}
             className="w-full max-w-[358px] py-[14px] rounded-xl text-white font-bold text-[15px] transition-all"
             style={{
