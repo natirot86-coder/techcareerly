@@ -128,25 +128,37 @@ function nodeRect(n: Node) {
   return { left: n.cx - n.w / 2, top: n.cy - h / 2, w: n.w, h };
 }
 
-// SVG path between two nodes (bottom-center of from → top-center of to)
+// SVG path between two nodes — straight lines, smart entry/exit points
 function edgePath(from: Node, to: Node): string {
   const fh = from.h ?? NH;
   const th = to.h ?? NH;
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
 
+  // Horizontal connections: same row OR side-panel (large dx, small dy)
+  const isHorizontal = Math.abs(dy) <= 30 || (Math.abs(dx) > 150 && Math.abs(dy) < 100);
+  if (isHorizontal) {
+    const x1 = dx > 0 ? from.cx + from.w / 2 + 2 : from.cx - from.w / 2 - 2;
+    const x2 = dx > 0 ? to.cx - to.w / 2 - 2 : to.cx + to.w / 2 + 2;
+    return `M ${x1} ${from.cy} L ${x2} ${to.cy}`;
+  }
+
+  // Back-edge (going upward) — curve around left side
+  if (dy < 0) {
+    const x1 = from.cx - from.w / 2 - 2;
+    const y1 = from.cy;
+    const x2 = to.cx - to.w / 2 - 2;
+    const y2 = to.cy + th / 2;
+    const midX = Math.min(x1, x2) - 40;
+    return `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+  }
+
+  // Forward vertical/diagonal: bottom-center → top-center, straight line
   const x1 = from.cx;
   const y1 = from.cy + fh / 2 + 2;
   const x2 = to.cx;
   const y2 = to.cy - th / 2 - 2;
-
-  // Straight vertical
-  if (Math.abs(x1 - x2) < 10) {
-    return `M ${x1} ${y1} L ${x2} ${y2}`;
-  }
-
-  // Cubic bezier for curved connections
-  const cy1 = y1 + Math.abs(y2 - y1) * 0.45;
-  const cy2 = y2 - Math.abs(y2 - y1) * 0.45;
-  return `M ${x1} ${y1} C ${x1} ${cy1}, ${x2} ${cy2}, ${x2} ${y2}`;
+  return `M ${x1} ${y1} L ${x2} ${y2}`;
 }
 
 // ─── Node Component ───────────────────────────────────────────────────────────
