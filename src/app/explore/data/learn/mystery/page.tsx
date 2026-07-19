@@ -359,7 +359,7 @@ export default function MysteryPage() {
   // ── Intro ──────────────────────────────────────────────────────────────────
   if (phase === "intro") {
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: "#0a0f1e" }}>
+      <div dir="rtl" className="min-h-screen flex flex-col" style={{ background: "#0a0f1e" }}>
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 max-w-[680px] mx-auto w-full">
           <div className="text-[11px] font-bold tracking-widest mb-8" style={{ color: "rgba(13,148,136,0.7)" }}>
             TECHFLOW · TLV · 23:52
@@ -410,7 +410,7 @@ export default function MysteryPage() {
   if (phase === "reveal") {
     const correct = accusation === CULPRIT_ID;
     return (
-      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+      <div dir="rtl" className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         <div className="bg-navy text-white px-[22px] md:px-12 pt-[26px] pb-[26px] shrink-0">
           <div className="max-w-[680px] mx-auto">
             <div className="text-[20px] font-bold" style={HEEBO}>
@@ -507,7 +507,7 @@ export default function MysteryPage() {
 
   // ── Investigate ────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+    <div dir="rtl" className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
       {/* Header */}
       <div className="px-[22px] md:px-12 pt-[20px] pb-[16px] shrink-0" style={{ background: "#0a0f1e" }}>
         <div className="max-w-[900px] mx-auto">
