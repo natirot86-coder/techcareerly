@@ -19,10 +19,16 @@ create table if not exists candidates (
   blockers text[] not null default '{}',
   current_stage int not null default 1 check (current_stage between 1 and 6),
   status text not null default 'active' check (status in ('active', 'at_risk', 'manual_intervention')),
+  chosen_domain text,
+  domain_selected_at timestamptz,
   onboarding_completed_at timestamptz,
   last_active_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
+
+-- אם הטבלה כבר קיימת מריצה קודמת של הקובץ — מוסיף את העמודות בבטחה
+alter table candidates add column if not exists chosen_domain text;
+alter table candidates add column if not exists domain_selected_at timestamptz;
 
 -- ─── tasks ──────────────────────────────────────────────────────────────────
 -- צ'קליסט המשימות בכל שלב (מוצג כ-TaskCard בדשבורד)
