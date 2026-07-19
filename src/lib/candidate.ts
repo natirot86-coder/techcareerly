@@ -11,6 +11,8 @@ export type Candidate = {
   blockers: string[];
   current_stage: number;
   status: "active" | "at_risk" | "manual_intervention";
+  chosen_domain: string | null;
+  domain_selected_at: string | null;
   onboarding_completed_at: string | null;
   last_active_at: string;
   created_at: string;
@@ -134,6 +136,29 @@ export async function saveDomainRankings(domainIds: string[]): Promise<void> {
   );
 
   if (error) console.error("saveDomainRankings failed", error);
+}
+
+/**
+ * שומר את התחום שנבחר דרך POST /api/domain-choice.
+ * שולח את ה-access token של הסשן הנוכחי כדי שהשרת יזהה את המשתמש ויעדכן ב-Supabase.
+ */
+export async function saveChosenDomain(domainId: string): Promise<string | null> {
+  if (!supabase) return "Supabase לא מוגדר — חסרים משתני סביבה";
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) return "אין סשן פעיל";
+
+  const response = await fetch("/api/domain-choice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ domainId, accessToken: session.access_token }),
+  });
+
+  if (!response.ok) {
+    const { error } = await response.json().catch(() => ({ error: "שגיאה בשמירת התחום" }));
+    return error ?? "שגיאה בשמירת התחום";
+  }
+  return null;
 }
 
 /**
