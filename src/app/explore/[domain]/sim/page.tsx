@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
+import { saveSimulationProgress, updateTask } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -2560,6 +2561,10 @@ export default function SimPage() {
               setAnswers(a);
               setNextDomain(getNextDomain(domainStr));
               setDone(true);
+              // Save to Supabase
+              const totalSteps = getSteps(domainStr).length;
+              saveSimulationProgress(domainStr, totalSteps, true, s);
+              updateTask(`sim-${domainStr}`, "done", 100);
             }}
           />
         )}
