@@ -485,31 +485,96 @@ export default function MysteryPage() {
             </div>
           </div>
 
-          {/* DB Access */}
+          {/* ERD */}
           <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <div className="text-[10px] font-bold tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>AVAILABLE DATABASES</div>
-            <div className="grid grid-cols-2 gap-3">
-              {SCHEMA.map(s => (
-                <div key={s.table} className="rounded-xl p-3" style={{ background: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.15)" }}>
-                  <div className="text-[11px] font-bold font-mono mb-1" style={{ color: "#0d9488" }}>{s.table}</div>
-                  <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>{s.cols.join(", ")}</div>
+            <div className="text-[10px] font-bold tracking-widest mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>DATABASE SCHEMA · איך הטבלאות מחוברות</div>
+
+            {/* employees — center table */}
+            <div className="flex flex-col items-center gap-0 mb-1">
+              <div className="rounded-xl px-4 py-3 w-full" style={{ background: "rgba(13,148,136,0.15)", border: "1.5px solid rgba(13,148,136,0.4)" }}>
+                <div className="text-[11px] font-bold font-mono text-center mb-1" style={{ color: "#0d9488" }}>employees</div>
+                <div className="text-[9.5px] text-center" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <span style={{ color: "rgba(255,200,100,0.9)" }}>id</span> · name · department · access_level · start_date · last_login
+                </div>
+              </div>
+
+              {/* Connector line + label */}
+              <div className="flex items-center gap-4 py-2 w-full justify-center">
+                <div className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>employees.id = *.employee_id</div>
+              </div>
+
+              {/* 3 child tables in a row */}
+              <div className="grid grid-cols-3 gap-2 w-full">
+                {[
+                  { name: "access_logs", cols: "employee_id · table_name · action · timestamp", c: "#fb8500" },
+                  { name: "file_transfers", cols: "employee_id · file_size_mb · destination · timestamp", c: "#fb8500" },
+                  { name: "meetings", cols: "employee_id · meeting_type · company · date", c: "#fb8500" },
+                ].map(t => (
+                  <div key={t.name} className="rounded-xl p-3 relative" style={{ background: "rgba(251,133,0,0.08)", border: `1px solid rgba(251,133,0,0.25)` }}>
+                    {/* connector dot */}
+                    <div className="absolute -top-[9px] left-1/2 -translate-x-1/2 text-[14px]" style={{ color: "rgba(255,255,255,0.2)" }}>↓</div>
+                    <div className="text-[10px] font-bold font-mono mb-1" style={{ color: t.c }}>{t.name}</div>
+                    <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                      <span style={{ color: "rgba(255,200,100,0.7)" }}>employee_id</span>{t.cols.replace("employee_id", "").replace("·", "").trimStart() ? " · " + t.cols.replace("employee_id · ", "") : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-[10px] mt-3" style={{ color: "rgba(255,255,255,0.25)" }}>
+              * הקשר: employee_id בכל טבלה = id בטבלת employees. JOIN ישתמש בזה.
+            </div>
+          </div>
+
+          {/* SQL Reference */}
+          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="text-[10px] font-bold tracking-widest mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>SQL QUICK REFERENCE · פקודות שתשתמשי בהן</div>
+            <div className="flex flex-col gap-3">
+              {[
+                {
+                  cmd: "SELECT * FROM employees",
+                  desc: "שלפי את כל השורות מהטבלה. * = כל העמודות.",
+                },
+                {
+                  cmd: "SELECT name, department FROM employees",
+                  desc: "שלפי עמודות ספציפיות בלבד (שם ומחלקה).",
+                },
+                {
+                  cmd: "SELECT * FROM access_logs WHERE action = 'export'",
+                  desc: "WHERE מסנן שורות לפי תנאי. כאן: רק שורות שבהן action הוא export.",
+                },
+                {
+                  cmd: "SELECT * FROM access_logs WHERE action = 'export' AND employee_id = 5",
+                  desc: "AND מוסיף תנאי נוסף — שני התנאים חייבים להתקיים.",
+                },
+                {
+                  cmd: "SELECT * FROM file_transfers ORDER BY file_size_mb DESC",
+                  desc: "ORDER BY ממיין תוצאות. DESC = מהגדול לקטן.",
+                },
+                {
+                  cmd: "SELECT e.name, a.action FROM employees e JOIN access_logs a ON e.id = a.employee_id",
+                  desc: "JOIN מחבר שתי טבלאות. e ו-a הם כינויים (aliases). ON מגדיר את הקשר.",
+                },
+              ].map(({ cmd, desc }) => (
+                <div key={cmd} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div className="px-3 py-2 font-mono text-[10.5px]" style={{ background: "rgba(0,0,0,0.35)", color: "#0d9488", direction: "ltr", textAlign: "left" }}>
+                    {cmd}
+                  </div>
+                  <div className="px-3 py-2 text-[11.5px]" style={{ color: "rgba(255,255,255,0.55)" }}>
+                    {desc}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* How to start */}
-          <div className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <div className="text-[10px] font-bold tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>HOW TO INVESTIGATE</div>
-            <div className="text-[12.5px] leading-relaxed mb-3" style={{ color: "rgba(255,255,255,0.55)" }}>
-              כתבי שאילתות SQL על מסדי הנתונים. אפשר להשתמש ב-WHERE, JOIN, ORDER BY, LIMIT.
-              כדאי להתחיל מלמפות את כל העובדים:
-            </div>
-            <div className="rounded-xl px-4 py-3 font-mono text-[12px]" style={{ background: "rgba(0,0,0,0.4)", color: "#0d9488" }}>
-              SELECT * FROM employees
-            </div>
-            <div className="text-[11.5px] mt-3" style={{ color: "rgba(255,255,255,0.35)" }}>
-              כשתמצאי מספיק ראיות — תוכלי להאשים. מדריך חקירה יופיע לצד העורך.
+          <div className="rounded-2xl p-4" style={{ background: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.2)" }}>
+            <div className="text-[12px] leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
+              💡 <strong style={{ color: "rgba(255,255,255,0.85)" }}>איפה להתחיל?</strong> השאילתה הראשונה הגיונית היא:
+              <span className="font-mono text-[11px] mx-2 px-2 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.3)", color: "#0d9488" }}>SELECT * FROM employees</span>
+              — כדי לדעת מי בכלל יש לנו. מדריך חקירה יופיע לצד העורך.
             </div>
           </div>
 
