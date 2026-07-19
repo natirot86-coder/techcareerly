@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { saveOnboarding } from "@/lib/candidate";
 
@@ -379,6 +380,10 @@ function Step0({ onNext }: { onNext: () => void }) {
         </div>
 
         <Button variant="orange" onClick={onNext}>יאללה, מתחילים</Button>
+
+        <Link href="/login" className="text-center text-[13px] font-bold" style={{ color: "#023e8a", opacity: 0.6 }}>
+          כבר יש לך חשבון? כניסה עם טלפון
+        </Link>
       </div>
     </div>
   );
@@ -732,6 +737,13 @@ export default function OnboardingPage() {
                 כל שלב בקצב שלך, עם רכזת לאורך כל הדרך
               </div>
               <Button variant="orange" onClick={() => setStep(1)}>יאללה, מתחילים</Button>
+              <Link
+                href="/login"
+                className="block text-center text-[13px] font-bold mt-4"
+                style={{ color: "#023e8a", opacity: 0.6 }}
+              >
+                כבר יש לך חשבון? כניסה עם טלפון
+              </Link>
             </div>
           </div>
         </div>

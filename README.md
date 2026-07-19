@@ -107,7 +107,8 @@ design_handoff_tech_career_2026/
 - [x] **Supabase project** — נוצר, `.env.local` מוגדר
 - [x] **הרצת schema** — `supabase/schema.sql` רץ בהצלחה (6 טבלאות + RLS), נבדק end-to-end
 - [x] **Anonymous Auth** — מופעל (Authentication → Sign In / Providers)
-- [ ] **Phone Auth** — קוד ה-Login מוכן (`/login`, `src/lib/candidate.ts: sendPhoneOtp/verifyPhoneOtp`). נשאר בדשבורד: Authentication → Providers → Phone → Enable + בחירת SMS provider (Twilio) + הוספת מספר הבדיקה שלך תחת Test OTP for phone numbers
+- [ ] **Phone Auth** — קוד ה-Login מוכן (`/login`, `src/lib/candidate.ts: sendPhoneOtp/verifyPhoneOtp`). עדיין תקוע: קריאה ל-API מחזירה `phone_provider_disabled` — הטוגל "Enable phone provider" ב-Authentication → Sign In/Providers → Phone לא נשמר בפועל. בינתיים יש bypass זמני בקוד למספר בדיקה קבוע (`545603636` / קוד `12345`) שלא תלוי ב-Supabase
+- [x] **קישור `/login` לניווט** — הוחלט: רק ל"משתמש חוזר" (לא ב-flow הראשי, כי Anonymous Auth כבר נותן זהות שקופה). מקושר מ-Onboarding Step0 ("כבר יש לך חשבון?") ומ-Dashboard (באנר "אבטח את החשבון שלך" למשתמשי Anonymous)
 - [ ] **Webhooks** → Make.com (Nudge Logic לפי `docs/architecture.md`) — טבלאות `nudges` + `chat_messages` מוכנות, אין עדיין חיבור בפועל ל-Make.com/Monday.com
 - [ ] **task-level sync** — Stage1-6 בדשבורד עדיין עם TaskCard סטטיים (הרדקודד); טבלת `tasks` מוכנה בסכימה אבל אף קומפוננטה לא קוראת/כותבת אליה
 - [ ] **simulation_progress** — טבלה מוכנה בסכימה, אבל דפי הסימולציה (Data/Marketing/AI/Cyber/UX) לא כותבים אליה — כרגע ה-state שלהן רק בזיכרון, נעלם ב-refresh

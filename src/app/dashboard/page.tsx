@@ -8,7 +8,7 @@ import TaskCard from "@/components/ui/TaskCard";
 import BottomNav from "@/components/ui/BottomNav";
 import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
-import { getCandidate, updateCurrentStage } from "@/lib/candidate";
+import { getCandidate, updateCurrentStage, isAnonymousSession } from "@/lib/candidate";
 
 const FALLBACK_USER = "נועה";
 
@@ -146,6 +146,22 @@ function Stage6() {
   );
 }
 
+// ─── Secure account banner (משתמש Anonymous) ──────────────────────────────────
+function SecureAccountBanner() {
+  return (
+    <Link
+      href="/login"
+      className="block rounded-xl p-3 mb-3"
+      style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
+    >
+      <div className="text-[12.5px] font-bold text-navy">אבטח את החשבון שלך עם מספר טלפון ←</div>
+      <div className="text-[11.5px] mt-[2px]" style={{ color: "rgba(0,0,0,0.5)" }}>
+        כדי לא לאבד את ההתקדמות שלך אם תחליף מכשיר או תנקה את הדפדפן
+      </div>
+    </Link>
+  );
+}
+
 // ─── Desktop sidebar tabs ─────────────────────────────────────────────────────
 const DESKTOP_TABS = [
   { href: "/dashboard", label: "המסע שלי", icon: "⊞" },
@@ -188,6 +204,7 @@ export default function DashboardPage() {
   const [currentStage, setCurrentStage] = useState(1);
   const [userName, setUserName] = useState(FALLBACK_USER);
   const [showToast, setShowToast] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const pathname = usePathname();
 
   // קרא שם מ-localStorage (מ-Onboarding) — ציור מיידי לפני שה-DB עונה
@@ -205,6 +222,7 @@ export default function DashboardPage() {
       if (candidate.first_name) setUserName(candidate.first_name);
       setCurrentStage(candidate.current_stage);
     });
+    isAnonymousSession().then(setIsAnonymous);
   }, []);
 
   function handleSetCurrentStage(stage: number) {
@@ -237,6 +255,7 @@ export default function DashboardPage() {
       <div className="md:hidden w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
         <NavyHeader userName={userName} currentStage={currentStage} />
         <div className="flex-1 px-[22px] py-6 pb-[84px]">
+          {isAnonymous && <SecureAccountBanner />}
           {renderStage()}
         </div>
         <DevSwitcher currentStage={currentStage} setCurrentStage={handleSetCurrentStage} />
@@ -297,6 +316,7 @@ export default function DashboardPage() {
               <NavyHeader userName={userName} currentStage={currentStage} />
             </div>
             <div className="bg-card rounded-2xl px-8 py-6 shadow-[0_2px_8px_rgba(2,62,138,0.06)]">
+              {isAnonymous && <SecureAccountBanner />}
               {renderStage()}
             </div>
             <DevSwitcher currentStage={currentStage} setCurrentStage={handleSetCurrentStage} />

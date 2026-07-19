@@ -166,4 +166,10 @@ export async function verifyPhoneOtp(phone: string, token: string): Promise<stri
   return error?.message ?? null;
 }
 
+export async function isAnonymousSession(): Promise<boolean> {
+  if (!supabase) return false;
+  const { data: { session } } = await supabase.auth.getSession();
+  return Boolean(session?.user?.is_anonymous);
+}
+
 export const supabaseReady = supabaseEnabled;
