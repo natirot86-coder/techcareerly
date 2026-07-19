@@ -472,6 +472,19 @@ function DataContent() {
         challenge="בסימולציה: קיבלת CSV עם 10,000 שורות. המשימה — לזהות את הסגמנט הרווחי ביותר ולהציג המלצה להנהלה תוך 5 דקות."
       />
 
+      <Link href="/explore/data/learn" className="block mb-7">
+        <div
+          className="rounded-2xl p-4 flex items-center justify-between"
+          style={{ background: "rgba(13,148,136,0.07)", border: "1.5px solid rgba(13,148,136,0.22)" }}
+        >
+          <div>
+            <div className="text-[14.5px] font-black" style={{ color: "#0d9488", ...HEEBO }}>מרכז למידה — דאטה</div>
+            <div className="text-[12px] mt-1" style={{ color: "rgba(0,0,0,0.48)" }}>7 חוויות שונות · חקירות, חיזויים, החלטות עסקיות</div>
+          </div>
+          <div className="text-[20px] font-bold shrink-0" style={{ color: "#0d9488" }}>←</div>
+        </div>
+      </Link>
+
       <SalaryCard min={12000} max={25000} />
     </>
   );
@@ -590,8 +603,8 @@ export default function DomainPage() {
 
   if (!meta || !ContentComponent) {
     return (
-      <div className="flex justify-center min-h-screen" style={{ background: "#f2ede6" }}>
-        <div className="w-full max-w-[390px] min-h-screen bg-card flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#fbf9f5" }}>
+        <div className="flex flex-col items-center gap-4">
           <div className="text-[16px] text-navy">תחום לא נמצא</div>
           <Link href="/explore" className="text-[14px] font-bold text-navy">← חזרה</Link>
         </div>
@@ -600,45 +613,48 @@ export default function DomainPage() {
   }
 
   return (
-    <div className="flex justify-center min-h-screen" style={{ background: "#f2ede6" }}>
-      <div className="w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
-
-        {/* Domain-colored header */}
-        <div className="text-white px-[22px] pt-[26px] pb-[30px] shrink-0" style={{ background: meta.color }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+      {/* Domain-colored header */}
+      <div className="text-white px-[22px] md:px-12 pt-[26px] pb-[30px] shrink-0" style={{ background: meta.color }}>
+        <div className="max-w-[900px] mx-auto">
           <Link href="/explore" className="text-[12px] font-bold block mb-5" style={{ opacity: 0.82 }}>
             ← חזרה למסלול
           </Link>
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-[18px] mb-4"
-            style={{ background: "rgba(255,255,255,0.2)", fontFamily: "'Heebo', sans-serif", color: "#fff" }}
-          >
-            {meta.badge}
+          <div className="md:flex md:items-center md:gap-6">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-[18px] mb-4 md:mb-0 shrink-0"
+              style={{ background: "rgba(255,255,255,0.2)", fontFamily: "'Heebo', sans-serif", color: "#fff" }}
+            >
+              {meta.badge}
+            </div>
+            <div>
+              <div className="text-[28px] md:text-[36px] leading-tight" style={HEEBO}>{meta.label}</div>
+              <div className="text-[13px] md:text-[15px] mt-[6px]" style={{ opacity: 0.88 }}>{meta.tagline}</div>
+            </div>
           </div>
-          <div className="text-[28px] leading-tight" style={HEEBO}>{meta.label}</div>
-          <div className="text-[13px] mt-[6px]" style={{ opacity: 0.88 }}>{meta.tagline}</div>
         </div>
-
-        {/* Unique content per domain */}
-        <div className="flex-1 px-[22px] pt-6 pb-36 overflow-y-auto">
-          <ContentComponent />
-        </div>
-
-        {/* Sticky CTA */}
-        <div
-          className="fixed bottom-[60px] inset-x-0 flex justify-center px-4 pb-3 pt-3"
-          style={{ background: "linear-gradient(to top, #fbf9f5 80%, transparent)" }}
-        >
-          <Link
-            href={`/explore/${domain}/sim`}
-            className="block w-full max-w-[358px] text-center py-[14px] rounded-xl text-white font-bold text-[15px]"
-            style={{ background: "#fb8500", fontFamily: "'Heebo', sans-serif" }}
-          >
-            קדימה לסימולציה ←
-          </Link>
-        </div>
-
-        <BottomNav />
       </div>
+
+      {/* Content */}
+      <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] md:px-6 pt-6 pb-28">
+        <ContentComponent />
+      </div>
+
+      {/* Sticky CTA */}
+      <div
+        className="fixed bottom-0 inset-x-0 flex justify-center px-4 pb-[72px] md:pb-4 pt-3"
+        style={{ background: "linear-gradient(to top, #fbf9f5 80%, transparent)" }}
+      >
+        <Link
+          href={`/explore/${domain}/sim`}
+          className="block w-full max-w-[500px] text-center py-[14px] rounded-xl text-white font-bold text-[15px]"
+          style={{ background: "#fb8500", fontFamily: "'Heebo', sans-serif" }}
+        >
+          קדימה לסימולציה ←
+        </Link>
+      </div>
+
+      <BottomNav />
     </div>
   );
 }

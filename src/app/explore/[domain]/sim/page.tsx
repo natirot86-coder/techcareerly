@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
+import { saveSimulationProgress, updateTask } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -2521,10 +2522,10 @@ export default function SimPage() {
 
   if (!IMPLEMENTED_DOMAINS.has(domainStr)) {
     return (
-      <div className="flex justify-center min-h-screen" style={{ background: "#f2ede6" }}>
-        <div className="w-full max-w-[390px] min-h-screen bg-card flex flex-col items-center justify-center gap-4 px-8">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#fbf9f5" }}>
+        <div className="flex flex-col items-center gap-4 px-8 text-center">
           <div className="text-[40px]">🚧</div>
-          <div className="text-[16px] font-bold text-navy text-center" style={HEEBO}>הסימולציה בפיתוח</div>
+          <div className="text-[16px] font-bold text-navy" style={HEEBO}>הסימולציה בפיתוח</div>
           <Link href={`/explore/${domainStr}`} className="text-[13px] font-bold" style={{ color: "#023e8a" }}>
             ← חזרה לתחום
           </Link>
@@ -2534,38 +2535,42 @@ export default function SimPage() {
   }
 
   return (
-    <div className="flex justify-center min-h-screen" style={{ background: "#f2ede6" }}>
-      <div className="w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
-        <div className="bg-navy text-white px-[22px] pt-[26px] pb-[30px] shrink-0">
+    <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+      <div className="bg-navy text-white px-[22px] md:px-12 pt-[26px] pb-[30px] shrink-0">
+        <div className="max-w-[720px] mx-auto">
           <Link href={`/explore/${domainStr}`} className="text-[12px] font-bold block mb-5" style={{ opacity: 0.6 }}>
             ← חזרה לתחום
           </Link>
-          <div className="text-[28px] leading-tight" style={HEEBO}>
+          <div className="text-[28px] md:text-[32px] leading-tight" style={HEEBO}>
             {done ? "סיימת!" : meta.simTitle}
           </div>
           <div className="text-[13px] mt-[6px]" style={{ opacity: 0.72 }}>
             {done ? "הנה מה שבנית היום" : `${steps.length} שלבים · מהמושג הראשון עד הכלים האמיתיים`}
           </div>
         </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {done ? (
-            <ResultScreen score={score} answers={answers} nextDomain={nextDomain} domain={domainStr} />
-          ) : (
-            <SimFlow
-              domain={domainStr}
-              onComplete={(s, a) => {
-                setScore(s);
-                setAnswers(a);
-                setNextDomain(getNextDomain(domainStr));
-                setDone(true);
-              }}
-            />
-          )}
-        </div>
-
-        <BottomNav />
       </div>
+
+      <div className="flex-1 max-w-[720px] mx-auto w-full">
+        {done ? (
+          <ResultScreen score={score} answers={answers} nextDomain={nextDomain} domain={domainStr} />
+        ) : (
+          <SimFlow
+            domain={domainStr}
+            onComplete={(s, a) => {
+              setScore(s);
+              setAnswers(a);
+              setNextDomain(getNextDomain(domainStr));
+              setDone(true);
+              // Save to Supabase
+              const totalSteps = getSteps(domainStr).length;
+              saveSimulationProgress(domainStr, totalSteps, true, s);
+              updateTask(`sim-${domainStr}`, "done", 100);
+            }}
+          />
+        )}
+      </div>
+
+      <BottomNav />
     </div>
   );
 }

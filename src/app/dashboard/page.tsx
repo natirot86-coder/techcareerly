@@ -8,9 +8,55 @@ import TaskCard from "@/components/ui/TaskCard";
 import BottomNav from "@/components/ui/BottomNav";
 import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
-import { getCandidate, updateCurrentStage, isAnonymousSession } from "@/lib/candidate";
+import {
+  getCandidate, updateCurrentStage, isAnonymousSession,
+  getTasks, updateTask, getSimulationProgress,
+  type Task, type Candidate,
+} from "@/lib/candidate";
 
 const FALLBACK_USER = "נועה";
+
+// ─── Progress Summary ─────────────────────────────────────────────────────────
+function ProgressSummary({ candidate, simCount, currentStage }: {
+  candidate: Candidate; simCount: number; currentStage: number;
+}) {
+  const daysSince = candidate.created_at
+    ? Math.max(0, Math.floor((Date.now() - new Date(candidate.created_at).getTime()) / 86400000))
+    : 0;
+  const pct = Math.round(((currentStage - 1) / 5) * 100);
+
+  return (
+    <div className="rounded-xl p-4 mb-4"
+      style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.1)" }}>
+      <div className="text-[12px] font-bold mb-3" style={{ color: "rgba(0,0,0,0.45)" }}>מה השלמת עד כה</div>
+      <div className="flex flex-col gap-[6px] mb-3">
+        {[
+          { done: daysSince >= 0, label: `הצטרפת לפני ${daysSince === 0 ? "היום" : `${daysSince} ימים`}` },
+          { done: !!candidate.onboarding_completed_at, label: "שאלון אישי הושלם" },
+          { done: simCount > 0, label: `${simCount} מתוך 6 סימולציות הושלמו` },
+          { done: currentStage >= 2, label: "אושרת על ידי הרכזת" },
+        ].map((item, i) => (
+          <div key={i} className="flex items-center gap-2 text-[12.5px]">
+            <span style={{ color: item.done ? "#6fbf8a" : "rgba(0,0,0,0.25)", fontSize: 14 }}>
+              {item.done ? "✓" : "○"}
+            </span>
+            <span style={{ color: item.done ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.38)" }}>
+              {item.label}
+            </span>
+          </div>
+        ))}
+      </div>
+      {/* Progress bar */}
+      <div className="h-[5px] rounded-full" style={{ background: "rgba(0,0,0,0.08)" }}>
+        <div className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: "#fb8500" }} />
+      </div>
+      <div className="text-[10.5px] mt-1.5" style={{ color: "rgba(0,0,0,0.4)" }}>
+        שלב {currentStage} מתוך 6 · {pct}% הושלם
+      </div>
+    </div>
+  );
+}
 
 // ─── Stage 1 ──────────────────────────────────────────────────────────────────
 function Stage1() {
@@ -50,11 +96,12 @@ function Stage1() {
 }
 
 // ─── Stage 2 ──────────────────────────────────────────────────────────────────
-function Stage2({ onConfirm }: { onConfirm: () => void }) {
-  const [confirmed, setConfirmed] = useState(false);
+function Stage2({ onConfirm, tasks }: { onConfirm: () => void; tasks: Task[] }) {
+  const meetingTask = tasks.find(t => t.task_key === "intake-meeting");
+  const confirmed = meetingTask?.status === "done";
 
   function handleConfirm() {
-    setConfirmed(true);
+    updateTask("intake-meeting", "done", 100);
     onConfirm();
   }
 
@@ -71,17 +118,39 @@ function Stage2({ onConfirm }: { onConfirm: () => void }) {
         </div>
       </div>
       <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mt-2">המשימות שלך</div>
-      <TaskCard label="הגעה למפגש הפתיחה" status="pending" />
-      <TaskCard label="חתימה על מפת הדרכים האישית" status="pending" />
+      {tasks.length > 0 ? (
+        tasks.map(t => <TaskCard key={t.task_key} label={t.label} status={t.status} progress={t.progress} />)
+      ) : (
+        <>
+          <TaskCard label="הגעה למפגש הפתיחה" status="pending" />
+          <TaskCard label="חתימה על מפת הדרכים האישית" status="pending" />
+        </>
+      )}
     </div>
   );
 }
 
 // ─── Stage 3 ──────────────────────────────────────────────────────────────────
-function Stage3() {
+const SIM_DOMAINS = [
+  { key: "sim-code",      domain: "code",      label: "קוד" },
+  { key: "sim-data",      domain: "data",      label: "דאטה" },
+  { key: "sim-cyber",     domain: "cyber",     label: "סייבר" },
+  { key: "sim-ai",        domain: "ai",        label: "AI" },
+  { key: "sim-ux",        domain: "ux",        label: "UX" },
+  { key: "sim-marketing", domain: "marketing", label: "מרקטינג" },
+];
+
+function Stage3({ tasks, simDone }: { tasks: Task[]; simDone: Record<string, boolean> }) {
+  function statusFor(taskKey: string, domain: string): Task["status"] {
+    const t = tasks.find(x => x.task_key === taskKey);
+    if (t) return t.status;
+    return simDone[domain] ? "done" : "pending";
+  }
+
+  const completed = SIM_DOMAINS.filter(s => statusFor(s.key, s.domain) === "done").length;
+
   return (
     <div className="flex flex-col gap-[10px]">
-      {/* CTA to explore page */}
       <Link
         href="/explore"
         className="block rounded-xl p-4"
@@ -89,16 +158,21 @@ function Stage3() {
       >
         <div className="text-[13.5px] font-bold text-navy mb-[3px]">טעימות הייטק — 6 תחומים</div>
         <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>
-          נסה סימולציות קצרות וגלה מה מדליק אותך
+          {completed > 0 ? `השלמת ${completed} מתוך 6 סימולציות` : "נסה סימולציות קצרות וגלה מה מדליק אותך"}
         </div>
         <div className="text-[12px] font-bold mt-2" style={{ color: "#fb8500" }}>
-          כנס לחקור ←
+          {completed < 6 ? "כנס לחקור ←" : "ראה תוצאות ←"}
         </div>
       </Link>
       <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mt-1">ההתקדמות שלך</div>
-      <TaskCard label="השלמת סימולציית קוד" status="done" progress={100} />
-      <TaskCard label="השלמת סימולציית סייבר" status="pending" progress={60} />
-      <TaskCard label="קריאה על תחום הדאטה" status="pending" progress={0} />
+      {SIM_DOMAINS.map(s => (
+        <TaskCard
+          key={s.key}
+          label={`השלמת סימולציית ${s.label}`}
+          status={statusFor(s.key, s.domain)}
+          progress={statusFor(s.key, s.domain) === "done" ? 100 : 0}
+        />
+      ))}
     </div>
   );
 }
@@ -205,6 +279,9 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState(FALLBACK_USER);
   const [showToast, setShowToast] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [simDone, setSimDone] = useState<Record<string, boolean>>({});
+  const [candidate, setCandidate] = useState<Candidate | null>(null);
   const pathname = usePathname();
 
   // קרא שם מ-localStorage (מ-Onboarding) — ציור מיידי לפני שה-DB עונה
@@ -217,13 +294,25 @@ export default function DashboardPage() {
 
   // דרוס עם המצב האמיתי מ-Supabase ברגע שהוא מגיע
   useEffect(() => {
-    getCandidate().then((candidate) => {
-      if (!candidate) return;
-      if (candidate.first_name) setUserName(candidate.first_name);
-      setCurrentStage(candidate.current_stage);
+    getCandidate().then((c) => {
+      if (!c) return;
+      setCandidate(c);
+      if (c.first_name) setUserName(c.first_name);
+      setCurrentStage(c.current_stage);
     });
     isAnonymousSession().then(setIsAnonymous);
+    // Load sim progress for stage 3
+    Promise.all(SIM_DOMAINS.map(s => getSimulationProgress(s.domain))).then(results => {
+      const map: Record<string, boolean> = {};
+      results.forEach((r, i) => { if (r?.completed) map[SIM_DOMAINS[i].domain] = true; });
+      setSimDone(map);
+    });
   }, []);
+
+  // Load tasks whenever stage changes
+  useEffect(() => {
+    getTasks(currentStage).then(setTasks);
+  }, [currentStage]);
 
   function handleSetCurrentStage(stage: number) {
     setCurrentStage(stage);
@@ -233,8 +322,8 @@ export default function DashboardPage() {
   function renderStage() {
     switch (currentStage) {
       case 1: return <Stage1 />;
-      case 2: return <Stage2 onConfirm={() => setShowToast(true)} />;
-      case 3: return <Stage3 />;
+      case 2: return <Stage2 onConfirm={() => setShowToast(true)} tasks={tasks} />;
+      case 3: return <Stage3 tasks={tasks} simDone={simDone} />;
       case 4: return <Stage4 />;
       case 5: return <Stage5 />;
       case 6: return <Stage6 />;
@@ -256,6 +345,7 @@ export default function DashboardPage() {
         <NavyHeader userName={userName} currentStage={currentStage} />
         <div className="flex-1 px-[22px] py-6 pb-[84px]">
           {isAnonymous && <SecureAccountBanner />}
+          {candidate && <ProgressSummary candidate={candidate} simCount={Object.values(simDone).filter(Boolean).length} currentStage={currentStage} />}
           {renderStage()}
         </div>
         <DevSwitcher currentStage={currentStage} setCurrentStage={handleSetCurrentStage} />

@@ -115,7 +115,7 @@ export async function getDomainRankings(): Promise<string[]> {
     console.error("getDomainRankings failed", error);
     return [];
   }
-  return (data ?? []).map((row) => row.domain_id);
+  return (data ?? []).map((row: { domain_id: string }) => row.domain_id);
 }
 
 export async function saveDomainRankings(domainIds: string[]): Promise<void> {
@@ -198,3 +198,154 @@ export async function isAnonymousSession(): Promise<boolean> {
 }
 
 export const supabaseReady = supabaseEnabled;
+
+// ─── Tasks ───────────────────────────────────────────────────────────────────
+
+export type Task = {
+  id: string;
+  candidate_id: string;
+  stage: number;
+  task_key: string;
+  label: string;
+  status: "pending" | "in-progress" | "done";
+  progress: number;
+  fail_count: number;
+};
+
+// Default tasks to seed per stage on first visit
+const STAGE_TASKS: Record<number, Array<{ task_key: string; label: string; status: Task["status"]; progress: number }>> = {
+  1: [
+    { task_key: "app-download",       label: "הורדת האפליקציה",           status: "done",        progress: 100 },
+    { task_key: "base-questionnaire", label: "מילוי שאלון בסיס",           status: "done",        progress: 100 },
+    { task_key: "awaiting-approval",  label: "המתנה לאישור הרכזת",         status: "in-progress", progress: 0   },
+  ],
+  2: [
+    { task_key: "intake-meeting",   label: "הגעה למפגש הפתיחה",            status: "pending", progress: 0 },
+    { task_key: "roadmap-signing",  label: "חתימה על מפת הדרכים האישית",   status: "pending", progress: 0 },
+  ],
+  3: [
+    { task_key: "sim-code",    label: "השלמת סימולציית קוד",   status: "pending", progress: 0 },
+    { task_key: "sim-data",    label: "השלמת סימולציית דאטה",  status: "pending", progress: 0 },
+    { task_key: "sim-cyber",   label: "השלמת סימולציית סייבר", status: "pending", progress: 0 },
+    { task_key: "sim-ai",      label: "השלמת סימולציית AI",    status: "pending", progress: 0 },
+    { task_key: "sim-ux",      label: "השלמת סימולציית UX",    status: "pending", progress: 0 },
+    { task_key: "sim-marketing", label: "השלמת סימולציית מרקטינג", status: "pending", progress: 0 },
+  ],
+  4: [
+    { task_key: "research-institutes", label: "חקר מוסדות לימוד",            status: "pending", progress: 0 },
+    { task_key: "compare-programs",    label: "השוואת תוכניות לימוד",         status: "pending", progress: 0 },
+    { task_key: "third-meeting",       label: "מפגש שלישי עם הרכזת",          status: "pending", progress: 0 },
+  ],
+  5: [
+    { task_key: "scholarship-check", label: "בדיקת זכאות למלגה",       status: "pending", progress: 0 },
+    { task_key: "financial-docs",    label: "הכנת מסמכים פיננסיים",     status: "pending", progress: 0 },
+    { task_key: "contact-institute", label: "יצירת קשר עם המוסד",       status: "pending", progress: 0 },
+  ],
+  6: [
+    { task_key: "final-registration", label: "אימות רישום סופי", status: "pending", progress: 0 },
+  ],
+};
+
+/**
+ * Seed default tasks for a stage if none exist, then return all tasks for that stage.
+ */
+export async function getTasks(stage: number): Promise<Task[]> {
+  if (!supabase) return [];
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return [];
+
+  const defaults = STAGE_TASKS[stage] ?? [];
+
+  // Upsert defaults — ignore if already exist (on_conflict = task_key per candidate)
+  if (defaults.length > 0) {
+    await supabase.from("tasks").upsert(
+      defaults.map((t) => ({
+        candidate_id: candidateId,
+        stage,
+        task_key: t.task_key,
+        label: t.label,
+        status: t.status,
+        progress: t.progress,
+      })),
+      { onConflict: "candidate_id,task_key", ignoreDuplicates: true }
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("candidate_id", candidateId)
+    .eq("stage", stage)
+    .order("updated_at", { ascending: true });
+
+  if (error) { console.error("getTasks failed", error); return []; }
+  return (data ?? []) as Task[];
+}
+
+export async function updateTask(
+  taskKey: string,
+  status: Task["status"],
+  progress?: number
+): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+
+  const patch: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (progress !== undefined) patch.progress = progress;
+
+  const { error } = await supabase
+    .from("tasks")
+    .update(patch)
+    .eq("candidate_id", candidateId)
+    .eq("task_key", taskKey);
+
+  if (error) console.error("updateTask failed", error);
+}
+
+// ─── Simulation progress ─────────────────────────────────────────────────────
+
+export type SimProgress = {
+  domain_id: string;
+  step: number;
+  completed: boolean;
+  score: number | null;
+};
+
+export async function getSimulationProgress(domainId: string): Promise<SimProgress | null> {
+  if (!supabase) return null;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return null;
+
+  const { data, error } = await supabase
+    .from("simulation_progress")
+    .select("domain_id, step, completed, score")
+    .eq("candidate_id", candidateId)
+    .eq("domain_id", domainId)
+    .maybeSingle();
+
+  if (error) { console.error("getSimulationProgress failed", error); return null; }
+  return data as SimProgress | null;
+}
+
+export async function saveSimulationProgress(
+  domainId: string,
+  step: number,
+  completed: boolean,
+  score?: number
+): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+
+  const { error } = await supabase.from("simulation_progress").upsert({
+    candidate_id: candidateId,
+    domain_id: domainId,
+    step,
+    completed,
+    score: score ?? null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "candidate_id,domain_id" });
+
+  if (error) console.error("saveSimulationProgress failed", error);
+}
