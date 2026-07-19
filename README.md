@@ -36,11 +36,19 @@ npm run dev
 פותח על `http://localhost:3000` — תראה את ה-Dashboard עם כל 6 השלבים.
 
 ### משתני סביבה
-צור קובץ `.env.local` (לא בגיט) עם:
+העתק את `.env.local.example` ל-`.env.local` (לא בגיט) ומלא עם הפרטים מה-Supabase project שלך:
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
+בלי הקובץ הזה האפליקציה עובדת ב-mock מקומי (localStorage) כרגיל — שום דבר לא נשבר.
+
+### חיבור Supabase — שלב אחרון (ישראל)
+1. צור פרויקט ב-[supabase.com](https://supabase.com) → Settings → API → העתק URL + anon key ל-`.env.local`
+2. הרץ את `supabase/schema.sql` ב-SQL Editor של הפרויקט (יוצר את כל הטבלאות + RLS)
+3. זהו — הדפים מתחברים אוטומטית (Onboarding, Dashboard, Explore) דרך `src/lib/candidate.ts`
+
+הזהות של המשתמש מבוססת על **Supabase Anonymous Auth** (`auth.uid()` יציב לכל דפדפן) — כך שהנתונים כבר נשמרים אמיתית לפני שיש Phone/OTP. כשתחבר OTP אמיתי, אפשר לשדרג את אותו anonymous user בלי לאבד נתונים (Supabase identity linking).
 
 ---
 
@@ -59,7 +67,14 @@ src/
 │   ├── ProgressDots.tsx        # 6 נקודות שלבים
 │   ├── NavyHeader.tsx          # header כחול + ProgressDots
 │   └── BottomNav.tsx           # ניווט תחתון
-└── lib/                        # ממתין לחיבור Supabase
+└── lib/
+    ├── supabase.ts              # Supabase client (no-op אם אין env vars)
+    └── candidate.ts             # anonymous auth + phone OTP + candidate/tasks/rankings helpers
+
+src/app/login/page.tsx           # מסך טלפון + OTP — לא מקושר עדיין מהניווט הראשי
+
+supabase/
+└── schema.sql                   # כל הטבלאות + RLS — מריצים פעם אחת ב-SQL Editor
 
 design_handoff_tech_career_2026/
 ├── README.md                   # מפרט עיצוב מלא + design tokens
@@ -73,12 +88,14 @@ design_handoff_tech_career_2026/
 
 | מסך | סטטוס | הערות |
 |-----|--------|-------|
-| Dashboard שלבים 1-6 | ✅ מוכן | mock state, dev switcher לבדיקה |
+| Dashboard שלבים 1-6 | ✅ מוכן | מחובר ל-Supabase (candidate + current_stage), dev switcher לבדיקה |
 | Bottom Nav | ✅ מוכן | UI מוכן, routes עוד ריקים |
-| Login / OTP | ⏳ ממתין לישראל | תלוי Supabase Phone Auth |
-| Onboarding | 🔄 הבא בתור | |
-| Tech Exploration | 🔄 הבא בתור | |
-| AI Chat | 🔄 הבא בתור | |
+| Onboarding | ✅ מוכן | כותב ל-Supabase (`candidates`) בסיום |
+| Login / OTP (`/login`) | ✅ קוד מוכן | טלפון → קוד SMS → `/dashboard`. משדרג משתמש Anonymous קיים באותו id (לא מאבד נתוני Onboarding). **ממתין**: הפעלת Phone provider + Test OTP ב-Supabase Dashboard (בתהליך אצל ישראל), ולא מקושר עדיין מהניווט הראשי |
+| Tech Exploration (דירוג תחומים) | ✅ מוכן | כותב ל-Supabase (`domain_rankings`) |
+| סימולציות (Data/Marketing/AI/Cyber/UX) | ✅ מוכן | UI מוכן — התקדמות עדיין לא נשמרת ל-`simulation_progress` |
+| Login / OTP | ⏳ ממתין לישראל | תלוי Supabase Phone Auth — עד אז כל משתמש הוא Anonymous Auth |
+| AI Chat | 🔄 הבא בתור | טבלת `chat_messages` מוכנה בסכימה |
 | Squad | 🔄 הבא בתור | |
 | Contact / רכזת | 🔄 הבא בתור | |
 | Completion | 🔄 הבא בתור | |
@@ -87,15 +104,25 @@ design_handoff_tech_career_2026/
 
 ## מה צריך מישראל (Backend)
 
-- [ ] **Supabase project** — צור פרויקט ב-supabase.com → URL + anon key → `.env.local`
-- [ ] **Phone Auth** — הפעל SMS OTP ב-Supabase (Twilio/Vonage)
-- [ ] **טבלאות** — הרץ את `supabase/schema.sql` (יוצר בקרוב)
-- [ ] **חיבור state** — חבר `currentStage` + task completion ל-Supabase במקום mock
-- [ ] **Webhooks** → Make.com (Nudge Logic לפי `docs/architecture.md`)
+- [x] **Supabase project** — נוצר, `.env.local` מוגדר
+- [x] **הרצת schema** — `supabase/schema.sql` רץ בהצלחה (6 טבלאות + RLS), נבדק end-to-end
+- [x] **Anonymous Auth** — מופעל (Authentication → Sign In / Providers)
+- [ ] **Phone Auth** — קוד ה-Login מוכן (`/login`, `src/lib/candidate.ts: sendPhoneOtp/verifyPhoneOtp`). נשאר בדשבורד: Authentication → Providers → Phone → Enable + בחירת SMS provider (Twilio) + הוספת מספר הבדיקה שלך תחת Test OTP for phone numbers
+- [ ] **Webhooks** → Make.com (Nudge Logic לפי `docs/architecture.md`) — טבלאות `nudges` + `chat_messages` מוכנות, אין עדיין חיבור בפועל ל-Make.com/Monday.com
+- [ ] **task-level sync** — Stage1-6 בדשבורד עדיין עם TaskCard סטטיים (הרדקודד); טבלת `tasks` מוכנה בסכימה אבל אף קומפוננטה לא קוראת/כותבת אליה
+- [ ] **simulation_progress** — טבלה מוכנה בסכימה, אבל דפי הסימולציה (Data/Marketing/AI/Cyber/UX) לא כותבים אליה — כרגע ה-state שלהן רק בזיכרון, נעלם ב-refresh
+- [ ] **Monday.com CRM** — אין עדיין חיבור/API key; זה מה שיהפוך נתוני `nudges`/`status` לדבר שרכזת רואה בפועל
 
 ---
 
 ## לוג עדכונים
+
+### 2026-07-19 — Supabase foundation
+- ✅ `@supabase/supabase-js` הותקן
+- ✅ `supabase/schema.sql` — candidates, tasks, domain_rankings, simulation_progress, chat_messages, nudges + RLS מלא
+- ✅ `src/lib/supabase.ts` + `src/lib/candidate.ts` — client + helpers, כולל Anonymous Auth
+- ✅ Onboarding, Dashboard, Explore מחוברים ל-Supabase (fallback ל-mock אם אין `.env.local`)
+- ⏳ נשאר לישראל: יצירת הפרויקט האמיתי + הרצת ה-schema (ה-CLI לא זמין כאן, צריך supabase.com)
 
 ### 2026-07-14 — סבב 3
 - ✅ GitHub repo הוקם: `natirot86-coder/techcareerly`
@@ -122,8 +149,8 @@ design_handoff_tech_career_2026/
 |------|--------|
 | Framework | Next.js 16, App Router |
 | CSS | Tailwind v4 — tokens ב-`globals.css` |
-| Backend | ישראל בלבד — Supabase (לא נוגעים) |
-| State כרגע | Mock מקומי בכל דף |
+| Backend | ישראל בלבד — Supabase |
+| State כרגע | Supabase (Anonymous Auth) עם fallback ל-mock מקומי כשאין `.env.local` |
 | ניווט | Bottom Nav: Dashboard / Chat / Squad / Contact |
 | שם | techcareerly (זמני) |
 | Demo user | נועה |

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
+import { saveOnboarding } from "@/lib/candidate";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
@@ -636,6 +637,15 @@ export default function OnboardingPage() {
   function handleDone() {
     localStorage.setItem("onboarding-done", "1");
     localStorage.setItem("user-name", firstName.trim());
+    saveOnboarding({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      gender: gender || "other",
+      age: parseInt(age, 10),
+      region,
+      techInterestScore: score,
+      blockers,
+    });
     router.push("/dashboard");
   }
 

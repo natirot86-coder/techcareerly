@@ -8,6 +8,7 @@ import TaskCard from "@/components/ui/TaskCard";
 import BottomNav from "@/components/ui/BottomNav";
 import Button from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
+import { getCandidate, updateCurrentStage } from "@/lib/candidate";
 
 const FALLBACK_USER = "נועה";
 
@@ -189,13 +190,27 @@ export default function DashboardPage() {
   const [showToast, setShowToast] = useState(false);
   const pathname = usePathname();
 
-  // קרא שם מ-localStorage (מ-Onboarding)
+  // קרא שם מ-localStorage (מ-Onboarding) — ציור מיידי לפני שה-DB עונה
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("user-name");
       if (saved) setUserName(saved);
     }
   }, []);
+
+  // דרוס עם המצב האמיתי מ-Supabase ברגע שהוא מגיע
+  useEffect(() => {
+    getCandidate().then((candidate) => {
+      if (!candidate) return;
+      if (candidate.first_name) setUserName(candidate.first_name);
+      setCurrentStage(candidate.current_stage);
+    });
+  }, []);
+
+  function handleSetCurrentStage(stage: number) {
+    setCurrentStage(stage);
+    updateCurrentStage(stage);
+  }
 
   function renderStage() {
     switch (currentStage) {
@@ -224,7 +239,7 @@ export default function DashboardPage() {
         <div className="flex-1 px-[22px] py-6 pb-[84px]">
           {renderStage()}
         </div>
-        <DevSwitcher currentStage={currentStage} setCurrentStage={setCurrentStage} />
+        <DevSwitcher currentStage={currentStage} setCurrentStage={handleSetCurrentStage} />
       </div>
 
       {/* ====== DESKTOP ====== */}
@@ -284,7 +299,7 @@ export default function DashboardPage() {
             <div className="bg-card rounded-2xl px-8 py-6 shadow-[0_2px_8px_rgba(2,62,138,0.06)]">
               {renderStage()}
             </div>
-            <DevSwitcher currentStage={currentStage} setCurrentStage={setCurrentStage} />
+            <DevSwitcher currentStage={currentStage} setCurrentStage={handleSetCurrentStage} />
           </div>
         </main>
       </div>

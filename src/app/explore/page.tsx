@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import { getDomainRankings, saveDomainRankings } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -92,7 +93,7 @@ export default function ExplorePage() {
   const [ranking, setRanking] = useState<string[]>([]);
   const [phase, setPhase] = useState<Phase>("rank");
 
-  // Restore ranking from localStorage on mount
+  // Restore ranking from localStorage on mount (ציור מיידי)
   useEffect(() => {
     const saved = localStorage.getItem("explore-ranking");
     if (saved) {
@@ -102,12 +103,22 @@ export default function ExplorePage() {
     }
   }, []);
 
+  // דרוס עם המצב האמיתי מ-Supabase ברגע שהוא מגיע
+  useEffect(() => {
+    getDomainRankings().then((saved) => {
+      if (saved.length === 0) return;
+      setRanking(saved);
+      if (saved.length === DOMAINS.length) setPhase("path");
+    });
+  }, []);
+
   function toggleRank(id: string) {
     const next = ranking.includes(id)
       ? ranking.filter((r) => r !== id)
       : [...ranking, id];
     setRanking(next);
     localStorage.setItem("explore-ranking", JSON.stringify(next));
+    saveDomainRankings(next);
   }
 
   function getRank(id: string): number | null {
@@ -129,7 +140,7 @@ export default function ExplorePage() {
           <div className="bg-navy text-white px-[22px] pt-[26px] pb-[30px] shrink-0">
             <button
               type="button"
-              onClick={() => { setPhase("rank"); localStorage.removeItem("explore-ranking"); setRanking([]); }}
+              onClick={() => { setPhase("rank"); localStorage.removeItem("explore-ranking"); setRanking([]); saveDomainRankings([]); }}
               className="text-[12px] font-bold block mb-5"
               style={{ opacity: 0.6 }}
             >
