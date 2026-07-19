@@ -11,10 +11,52 @@ import Toast from "@/components/ui/Toast";
 import {
   getCandidate, updateCurrentStage, isAnonymousSession,
   getTasks, updateTask, getSimulationProgress,
-  type Task,
+  type Task, type Candidate,
 } from "@/lib/candidate";
 
 const FALLBACK_USER = "נועה";
+
+// ─── Progress Summary ─────────────────────────────────────────────────────────
+function ProgressSummary({ candidate, simCount, currentStage }: {
+  candidate: Candidate; simCount: number; currentStage: number;
+}) {
+  const daysSince = candidate.created_at
+    ? Math.max(0, Math.floor((Date.now() - new Date(candidate.created_at).getTime()) / 86400000))
+    : 0;
+  const pct = Math.round(((currentStage - 1) / 5) * 100);
+
+  return (
+    <div className="rounded-xl p-4 mb-4"
+      style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.1)" }}>
+      <div className="text-[12px] font-bold mb-3" style={{ color: "rgba(0,0,0,0.45)" }}>מה השלמת עד כה</div>
+      <div className="flex flex-col gap-[6px] mb-3">
+        {[
+          { done: daysSince >= 0, label: `הצטרפת לפני ${daysSince === 0 ? "היום" : `${daysSince} ימים`}` },
+          { done: !!candidate.onboarding_completed_at, label: "שאלון אישי הושלם" },
+          { done: simCount > 0, label: `${simCount} מתוך 6 סימולציות הושלמו` },
+          { done: currentStage >= 2, label: "אושרת על ידי הרכזת" },
+        ].map((item, i) => (
+          <div key={i} className="flex items-center gap-2 text-[12.5px]">
+            <span style={{ color: item.done ? "#6fbf8a" : "rgba(0,0,0,0.25)", fontSize: 14 }}>
+              {item.done ? "✓" : "○"}
+            </span>
+            <span style={{ color: item.done ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.38)" }}>
+              {item.label}
+            </span>
+          </div>
+        ))}
+      </div>
+      {/* Progress bar */}
+      <div className="h-[5px] rounded-full" style={{ background: "rgba(0,0,0,0.08)" }}>
+        <div className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: "#fb8500" }} />
+      </div>
+      <div className="text-[10.5px] mt-1.5" style={{ color: "rgba(0,0,0,0.4)" }}>
+        שלב {currentStage} מתוך 6 · {pct}% הושלם
+      </div>
+    </div>
+  );
+}
 
 // ─── Stage 1 ──────────────────────────────────────────────────────────────────
 function Stage1() {
@@ -239,6 +281,7 @@ export default function DashboardPage() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [simDone, setSimDone] = useState<Record<string, boolean>>({});
+  const [candidate, setCandidate] = useState<Candidate | null>(null);
   const pathname = usePathname();
 
   // קרא שם מ-localStorage (מ-Onboarding) — ציור מיידי לפני שה-DB עונה
@@ -251,10 +294,11 @@ export default function DashboardPage() {
 
   // דרוס עם המצב האמיתי מ-Supabase ברגע שהוא מגיע
   useEffect(() => {
-    getCandidate().then((candidate) => {
-      if (!candidate) return;
-      if (candidate.first_name) setUserName(candidate.first_name);
-      setCurrentStage(candidate.current_stage);
+    getCandidate().then((c) => {
+      if (!c) return;
+      setCandidate(c);
+      if (c.first_name) setUserName(c.first_name);
+      setCurrentStage(c.current_stage);
     });
     isAnonymousSession().then(setIsAnonymous);
     // Load sim progress for stage 3
@@ -301,6 +345,7 @@ export default function DashboardPage() {
         <NavyHeader userName={userName} currentStage={currentStage} />
         <div className="flex-1 px-[22px] py-6 pb-[84px]">
           {isAnonymous && <SecureAccountBanner />}
+          {candidate && <ProgressSummary candidate={candidate} simCount={Object.values(simDone).filter(Boolean).length} currentStage={currentStage} />}
           {renderStage()}
         </div>
         <DevSwitcher currentStage={currentStage} setCurrentStage={handleSetCurrentStage} />

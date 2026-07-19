@@ -1130,6 +1130,23 @@ export default function DataLearnPage() {
             </div>
           </div>
         )}
+
+        {/* Advanced: SQL Mystery */}
+        <Link href="/explore/data/learn/mystery" className="block mt-5">
+          <div className="rounded-2xl p-5 flex items-center justify-between"
+            style={{ background: "#0a0f1e", border: "1.5px solid rgba(13,148,136,0.3)" }}>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[18px]">🕵️</span>
+                <div className="text-[13px] font-black text-white" style={HEEBO}>מודול חקירה מתקדם — SQL</div>
+              </div>
+              <div className="text-[11.5px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+                מסד נתונים אמיתי · כתיבת שאילתות · פרשת הדלפה בסטארטאפ
+              </div>
+            </div>
+            <div className="text-[18px] font-bold shrink-0" style={{ color: "#0d9488" }}>←</div>
+          </div>
+        </Link>
       </div>
 
       <BottomNav />
