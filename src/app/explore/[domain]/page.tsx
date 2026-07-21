@@ -410,22 +410,24 @@ function DataContent() {
     { label: "יוני", val: 91, spike: true },
   ];
 
+  const TEAL = "#0d9488";
+
   return (
     <>
+      {/* Hook */}
       <div className="mb-6 rounded-2xl p-4 text-[13.5px] leading-[1.7]" style={{ background: "rgba(13,148,136,0.07)" }}>
         מה גרם לחברה אחת לגדול פי 3 תוך חודשיים?{" "}
         <span className="font-black" style={{ color: "#023e8a" }}>דאטה אנליסטית אחת גילתה — בשתי שאילתות.</span>
       </div>
 
+      {/* Interactive chart */}
       <div className="mb-7">
         <Label text="מה קרה פה? לחצי לגילוי" />
         <div
           className="rounded-2xl px-4 pt-5 pb-4"
           style={{ background: "#f0fdf9", border: "1px solid #99f6e4", boxShadow: "0 4px 24px rgba(13,148,136,0.1)" }}
         >
-          <div className="text-[11px] font-bold mb-4" style={{ color: "#0d9488" }}>
-            מכירות חודשיות (₪ אלפים)
-          </div>
+          <div className="text-[11px] font-bold mb-4" style={{ color: TEAL }}>מכירות חודשיות (₪ אלפים)</div>
           <div className="flex items-end gap-2 h-[72px]">
             {bars.map((b) => (
               <div key={b.label} className="flex-1 flex flex-col items-center gap-1">
@@ -433,8 +435,8 @@ function DataContent() {
                   className="w-full rounded-t transition-all duration-700"
                   style={{
                     height: `${(b.val / 91) * 60}px`,
-                    background: revealed && b.spike ? "#0d9488" : "#99f6e4",
-                    border: revealed && b.spike ? "2px solid #0d9488" : "none",
+                    background: revealed && b.spike ? TEAL : "#99f6e4",
+                    border: revealed && b.spike ? `2px solid ${TEAL}` : "none",
                   }}
                 />
                 <span className="text-[8.5px]" style={{ color: "rgba(0,0,0,0.4)" }}>{b.label}</span>
@@ -445,45 +447,146 @@ function DataContent() {
             onClick={() => setRevealed(true)}
             disabled={revealed}
             className="mt-4 w-full py-[10px] rounded-xl text-[13px] font-bold text-white transition-all"
-            style={{ background: revealed ? "#16a34a" : "#0d9488", fontFamily: "'Heebo', sans-serif" }}
+            style={{ background: revealed ? "#16a34a" : TEAL, fontFamily: "'Heebo', sans-serif" }}
           >
             {revealed ? "✓ גילית את הסוד!" : "🔍 מה קרה במאי?"}
           </button>
         </div>
         {revealed && (
-          <div
-            className="mt-3 rounded-xl px-4 py-3 text-[12.5px] leading-[1.55]"
-            style={{ background: "rgba(13,148,136,0.08)", border: "1px solid #99f6e488", color: "#065f46" }}
-          >
+          <div className="mt-3 rounded-xl px-4 py-3 text-[12.5px] leading-[1.55]"
+            style={{ background: "rgba(13,148,136,0.08)", border: "1px solid #99f6e488", color: "#065f46" }}>
             ✓ במאי פתחו קמפיין — אבל הדאטה גילתה ש-2 מוצרים בלבד מתוך 18 אחראים ל-89% מהצמיחה. ההמלצה: להעביר כל התקציב אליהם. תוצאה: +116% ביוני.
           </div>
         )}
+      </div>
+
+      {/* What does a data analyst do */}
+      <div className="mb-7">
+        <Label text="מה עושה אנליסטית דאטה?" />
+        <div className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid rgba(13,148,136,0.12)" }}>
+          <div className="flex flex-col gap-3 mb-4">
+            {[
+              ["🔍", "מגדירה שאלה עסקית", "לא 'למה המכירות ירדו' אלא 'מה ההמרה לפי מכשיר בQ1?'"],
+              ["🧹", "אוספת ומנקה נתונים", "80% מהזמן — בלי נתונים נקיים אין תוצאות אמיתיות"],
+              ["📊", "מוצאת דפוסים וחריגות", "הגרף שמספר סיפור שאף אחד אחר לא ראה"],
+              ["💡", "מציגה המלצה להנהלה", "לא רק 'מה קרה' — אלא 'מה לעשות עכשיו'"],
+            ].map(([icon, title, sub]) => (
+              <div key={title} className="flex items-start gap-3">
+                <span className="text-[18px] shrink-0">{icon}</span>
+                <div>
+                  <div className="text-[12.5px] font-bold" style={{ color: "#023e8a" }}>{title}</div>
+                  <div className="text-[11.5px]" style={{ color: "rgba(0,0,0,0.45)" }}>{sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="text-[10.5px] font-bold mb-2" style={{ color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em" }}>כלי עבודה</div>
+            <div className="flex flex-wrap gap-1.5">
+              {["SQL", "Python", "Excel", "Tableau", "Power BI", "Google Sheets"].map(t => (
+                <span key={t} className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                  style={{ background: "rgba(13,148,136,0.08)", color: TEAL }}>{t}</span>
+              ))}
+            </div>
+          </div>
+          <div className="pt-3 mt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="text-[10.5px] font-bold mb-2" style={{ color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em" }}>תעשיות מובילות</div>
+            <div className="flex flex-wrap gap-1.5">
+              {["פינטק", "e-commerce", "בריאות", "ממשלה", "ביטוח", "תקשורת"].map(t => (
+                <span key={t} className="text-[11px] px-2.5 py-1 rounded-full"
+                  style={{ background: "rgba(2,62,138,0.06)", color: "#023e8a" }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <WowStat
         stat="2.5×"
         label="חברות data-driven צומחות פי 2.5 מהמתחרות"
         sub='McKinsey, 2024 — "הנתונים הם הנפט החדש של המאה ה-21"'
-        color="#0d9488"
+        color={TEAL}
       />
 
-      <SimTeaser
-        emoji="📊"
-        challenge="בסימולציה: קיבלת CSV עם 10,000 שורות. המשימה — לזהות את הסגמנט הרווחי ביותר ולהציג המלצה להנהלה תוך 5 דקות."
-      />
-
-      <Link href="/explore/data/learn" className="block mb-7">
-        <div
-          className="rounded-2xl p-4 flex items-center justify-between"
-          style={{ background: "rgba(13,148,136,0.07)", border: "1.5px solid rgba(13,148,136,0.22)" }}
-        >
-          <div>
-            <div className="text-[14.5px] font-black" style={{ color: "#0d9488", ...HEEBO }}>מרכז למידה — דאטה</div>
-            <div className="text-[12px] mt-1" style={{ color: "rgba(0,0,0,0.48)" }}>7 חוויות שונות · חקירות, חיזויים, החלטות עסקיות</div>
-          </div>
-          <div className="text-[20px] font-bold shrink-0" style={{ color: "#0d9488" }}>←</div>
+      {/* Journey map */}
+      <div className="mb-7">
+        <Label text="המסלול שלך בדאטה" />
+        <div className="flex flex-col gap-2">
+          {[
+            {
+              num: "1",
+              emoji: "📊",
+              title: "סימולציה — חשבי כמו אנליסטית",
+              sub: "CSV עם נתונים אמיתיים · 8 שלבים · ~10 דק'",
+              href: "/explore/data/sim",
+              highlight: true,
+              label: "התחלי כאן",
+            },
+            {
+              num: "2",
+              emoji: "🎯",
+              title: "מרכז למידה — 7 מודולים",
+              sub: "חקירה · גרפים שבורים · חיזויים · החלטות עסקיות",
+              href: "/explore/data/learn",
+              highlight: false,
+              label: "",
+            },
+            {
+              num: "3",
+              emoji: "🔬",
+              title: "אנליטיקה בשטח — 5 שלבים",
+              sub: "שאלת מחקר · ניקוי נתונים · AI Prompting · המנכ\"ל",
+              href: "/explore/data/learn/analytics",
+              highlight: false,
+              label: "",
+            },
+            {
+              num: "4",
+              emoji: "🕵️",
+              title: "תעלומת SQL — מתקדם",
+              sub: "חקירת הדלפה בסטארטאפ · כתיבת שאילתות אמיתיות",
+              href: "/explore/data/learn/mystery",
+              highlight: false,
+              label: "",
+            },
+          ].map((step, i) => (
+            <div key={step.num}>
+              <Link href={step.href} className="block">
+                <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                  style={{
+                    background: step.highlight ? TEAL : "#fff",
+                    border: step.highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
+                    boxShadow: step.highlight ? "0 4px 20px rgba(13,148,136,0.25)" : "none",
+                  }}>
+                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                    style={{ background: step.highlight ? "rgba(255,255,255,0.25)" : "rgba(13,148,136,0.1)", color: step.highlight ? "#fff" : TEAL }}>
+                    {step.num}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px]">{step.emoji}</span>
+                      <span className="text-[12.5px] font-bold" style={{ color: step.highlight ? "#fff" : "#023e8a" }}>{step.title}</span>
+                      {step.label && (
+                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>{step.label}</span>
+                      )}
+                    </div>
+                    <div className="text-[11px] mt-0.5" style={{ color: step.highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                      {step.sub}
+                    </div>
+                  </div>
+                  <span className="text-[16px] font-bold shrink-0" style={{ color: step.highlight ? "#fff" : TEAL }}>←</span>
+                </div>
+              </Link>
+              {i < 3 && (
+                <div className="flex justify-center my-1">
+                  <div className="w-[1.5px] h-3" style={{ background: "rgba(13,148,136,0.2)" }} />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      </Link>
+      </div>
 
       <SalaryCard min={12000} max={25000} />
     </>

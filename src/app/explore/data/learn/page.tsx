@@ -1131,8 +1131,25 @@ export default function DataLearnPage() {
           </div>
         )}
 
+        {/* Advanced: Analytics Mission */}
+        <Link href="/explore/data/learn/analytics" className="block mt-5">
+          <div className="rounded-2xl p-5 flex items-center justify-between"
+            style={{ background: "#fff", border: "1.5px solid rgba(13,148,136,0.25)" }}>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[18px]">📊</span>
+                <div className="text-[13px] font-black" style={{ color: "#023e8a", fontFamily: "'Heebo', sans-serif", fontWeight: 900 }}>מה שאנליסטית באמת עושה</div>
+              </div>
+              <div className="text-[11.5px]" style={{ color: "rgba(0,0,0,0.45)" }}>
+                5 שלבים · שאלת מחקר · ניקוי · גרפים · AI · המנכ״ל
+              </div>
+            </div>
+            <div className="text-[18px] font-bold shrink-0" style={{ color: "#0d9488" }}>←</div>
+          </div>
+        </Link>
+
         {/* Advanced: SQL Mystery */}
-        <Link href="/explore/data/learn/mystery" className="block mt-5">
+        <Link href="/explore/data/learn/mystery" className="block mt-3">
           <div className="rounded-2xl p-5 flex items-center justify-between"
             style={{ background: "#0a0f1e", border: "1.5px solid rgba(13,148,136,0.3)" }}>
             <div>

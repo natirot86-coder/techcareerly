@@ -526,44 +526,45 @@ const DA0: ChoiceStep = {
 const DA1: ChoiceStep = {
   kind: "choice",
   tag: "סוגי נתונים",
-  concept: "כמותי vs איכותי",
+  concept: "מספרים vs קטגוריות",
   context: (
     <div>
       <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
-        כל נתון בעולם שייך לאחת משתי קטגוריות:
+        כל נתון הוא אחד משניים — <span className="font-bold" style={{ color: "#0d9488" }}>מספר</span> שאפשר לחשב עליו, או <span className="font-bold" style={{ color: "#023e8a" }}>קטגוריה</span> שמסווגת לקבוצה.
+        <br /><span className="text-[12px]" style={{ color: "rgba(0,0,0,0.45)" }}>למה זה חשוב? כי כלי ניתוח שונים עובדים על סוגים שונים.</span>
       </p>
-      <div className="flex gap-3 mb-5">
-        <div
-          className="flex-1 rounded-xl p-3"
-          style={{ background: "rgba(13,148,136,0.07)", border: "1px solid rgba(13,148,136,0.18)" }}
-        >
-          <div className="text-[12px] font-bold mb-2" style={{ color: "#0d9488" }}>כמותי (מספרי)</div>
-          <div className="text-[11.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
-            ✓ גיל: 27<br />
-            ✓ מחיר: ₪299<br />
-            ✓ כמות קליקים: 4,820
+      <div className="flex gap-3 mb-4">
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(13,148,136,0.07)", border: "1px solid rgba(13,148,136,0.18)" }}>
+          <div className="text-[12px] font-bold mb-2" style={{ color: "#0d9488" }}>📊 נתון מספרי</div>
+          <div className="text-[11.5px] leading-[1.8]" style={{ color: "rgba(0,0,0,0.6)" }}>
+            אפשר לחשב ממוצע, סכום, מינימום:<br />
+            • גיל: 27<br />
+            • מחיר: ₪299<br />
+            • כמות לחיצות: 4,820
           </div>
         </div>
-        <div
-          className="flex-1 rounded-xl p-3"
-          style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.1)" }}
-        >
-          <div className="text-[12px] font-bold mb-2" style={{ color: "#023e8a" }}>איכותי (לא מספרי)</div>
-          <div className="text-[11.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
-            ✓ מין: נקבה<br />
-            ✓ צבע עיניים: חום<br />
-            ✓ סוג מכשיר: Android
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.1)" }}>
+          <div className="text-[12px] font-bold mb-2" style={{ color: "#023e8a" }}>🏷️ נתון קטגורי</div>
+          <div className="text-[11.5px] leading-[1.8]" style={{ color: "rgba(0,0,0,0.6)" }}>
+            אפשר לסווג ולספור לפי קבוצה:<br />
+            • מין: נקבה<br />
+            • צבע עיניים: חום<br />
+            • סוג מכשיר: Android
           </div>
         </div>
       </div>
     </div>
   ),
-  question: "כמה אנשים לחצו על כפתור ההרשמה — זה נתון:",
-  options: ["איכותי — כי זו פעולה", "כמותי-ספיר — ספירה שלמה", "כמותי-רציף — אפשר לחצי לחיצה"],
+  question: "כמה אנשים לחצו על כפתור ההרשמה — איזה סוג נתון זה?",
+  options: [
+    "קטגורי — כי לחיצה היא פעולה, לא מספר",
+    "מספרי — אפשר לספור: 0, 1, 2, 3 לחיצות",
+    "לא ניתן לסווג",
+  ],
   correct: 1,
-  okMsg: "נכון! ספירת לחיצות = מספר שלם — לא ניתן ללחוץ 2.7 פעמים. זה כמותי-ספיר. המחשבה הזו חשובה כי כל כלי ניתוח עובד אחרת על סוגי נתונים שונים.",
-  errMsg: "כמותי-ספיר — מספר לחיצות הוא מספר שלם שאפשר לספור. לא ניתן ללחוץ '3.5 פעמים'. ההבחנה בין סוגי נתונים קריטית לבחירת הכלי הנכון לניתוח.",
-  learned: "כמותי = מספרים | איכותי = קטגוריות | ספיר = שלמים",
+  okMsg: "נכון! ספירת לחיצות היא מספר שלם — 0, 1, 2... כשיודעים את סוג הנתון, יודעים איזה גרף לבנות ואיזה חישוב לעשות. זה הצעד הראשון בכל ניתוח.",
+  errMsg: "ספירת לחיצות היא מספר שלם שאפשר לחשב עליו — לא ניתן ללחוץ 2.7 פעמים. לחיצה היא משהו שסופרים, לכן זה נתון מספרי.",
+  learned: "נתון מספרי = ספירה ומדידה | קטגורי = סיווג לקבוצות",
 };
 
 const DA2: SequenceStep = {
@@ -606,25 +607,30 @@ const DA2: SequenceStep = {
 const DA3: ChoiceStep = {
   kind: "choice",
   tag: "KPI",
-  concept: "KPI = מדד הצלחה",
+  concept: "מדדי הצלחה",
   context: (
     <div>
-      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
-        כל חברה מגדירה <span className="font-bold" style={{ color: "#0d9488" }}>KPI</span> — מדדים שמראים האם היא בדרך הנכונה.
-      </p>
-      <div
-        className="rounded-xl p-4 mb-5"
-        style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.1)" }}
-      >
-        <div className="text-[11.5px] font-bold mb-3" style={{ color: "rgba(0,0,0,0.35)" }}>
-          משפך הרכישה של אפליקציה:
+      <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "rgba(13,148,136,0.07)", border: "1px solid rgba(13,148,136,0.18)" }}>
+        <div className="text-[11px] font-black mb-1" style={{ color: "#0d9488" }}>מה זה KPI?</div>
+        <div className="text-[12px] leading-relaxed" style={{ color: "rgba(0,0,0,0.62)" }}>
+          KPI = מדד ביצועים (ראשי תיבות של Key Performance Indicator).
+          <br />בעברית פשוטה: <span className="font-bold">"המספר שמראה לנו אם אנחנו בדרך הנכונה."</span>
+          <br /><span style={{ color: "rgba(0,0,0,0.45)" }}>כמו קצב לב — מדד שבוחנים כדי לדעת אם הכל בסדר.</span>
         </div>
+      </div>
+      <div className="text-[12.5px] font-bold mb-1" style={{ color: "#023e8a" }}>
+        דוגמה: "משפך" של אפליקציה
+      </div>
+      <div className="text-[11.5px] mb-3" style={{ color: "rgba(0,0,0,0.5)" }}>
+        "משפך" = הדרך שעושה הגולש מכניסה לאתר עד רכישה. בכל שלב — חלק עוזבים.
+      </div>
+      <div className="rounded-xl p-4" style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.1)" }}>
         {[
-          { label: "כניסות לאתר", val: "10,000", w: "100%" },
-          { label: "נרשמו", val: "1,000", w: "20%" },
-          { label: "שילמו", val: "100", w: "4%" },
+          { label: "נכנסו לאתר", val: "10,000", w: "100%", note: "" },
+          { label: "נרשמו בחינם", val: "1,000", w: "20%", note: "⬇ 90% יצאו בלי להירשם" },
+          { label: "שילמו בסוף", val: "100", w: "4%", note: "⬇ 90% מהנרשמים לא שילמו" },
         ].map((row) => (
-          <div key={row.label} className="mb-3">
+          <div key={row.label} className="mb-3 last:mb-0">
             <div className="flex justify-between mb-1">
               <span className="text-[11.5px] font-bold" style={{ color: "#023e8a" }}>{row.label}</span>
               <span className="text-[11px]" style={{ color: "#0d9488" }}>{row.val}</span>
@@ -632,17 +638,18 @@ const DA3: ChoiceStep = {
             <div className="h-[7px] rounded-full" style={{ background: "rgba(13,148,136,0.1)" }}>
               <div className="h-full rounded-full" style={{ width: row.w, background: "#0d9488" }} />
             </div>
+            {row.note && <div className="text-[10px] mt-0.5" style={{ color: "rgba(220,38,38,0.6)" }}>{row.note}</div>}
           </div>
         ))}
       </div>
     </div>
   ),
-  question: "מהו שיעור ההמרה מכניסה לאתר עד תשלום?",
+  question: "כמה אחוז מהנכנסים לאתר בסוף שילמו?",
   options: ["10% (1,000 מתוך 10,000)", "1% (100 מתוך 10,000)", "100% (כי כולם ראו)"],
   correct: 1,
-  okMsg: "נכון! 100 משלמים מתוך 10,000 כניסות = 1%. זה KPI קריטי — נקרא Conversion Rate. אם עלה ל-2%, ההכנסה מוכפלת. הדאטה אנליסטית מזהה מה גרם לשינוי.",
-  errMsg: "100 ÷ 10,000 = 1%. זהו ה-Conversion Rate — אחוז האנשים שבסוף שילמו. KPI זה הוא אחד החשובים ביותר בכל עסק דיגיטלי.",
-  learned: "Conversion Rate = משלמים ÷ כניסות × 100",
+  okMsg: "נכון! 100 ÷ 10,000 = 1%. זה נקרא 'אחוז המרה' (Conversion Rate — אחוז האנשים שעשו את הפעולה שרצינו). אם יעלה ל-2% — ההכנסה מוכפלת בלי להוציא יותר על פרסום. זה KPI שאנליסטית עוקבת אחריו כל יום.",
+  errMsg: "100 מתוך 10,000 = 1%. זה נקרא 'אחוז המרה' (Conversion Rate). זה KPI קריטי — כי אם עולה ל-2%, ההכנסה מוכפלת. אנליסטיות מחפשות כל הזמן מה יכול להעלות אותו.",
+  learned: "אחוז המרה (Conversion Rate) = משלמים ÷ כניסות × 100",
 };
 
 const DA4: ChoiceStep = {
@@ -657,9 +664,9 @@ const DA4: ChoiceStep = {
       >
         <span className="text-[20px] shrink-0">📱</span>
         <div>
-          <div className="text-[12.5px] font-bold" style={{ color: "#c2410c" }}>מקרה אמיתי: Blinkist</div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#c2410c" }}>מקרה אמיתי: אפליקציית קריאה</div>
           <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.6)" }}>
-            אפליקציית סיכומי ספרים. השיקו עיצוב חדש + העלו מחיר. אחרי חודש — ירידה חדה במנויים.
+            Blinkist — אפליקציה שמוכרת סיכומי ספרים במנוי חודשי (כמו Spotify, רק לספרים במקום מוזיקה). השיקו עיצוב חדש ובאותו זמן העלו מחיר. אחרי חודש — ירידה חדה במנויים (אנשים שמשלמים כל חודש).
           </div>
         </div>
       </div>
@@ -697,41 +704,44 @@ const DA5: ChoiceStep = {
   concept: "עלות רכישת לקוח",
   context: (
     <div>
-      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
-        אחד ה-KPI החשובים בכל עסק:
-        <br />
-        <span className="font-bold" style={{ color: "#0d9488" }}>CAC — Customer Acquisition Cost</span>
-        <br />
-        כמה עולה לי להביא לקוח חדש?
-      </p>
-      <div
-        className="rounded-2xl p-4 mb-4 text-center"
-        style={{ background: "#0f172a" }}
-      >
-        <div className="font-mono text-[15px] leading-[2]" style={{ color: "#e2e8f0" }} dir="ltr">
-          <span style={{ color: "#a78bfa" }}>CAC</span>
-          {" = "}
-          <div className="inline-block text-center">
-            <div style={{ color: "#34d399" }}>הוצאות שיווק + מכירות</div>
-            <div style={{ borderTop: "1px solid #475569", paddingTop: 4, color: "#fbbf24" }}>
-              _______________
+      <div className="text-[13px] leading-relaxed mb-4" style={{ color: "rgba(0,0,0,0.65)" }}>
+        כמה עולה לחברה <span className="font-bold" style={{ color: "#0d9488" }}>להביא לקוח חדש</span>?
+        <br />המספר הזה נקרא <span className="font-bold" style={{ color: "#0d9488" }}>CAC</span> — קיצור של Customer Acquisition Cost (עלות רכישת לקוח בעברית).
+      </div>
+
+      {/* Formula — Option B: clean fraction */}
+      <div className="rounded-2xl p-4 mb-4" style={{ background: "rgba(2,62,138,0.05)", border: "1.5px solid rgba(2,62,138,0.12)" }}>
+        <div className="text-[10.5px] font-black text-center mb-3" style={{ color: "#023e8a" }}>הנוסחה:</div>
+        <div dir="ltr" className="flex items-center justify-center gap-3">
+          <span className="text-[15px] font-black" style={{ color: "#fb8500" }}>CAC</span>
+          <span className="text-[15px] font-black" style={{ color: "#023e8a" }}>=</span>
+          <div className="text-center">
+            <div className="text-[13px] font-black pb-1.5" style={{ color: "#0d9488", borderBottom: "2px solid rgba(2,62,138,0.25)" }}>
+              הוצאות שיווק ומכירות
+            </div>
+            <div className="text-[13px] font-black pt-1.5" style={{ color: "#023e8a" }}>
+              מספר לקוחות חדשים
             </div>
           </div>
         </div>
       </div>
-      <div
-        className="rounded-xl p-3 text-[12.5px] leading-[1.6]"
-        style={{ background: "rgba(13,148,136,0.07)", color: "rgba(0,0,0,0.55)" }}
-      >
-        חברה הוציאה ₪50,000 על שיווק ומכירות החודש ורכשה 100 לקוחות חדשים.
+
+      {/* Concrete example */}
+      <div className="rounded-xl p-4" style={{ background: "rgba(13,148,136,0.07)", border: "1px solid rgba(13,148,136,0.2)" }}>
+        <div className="text-[10.5px] font-black mb-2" style={{ color: "#0d9488" }}>דוגמה:</div>
+        <div className="text-[12.5px] leading-[1.9]" style={{ color: "rgba(0,0,0,0.65)" }}>
+          חברה הוציאה <span className="font-bold">₪50,000</span> על שיווק החודש
+          <br />ורכשה <span className="font-bold">100 לקוחות חדשים</span>
+          <br />→ <span className="font-black" style={{ color: "#0d9488" }}>50,000 ÷ 100 = ₪500 ללקוח</span>
+        </div>
       </div>
     </div>
   ),
   question: "מה ה-CAC של החברה?",
   options: ["₪50 ללקוח", "₪500 ללקוח", "₪5,000 ללקוח"],
   correct: 1,
-  okMsg: "נכון! 50,000 ÷ 100 = ₪500 לכל לקוח. עכשיו השאלה: כמה הלקוח שווה לחברה לאורך זמן? אם הוא משלם ₪200 בחודש — ה-CAC מוחזר תוך פחות מ-3 חודשים.",
-  errMsg: "50,000 ÷ 100 לקוחות = ₪500 לכל לקוח. זה ה-CAC. הכלל: CAC חייב להיות נמוך מ-LTV (Lifetime Value — כמה הלקוח מכניס לחברה לאורך זמן).",
+  okMsg: "נכון! 50,000 ÷ 100 = ₪500 לכל לקוח. עכשיו השאלה: כמה הלקוח שווה לחברה לאורך הזמן שהוא לקוח? (זה נקרא LTV — סך ההכנסה הממוצעת מלקוח). אם הוא משלם ₪200 בחודש ונשאר 3 חודשים — LTV של ₪600. כלומר, שילמנו ₪500 להביא אותו, ועשינו ₪600 — כדאי!",
+  errMsg: "50,000 ÷ 100 לקוחות = ₪500 לכל לקוח. זה ה-CAC. הכלל: CAC חייב להיות נמוך מה-LTV (סך מה שהלקוח ישלם לאורך הזמן שהוא לקוח שלנו). לקוח שעולה ₪500 לרכוש, ומכניס ₪2,000 — עסקה מצוינת.",
   learned: "CAC = הוצאות שיווק ÷ לקוחות חדשים",
 };
 
@@ -741,36 +751,75 @@ const DA6: ChoiceStep = {
   concept: "דאטה יכולה לשקר",
   context: (
     <div>
-      <div
-        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
-        style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)" }}
-      >
-        <span className="text-[20px] shrink-0">⚠️</span>
-        <div>
-          <div className="text-[12.5px] font-bold" style={{ color: "#b91c1c" }}>הטיית נתונים</div>
-          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.58)" }}>
-            כשאופן הצגת הנתונים גורם לנו להסיק מסקנות שגויות
-          </div>
+      {/* Story */}
+      <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "rgba(2,62,138,0.06)", border: "1px solid rgba(2,62,138,0.14)" }}>
+        <div className="text-[13px] font-black mb-1" style={{ color: "#023e8a" }}>📊 הבוס מרוצה. האנליסטית — פחות.</div>
+        <div className="text-[12px] leading-relaxed" style={{ color: "rgba(0,0,0,0.6)" }}>
+          מנהל מכירות הציג לדירקטוריון גרף שמראה <span className="font-bold" style={{ color: "#023e8a" }}>"זינוק עצום"</span> בינואר–מרץ. כולם מחאו כפיים.
+          <br />האנליסטית שאלה בשקט: <span className="font-bold">"מה הציר האנכי מציג?"</span>
         </div>
       </div>
-      <div className="flex gap-3 mb-4">
-        {[
-          { title: "גרף א׳", y: "0–100", desc: "עלייה של 3 יחידות נראית קטנה" },
-          { title: "גרף ב׳", y: "47–50", desc: "אותה עלייה נראית ענקית!" },
-        ].map((g) => (
-          <div
-            key={g.title}
-            className="flex-1 rounded-xl p-3"
-            style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.1)" }}
-          >
-            <div className="text-[11px] font-bold mb-1" style={{ color: "#023e8a" }}>{g.title}</div>
-            <div className="text-[10px] mb-1" style={{ color: "rgba(0,0,0,0.38)" }}>ציר Y: {g.y}</div>
-            <div className="text-[10.5px] leading-[1.4]" style={{ color: "rgba(0,0,0,0.55)" }}>{g.desc}</div>
-          </div>
-        ))}
+
+      {/* What is Y-axis */}
+      <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "rgba(251,133,0,0.07)", border: "1px solid rgba(251,133,0,0.25)" }}>
+        <div className="text-[11px] font-black mb-1.5" style={{ color: "#c96800" }}>📐 מה זה ציר Y?</div>
+        <div className="text-[11.5px] leading-relaxed" style={{ color: "rgba(0,0,0,0.62)" }}>
+          בכל גרף יש <span className="font-bold">ציר X</span> — האופקי (בדרך כלל זמן: ינואר, פברואר...) ו<span className="font-bold">ציר Y</span> — האנכי שמראה את הערכים (מכירות, משתמשים, רווח...).
+          <br /><span className="font-bold" style={{ color: "#b91c1c" }}>הטריק:</span> אם ציר Y לא מתחיל מ-0, גם שינוי קטן ייראה ענקי.
+        </div>
       </div>
-      <div className="text-[11.5px]" style={{ color: "rgba(0,0,0,0.38)" }}>
-        שני הגרפים מציגים את אותם נתונים בדיוק — רק ציר Y שונה.
+
+      {/* Two SVG charts */}
+      <div className="flex gap-2.5 mb-3">
+        {/* Chart A — honest */}
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(13,148,136,0.07)", border: "1.5px solid rgba(13,148,136,0.28)" }}>
+          <div className="text-[10.5px] font-black mb-0.5" style={{ color: "#0d9488" }}>גרף א׳ ✓ ישר</div>
+          <div className="text-[9.5px] mb-2" style={{ color: "rgba(0,0,0,0.4)" }}>ציר Y: 0 עד 100</div>
+          <svg viewBox="0 0 110 85" width="100%" style={{ display: "block" }}>
+            <line x1="22" y1="4" x2="22" y2="68" stroke="rgba(0,0,0,0.18)" strokeWidth="1"/>
+            <line x1="22" y1="68" x2="108" y2="68" stroke="rgba(0,0,0,0.18)" strokeWidth="1"/>
+            <text x="20" y="70" textAnchor="end" fontSize="6.5" fill="rgba(0,0,0,0.38)">0</text>
+            <text x="20" y="38" textAnchor="end" fontSize="6.5" fill="rgba(0,0,0,0.38)">50</text>
+            <text x="20" y="8"  textAnchor="end" fontSize="6.5" fill="rgba(0,0,0,0.38)">100</text>
+            <line x1="22" y1="36" x2="108" y2="36" stroke="rgba(0,0,0,0.05)" strokeWidth="1" strokeDasharray="3,3"/>
+            {/* bars: values 47, 49, 50 → heights 47%, 49%, 50% of 64px */}
+            <rect x="30" y={68 - 47*64/100} width="18" height={47*64/100} fill="#0d9488" rx="2"/>
+            <rect x="56" y={68 - 49*64/100} width="18" height={49*64/100} fill="#0d9488" rx="2"/>
+            <rect x="82" y={68 - 50*64/100} width="18" height={50*64/100} fill="#0d9488" rx="2"/>
+            <text x="39" y="79" textAnchor="middle" fontSize="6.5" fill="rgba(0,0,0,0.38)">ינו׳</text>
+            <text x="65" y="79" textAnchor="middle" fontSize="6.5" fill="rgba(0,0,0,0.38)">פבר׳</text>
+            <text x="91" y="79" textAnchor="middle" fontSize="6.5" fill="rgba(0,0,0,0.38)">מרץ</text>
+          </svg>
+          <div className="text-[9.5px] text-center mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>עלייה קטנה — נראית כך</div>
+        </div>
+
+        {/* Chart B — misleading */}
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(220,38,38,0.06)", border: "1.5px solid rgba(220,38,38,0.28)" }}>
+          <div className="text-[10.5px] font-black mb-0.5" style={{ color: "#b91c1c" }}>גרף ב׳ ✗ מטעה</div>
+          <div className="text-[9.5px] mb-2" style={{ color: "rgba(0,0,0,0.4)" }}>ציר Y: 47 עד 50 בלבד!</div>
+          <svg viewBox="0 0 110 85" width="100%" style={{ display: "block" }}>
+            <line x1="22" y1="4" x2="22" y2="68" stroke="rgba(0,0,0,0.18)" strokeWidth="1"/>
+            <line x1="22" y1="68" x2="108" y2="68" stroke="rgba(0,0,0,0.18)" strokeWidth="1"/>
+            <text x="20" y="70" textAnchor="end" fontSize="6.5" fill="rgba(0,0,0,0.38)">47</text>
+            <text x="20" y="38" textAnchor="end" fontSize="6" fill="rgba(0,0,0,0.38)">48.5</text>
+            <text x="20" y="8"  textAnchor="end" fontSize="6.5" fill="rgba(0,0,0,0.38)">50</text>
+            <line x1="22" y1="36" x2="108" y2="36" stroke="rgba(0,0,0,0.05)" strokeWidth="1" strokeDasharray="3,3"/>
+            {/* break indicator: axis doesn't start at 0 */}
+            <path d="M 15 65 L 19 62 L 15 59 L 19 56" stroke="#ef4444" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
+            {/* bars: values 47,49,50; range=3; height=(v-47)*64/3 */}
+            <rect x="30" y={68 - Math.max((47-47)*64/3, 3)} width="18" height={Math.max((47-47)*64/3, 3)} fill="#ef4444" rx="2"/>
+            <rect x="56" y={68 - (49-47)*64/3}              width="18" height={(49-47)*64/3}               fill="#ef4444" rx="2"/>
+            <rect x="82" y={68 - (50-47)*64/3}              width="18" height={(50-47)*64/3}               fill="#ef4444" rx="2"/>
+            <text x="39" y="79" textAnchor="middle" fontSize="6.5" fill="rgba(0,0,0,0.38)">ינו׳</text>
+            <text x="65" y="79" textAnchor="middle" fontSize="6.5" fill="rgba(0,0,0,0.38)">פבר׳</text>
+            <text x="91" y="79" textAnchor="middle" fontSize="6.5" fill="rgba(0,0,0,0.38)">מרץ</text>
+          </svg>
+          <div className="text-[9.5px] text-center mt-0.5" style={{ color: "#b91c1c" }}>אותה עלייה — נראית ענקית!</div>
+        </div>
+      </div>
+
+      <div className="text-[11.5px] text-center font-bold" style={{ color: "rgba(0,0,0,0.38)" }}>
+        אותם מספרים בדיוק. שני גרפים שונים לגמרי.
       </div>
     </div>
   ),
@@ -2278,36 +2327,43 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
         </div>
       </div>
 
-      {/* Growth graph — skill bars */}
+      {/* Skills — 3-stage progress */}
       <div className="mb-7">
-        <div
-          className="text-[10px] font-bold uppercase tracking-widest mb-4"
-          style={{ color: "rgba(0,0,0,0.32)" }}
-        >
-          כישורים שרכשת היום
+        <div className="text-[15px] font-black mb-1" style={{ color: "#023e8a" }}>
+          5 כישורים שגילית היום ✓
+        </div>
+        <div className="text-[11.5px] mb-4" style={{ color: "rgba(0,0,0,0.45)" }}>
+          לפני הסימולציה — לא הכרת אף אחד מהם
         </div>
         <div className="flex flex-col gap-3">
           {skills.map((s, i) => (
-            <div key={i}>
-              <div className="flex justify-between mb-[5px]">
-                <span className="text-[12px] font-bold" style={{ color: "#023e8a" }}>{s.label}</span>
-                <span className="text-[11px]" style={{ color: "#3b82f6" }}>{s.val}%</span>
+            <div key={i} className="flex items-center gap-2">
+              <div className="text-[12px] font-bold shrink-0 w-[110px] text-right" style={{ color: "#023e8a" }}>
+                {s.label}
               </div>
-              <div className="h-[6px] rounded-full" style={{ background: "rgba(59,130,246,0.12)" }}>
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${s.val}%`,
-                    background: "linear-gradient(90deg, #3b82f6, #60a5fa)",
-                    transition: "width 1s ease-out",
-                  }}
-                />
+              {/* Stage 1 — before */}
+              <div className="rounded-full px-2.5 py-1 text-[10px] font-bold shrink-0"
+                style={{ background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.3)" }}>
+                לא הכרתי
+              </div>
+              <div className="text-[10px] shrink-0" style={{ color: "rgba(0,0,0,0.2)" }}>→</div>
+              {/* Stage 2 — NOW (highlighted) */}
+              <div className="rounded-full px-3 py-1 text-[11px] font-black shrink-0 text-white"
+                style={{ background: "#0d9488", boxShadow: "0 2px 8px rgba(13,148,136,0.35)" }}>
+                ✓ גיליתי!
+              </div>
+              <div className="text-[10px] shrink-0" style={{ color: "rgba(0,0,0,0.2)" }}>→</div>
+              {/* Stage 3 — future */}
+              <div className="rounded-full px-2.5 py-1 text-[10px] font-bold shrink-0"
+                style={{ background: "rgba(13,148,136,0.08)", color: "rgba(13,148,136,0.45)", border: "1px dashed rgba(13,148,136,0.3)" }}>
+                שולטת
               </div>
             </div>
           ))}
         </div>
-        <div className="text-[11px] mt-3 text-right" style={{ color: "rgba(0,0,0,0.35)" }}>
-          לפני הסימולציה — הכל היה 0%
+        <div className="mt-4 rounded-xl px-4 py-2.5 text-center text-[11.5px] font-bold"
+          style={{ background: "rgba(13,148,136,0.08)", color: "#0d9488" }}>
+          "שולטת" מגיעה עם הלימודים — כבר התחלת 🎯
         </div>
       </div>
 
@@ -2355,10 +2411,25 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
         </div>
       </div>
 
+      {domain === "data" && (
+        <Link
+          href="/explore/data/learn"
+          className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"
+          style={{ background: "#0d9488", color: "#fff", fontFamily: "'Heebo', sans-serif" }}
+        >
+          המשיכי למרכז הלמידה ←
+        </Link>
+      )}
+
       <Link
         href={nextDomain ? `/explore/${nextDomain}` : "/explore"}
-        className="block w-full text-center py-[14px] rounded-xl text-white font-bold text-[15px] mb-4"
-        style={{ background: "#fb8500", fontFamily: "'Heebo', sans-serif" }}
+        className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-4"
+        style={{
+          background: domain === "data" ? "transparent" : "#fb8500",
+          color: domain === "data" ? "rgba(0,0,0,0.4)" : "#fff",
+          border: domain === "data" ? "1px solid rgba(0,0,0,0.1)" : "none",
+          fontFamily: "'Heebo', sans-serif",
+        }}
       >
         {nextDomain ? `לתחום הבא ←` : "חזרה למסלול ←"}
       </Link>
