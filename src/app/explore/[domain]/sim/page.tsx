@@ -8,6 +8,114 @@ import { saveSimulationProgress, updateTask } from "@/lib/candidate";
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// THEME — עיצוב "Playful" (קורל/סגול על קרם) לתחום ה-code בלבד; שאר התחומים
+// ממשיכים עם עיצוב הניווי הקיים. כל שאר קומפוננטות ה-UI מקבלות theme כפרופ.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type SimTheme = {
+  fontUI: string;
+  fontCode: string;
+  pageBg: string;
+  cardBg: string;
+  cardBorder: string;
+  headerGradient: string;
+  accent: string;
+  accentSoft: string;
+  accentGradient: string;
+  textDark: string;
+  textMuted: string;
+  textFaint: string;
+  successBg: string;
+  successBorder: string;
+  successText: string;
+  errorBg: string;
+  errorBorder: string;
+  errorText: string;
+  hintBg: string;
+  hintBorder: string;
+  hintText: string;
+  codeBg: string;
+  codeHeaderBg: string;
+  codeKeyword: string;
+  codeFn: string;
+  codeString: string;
+  codeNum: string;
+  codeErr: string;
+  codePlain: string;
+  progressTrack: string;
+};
+
+const NAVY_THEME: SimTheme = {
+  fontUI: "'Heebo', sans-serif",
+  fontCode: "monospace",
+  pageBg: "#fbf9f5",
+  cardBg: "#fff",
+  cardBorder: "rgba(0,0,0,0.08)",
+  headerGradient: "#023e8a",
+  accent: "#3b82f6",
+  accentSoft: "rgba(59,130,246,0.1)",
+  accentGradient: "#023e8a",
+  textDark: "#023e8a",
+  textMuted: "rgba(0,0,0,0.6)",
+  textFaint: "rgba(0,0,0,0.35)",
+  successBg: "rgba(34,197,94,0.08)",
+  successBorder: "#22c55e55",
+  successText: "#15803d",
+  errorBg: "rgba(220,38,38,0.07)",
+  errorBorder: "#dc262644",
+  errorText: "#b91c1c",
+  hintBg: "rgba(251,133,0,0.08)",
+  hintBorder: "rgba(251,133,0,0.22)",
+  hintText: "#c2410c",
+  codeBg: "#0f172a",
+  codeHeaderBg: "#1e293b",
+  codeKeyword: "#a78bfa",
+  codeFn: "#60a5fa",
+  codeString: "#34d399",
+  codeNum: "#f472b6",
+  codeErr: "#f87171",
+  codePlain: "#e2e8f0",
+  progressTrack: "rgba(59,130,246,0.18)",
+};
+
+const PLAYFUL_THEME: SimTheme = {
+  fontUI: "'Rubik', sans-serif",
+  fontCode: "'JetBrains Mono', monospace",
+  pageBg: "#f3ede0",
+  cardBg: "#fff8ef",
+  cardBorder: "#ffe3cc",
+  headerGradient: "linear-gradient(135deg, #ff7a59, #ffb648)",
+  accent: "#7c5cff",
+  accentSoft: "rgba(124,92,255,0.1)",
+  accentGradient: "linear-gradient(135deg, #7c5cff, #5f3dff)",
+  textDark: "#33261a",
+  textMuted: "#5a4636",
+  textFaint: "#a3773f",
+  successBg: "#e4ffe9",
+  successBorder: "#7ee6a0",
+  successText: "#219653",
+  errorBg: "#ffe6e6",
+  errorBorder: "#ffb3b3",
+  errorText: "#e05252",
+  hintBg: "#fff2da",
+  hintBorder: "#ffcf70",
+  hintText: "#8a5a12",
+  codeBg: "#2b2540",
+  codeHeaderBg: "#241e38",
+  codeKeyword: "#ff9df5",
+  codeFn: "#7ee6ff",
+  codeString: "#a5f3b8",
+  codeNum: "#ffd580",
+  codeErr: "#ff8a80",
+  codePlain: "#eae6ff",
+  progressTrack: "#ffe3cc",
+};
+
+function getTheme(domain: string): SimTheme {
+  return domain === "code" ? PLAYFUL_THEME : NAVY_THEME;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // STEP TYPES
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -22,6 +130,7 @@ type ChoiceStep = {
   okMsg: string;
   errMsg: string;
   learned: string;
+  level?: 1 | 2 | 3;
 };
 
 type SequenceStep = {
@@ -35,9 +144,181 @@ type SequenceStep = {
   okMsg: string;
   errMsg: string;
   learned: string;
+  level?: 1 | 2 | 3;
 };
 
-type Step = ChoiceStep | SequenceStep;
+// משחק התאמה — לוחצות על פריט משמאל ואז על ההתאמה שלו מימין
+type MatchStep = {
+  kind: "match";
+  tag: string;
+  concept: string;
+  context: React.ReactNode;
+  instruction: string;
+  pairs: { left: string; right: string }[];
+  okMsg: string;
+  errMsg: string;
+  learned: string;
+  level?: 1 | 2 | 3;
+};
+
+// השלמה בהקלדה חופשית — בודקים מול רשימת תשובות מקובלות (case-insensitive, trim)
+type TypeStep = {
+  kind: "type";
+  tag: string;
+  concept: string;
+  context: React.ReactNode;
+  question: string;
+  accepted: string[];
+  placeholder?: string;
+  okMsg: string;
+  errMsg: string;
+  learned: string;
+  level?: 1 | 2 | 3;
+};
+
+type Step = ChoiceStep | SequenceStep | MatchStep | TypeStep;
+
+const LEVEL_LABELS: Record<number, string> = {
+  1: "רמה 1 · יסודות",
+  2: "רמה 2 · בניית לוגיקה",
+  3: "רמה 3 · אתגר מתקדם",
+};
+
+// קופסת "רוצה להעמיק?" — קישורי מאמר + סרטון מוטמע בתוך הדף (בלי לצאת לינק חדש)
+type LearnResource = { label: string; url: string; kind: "article" | "video" };
+
+// מוציאה video id מתוך כתובת יוטיוב (watch?v=, youtu.be/, embed/) כדי להטמיע נגן ישירות בדף
+function getYouTubeEmbedUrl(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+}
+
+// (בשימוש בלעדי בתחום ה-code — צבועה תמיד בפלטת ה-Playful)
+function LearnMore({ resources }: { resources: LearnResource[] }) {
+  const t = PLAYFUL_THEME;
+  const articles = resources.filter((r) => r.kind === "article");
+  const videos = resources.filter((r) => r.kind === "video");
+
+  return (
+    <div
+      className="rounded-2xl p-4 mb-5"
+      style={{ background: t.cardBg, border: `1.5px solid ${t.cardBorder}`, fontFamily: t.fontUI }}
+    >
+      <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textFaint }}>
+        רוצה להעמיק? 📚
+      </div>
+
+      <div className="flex gap-4 flex-wrap items-start">
+        {articles.length > 0 && (
+          <div className="flex-1 min-w-[120px]">
+            <div className="text-[10px] font-bold uppercase tracking-widest mb-[6px]" style={{ color: t.textFaint }}>
+              📄 קריאה
+            </div>
+            <div className="flex flex-col gap-[6px]">
+              {articles.map((r) => (
+                <a
+                  key={r.url}
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12px] font-bold underline leading-[1.4]"
+                  style={{ color: t.accent }}
+                >
+                  {r.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {videos.length > 0 && (
+          <div className="flex-1 min-w-[140px]">
+            <div className="text-[10px] font-bold uppercase tracking-widest mb-[6px]" style={{ color: t.textFaint }}>
+              🎥 צפייה
+            </div>
+            <div className="flex flex-col gap-3">
+              {videos.map((v) => {
+                const embedUrl = getYouTubeEmbedUrl(v.url);
+                return (
+                  <div key={v.url}>
+                    {embedUrl ? (
+                      <div
+                        className="relative w-full rounded-lg overflow-hidden"
+                        style={{ paddingTop: "56.25%", background: "#000" }}
+                      >
+                        <iframe
+                          src={embedUrl}
+                          title={v.label}
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className="absolute inset-0 w-full h-full border-0"
+                        />
+                      </div>
+                    ) : (
+                      <a
+                        href={v.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[12px] font-bold underline"
+                        style={{ color: t.accent }}
+                      >
+                        {v.label}
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// קופסת "העמקה" — תוכן טכני נוסף שמתקפל (בשימוש בלעדי בתחום ה-code)
+function DeepDive({ title, children }: { title: string; children: React.ReactNode }) {
+  const t = PLAYFUL_THEME;
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl overflow-hidden mb-5" style={{ border: `1.5px solid ${t.cardBorder}`, fontFamily: t.fontUI }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-right"
+        style={{ background: t.accentSoft }}
+      >
+        <span className="text-[12.5px] font-bold" style={{ color: t.accent }}>🔬 {title}</span>
+        <span className="text-[12px]" style={{ color: t.accent }}>{open ? "סגירה ▲" : "העמקה ▼"}</span>
+      </button>
+      {open && (
+        <div className="px-4 py-4 text-[12.5px] leading-[1.75]" style={{ color: t.textMuted, background: t.cardBg }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// כרטיס פתיחה לכל שלב (בשימוש בלעדי בתחום ה-code)
+function ConceptIntro({ title, icon = "📘", children }: { title: string; icon?: string; children: React.ReactNode }) {
+  const t = PLAYFUL_THEME;
+  return (
+    <div
+      className="rounded-2xl p-4 mb-4"
+      style={{ background: t.cardBg, border: `1.5px solid ${t.cardBorder}`, boxShadow: "0 4px 16px rgba(255,122,89,0.08)", fontFamily: t.fontUI }}
+    >
+      <div className="flex items-center gap-2 mb-[10px]">
+        <span className="text-[17px] shrink-0">{icon}</span>
+        <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: t.accent }}>{title}</span>
+      </div>
+      <div className="text-[13.5px] leading-[1.75] flex flex-col gap-[10px]" style={{ color: t.textMuted }}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP 0 — זהות: "זה בשבילי?"
@@ -474,10 +755,773 @@ const S6: ChoiceStep = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// STEP 7 — תנאי אמת/שקר: בדיקת אורך סיסמה
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S7: ChoiceStep = {
+  kind: "choice",
+  tag: "תנאי אמת/שקר",
+  concept: "פונקציה שמחזירה True/False",
+  context: (
+    <div>
+      <ConceptIntro title="פונקציה שמחזירה True/False" icon="🔑">
+        <p>
+          בכל אתר שדורש הרשמה, יש קוד שבודק אם הסיסמה שהזנת "מספיק חזקה". איך עושים את זה בפייתון? עם שתי מילות מפתח:
+        </p>
+        <ul className="flex flex-col gap-[6px] pr-4 list-disc">
+          <li><span className="font-mono font-bold">len()</span> — פונקציה מובנית שסופרת כמה תווים יש במחרוזת (טקסט).</li>
+          <li><span className="font-mono font-bold">if...else</span> — מריץ קטע קוד אחד אם תנאי נכון, וקטע אחר אם לא.</li>
+        </ul>
+        <p>
+          כששתי אלה משולבות יחד — מקבלים פונקציה קטנה שמחזירה תשובה של <span className="font-bold">אמת/שקר (True/False)</span> לכל שאלה שאפשר לנסח כתנאי.
+        </p>
+      </ConceptIntro>
+
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
+        style={{ background: "rgba(124,92,255,0.08)", border: "1px solid rgba(124,92,255,0.22)" }}
+      >
+        <span className="text-[20px] shrink-0">🔐</span>
+        <div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#5f3dff" }}>משימה מצוות האבטחה</div>
+          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "#5a4636" }}>
+            "צריך פונקציה שבודקת אם סיסמה מכילה 8 תווים או יותר, ומחזירה True/False."
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl overflow-hidden mb-4" style={{ boxShadow: "0 4px 20px rgba(90,60,20,0.14)" }}>
+        <div className="flex items-center gap-[6px] px-4 py-[9px]" style={{ background: "#241e38" }}>
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ff8a80" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ffd580" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#a5f3b8" }} />
+          <span className="text-[11px] mr-2" style={{ color: "#b8aee0" }}>password_check.py</span>
+        </div>
+        <div className="p-4 font-mono text-[13px] leading-[2.2]" style={{ background: "#2b2540", color: "#eae6ff", fontFamily: "'JetBrains Mono', monospace" }} dir="ltr">
+          <div>
+            <span style={{ color: "#ff9df5" }}>def</span>
+            {" password_check("}
+            <span style={{ color: "#c9b8ff" }}>password</span>
+            {"):"}
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#ff9df5" }}>if</span>
+            {" "}
+            <span style={{ color: "#7ee6ff" }}>len</span>
+            {"("}
+            <span style={{ color: "#c9b8ff" }}>password</span>
+            {") >= "}
+            <span style={{ color: "#ffd580" }}>8</span>
+            {":"}
+          </div>
+          <div>
+            {"        "}
+            <span style={{ color: "#ff9df5" }}>return</span>
+            {" "}
+            <span style={{ color: "#ffd580" }}>True</span>
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#ff9df5" }}>else</span>
+            {":"}
+          </div>
+          <div>
+            {"        "}
+            <span style={{ color: "#ff9df5" }}>return</span>
+            {" "}
+            <span style={{ color: "#ffd580" }}>False</span>
+          </div>
+        </div>
+      </div>
+      <div className="text-[11.5px] leading-[1.55] p-3 rounded-xl mb-5" style={{ background: "rgba(255,242,218,0.6)", color: "#5a4636" }}>
+        `len()` סופרת כמה תווים יש במחרוזת.
+      </div>
+
+      <DeepDive title="האם 8 תווים באמת מספיק כדי לקבוע שסיסמה 'חזקה'?">
+        <p className="mb-3">
+          התשובה הכנה: לא ממש. `password_check` בודקת רק <span className="font-bold">אורך</span> — והסיסמה
+          "<span className="font-mono">12345678</span>" עוברת אותה בקלות, למרות שהיא אחת הסיסמאות הכי נפוצות ופרוצות בעולם.
+        </p>
+        <p className="mb-3">
+          מערכות אמיתיות מוסיפות בדיקות נוספות: האם יש גם אות גדולה, גם ספרה, גם תו מיוחד? בפייתון אמיתי עושים
+          את זה עם ביטויים רגולריים (<span className="font-mono">regex</span>) או בדיקות נוספות בתוך אותה פונקציה —
+          אבל העיקרון זהה: כל בדיקה היא עוד <span className="font-mono font-bold">if</span> שמצטרף לתנאי.
+        </p>
+        <p>
+          שימי לב גם לגבול המדויק: <span className="font-mono">&gt;= 8</span> אומר "8 ומעלה, כולל 8 בדיוק". אם היינו
+          כותבים <span className="font-mono">&gt; 8</span> (בלי ה-<span className="font-mono">=</span>), סיסמה בת
+          8 תווים בדיוק הייתה נכשלת — טעות נפוצה מאוד שנקראת <span className="font-bold">off-by-one</span>.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — len() Function", url: "https://www.w3schools.com/python/ref_func_len.asp", kind: "article" },
+          { label: "W3Schools — If...Else Statements", url: "https://www.w3schools.com/python/python_conditions.asp", kind: "article" },
+          { label: "וידאו: If Elif Else Statements in Python", url: "https://www.youtube.com/watch?v=rvLpDfOi9pQ", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  question: 'מה תחזיר הקריאה password_check("1234")?',
+  options: ["True", "False", "שגיאה — הקוד לא תקין"],
+  correct: 1,
+  okMsg: '`len("1234")` שווה 4 — קטן מ-8, אז התנאי `if` לא מתקיים, ואז מגיעים ל-`else` שמחזיר False.',
+  errMsg: 'False — כי `len("1234")` הוא 4, וזה קטן מ-8. התנאי `if len(password) >= 8` נכשל, אז רצים ל-`else`.',
+  learned: "len() סופרת תווים; if/else מחזיר True או False לפי התנאי",
+  level: 1,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 8 — לולאת FOR שעוברת על כל תו במחרוזת
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S8: ChoiceStep = {
+  kind: "choice",
+  tag: "לולאת FOR",
+  concept: "מעבר על מחרוזת תו-אחר-תו",
+  context: (
+    <div>
+      <ConceptIntro title="מעבר על מחרוזת תו-אחר-תו" icon="🔁">
+        <p>
+          <span className="font-bold" style={{ color: "#7c5cff" }}>לולאת FOR</span> היא אחד הכלים הכי שימושיים בתכנות: היא לוקחת רשימה (או מחרוזת) ורצה על כל איבר בה, אחד-אחד, ומריצה עליו את אותו קטע קוד.
+        </p>
+        <p>
+          במקום לכתוב "בדוק אם התו הראשון הוא @, בדוק אם השני הוא @..." שוב ושוב — כותבים פעם אחת:
+          {" "}<span className="font-bold">"עבור כל תו במחרוזת — בדוק אם הוא @"</span>. המחשב חוזר על זה בעצמו כמה פעמים שצריך.
+        </p>
+      </ConceptIntro>
+
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
+        style={{ background: "rgba(126,230,160,0.15)", border: "1px solid rgba(126,230,160,0.35)" }}
+      >
+        <span className="text-[20px] shrink-0">🕵️</span>
+        <div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#219653" }}>אתגר בלשי</div>
+          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "#5a4636" }}>
+            מישהו הקליד "danaexample.com" בטעות — בלי @. איך התוכנה תדע שזה לא מייל תקין, בלי שתדעי מראש איפה ה-@ אמור להיות?
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "#5a4636" }}>
+        עכשיו נבדוק אם למייל יש את התו <span className="font-bold" style={{ color: "#7c5cff" }}>"@"</span> — אבל אנחנו לא יודעים מראש איפה הוא נמצא במחרוזת.
+      </p>
+      <div className="rounded-2xl overflow-hidden mb-4" style={{ boxShadow: "0 4px 20px rgba(90,60,20,0.14)" }}>
+        <div className="flex items-center gap-[6px] px-4 py-[9px]" style={{ background: "#241e38" }}>
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ff8a80" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ffd580" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#a5f3b8" }} />
+          <span className="text-[11px] mr-2" style={{ color: "#b8aee0" }}>email_check.py</span>
+        </div>
+        <div className="p-4 font-mono text-[13px] leading-[2.2]" style={{ background: "#2b2540", color: "#eae6ff", fontFamily: "'JetBrains Mono', monospace" }} dir="ltr">
+          <div>
+            <span style={{ color: "#ff9df5" }}>def</span>
+            {" email_check("}
+            <span style={{ color: "#c9b8ff" }}>email</span>
+            {"):"}
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#c9b8ff" }}>at_sign</span>
+            {" = "}
+            <span style={{ color: "#ffd580" }}>False</span>
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#ff9df5" }}>for</span>
+            {" "}
+            <span style={{ color: "#c9b8ff" }}>char</span>
+            {" "}
+            <span style={{ color: "#ff9df5" }}>in</span>
+            {" "}
+            <span style={{ color: "#c9b8ff" }}>email</span>
+            {":"}
+          </div>
+          <div>
+            {"        "}
+            <span style={{ color: "#ff9df5" }}>if</span>
+            {" "}
+            <span style={{ color: "#c9b8ff" }}>char</span>
+            {" == "}
+            <span style={{ color: "#a5f3b8" }}>"@"</span>
+            {":"}
+          </div>
+          <div>
+            {"            "}
+            <span style={{ color: "#c9b8ff" }}>at_sign</span>
+            {" = "}
+            <span style={{ color: "#ffd580" }}>True</span>
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#ff9df5" }}>return</span>
+            {" "}
+            <span style={{ color: "#c9b8ff" }}>at_sign</span>
+          </div>
+        </div>
+      </div>
+
+      <DeepDive title="יש דרך קצרה יותר, וגם — הפתרון הזה לא מושלם">
+        <p className="mb-3">
+          פייתון בעצם נותנת קיצור מובנה בדיוק לזה: <span className="font-mono font-bold">if "@" in email:</span>
+          {" "}עושה בדיוק את מה שהלולאה עושה, בשורה אחת. זה נקרא סגנון <span className="font-bold">"Pythonic"</span> —
+          קצר וקריא. אז למה בכלל ללמד את הלולאה? כי היא מראה לך <span className="font-bold">מה קורה מאחורי הקלעים</span>{" "}
+          כש-Python "מחפשת" תו במחרוזת — וההבנה הזאת תשרת אותך גם כשתצטרכי לעשות משהו שאין לו קיצור מוכן.
+        </p>
+        <p>
+          שימי לב גם למגבלה: הקוד הנוכחי רק בודק שיש @ <span className="font-bold">איפשהו</span> — מייל כמו
+          "<span className="font-mono">a@@b</span>" (שתי שקדות @) או "<span className="font-mono">@b.com</span>"
+          (בלי שם לפני ה-@) יעברו את הבדיקה הזו בהצלחה, למרות שהם לא מיילים תקינים. בעולם האמיתי בודקים גם
+          שיש בדיוק @ אחד, שיש טקסט לפניו ואחריו, ושיש נקודה בחלק שאחרי ה-@.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python For Loops", url: "https://www.w3schools.com/python/python_for_loops.asp", kind: "article" },
+          { label: "וידאו: For Loops in Python are Easy", url: "https://www.youtube.com/watch?v=KWgYha0clzw", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  question: 'למה צריך לולאת FOR שעוברת על כל תו, ולא מספיק לבדוק רק תו אחד קבוע במייל?',
+  options: [
+    "כי ה-'@' יכול להימצא בכל מיקום שונה בכל מייל — לא ידוע מראש איפה",
+    "כי Python לא יודעת לקרוא מחרוזות בלי לולאה",
+    "כי לולאה רצה יותר מהר מבדיקה בודדת",
+  ],
+  correct: 0,
+  okMsg: "בדיוק! ל-'name@domain.com' יש @ במיקום 4, ול-'a@b.com' במיקום 1. הלולאה בודקת כל תו בתורו כדי לא לפספס אותו לא משנה איפה הוא.",
+  errMsg: "התשובה: מיקום ה-'@' משתנה מכתובת מייל אחת לשנייה — אין לו מיקום קבוע. לכן הלולאה עוברת על כל תו כדי לוודא שלא מפספסים אותו.",
+  learned: "לולאת FOR עוברת על כל איבר במחרוזת בנפרד — שימושי כשלא יודעים מראש איפה למצוא משהו",
+  level: 1,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 8.5 — משחק התאמה: מילות מפתח
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S_MATCH1: MatchStep = {
+  kind: "match",
+  tag: "משחק התאמה",
+  concept: "חזרה על מילות המפתח שלמדנו",
+  context: (
+    <div>
+      <ConceptIntro title="חזרה על מילות המפתח שלמדנו" icon="🧠">
+        <p>
+          עד עכשיו פגשת ארבע מילות מפתח (keywords) שחוזרות בכל פונקציית בדיקה בפייתון. הן לא סתם מילים — כל אחת היא הוראה מדויקת למחשב, ובלעדיה הקוד פשוט לא ירוץ.
+        </p>
+        <p>
+          לפני שממשיכים לשלב הבא — בואי נוודא שהמונחים יושבים טוב. לחצי על מילת מפתח משמאל, ואז על התפקיד המתאים לה מימין.
+        </p>
+      </ConceptIntro>
+
+      <DeepDive title="keyword או פונקציה? יש הבדל, וזה חשוב">
+        <p className="mb-3">
+          שלוש מהמילים ששיחקת איתן — <span className="font-mono font-bold">def</span>,{" "}
+          <span className="font-mono font-bold">return</span> ו-<span className="font-mono font-bold">for</span> — הן
+          {" "}<span className="font-bold">מילות מפתח שמורות (keywords)</span> חלק משפת פייתון עצמה. בגלל זה
+          אי אפשר לקרוא למשתנה <span className="font-mono">def = 5</span> — Python תזרוק שגיאה, כי המילה כבר תפוסה.
+        </p>
+        <p>
+          <span className="font-mono font-bold">len()</span> לעומת זאת היא <span className="font-bold">פונקציה מובנית</span>{" "}
+          (built-in function) — לא מילת מפתח. ההבדל הזה לא משנה לשימוש היומיומי, אבל הוא כן משנה אם אי פעם תרצי לדעת
+          למה אפשר לכתוב <span className="font-mono">my_len = len</span> (להעתיק פונקציה למשתנה) אבל אי אפשר לעשות
+          את זה עם <span className="font-mono">for</span> או <span className="font-mono">def</span>. בפייתון יש כ-35
+          מילות מפתח שמורות בסך הכול — כדאי להכיר את הרשימה כדי לא "להיתקע" בהן בטעות בתור שם משתנה.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python Functions", url: "https://www.w3schools.com/python/python_functions.asp", kind: "article" },
+          { label: "W3Schools — def Keyword", url: "https://www.w3schools.com/python/ref_keyword_def.asp", kind: "article" },
+          { label: "וידאו: Functions in Python are Easy", url: "https://www.youtube.com/watch?v=89cGQjB5R4M", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  instruction: "התאימי כל מילת מפתח לתפקיד שלה:",
+  pairs: [
+    { left: "def", right: "מגדירה פונקציה חדשה" },
+    { left: "return", right: "מחזירה תוצאה החוצה מהפונקציה" },
+    { left: "len()", right: "סופרת כמה תווים יש במחרוזת" },
+    { left: "for", right: "עוברת על כל תו/איבר בתורו" },
+  ],
+  okMsg: "כל הכבוד — ארבע מילות המפתח האלה הן הבסיס לכל פונקציית בדיקה שתכתבי מעכשיו.",
+  errMsg: "כמעט! נסי שוב — כל מילת מפתח מתאימה לתפקיד אחד בלבד.",
+  learned: "def / return / len() / for — ארבע אבני היסוד של פונקציית בדיקה",
+  level: 1,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 9 — שילוב שתי בדיקות עם and
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S9: ChoiceStep = {
+  kind: "choice",
+  tag: "שילוב תנאים",
+  concept: "and — שתי בדיקות ביחד",
+  context: (
+    <div>
+      <ConceptIntro title="and — שתי בדיקות ביחד" icon="🔗">
+        <p>
+          עד עכשיו כתבנו שתי פונקציות נפרדות — אחת בודקת מייל, אחת בודקת סיסמה. אבל כדי להתחבר לאתר, <span className="font-bold" style={{ color: "#7c5cff" }}>שתיהן</span> צריכות להיות תקינות.
+        </p>
+        <p>
+          מילת המפתח <span className="font-mono font-bold">and</span> היא בדיוק הכלי לזה: היא מחברת שני תנאים לתנאי אחד גדול, שנכון (True) רק אם <span className="font-bold">שני הצדדים</span> שלו נכונים. אם ולו צד אחד הוא False — כל התנאי המשולב הופך ל-False, גם אם הצד השני היה תקין לגמרי.
+        </p>
+      </ConceptIntro>
+
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
+        style={{ background: "rgba(124,92,255,0.08)", border: "1px solid rgba(124,92,255,0.22)" }}
+      >
+        <span className="text-[20px] shrink-0">🔒</span>
+        <div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#5f3dff" }}>מנעול כפול על הדלת</div>
+          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "#5a4636" }}>
+            תחשבי על דלת עם שני מנעולים — צריך לפתוח את שניהם כדי להיכנס. גם אם פתחת מנעול אחד מושלם, אם השני נעול — הדלת עדיין סגורה.
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "#5a4636" }}>
+        עכשיו נחבר את שתי הפונקציות למסך התחברות אמיתי:
+      </p>
+      <div className="rounded-2xl overflow-hidden mb-4" style={{ boxShadow: "0 4px 20px rgba(90,60,20,0.14)" }}>
+        <div className="flex items-center gap-[6px] px-4 py-[9px]" style={{ background: "#241e38" }}>
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ff8a80" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ffd580" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#a5f3b8" }} />
+          <span className="text-[11px] mr-2" style={{ color: "#b8aee0" }}>login.py</span>
+        </div>
+        <div className="p-4 font-mono text-[13px] leading-[2.2]" style={{ background: "#2b2540", color: "#eae6ff", fontFamily: "'JetBrains Mono', monospace" }} dir="ltr">
+          <div>
+            <span style={{ color: "#ff9df5" }}>if</span>
+            {" "}
+            <span style={{ color: "#7ee6ff" }}>email_check</span>
+            {"("}
+            <span style={{ color: "#c9b8ff" }}>email</span>
+            {") "}
+            <span style={{ color: "#ff9df5" }}>and</span>
+            {" "}
+            <span style={{ color: "#7ee6ff" }}>password_check</span>
+            {"("}
+            <span style={{ color: "#c9b8ff" }}>password</span>
+            {"):"}
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#7ee6ff" }}>print</span>
+            {"("}
+            <span style={{ color: "#a5f3b8" }}>"Login OK!"</span>
+            {")"}
+          </div>
+          <div>
+            <span style={{ color: "#ff9df5" }}>else</span>
+            {":"}
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#7ee6ff" }}>print</span>
+            {"("}
+            <span style={{ color: "#a5f3b8" }}>"Check your credentials!"</span>
+            {")"}
+          </div>
+        </div>
+      </div>
+
+      <DeepDive title="פייתון לפעמים לא בכלל טורחת לבדוק את הצד השני — למה?">
+        <p className="mb-3">
+          זה נקרא <span className="font-bold">short-circuit evaluation</span> ("הערכת מעגל קצר"): פייתון בודקת
+          תנאים מ<span className="font-bold">שמאל לימין</span>, ועוצרת ברגע שהיא כבר יודעת את התשובה הסופית. אם
+          {" "}<span className="font-mono">email_check(email)</span> מחזירה <span className="font-mono">False</span>,
+          פייתון כבר יודעת ש-<span className="font-mono">and</span> חייב להיות False — ולכן היא{" "}
+          <span className="font-bold">אפילו לא מריצה</span> את <span className="font-mono">password_check(password)</span>!
+        </p>
+        <p>
+          זה לא רק אופטימיזציה — לפעמים זה קריטי. תארי לך פונקציה שבודקת קודם "האם המשתמש קיים" ורק אז "האם הסיסמה
+          שלו נכונה". אם לא היה short-circuit, הקוד היה יכול לנסות לבדוק סיסמה למשתמש שלא קיים בכלל ולקרוס. הטבלה
+          המלאה של <span className="font-mono font-bold">and</span>: True and True → True. כל שילוב אחר → False.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python Logical Operators", url: "https://www.w3schools.com/python/python_if_logical.asp", kind: "article" },
+          { label: "W3Schools — If AND", url: "https://www.w3schools.com/python/gloss_python_if_and.asp", kind: "article" },
+          { label: "וידאו: Logical Operators in Python are Easy", url: "https://www.youtube.com/watch?v=W7luvtXeQTA", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  question: "email_check מחזירה True, אבל password_check מחזירה False. מה יודפס?",
+  options: ['"Login OK!"', '"Check your credentials!"', "שתי ההודעות יחד"],
+  correct: 1,
+  okMsg: '`and` מחזיר True רק אם שני הצדדים True. פה password_check החזירה False — אז כל הביטוי False, ורצים ל-else.',
+  errMsg: '"Check your credentials!" — `and` דורש ששני התנאים יהיו True יחד. אם רק אחד מהם False, כל התנאי נופל ל-else.',
+  learned: "and מחזיר True רק אם כל התנאים בו מתקיימים יחד",
+  level: 2,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 9.5 — סדרי את שורות הפונקציה login_check
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S_SEQ2: SequenceStep = {
+  kind: "sequence",
+  tag: "הרכבת קוד",
+  concept: "סדר השורות בפונקציה משנה הכל",
+  context: (
+    <div>
+      <ConceptIntro title="סדר השורות בפונקציה משנה הכל" icon="🧱">
+        <p>
+          כל פונקציה בפייתון בנויה לפי מבנה קבוע, ובלי לשמור על הסדר הזה הקוד פשוט לא יעבוד:
+        </p>
+        <ol className="flex flex-col gap-[6px] pr-4 list-decimal">
+          <li><span className="font-mono font-bold">def</span> — מגדיר את שם הפונקציה והמשתנים שהיא מקבלת</li>
+          <li><span className="font-mono font-bold">if</span> — תנאי שבודק משהו</li>
+          <li><span className="font-mono font-bold">return</span> — מחזיר תוצאה, בהתאם לתוצאה של התנאי</li>
+        </ol>
+      </ConceptIntro>
+
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
+        style={{ background: "rgba(255,207,112,0.18)", border: "1px solid rgba(255,207,112,0.30)" }}
+      >
+        <span className="text-[20px] shrink-0">🧩</span>
+        <div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#8a5a12" }}>פאזל בקופסה</div>
+          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "#5a4636" }}>
+            קיבלת ארבע חתיכות קוד בערבוביה, בלי הוראות הרכבה. כל מה שיש לך זה ההיגיון של פייתון עצמה.
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[13px] leading-[1.65] mb-4" style={{ color: "#5a4636" }}>
+        עכשיו תורך לבנות פונקציה שלמה. השורות הבאות התערבבו — סדרי אותן לפי ההיגיון הנכון של <span className="font-mono font-bold" dir="ltr">login_check</span>:
+      </p>
+
+      <DeepDive title="מה קורה אם שוכחים return בכלל?">
+        <p className="mb-3">
+          נניח שכתבת פונקציה שלמה בלי אף <span className="font-mono font-bold">return</span> — פייתון לא תזרוק
+          שגיאה! היא פשוט תחזיר <span className="font-mono font-bold">None</span> (ערך שמייצג "כלום") בשקט. זו
+          אחת הסיבות הכי נפוצות ל-"באג שקט" — קוד שרץ בלי קריסה, אבל מחזיר תשובה לא נכונה.
+        </p>
+        <p>
+          שימי לב גם ש-<span className="font-mono">login_check</span> יכולה לצאת דרך שני נתיבי{" "}
+          <span className="font-mono font-bold">return</span> שונים — אחד בתוך ה-if ואחד מחוצה לו. זה נקרא
+          {" "}<span className="font-bold">early return</span>, וזה בדיוק אותו רעיון שראית ב-<span className="font-mono">password_check</span>{" "}
+          וב-<span className="font-mono">email_check</span> — ברגע שיש תשובה, יוצאים מהפונקציה, בלי להמשיך לרוץ.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python Functions", url: "https://www.w3schools.com/python/python_functions.asp", kind: "article" },
+          { label: "Python Docs — Defining Functions", url: "https://docs.python.org/3/tutorial/controlflow.html#defining-functions", kind: "article" },
+          { label: "וידאו: Functions in Python are Easy", url: "https://www.youtube.com/watch?v=89cGQjB5R4M", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  instruction: "לחצי לפי הסדר הנכון:",
+  items: [
+    'return "Check your credentials!"',
+    "def login_check(email, password):",
+    'return "Login OK!"',
+    "if email_check(email) and password_check(password):",
+  ],
+  correctOrder: [1, 3, 2, 0],
+  okMsg: 'מצוין! קודם מגדירים את הפונקציה (def), אז בודקים את התנאי (if), ואז — בהתאם לתוצאה — מחזירים "Login OK!" או נופלים ל-"Check your credentials!".',
+  errMsg: "הסדר הנכון: def login_check(...) → if email_check(...) and password_check(...): → return \"Login OK!\" → return \"Check your credentials!\". חייבים להגדיר את הפונקציה לפני שבודקים תנאי בתוכה.",
+  learned: "פונקציה = def בראש, תנאי באמצע, return בסוף לכל מקרה",
+  level: 2,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 9.7 — השלמה בהקלדה: המילה החסרה בתנאי המשולב
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S_TYPE2: TypeStep = {
+  kind: "type",
+  tag: "השלימי בעצמך",
+  concept: "הקלדה חופשית — לא רק בחירה",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-3" style={{ color: "#5a4636" }}>
+        בשלב הקודם ראית איך <span className="font-mono font-bold">and</span> מחבר שני תנאים לתנאי אחד — עכשיו בואי נבדוק שזה נטמע. הפעם בלי אפשרויות לבחור מהן — תכתבי את המילה בעצמך.
+      </p>
+      <div className="rounded-2xl overflow-hidden mb-3" style={{ boxShadow: "0 4px 20px rgba(90,60,20,0.14)" }}>
+        <div className="flex items-center gap-[6px] px-4 py-[9px]" style={{ background: "#241e38" }}>
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ff8a80" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ffd580" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#a5f3b8" }} />
+        </div>
+        <div className="p-4 font-mono text-[13px] leading-[2.2]" style={{ background: "#2b2540", color: "#eae6ff", fontFamily: "'JetBrains Mono', monospace" }} dir="ltr">
+          <div>
+            <span style={{ color: "#ff9df5" }}>if</span>
+            {" email_check(email) "}
+            <span
+              className="rounded px-1"
+              style={{ background: "rgba(255,207,112,0.35)", color: "#ff7a59", border: "1.5px dashed #ff7a59" }}
+            >
+              ___
+            </span>
+            {" password_check(password):"}
+          </div>
+        </div>
+      </div>
+
+      <DeepDive title="ומה אם יש יותר משתי בדיקות?">
+        <p>
+          עם שתי בדיקות, <span className="font-mono font-bold">and</span> נוח. אבל מה אם צריך לבדוק חמישה תנאים
+          יחד? לכתוב <span className="font-mono">a and b and c and d and e</span> עובד, אבל נהיה מסורבל. פייתון
+          נותנת כלי מובנה בדיוק לזה: <span className="font-mono font-bold">all([a, b, c, d, e])</span> — מחזיר
+          True רק אם <span className="font-bold">כל</span> האיברים ברשימה הם True. זה אותו עיקרון בדיוק כמו
+          {" "}<span className="font-mono">and</span>, רק שמתאים גם כשיש הרבה תנאים.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python Logical Operators", url: "https://www.w3schools.com/python/python_if_logical.asp", kind: "article" },
+          { label: "וידאו: Logical Operators in Python are Easy", url: "https://www.youtube.com/watch?v=W7luvtXeQTA", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  question: "איזו מילה חסרה כדי ששתי הבדיקות יידרשו יחד?",
+  accepted: ["and"],
+  placeholder: "כתבי את המילה כאן (אנגלית)",
+  okMsg: '`and` — בדיוק המילה שדורשת ששני התנאים יהיו True יחד כדי להיכנס ל-if.',
+  errMsg: 'המילה הנכונה היא `and`. רק היא דורשת ששני הצדדים יהיו True בו-זמנית.',
+  learned: "and הוא מילת המפתח שמחברת שני תנאים לבדיקה משותפת",
+  level: 2,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 10 — בונוס למתקדמים: הודעת שגיאה מדויקת
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S10: ChoiceStep = {
+  kind: "choice",
+  tag: "בונוס למתקדמים",
+  concept: "if/elif — הודעה מדויקת במקום הודעה כללית",
+  context: (
+    <div>
+      <ConceptIntro title="if/elif — הודעה מדויקת במקום הודעה כללית" icon="🪜">
+        <p>
+          <span className="font-mono font-bold">if</span> תמיד נבדק ראשון. <span className="font-mono font-bold">elif</span> ("else if") הוא תנאי נוסף שנבדק <span className="font-bold" style={{ color: "#7c5cff" }}>רק אם</span> ה-if שלפניו נכשל — כמו שאלת המשך שנשאלת רק אם התשובה הראשונה הייתה "לא". אפשר לשרשר כמה elif שרוצים, וכל אחד נבדק רק אם כל מה שקדם לו נכשל.
+        </p>
+        <p>
+          זה שונה מהותית מ-<span className="font-mono font-bold">and</span>: עם <span className="font-mono">and</span> מקבלים תשובה אחת ("תקין" / "לא תקין"), עם <span className="font-mono">if/elif</span> אפשר לתת <span className="font-bold">הודעה שונה לכל מקרה כשל בנפרד</span>.
+        </p>
+      </ConceptIntro>
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
+        style={{ background: "rgba(255,207,112,0.18)", border: "1px solid rgba(255,207,112,0.30)" }}
+      >
+        <span className="text-[20px] shrink-0">🎯</span>
+        <div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#8a5a12" }}>בקשה מהתמיכה</div>
+          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "#5a4636" }}>
+            "'Check your credentials!' לא עוזר למשתמש — הוא לא יודע אם הטעות במייל או בסיסמה. אפשר לדייק?"
+          </div>
+        </div>
+      </div>
+      <p className="text-[13px] leading-[1.65] mb-5" style={{ color: "#5a4636" }}>
+        כרגע יש רק בדיקה אחת משולבת עם <span className="font-mono font-bold">and</span> — אין דרך לדעת איזה חלק נכשל.
+      </p>
+
+      <DeepDive title="רגע — האם לדייק את ההודעה זה תמיד רעיון טוב?">
+        <p className="mb-3">
+          דווקא לא, ולא סתם: אתרים אמיתיים (בנקים, ג'ימייל, פייסבוק) <span className="font-bold">מתכוונים</span>{" "}
+          לכתוב הודעה מעורפלת כמו "Check your credentials!" בכל מסך התחברות, ולא "האימייל לא קיים במערכת" או
+          "הסיסמה שגויה". הסיבה: אם תוקף מנסה לנחש כתובות מייל של משתמשים אמיתיים, הודעה מדויקת "האימייל לא קיים"
+          הייתה נותנת לו בדיוק את המידע שהוא צריך — אילו כתובות מייל <span className="font-bold">כן</span> רשומות
+          במערכת. זה נקרא <span className="font-bold">user enumeration</span>, ונחשב פרצת אבטחה אמיתית.
+        </p>
+        <p>
+          אז למה בכל זאת לומדים את זה? כי אותו רעיון בדיוק (if/elif עם הודעה שונה לכל מקרה) חשוב ומועיל מאוד
+          {" "}<span className="font-bold">בטופסי הרשמה</span> (איפה שאין בעיה לומר "המייל כבר תפוס" או "הסיסמה
+          קצרה מדי") — פשוט לא במסך התחברות. זו דוגמה טובה לכך שבתכנות הפתרון הטכני הנכון תלוי בהקשר, לא רק בקוד עצמו.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python Elif Statement", url: "https://www.w3schools.com/python/python_if_elif.asp", kind: "article" },
+          { label: "W3Schools — If Elif Else", url: "https://www.w3schools.com/python/gloss_python_elif.asp", kind: "article" },
+          { label: "וידאו: If Elif Else Statements in Python", url: "https://www.youtube.com/watch?v=rvLpDfOi9pQ", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  question: "מה השינוי הנדרש כדי שההודעה תציין בדיוק אם הבעיה במייל או בסיסמה?",
+  options: [
+    "לבדוק כל תנאי בנפרד עם if/elif נפרדים, ולהדפיס הודעה שונה לכל מקרה כשל",
+    "להוסיף עוד לולאת FOR לבדיקת המייל",
+    "להחליף את and ב-or כדי שתמיד יודפס Login OK",
+  ],
+  correct: 0,
+  okMsg: 'נכון! `if not email_check(email): print("בעיה במייל")` ואז `elif not password_check(password): print("בעיה בסיסמה")` ואז `else: print("Login OK!")` — כל מקרה מקבל הודעה משלו.',
+  errMsg: 'התשובה: לפרק את הבדיקה המשולבת ל-if/elif נפרדים — כל תנאי נבדק בעצמו ומדפיס הודעה ייעודית, במקום הודעה כללית אחת ל-and.',
+  learned: "if/elif נפרדים מאפשרים לדייק את הודעת השגיאה במקום הודעה כללית אחת",
+  level: 3,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 10.5 — משחק התאמה: תרחיש → הודעה נכונה
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S_MATCH3: MatchStep = {
+  kind: "match",
+  tag: "משחק התאמה",
+  concept: "if/elif בפעולה — כל תרחיש וההודעה שלו",
+  context: (
+    <div>
+      <ConceptIntro title="if/elif בפעולה — כל תרחיש וההודעה שלו" icon="🎲">
+        <p>
+          זו הבחינה האמיתית של if/elif/else: לדמיין בראש איך התוכנית "רצה" על כל שילוב אפשרי של תוצאות, בלי להריץ אותה בפועל. זו בדיוק היכולת שמפתחים משתמשים בה כל יום — לקרוא קוד ולנבא מה יקרה, לפני שמריצים אותו.
+        </p>
+        <p>
+          אחרי השדרוג ל-if/elif, לכל שילוב תוצאות יש הודעה משלו. התאימי כל תרחיש להודעה שתודפס בפועל:
+        </p>
+      </ConceptIntro>
+
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
+        style={{ background: "rgba(124,92,255,0.08)", border: "1px solid rgba(124,92,255,0.25)" }}
+      >
+        <span className="text-[20px] shrink-0">🎮</span>
+        <div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#5f3dff" }}>סימולטור בראש</div>
+          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "#5a4636" }}>
+            בלי מחשב, בלי להריץ כלום — רק את, הקוד, והדמיון. ככה בודקים קוד "על הנייר" גם בראיונות עבודה.
+          </div>
+        </div>
+      </div>
+
+      <DeepDive title="למה זו בדיוק המיומנות שבודקים בראיונות עבודה?">
+        <p>
+          לקרוא קוד ולדעת לחזות מה יקרה בלי להריץ אותו נקרא <span className="font-bold">"tracing" (מעקב קוד)</span>,
+          וזו אחת המיומנויות הכי נבדקות בראיונות למפתחי תוכנה — הרבה יותר מ"לשנן syntax". כשמראיינת נותנת לך קוד
+          ושואלת "מה ידפיס?", היא בעצם בודקת בדיוק את מה שעשית עכשיו: לעקוב אחרי if, לדעת מתי elif "מדלג", ולחזות
+          תוצאה נכונה. ככל שתתרגלי יותר תרגילים כאלה — כך יהיה לך קל יותר גם לדבג קוד אמיתי שכתבת בעצמך.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python Elif Statement", url: "https://www.w3schools.com/python/python_if_elif.asp", kind: "article" },
+          { label: "וידאו: Python Elif and Logical Expressions — Visually Explained", url: "https://www.youtube.com/watch?v=BmEYxeuHg58", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  instruction: "התאימי תרחיש להודעה הנכונה:",
+  pairs: [
+    { left: "email_check=False, password_check=True", right: "בעיה במייל" },
+    { left: "email_check=True, password_check=False", right: "בעיה בסיסמה" },
+    { left: "email_check=True, password_check=True", right: "Login OK!" },
+  ],
+  okMsg: "בדיוק! הבדיקה הראשונה שנכשלת (if, ואז elif) קובעת איזו הודעה תודפס — וכשהכל True, מגיעים ל-else עם Login OK!.",
+  errMsg: "נסי שוב — זכרי: if בודק מייל קודם, elif בודק סיסמה רק אם המייל תקין, ו-else רץ רק כששניהם תקינים.",
+  learned: "if רץ ראשון, elif רק אם if נכשל, else רק אם כולם נכשלו/עברו",
+  level: 3,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEP 10.7 — השלמה בהקלדה: מילת המפתח החסרה
+// ─────────────────────────────────────────────────────────────────────────────
+
+const S_TYPE3: TypeStep = {
+  kind: "type",
+  tag: "השלימי בעצמך",
+  concept: "elif — בדיקה נוספת רק אם הקודמת נכשלה",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-3" style={{ color: "#5a4636" }}>
+        זכרי מהשלב הקודם: <span className="font-mono font-bold">elif</span> נבדק רק כש-if שלפניו נכשל. סוגרים חזק: מה המילה שמאפשרת לבדוק תנאי נוסף — רק אם התנאי הקודם נכשל?
+      </p>
+      <div className="rounded-2xl overflow-hidden mb-3" style={{ boxShadow: "0 4px 20px rgba(90,60,20,0.14)" }}>
+        <div className="flex items-center gap-[6px] px-4 py-[9px]" style={{ background: "#241e38" }}>
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ff8a80" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#ffd580" }} />
+          <div className="w-[10px] h-[10px] rounded-full" style={{ background: "#a5f3b8" }} />
+        </div>
+        <div className="p-4 font-mono text-[13px] leading-[2.2]" style={{ background: "#2b2540", color: "#eae6ff", fontFamily: "'JetBrains Mono', monospace" }} dir="ltr">
+          <div>
+            <span style={{ color: "#ff9df5" }}>if</span>
+            {" not email_check(email):"}
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#7ee6ff" }}>print</span>
+            {'("בעיה במייל")'}
+          </div>
+          <div>
+            <span
+              className="rounded px-1"
+              style={{ background: "rgba(255,207,112,0.35)", color: "#ff7a59", border: "1.5px dashed #ff7a59" }}
+            >
+              ___
+            </span>
+            {" not password_check(password):"}
+          </div>
+          <div>
+            {"    "}
+            <span style={{ color: "#7ee6ff" }}>print</span>
+            {'("בעיה בסיסמה")'}
+          </div>
+        </div>
+      </div>
+
+      <DeepDive title="כמה elif אפשר לשרשר? ומה קורה בלי else בסוף?">
+        <p className="mb-3">
+          אין הגבלה — אפשר לשרשר כמה <span className="font-mono font-bold">elif</span> שרוצים אחרי ה-if
+          הראשון: קודם בודקים אם המייל תקין, אחר כך אם הסיסמה תקינה, ואפשר להוסיף עוד ועוד תנאים באותו אופן.
+          פייתון בודקת אותם <span className="font-bold">בסדר שכתבת אותם</span>, ועוצרת בראשון שמתקיים.
+        </p>
+        <p>
+          שימי לב: <span className="font-mono font-bold">else</span> בסוף השרשרת הוא <span className="font-bold">אופציונלי</span>.
+          בלעדיו, אם אף תנאי לא מתקיים — פשוט לא קורה כלום, הקוד ממשיך הלאה בלי להדפיס שום דבר. זו סיבה נוספת
+          לכתוב תמיד <span className="font-mono">else</span> בסוף, כדי לוודא שיש טיפול לכל מקרה אפשרי.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "W3Schools — Python Elif Statement", url: "https://www.w3schools.com/python/python_if_elif.asp", kind: "article" },
+          { label: "וידאו: If Elif Else Statements in Python", url: "https://www.youtube.com/watch?v=rvLpDfOi9pQ", kind: "video" },
+        ]}
+      />
+    </div>
+  ),
+  question: "מה כותבים במקום ה-___?",
+  accepted: ["elif"],
+  placeholder: "כתבי את המילה כאן (אנגלית)",
+  okMsg: "`elif` — נבדק רק אם ה-if שלפניו נכשל. זה מה שמונע בדיקה כפולה ומיותרת של המייל.",
+  errMsg: "המילה הנכונה היא `elif`. היא רצה רק כש-if הקודם החזיר False — בדיוק המקרה שבו המייל כבר תקין ורוצים לבדוק את הסיסמה.",
+  learned: "elif נבדק רק אם התנאי הקודם נכשל — שרשרת בדיקות יעילה",
+  level: 3,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ALL STEPS — code
 // ─────────────────────────────────────────────────────────────────────────────
 
-const STEPS_CODE: Step[] = [S0, S1, S2, S3, S4, S5, S6];
+const STEPS_CODE: Step[] = [
+  // S0, S1, S2, S3, S4, S5, S6, — קיים, הושבת זמנית
+  S7, S8, S_MATCH1,             // רמה 1: היכרות עם len/for + חיזוק אוצר מילים
+  S9, S_TYPE2, S_SEQ2,          // רמה 2: and → תרגול הקלדה קל → סינתזה של פונקציה שלמה
+  S10, S_TYPE3, S_MATCH3,       // רמה 3: elif → תרגול הקלדה קל → יישום על כמה תרחישים יחד
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STEPS — data  (דאטה ואנליטיקס)
@@ -2026,12 +3070,16 @@ const STEPS_UX: Step[] = [UX0, UX1, UX2, UX3, UX4, UX5, UX6];
 function SequenceInteraction({
   step,
   onAnswer,
+  initialOrder,
+  theme,
 }: {
   step: SequenceStep;
-  onAnswer: (correct: boolean) => void;
+  onAnswer: (order: number[], correct: boolean) => void;
+  initialOrder?: number[];
+  theme: SimTheme;
 }) {
-  const [sequence, setSequence] = useState<number[]>([]);
-  const [submitted, setSubmitted] = useState(false);
+  const [sequence, setSequence] = useState<number[]>(initialOrder ?? []);
+  const [submitted, setSubmitted] = useState(Boolean(initialOrder));
 
   function tapItem(i: number) {
     if (submitted || sequence.includes(i)) return;
@@ -2042,7 +3090,7 @@ function SequenceInteraction({
     if (submitted || sequence.length !== step.items.length) return;
     const isCorrect = sequence.every((idx, pos) => idx === step.correctOrder[pos]);
     setSubmitted(true);
-    onAnswer(isCorrect);
+    onAnswer(sequence, isCorrect);
   }
 
   function reset() {
@@ -2053,8 +3101,8 @@ function SequenceInteraction({
   const complete = sequence.length === step.items.length;
 
   return (
-    <div>
-      <div className="text-[13.5px] font-bold mb-4" style={{ color: "#023e8a", ...HEEBO }}>
+    <div style={{ fontFamily: theme.fontUI }}>
+      <div className="text-[13.5px] font-bold mb-4" style={{ color: theme.textDark, ...HEEBO, fontFamily: theme.fontUI }}>
         {step.instruction}
       </div>
 
@@ -2073,21 +3121,21 @@ function SequenceInteraction({
               <div
                 className="rounded-xl px-4 py-[13px] flex items-center gap-3 transition-all"
                 style={{
-                  background: tapped ? "rgba(59,130,246,0.09)" : "#fff",
-                  border: `1.5px solid ${tapped ? "#3b82f6" : "rgba(0,0,0,0.08)"}`,
+                  background: tapped ? theme.accentSoft : theme.cardBg,
+                  border: `1.5px solid ${tapped ? theme.accent : theme.cardBorder}`,
                   opacity: tapped ? 1 : submitted ? 0.45 : 1,
                 }}
               >
                 <div
                   className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-black shrink-0"
                   style={{
-                    background: tapped ? "#3b82f6" : "rgba(0,0,0,0.08)",
-                    color: tapped ? "#fff" : "rgba(0,0,0,0.35)",
+                    background: tapped ? theme.accent : theme.progressTrack,
+                    color: tapped ? "#fff" : theme.textFaint,
                   }}
                 >
                   {tapped ? rank + 1 : "·"}
                 </div>
-                <span className="text-[13.5px] flex-1" style={{ color: tapped ? "#1e3a8a" : "rgba(0,0,0,0.68)" }}>
+                <span className="text-[13.5px] flex-1" style={{ color: tapped ? theme.textDark : theme.textMuted }}>
                   {item}
                 </span>
               </div>
@@ -2103,7 +3151,7 @@ function SequenceInteraction({
               type="button"
               onClick={reset}
               className="text-[12px] font-bold"
-              style={{ color: "rgba(0,0,0,0.38)" }}
+              style={{ color: theme.textFaint }}
             >
               אפסי
             </button>
@@ -2114,9 +3162,9 @@ function SequenceInteraction({
             disabled={!complete}
             className="flex-1 py-[12px] rounded-xl text-[14px] font-bold transition-all"
             style={{
-              background: complete ? "#023e8a" : "rgba(0,0,0,0.06)",
-              color: complete ? "#fff" : "rgba(0,0,0,0.3)",
-              fontFamily: "'Heebo', sans-serif",
+              background: complete ? theme.accentGradient : theme.progressTrack,
+              color: complete ? "#fff" : theme.textFaint,
+              fontFamily: theme.fontUI,
             }}
           >
             {complete ? "בדקי את הסדר ✓" : `בחרי עוד ${step.items.length - sequence.length}`}
@@ -2134,46 +3182,51 @@ function SequenceInteraction({
 function ChoiceInteraction({
   step,
   onAnswer,
+  initialSelected,
+  theme,
 }: {
   step: ChoiceStep;
-  onAnswer: (correct: boolean) => void;
+  onAnswer: (selected: number, correct: boolean) => void;
+  initialSelected?: number;
+  theme: SimTheme;
 }) {
-  const [selected, setSelected] = useState<number | null>(null);
+  const t = theme;
+  const [selected, setSelected] = useState<number | null>(initialSelected ?? null);
   const revealed = selected !== null;
 
   function handleSelect(i: number) {
     if (revealed) return;
     setSelected(i);
-    onAnswer(i === step.correct);
+    onAnswer(i, i === step.correct);
   }
 
   return (
-    <div>
-      <div className="text-[15px] font-bold mb-4" style={{ color: "#023e8a", ...HEEBO }}>
+    <div style={{ fontFamily: t.fontUI }}>
+      <div className="text-[15px] font-bold mb-4" style={{ color: t.textDark, ...HEEBO, fontFamily: t.fontUI }}>
         {step.question}
       </div>
       <div className="flex flex-col gap-[9px]">
         {step.options.map((opt, i) => {
           const isSelected = selected === i;
           const isCorrectOpt = i === step.correct;
-          let bg = "#fff";
-          let border = "rgba(0,0,0,0.08)";
-          let color = "rgba(0,0,0,0.68)";
+          let bg = t.cardBg;
+          let border = t.cardBorder;
+          let color = t.textMuted;
           let suffix: React.ReactNode = null;
 
           if (revealed) {
             if (isCorrectOpt) {
-              bg = "rgba(34,197,94,0.08)";
-              border = "#22c55e55";
-              color = "#15803d";
+              bg = t.successBg;
+              border = t.successBorder;
+              color = t.successText;
               suffix = <span className="text-[16px] shrink-0">✓</span>;
             } else if (isSelected) {
-              bg = "rgba(220,38,38,0.07)";
-              border = "#dc262644";
-              color = "#b91c1c";
+              bg = t.errorBg;
+              border = t.errorBorder;
+              color = t.errorText;
               suffix = <span className="text-[16px] shrink-0">✗</span>;
             } else {
-              color = "rgba(0,0,0,0.3)";
+              color = t.textFaint;
             }
           }
 
@@ -2198,6 +3251,241 @@ function ChoiceInteraction({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MATCH INTERACTION — משחק התאמה
+// ─────────────────────────────────────────────────────────────────────────────
+
+// מסובבת את סדר הפריטים כך שאף פריט לא יישאר מול הזוג שלו — פשוט וקבוע (לא תלוי-רנדום)
+function shuffledIndices(n: number): number[] {
+  const rotateBy = n > 1 ? Math.ceil(n / 2) : 0;
+  return Array.from({ length: n }, (_, i) => (i + rotateBy) % n);
+}
+
+function MatchInteraction({
+  step,
+  onAnswer,
+  initialMistakes,
+  theme,
+}: {
+  step: MatchStep;
+  onAnswer: (mistakes: number, correct: boolean) => void;
+  initialMistakes?: number;
+  theme: SimTheme;
+}) {
+  const t = theme;
+  const alreadyDone = initialMistakes !== undefined;
+  const [rightOrder] = useState(() => shuffledIndices(step.pairs.length));
+  const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
+  const [matched, setMatched] = useState<Set<number>>(
+    () => (alreadyDone ? new Set(step.pairs.map((_, i) => i)) : new Set())
+  );
+  const [wrongFlash, setWrongFlash] = useState<number | null>(null);
+  const [mistakes, setMistakes] = useState(initialMistakes ?? 0);
+  const [done, setDone] = useState(alreadyDone);
+
+  function pickLeft(i: number) {
+    if (matched.has(i) || done) return;
+    setSelectedLeft(i);
+  }
+
+  function pickRight(rightIdx: number) {
+    if (selectedLeft === null || done) return;
+    const isMatch = selectedLeft === rightIdx;
+    if (isMatch) {
+      const next = new Set(matched).add(selectedLeft);
+      setMatched(next);
+      setSelectedLeft(null);
+      if (next.size === step.pairs.length) {
+        setDone(true);
+        onAnswer(mistakes, mistakes === 0);
+      }
+    } else {
+      setMistakes((m) => m + 1);
+      setWrongFlash(rightIdx);
+      setTimeout(() => setWrongFlash(null), 400);
+      setSelectedLeft(null);
+    }
+  }
+
+  return (
+    <div style={{ fontFamily: t.fontUI }}>
+      <div className="text-[13.5px] font-bold mb-4" style={{ color: t.textDark, ...HEEBO, fontFamily: t.fontUI }}>
+        {step.instruction}
+      </div>
+      <div className="flex gap-3">
+        <div className="flex-1 flex flex-col gap-[9px]">
+          {step.pairs.map((pair, i) => {
+            const isMatched = matched.has(i);
+            const isSelected = selectedLeft === i;
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={isMatched}
+                onClick={() => pickLeft(i)}
+                className="text-right w-full"
+              >
+                <div
+                  className="rounded-xl px-3 py-[11px] text-[12.5px] font-mono transition-all"
+                  style={{
+                    background: isMatched ? t.successBg : isSelected ? t.accentSoft : t.cardBg,
+                    border: `1.5px solid ${isMatched ? t.successBorder : isSelected ? t.accent : t.cardBorder}`,
+                    color: isMatched ? t.successText : isSelected ? t.accent : t.textMuted,
+                    opacity: isMatched ? 0.6 : 1,
+                    fontFamily: t.fontCode,
+                  }}
+                  dir="ltr"
+                >
+                  {pair.left}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex-1 flex flex-col gap-[9px]">
+          {rightOrder.map((origIdx) => {
+            const isMatched = matched.has(origIdx);
+            const isWrong = wrongFlash === origIdx;
+            return (
+              <button
+                key={origIdx}
+                type="button"
+                disabled={isMatched}
+                onClick={() => pickRight(origIdx)}
+                className="text-right w-full"
+              >
+                <div
+                  className="rounded-xl px-3 py-[11px] text-[12px] leading-[1.4] transition-all"
+                  style={{
+                    background: isMatched ? t.successBg : isWrong ? t.errorBg : t.cardBg,
+                    border: `1.5px solid ${isMatched ? t.successBorder : isWrong ? t.errorBorder : t.cardBorder}`,
+                    color: isMatched ? t.successText : isWrong ? t.errorText : t.textMuted,
+                    opacity: isMatched ? 0.6 : 1,
+                  }}
+                >
+                  {step.pairs[origIdx].right}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {!done && (
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-[11.5px]" style={{ color: t.textFaint }}>
+            {matched.size} / {step.pairs.length} הותאמו
+          </span>
+          {mistakes > 0 && (
+            <span className="text-[11.5px] font-bold" style={{ color: t.errorText }}>
+              {mistakes} טעויות
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPE INTERACTION — השלמה בהקלדה
+// ─────────────────────────────────────────────────────────────────────────────
+
+function TypeInteraction({
+  step,
+  onAnswer,
+  initialValue,
+  theme,
+}: {
+  step: TypeStep;
+  onAnswer: (value: string, correct: boolean) => void;
+  initialValue?: string;
+  theme: SimTheme;
+}) {
+  const t = theme;
+  const [value, setValue] = useState(initialValue ?? "");
+  const [revealed, setRevealed] = useState(Boolean(initialValue));
+  const [wasCorrect, setWasCorrect] = useState(() =>
+    initialValue
+      ? step.accepted.some((a) => a.trim().toLowerCase() === initialValue.trim().toLowerCase())
+      : false
+  );
+  const [showHint, setShowHint] = useState(false);
+
+  function submit() {
+    if (revealed || !value.trim()) return;
+    const normalized = value.trim().toLowerCase();
+    const correct = step.accepted.some((a) => a.trim().toLowerCase() === normalized);
+    setWasCorrect(correct);
+    setRevealed(true);
+    onAnswer(value, correct);
+  }
+
+  const answer = step.accepted[0];
+  const hintText = answer[0] + "_".repeat(Math.max(answer.length - 1, 1));
+
+  return (
+    <div style={{ fontFamily: t.fontUI }}>
+      <div className="text-[15px] font-bold mb-4" style={{ color: t.textDark, ...HEEBO, fontFamily: t.fontUI }}>
+        {step.question}
+      </div>
+      <input
+        type="text"
+        dir="ltr"
+        disabled={revealed}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && submit()}
+        placeholder={step.placeholder ?? "הקלידי כאן..."}
+        className="w-full rounded-xl px-4 py-[14px] text-[14px] font-mono mb-2 outline-none"
+        style={{
+          background: t.cardBg,
+          border: `1.5px solid ${revealed ? (wasCorrect ? t.successBorder : t.errorBorder) : t.cardBorder}`,
+          color: revealed ? (wasCorrect ? t.successText : t.errorText) : t.textDark,
+          fontFamily: t.fontCode,
+        }}
+      />
+      {!revealed && (
+        <div className="flex items-center justify-end mb-3 h-[18px]">
+          {showHint ? (
+            <span className="text-[11.5px] font-mono" style={{ color: t.textFaint }}>
+              רמז: {hintText}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowHint(true)}
+              className="text-[11.5px] font-bold"
+              style={{ color: t.hintText }}
+            >
+              💡 הצג רמז
+            </button>
+          )}
+        </div>
+      )}
+      {!revealed && (
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!value.trim()}
+          className="w-full py-[12px] rounded-xl text-[14px] font-bold transition-all"
+          style={{
+            background: value.trim() ? t.accentGradient : t.progressTrack,
+            color: value.trim() ? "#fff" : t.textFaint,
+            fontFamily: t.fontUI,
+          }}
+        >
+          בדקי
+        </button>
+      )}
+      {revealed && !wasCorrect && (
+        <div className="text-[12px] font-mono" style={{ color: t.textFaint }}>
+          התשובה הנכונה: <span className="font-bold" style={{ color: t.successText }}>{answer}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -2308,6 +3596,8 @@ function getDomainMeta(domain: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ResultScreen({ score, answers, nextDomain, domain }: { score: number; answers: boolean[]; nextDomain: string | null; domain: string }) {
+  const theme = getTheme(domain);
+  const playful = domain === "code";
   const steps = getSteps(domain);
   const meta = getDomainMeta(domain);
   const pct = Math.round((score / steps.length) * 100);
@@ -2315,21 +3605,21 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
   const skills = meta.skills;
 
   return (
-    <div className="px-[22px] pt-7 pb-36">
+    <div className="px-[22px] pt-7 pb-36" style={{ fontFamily: theme.fontUI }}>
       {/* Hero */}
       <div className="text-center mb-7">
         <div className="text-[52px] mb-2">{pct >= 80 ? "🎯" : pct >= 55 ? "💪" : "🌱"}</div>
-        <div className="text-[26px] leading-tight" style={{ color: "#023e8a", ...HEEBO }}>
+        <div className="text-[26px] leading-tight" style={playful ? { color: theme.textDark, fontWeight: 800 } : { color: "#023e8a", ...HEEBO }}>
           {pct >= 80 ? meta.heroTexts[0] : pct >= 55 ? meta.heroTexts[1] : meta.heroTexts[2]}
         </div>
-        <div className="text-[13px] mt-2" style={{ color: "rgba(0,0,0,0.42)" }}>
+        <div className="text-[13px] mt-2" style={{ color: theme.textFaint }}>
           {score} מתוך {steps.length} · {meta.simTitle.replace("סימולציה — ", "")}
         </div>
       </div>
 
       {/* Skills — 3-stage progress */}
       <div className="mb-7">
-        <div className="text-[15px] font-black mb-1" style={{ color: "#023e8a" }}>
+        <div className="text-[15px] font-black mb-1" style={{ color: theme.textDark }}>
           5 כישורים שגילית היום ✓
         </div>
         <div className="text-[11.5px] mb-4" style={{ color: "rgba(0,0,0,0.45)" }}>
@@ -2338,7 +3628,7 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
         <div className="flex flex-col gap-3">
           {skills.map((s, i) => (
             <div key={i} className="flex items-center gap-2">
-              <div className="text-[12px] font-bold shrink-0 w-[110px] text-right" style={{ color: "#023e8a" }}>
+              <div className="text-[12px] font-bold shrink-0 w-[110px] text-right" style={{ color: theme.textDark }}>
                 {s.label}
               </div>
               {/* Stage 1 — before */}
@@ -2371,7 +3661,7 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
       <div className="mb-6">
         <div
           className="text-[10px] font-bold uppercase tracking-widest mb-3"
-          style={{ color: "rgba(0,0,0,0.32)" }}
+          style={{ color: theme.textFaint }}
         >
           מושגים שהפנמת
         </div>
@@ -2381,16 +3671,14 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
               key={i}
               className="flex items-center gap-3 rounded-xl px-4 py-3"
               style={{
-                background: answers[i]
-                  ? "rgba(34,197,94,0.07)"
-                  : "rgba(59,130,246,0.06)",
-                border: `1px solid ${answers[i] ? "#22c55e33" : "#3b82f633"}`,
+                background: answers[i] ? theme.successBg : theme.accentSoft,
+                border: `1px solid ${answers[i] ? theme.successBorder : theme.accent}55`,
               }}
             >
-              <span style={{ color: answers[i] ? "#22c55e" : "#94a3b8", fontSize: 15 }}>
+              <span style={{ color: answers[i] ? theme.successText : theme.textFaint, fontSize: 15 }}>
                 {answers[i] ? "✓" : "○"}
               </span>
-              <span className="text-[12px]" style={{ color: "#1e3a8a" }}>
+              <span className="text-[12px]" style={{ color: theme.textDark }}>
                 {s.concept}
               </span>
             </div>
@@ -2401,12 +3689,12 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
       {/* Career connection */}
       <div
         className="mb-7 rounded-2xl p-4"
-        style={{ background: "rgba(251,133,0,0.07)", border: "1.5px solid rgba(251,133,0,0.22)" }}
+        style={{ background: theme.hintBg, border: `1.5px solid ${theme.hintBorder}` }}
       >
-        <div className="text-[11px] font-bold uppercase tracking-wide mb-2" style={{ color: "#fb8500" }}>
+        <div className="text-[11px] font-bold uppercase tracking-wide mb-2" style={{ color: playful ? theme.hintText : "#fb8500" }}>
           מה זה אומר לקריירה שלך
         </div>
-        <div className="text-[13px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.62)" }}>
+        <div className="text-[13px] leading-[1.65]" style={{ color: theme.textMuted }}>
           {meta.careerText}
         </div>
       </div>
@@ -2425,10 +3713,10 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
         href={nextDomain ? `/explore/${nextDomain}` : "/explore"}
         className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-4"
         style={{
-          background: domain === "data" ? "transparent" : "#fb8500",
+          background: domain === "data" ? "transparent" : theme.accentGradient,
           color: domain === "data" ? "rgba(0,0,0,0.4)" : "#fff",
           border: domain === "data" ? "1px solid rgba(0,0,0,0.1)" : "none",
-          fontFamily: "'Heebo', sans-serif",
+          fontFamily: theme.fontUI,
         }}
       >
         {nextDomain ? `לתחום הבא ←` : "חזרה למסלול ←"}
@@ -2441,22 +3729,43 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
 // SIM FLOW
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SimFlow({ onComplete, domain }: { onComplete: (score: number, answers: boolean[]) => void; domain: string }) {
+// תשובה שנשמרת לכל שלב — כך אפשר לחזור אחורה ולראות מה נענה בלי לאבד ציון או להכפיל אותו
+type StepResponse =
+  | { kind: "choice"; selected: number; correct: boolean }
+  | { kind: "sequence"; order: number[]; correct: boolean }
+  | { kind: "match"; mistakes: number; correct: boolean }
+  | { kind: "type"; value: string; correct: boolean };
+
+function SimFlow({
+  onComplete,
+  domain,
+  onStepIndexChange,
+}: {
+  onComplete: (score: number, answers: boolean[]) => void;
+  domain: string;
+  onStepIndexChange?: (i: number) => void;
+}) {
+  const theme = getTheme(domain);
+  const playful = domain === "code";
   const steps = getSteps(domain);
   const [stepIndex, setStepIndex] = useState(0);
-  const [answered, setAnswered] = useState(false);
-  const [lastCorrect, setLastCorrect] = useState(false);
-  const [score, setScore] = useState(0);
-  const [answers, setAnswers] = useState<boolean[]>([]);
+  const [responses, setResponses] = useState<Record<number, StepResponse>>({});
   const feedbackRef = React.useRef<HTMLDivElement>(null);
 
-  const step = steps[stepIndex];
+  React.useEffect(() => {
+    onStepIndexChange?.(stepIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex]);
 
-  function handleAnswer(correct: boolean) {
-    setLastCorrect(correct);
-    setAnswered(true);
-    if (correct) setScore((s) => s + 1);
-    setAnswers((prev) => [...prev, correct]);
+  const step = steps[stepIndex];
+  const current = responses[stepIndex];
+  const answered = current !== undefined;
+  const lastCorrect = current?.correct ?? false;
+  const score = Object.values(responses).filter((r) => r.correct).length;
+  const pct = Math.round(((stepIndex + 1) / steps.length) * 100);
+
+  function recordResponse(response: StepResponse) {
+    setResponses((prev) => ({ ...prev, [stepIndex]: response }));
     setTimeout(() => {
       feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
@@ -2465,49 +3774,99 @@ function SimFlow({ onComplete, domain }: { onComplete: (score: number, answers: 
   function handleNext() {
     if (stepIndex < steps.length - 1) {
       setStepIndex((s) => s + 1);
-      setAnswered(false);
-      setLastCorrect(false);
     } else {
-      onComplete(score, answers);
+      const correctness = steps.map((_, i) => responses[i]?.correct ?? false);
+      onComplete(score, correctness);
     }
   }
 
-  return (
-    <div className="pb-4">
-      {/* Progress */}
-      <div className="flex items-center gap-[5px] justify-center py-5">
-        {steps.map((_, i) => (
-          <div
-            key={i}
-            className="rounded-full transition-all duration-300"
-            style={{
-              height: 7,
-              width: i === stepIndex ? 22 : 7,
-              background:
-                i < stepIndex
-                  ? "#3b82f6"
-                  : i === stepIndex
-                  ? "#3b82f6"
-                  : "rgba(59,130,246,0.18)",
-            }}
-          />
-        ))}
-      </div>
+  function handleBack() {
+    if (stepIndex > 0) setStepIndex((s) => s - 1);
+  }
 
-      {/* Tag */}
-      <div className="px-[22px] mb-5">
-        <div className="flex items-center justify-between">
-          <span
-            className="text-[10px] font-bold uppercase tracking-widest px-[10px] py-[4px] rounded-full"
-            style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}
-          >
-            {step.tag} · {stepIndex + 1} / {steps.length}
-          </span>
-          <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.32)" }}>
-            {score} נכון עד כה
-          </span>
+  return (
+    <div className="pb-4" style={{ fontFamily: theme.fontUI }}>
+      {playful ? (
+        <div className="px-[22px] pt-3 mb-2">
+          <div className="flex items-center gap-[10px]">
+            <span className="text-[12px] font-bold whitespace-nowrap" style={{ color: theme.accent }}>
+              {stepIndex + 1} / {steps.length}
+            </span>
+            <div className="flex-1 h-[10px] rounded-full overflow-hidden" style={{ background: theme.progressTrack }}>
+              <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: theme.headerGradient }} />
+            </div>
+            <span className="text-[11px] whitespace-nowrap" style={{ color: theme.textFaint }}>
+              {score} נכון עד כה
+            </span>
+          </div>
+          {stepIndex > 0 && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="text-[11.5px] font-bold mt-3"
+              style={{ color: theme.accent }}
+            >
+              → חזרה לשלב הקודם
+            </button>
+          )}
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-[5px] justify-center py-5">
+            {steps.map((s, i) => {
+              const levelColor = s.level === 2 ? "#fb8500" : s.level === 3 ? "#dc2626" : "#3b82f6";
+              return (
+                <div
+                  key={i}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    height: 7,
+                    width: i === stepIndex ? 22 : 7,
+                    background: i <= stepIndex ? levelColor : `${levelColor}2e`,
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Level divider */}
+          {step.level && step.level !== steps[stepIndex - 1]?.level && (
+            <div className="px-[22px] mb-4">
+              <div
+                className="rounded-xl py-2 text-center text-[11.5px] font-bold uppercase tracking-widest"
+                style={{ background: theme.headerGradient, color: "#fff", ...HEEBO }}
+              >
+                {LEVEL_LABELS[step.level]}
+              </div>
+            </div>
+          )}
+
+          {/* Tag */}
+          <div className="px-[22px] mb-5">
+            <div className="flex items-center justify-between">
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest px-[10px] py-[4px] rounded-full"
+                style={{ background: theme.accentSoft, color: theme.accent }}
+              >
+                {step.tag} · {stepIndex + 1} / {steps.length}
+              </span>
+              <span className="text-[11px]" style={{ color: theme.textFaint }}>
+                {score} נכון עד כה
+              </span>
+            </div>
+            {stepIndex > 0 && (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="text-[11.5px] font-bold mt-2"
+                style={{ color: theme.accent }}
+              >
+                → חזרה לשלב הקודם
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Context */}
       <div className="px-[22px]">{step.context}</div>
@@ -2515,9 +3874,37 @@ function SimFlow({ onComplete, domain }: { onComplete: (score: number, answers: 
       {/* Interaction */}
       <div className="px-[22px] mb-4">
         {step.kind === "sequence" ? (
-          <SequenceInteraction key={stepIndex} step={step} onAnswer={handleAnswer} />
+          <SequenceInteraction
+            key={stepIndex}
+            step={step}
+            initialOrder={current?.kind === "sequence" ? current.order : undefined}
+            onAnswer={(order, correct) => recordResponse({ kind: "sequence", order, correct })}
+            theme={theme}
+          />
+        ) : step.kind === "match" ? (
+          <MatchInteraction
+            key={stepIndex}
+            step={step}
+            initialMistakes={current?.kind === "match" ? current.mistakes : undefined}
+            onAnswer={(mistakes, correct) => recordResponse({ kind: "match", mistakes, correct })}
+            theme={theme}
+          />
+        ) : step.kind === "type" ? (
+          <TypeInteraction
+            key={stepIndex}
+            step={step}
+            initialValue={current?.kind === "type" ? current.value : undefined}
+            onAnswer={(value, correct) => recordResponse({ kind: "type", value, correct })}
+            theme={theme}
+          />
         ) : (
-          <ChoiceInteraction key={stepIndex} step={step} onAnswer={handleAnswer} />
+          <ChoiceInteraction
+            key={stepIndex}
+            step={step}
+            initialSelected={current?.kind === "choice" ? current.selected : undefined}
+            onAnswer={(selected, correct) => recordResponse({ kind: "choice", selected, correct })}
+            theme={theme}
+          />
         )}
       </div>
 
@@ -2527,21 +3914,19 @@ function SimFlow({ onComplete, domain }: { onComplete: (score: number, answers: 
           <div
             className="rounded-xl px-4 py-3 text-[12.5px] leading-[1.55] mb-3"
             style={{
-              background: lastCorrect ? "rgba(34,197,94,0.07)" : "rgba(59,130,246,0.07)",
-              border: `1px solid ${lastCorrect ? "#22c55e44" : "#3b82f644"}`,
-              color: lastCorrect ? "#15803d" : "#1e40af",
+              background: lastCorrect ? theme.successBg : theme.accentSoft,
+              border: `1px solid ${lastCorrect ? theme.successBorder : theme.accent}44`,
+              color: lastCorrect ? theme.successText : theme.textDark,
             }}
           >
-            {lastCorrect
-              ? (step as ChoiceStep | SequenceStep).okMsg
-              : (step as ChoiceStep | SequenceStep).errMsg}
+            {lastCorrect ? step.okMsg : step.errMsg}
           </div>
 
           <div className="flex items-center gap-2 mb-5">
-            <span className="text-[10.5px]" style={{ color: "rgba(0,0,0,0.32)" }}>הפנמת:</span>
+            <span className="text-[10.5px]" style={{ color: theme.textFaint }}>הפנמת:</span>
             <span
               className="text-[11px] font-bold px-[10px] py-[4px] rounded-full"
-              style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6" }}
+              style={{ background: theme.accentSoft, color: theme.accent }}
             >
               {step.learned}
             </span>
@@ -2551,7 +3936,7 @@ function SimFlow({ onComplete, domain }: { onComplete: (score: number, answers: 
             type="button"
             onClick={handleNext}
             className="w-full py-[14px] rounded-xl text-white font-bold text-[15px] mb-4"
-            style={{ background: "#023e8a", fontFamily: "'Heebo', sans-serif" }}
+            style={{ background: theme.accentGradient, fontFamily: theme.fontUI, boxShadow: playful ? "0 6px 16px rgba(95,61,255,.3)" : undefined }}
           >
             {stepIndex < steps.length - 1 ? "הבא ←" : "סיימתי — תראי תוצאות"}
           </button>
@@ -2583,10 +3968,13 @@ const IMPLEMENTED_DOMAINS = new Set(["code", "data", "marketing", "ai", "cyber",
 export default function SimPage() {
   const { domain } = useParams();
   const domainStr = domain as string;
+  const theme = getTheme(domainStr);
+  const playful = domainStr === "code";
   const [done, setDone] = useState(false);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
   const [nextDomain, setNextDomain] = useState<string | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   const steps = getSteps(domainStr);
   const meta = getDomainMeta(domainStr);
@@ -2605,40 +3993,137 @@ export default function SimPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
-      <div className="bg-navy text-white px-[22px] md:px-12 pt-[26px] pb-[30px] shrink-0">
-        <div className="max-w-[720px] mx-auto">
-          <Link href={`/explore/${domainStr}`} className="text-[12px] font-bold block mb-5" style={{ opacity: 0.6 }}>
-            ← חזרה לתחום
-          </Link>
-          <div className="text-[28px] md:text-[32px] leading-tight" style={HEEBO}>
-            {done ? "סיימת!" : meta.simTitle}
-          </div>
-          <div className="text-[13px] mt-[6px]" style={{ opacity: 0.72 }}>
-            {done ? "הנה מה שבנית היום" : `${steps.length} שלבים · מהמושג הראשון עד הכלים האמיתיים`}
-          </div>
+  const pct = Math.round(((currentStepIndex + 1) / steps.length) * 100);
+
+  // רשימת הרמות הייחודיות (לפי סדר הופעה) — לניווט הצדדי בדסקטופ, בהשראת מוקאפ ה-Playful
+  const levelList: { level: number; label: string }[] = [];
+  steps.forEach((s) => {
+    if (s.level && !levelList.some((l) => l.level === s.level)) {
+      const parts = LEVEL_LABELS[s.level].split(" · ");
+      levelList.push({ level: s.level, label: parts[1] ?? LEVEL_LABELS[s.level] });
+    }
+  });
+  const currentLevel = steps[currentStepIndex]?.level;
+
+  const sidebar = playful && !done && levelList.length > 0 && (
+    <div
+      className="hidden md:flex md:sticky md:top-0 md:h-screen w-[260px] shrink-0 flex-col gap-[22px] p-[28px] overflow-y-auto"
+      style={{ background: theme.headerGradient, fontFamily: theme.fontUI }}
+    >
+      <Link href={`/explore/${domainStr}`} className="text-[11px] font-bold" style={{ color: "rgba(255,255,255,.85)" }}>
+        ← חזרה לתחום
+      </Link>
+      <div>
+        <div className="text-[20px] font-extrabold" style={{ color: "#fff" }}>{meta.simTitle} 🚀</div>
+        <div className="text-[11.5px] mt-1" style={{ color: "rgba(255,255,255,.85)" }}>
+          התקדמות שלב-אחר-שלב עם דוגמאות אמיתיות
         </div>
       </div>
+      <div className="flex flex-col gap-[10px] mt-1">
+        {levelList.map((l, idx) => {
+          const active = l.level === currentLevel;
+          const passed = currentLevel !== undefined && l.level < currentLevel;
+          return (
+            <div key={l.level} className="flex items-center gap-[10px]" style={{ opacity: active || passed ? 1 : 0.55 }}>
+              <span
+                className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[12px] font-extrabold shrink-0"
+                style={{
+                  background: active || passed ? "#fff" : "rgba(255,255,255,.3)",
+                  color: active || passed ? theme.accent : "#fff",
+                }}
+              >
+                {passed ? "✓" : idx + 1}
+              </span>
+              <span className="text-[12.5px] font-bold" style={{ color: "#fff" }}>{l.label}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-auto mb-[15%] p-[14px] rounded-xl" style={{ background: "rgba(255,255,255,.18)" }}>
+        <div className="text-[11px] font-bold mb-[6px]" style={{ color: "#fff" }}>🎯 ההתקדמות שלך</div>
+        <div className="h-[8px] rounded-[5px] overflow-hidden" style={{ background: "rgba(255,255,255,.35)" }}>
+          <div className="h-full rounded-[5px] transition-all duration-300" style={{ width: `${pct}%`, background: "#fff" }} />
+        </div>
+        <div className="text-[10.5px] font-semibold mt-[6px]" style={{ color: "rgba(255,255,255,.9)" }}>
+          {currentStepIndex + 1} / {steps.length} שלבים
+        </div>
+      </div>
+    </div>
+  );
 
-      <div className="flex-1 max-w-[720px] mx-auto w-full">
-        {done ? (
-          <ResultScreen score={score} answers={answers} nextDomain={nextDomain} domain={domainStr} />
-        ) : (
-          <SimFlow
-            domain={domainStr}
-            onComplete={(s, a) => {
-              setScore(s);
-              setAnswers(a);
-              setNextDomain(getNextDomain(domainStr));
-              setDone(true);
-              // Save to Supabase
-              const totalSteps = getSteps(domainStr).length;
-              saveSimulationProgress(domainStr, totalSteps, true, s);
-              updateTask(`sim-${domainStr}`, "done", 100);
-            }}
-          />
-        )}
+  return (
+    <div className="min-h-screen flex flex-col" style={{ background: theme.pageBg, fontFamily: theme.fontUI }}>
+      {playful ? (
+        <div className="md:hidden px-[22px] pt-[16px] pb-1 shrink-0">
+          <Link
+            href={`/explore/${domainStr}`}
+            className="inline-flex items-center gap-1 text-[12.5px] font-bold px-3 py-[7px] rounded-full"
+            style={{ background: theme.cardBg, color: theme.accent, border: `1.5px solid ${theme.cardBorder}` }}
+          >
+            ← חזרה לתחום
+          </Link>
+        </div>
+      ) : (
+        <div
+          className="text-white px-[22px] md:px-12 pt-[26px] pb-[30px] shrink-0"
+          style={{ background: theme.headerGradient }}
+        >
+          <div className="max-w-[720px] mx-auto">
+            <Link href={`/explore/${domainStr}`} className="text-[12px] font-bold block mb-5" style={{ opacity: 0.6 }}>
+              ← חזרה לתחום
+            </Link>
+            <div className="text-[28px] md:text-[32px] leading-tight" style={HEEBO}>
+              {done ? "סיימת!" : meta.simTitle}
+            </div>
+            <div className="text-[13px] mt-[6px]" style={{ opacity: 0.8 }}>
+              {done ? "הנה מה שבנית היום" : `${steps.length} שלבים · מהמושג הראשון עד הכלים האמיתיים`}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 flex w-full">
+        {sidebar}
+        <div className={playful ? "flex-1 max-w-[880px] mx-auto w-full" : "flex-1 max-w-[720px] mx-auto w-full"}>
+          {playful && !done && (
+            <div className="px-[22px] md:px-9 pt-6 flex items-start justify-between gap-3 flex-wrap-reverse">
+              <div>
+                <div className="text-[22px] md:text-[26px] font-extrabold leading-tight" style={{ color: theme.textDark }}>
+                  {meta.simTitle}
+                </div>
+                <div className="text-[12.5px] mt-1" style={{ color: theme.textFaint }}>
+                  {steps.length} שלבים · מהמושג הראשון עד הכלים האמיתיים
+                </div>
+              </div>
+              {currentLevel && (
+                <span
+                  className="text-[11.5px] font-bold px-[14px] py-[7px] rounded-full whitespace-nowrap"
+                  style={{ background: theme.accentGradient, color: "#fff" }}
+                >
+                  ⭐ {LEVEL_LABELS[currentLevel]}
+                </span>
+              )}
+            </div>
+          )}
+          {done ? (
+            <ResultScreen score={score} answers={answers} nextDomain={nextDomain} domain={domainStr} />
+          ) : (
+            <SimFlow
+              domain={domainStr}
+              onStepIndexChange={setCurrentStepIndex}
+              onComplete={(s, a) => {
+                setScore(s);
+                setAnswers(a);
+                setNextDomain(getNextDomain(domainStr));
+                setDone(true);
+                // Save to Supabase
+                const totalSteps = getSteps(domainStr).length;
+                saveSimulationProgress(domainStr, totalSteps, true, s);
+                updateTask(`sim-${domainStr}`, "done", 100);
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <BottomNav />
