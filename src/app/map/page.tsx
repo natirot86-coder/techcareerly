@@ -34,7 +34,7 @@ type Edge = {
 // ─── Canvas ───────────────────────────────────────────────────────────────────
 
 const W = 920;
-const H = 760;
+const H = 980;
 const NH = 44;   // node height default
 
 // ─── Nodes ────────────────────────────────────────────────────────────────────
@@ -72,8 +72,10 @@ const NODES: Node[] = [
   { id: "s-ux",        label: "sim / UX",       url: `${BASE}/explore/ux/sim`,        cx: 665, cy: 440, w: 80,  color: "#d97706" },
 
   // ── Learn (data only for now) ─────────────────────────────────────────────
-  { id: "learn",   label: "מרכז למידה",   sub: "7 מודולים",       url: `${BASE}/explore/data/learn`,         cx: 185, cy: 560, w: 110, color: "#0d9488" },
-  { id: "mystery", label: "פרשת TechFlow", sub: "SQL חקירה",      url: `${BASE}/explore/data/learn/mystery`, cx: 185, cy: 670, w: 130, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
+  { id: "learn",      label: "מרכז למידה",     sub: "7 מודולים",        url: `${BASE}/explore/data/learn`,             cx: 185, cy: 560, w: 120, color: "#0d9488" },
+  { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 185, cy: 670, w: 120, color: "#0d9488" },
+  { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 185, cy: 780, w: 130, color: "#0d9488" },
+  { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 185, cy: 890, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
 ];
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
@@ -108,10 +110,13 @@ const EDGES: Edge[] = [
   { from: "d-ux",        to: "s-ux",        label: "קדימה לסימולציה" },
 
   // Data domain → learn
-  { from: "d-data", to: "learn", label: "מרכז למידה", color: "#0d9488" },
+  { from: "d-data",    to: "learn",      label: "מרכז למידה",   color: "#0d9488" },
+  { from: "s-data",    to: "learn",      label: "מיציתי ←",     color: "#0d9488", dashed: true },
 
-  // Learn → mystery
-  { from: "learn", to: "mystery", label: "מודול SQL", color: "#0d9488" },
+  // Data learn flow (sequential)
+  { from: "learn",     to: "analytics",  label: "אנליטיקה",     color: "#0d9488" },
+  { from: "analytics", to: "mystery",    label: "מיציתי ←",     color: "#0d9488" },
+  { from: "mystery",   to: "experience", label: "מיציתי ←",     color: "#0d9488" },
 
   // Sim → next domain (conceptual)
   { from: "s-code", to: "explore", label: "תחום הבא", dashed: true, color: "#d97706" },
@@ -304,12 +309,15 @@ function Arrows() {
 // ─── Section Labels ───────────────────────────────────────────────────────────
 
 const LABELS = [
-  { text: "כניסה והרשמה",     x: 10,  y: 10, color: "#023e8a" },
-  { text: "ניווט תחתון",      x: 680, y: 10, color: "#6b7280" },
-  { text: "חקר תחומים",       x: 10,  y: 195, color: "#fb8500" },
-  { text: "דפי תחום (×6)",    x: 10,  y: 285, color: "#fb8500" },
-  { text: "סימולציות (×6)",    x: 10,  y: 395, color: "#d97706" },
-  { text: "מרכז למידה — דאטה", x: 10,  y: 515, color: "#0d9488" },
+  { text: "כניסה והרשמה",        x: 10,  y: 10,  color: "#023e8a" },
+  { text: "ניווט תחתון",         x: 680, y: 10,  color: "#6b7280" },
+  { text: "חקר תחומים",          x: 10,  y: 195, color: "#fb8500" },
+  { text: "דפי תחום (×6)",       x: 10,  y: 285, color: "#fb8500" },
+  { text: "סימולציות (×6)",       x: 10,  y: 395, color: "#d97706" },
+  { text: "מרכז למידה — דאטה",   x: 10,  y: 515, color: "#0d9488" },
+  { text: "אנליטיקה בשטח",       x: 10,  y: 625, color: "#0d9488" },
+  { text: "תעלומת SQL",           x: 10,  y: 735, color: "#0d9488" },
+  { text: "כלי עיבוד החוויה",    x: 10,  y: 845, color: "#0d9488" },
 ];
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -367,6 +375,8 @@ export default function MapPage() {
               <line x1={0} y1={385} x2={730} y2={385} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
               <line x1={0} y1={505} x2={320} y2={505} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
               <line x1={0} y1={615} x2={320} y2={615} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              <line x1={0} y1={725} x2={320} y2={725} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              <line x1={0} y1={835} x2={320} y2={835} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
 
               {LABELS.map(l => (
                 <text key={l.text} x={l.x} y={l.y + 10} fontSize={9} fill={l.color} fontWeight={700}
