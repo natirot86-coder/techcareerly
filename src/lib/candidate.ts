@@ -38,14 +38,25 @@ export async function ensureCandidateId(): Promise<string | null> {
   if (!supabase) return null;
 
   const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) return session.user.id;
+  let candidateId = session?.user?.id ?? null;
 
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error || !data.user) {
-    console.error("ensureCandidateId failed", error);
-    return null;
+  if (!candidateId) {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error || !data.user) {
+      console.error("ensureCandidateId failed", error);
+      return null;
+    }
+    candidateId = data.user.id;
   }
-  return data.user.id;
+
+  // כל טבלה תלויה (domain_rankings, tasks וכו') מצביעה ל-candidates.id — מבטיחים שהשורה קיימת
+  // לפני שקוראים חוזר, כדי שלא ניפול על foreign key violation אם saveOnboarding עוד לא רץ.
+  const { error: ensureError } = await supabase
+    .from("candidates")
+    .upsert({ id: candidateId }, { onConflict: "id", ignoreDuplicates: true });
+  if (ensureError) console.error("ensureCandidateId: failed to ensure candidates row", ensureError);
+
+  return candidateId;
 }
 
 export async function getCandidate(): Promise<Candidate | null> {

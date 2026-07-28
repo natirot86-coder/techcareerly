@@ -73,6 +73,7 @@ function SalaryCard({ min, max }: { min: number; max: number }) {
 // ─── CODE ────────────────────────────────────────────────────────────────────
 function CodeContent() {
   const [ran, setRan] = useState(false);
+  const [name, setName] = useState("נועה");
 
   return (
     <>
@@ -82,7 +83,7 @@ function CodeContent() {
       </div>
 
       <div className="mb-7">
-        <Label text="הרצי קוד אמיתי — לחצי Run" />
+        <Label text="הרצי קוד אמיתי — אפשר לערוך את השם, ואז Run" />
         <div className="rounded-2xl overflow-hidden" style={{ boxShadow: "0 4px 24px rgba(59,130,246,0.15)" }}>
           <div className="flex items-center gap-[6px] px-4 py-[10px]" style={{ background: "#1e293b" }}>
             <div className="w-[11px] h-[11px] rounded-full" style={{ background: "#ef4444" }} />
@@ -93,7 +94,27 @@ function CodeContent() {
           <div className="p-4 font-mono text-[12px] leading-[1.85]" style={{ background: "#0f172a", color: "#e2e8f0" }} dir="ltr">
             <div><span style={{ color: "#a78bfa" }}>def</span>{" "}<span style={{ color: "#60a5fa" }}>welcome</span>(name):</div>
             <div>{"  "}<span style={{ color: "#a78bfa" }}>return</span>{" "}<span style={{ color: "#34d399" }}>{`f"שלום {name}! הייטק מחכה לך 🚀"`}</span></div>
-            <div className="mt-2"><span style={{ color: "#60a5fa" }}>print</span>(welcome(<span style={{ color: "#34d399" }}>"נועה"</span>))</div>
+            <div className="mt-2">
+              <span style={{ color: "#60a5fa" }}>print</span>(welcome("
+              <span
+                contentEditable
+                suppressContentEditableWarning
+                onInput={(e) => {
+                  setName(e.currentTarget.textContent || "");
+                  setRan(false);
+                }}
+                className="outline-none"
+                style={{
+                  color: "#34d399",
+                  borderBottom: "1px dashed rgba(52,211,153,0.55)",
+                  cursor: "text",
+                  padding: "0 1px",
+                }}
+              >
+                נועה
+              </span>
+              "))
+            </div>
           </div>
           <button
             onClick={() => setRan(true)}
@@ -104,7 +125,7 @@ function CodeContent() {
           </button>
           {ran && (
             <div className="px-4 py-3 font-mono text-[13px]" style={{ background: "#0d1117", color: "#22c55e" }} dir="ltr">
-              {">"} שלום נועה! הייטק מחכה לך 🚀
+              {">"} שלום {name || "?"}! הייטק מחכה לך 🚀
             </div>
           )}
         </div>
