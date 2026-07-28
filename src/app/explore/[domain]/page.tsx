@@ -400,6 +400,14 @@ function UXContent() {
 // ─── DATA ────────────────────────────────────────────────────────────────────
 function DataContent() {
   const [revealed, setRevealed] = useState(false);
+  const [journey, setJourney] = useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("data-journey");
+      if (saved) setJourney(JSON.parse(saved));
+    } catch {/* ignore */}
+  }, []);
 
   const bars = [
     { label: "ינו", val: 42, spike: false },
@@ -519,8 +527,8 @@ function DataContent() {
               title: "סימולציה — חשבי כמו אנליסטית",
               sub: "CSV עם נתונים אמיתיים · 8 שלבים · ~10 דק'",
               href: "/explore/data/sim",
-              highlight: true,
-              label: "התחלי כאן",
+              doneKey: "sim" as const,
+              lockedBy: null,
             },
             {
               num: "2",
@@ -528,8 +536,8 @@ function DataContent() {
               title: "מרכז למידה — 7 מודולים",
               sub: "חקירה · גרפים שבורים · חיזויים · החלטות עסקיות",
               href: "/explore/data/learn",
-              highlight: false,
-              label: "",
+              doneKey: null,
+              lockedBy: null,
             },
             {
               num: "3",
@@ -537,8 +545,8 @@ function DataContent() {
               title: "אנליטיקה בשטח — 5 שלבים",
               sub: "שאלת מחקר · ניקוי נתונים · AI Prompting · המנכ\"ל",
               href: "/explore/data/learn/analytics",
-              highlight: false,
-              label: "",
+              doneKey: "analytics" as const,
+              lockedBy: "sim" as const,
             },
             {
               num: "4",
@@ -546,45 +554,95 @@ function DataContent() {
               title: "תעלומת SQL — מתקדם",
               sub: "חקירת הדלפה בסטארטאפ · כתיבת שאילתות אמיתיות",
               href: "/explore/data/learn/mystery",
-              highlight: false,
-              label: "",
+              doneKey: "mystery" as const,
+              lockedBy: "analytics" as const,
             },
-          ].map((step, i) => (
-            <div key={step.num}>
-              <Link href={step.href} className="block">
-                <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
-                  style={{
-                    background: step.highlight ? TEAL : "#fff",
-                    border: step.highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
-                    boxShadow: step.highlight ? "0 4px 20px rgba(13,148,136,0.25)" : "none",
-                  }}>
-                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
-                    style={{ background: step.highlight ? "rgba(255,255,255,0.25)" : "rgba(13,148,136,0.1)", color: step.highlight ? "#fff" : TEAL }}>
-                    {step.num}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px]">{step.emoji}</span>
-                      <span className="text-[12.5px] font-bold" style={{ color: step.highlight ? "#fff" : "#023e8a" }}>{step.title}</span>
-                      {step.label && (
-                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                          style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>{step.label}</span>
-                      )}
+            {
+              num: "5",
+              emoji: "💭",
+              title: "כלי עיבוד החוויה",
+              sub: "6 שאלות קצרות — מה הרגשת? מה הדליק? מה אחר כך?",
+              href: "/explore/data/experience",
+              doneKey: "experience" as const,
+              lockedBy: "mystery" as const,
+            },
+          ].map((step, i, arr) => {
+            const isDone = step.doneKey ? !!journey[step.doneKey] : false;
+            const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
+            const isFirst = i === 0;
+            const highlight = isFirst && !journey["sim"];
+
+            return (
+              <div key={step.num}>
+                <Link href={isLocked ? "#" : step.href} className="block" onClick={isLocked ? (e) => e.preventDefault() : undefined}>
+                  <div
+                    className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                    style={{
+                      background: isDone ? "rgba(13,148,136,0.06)" : highlight ? TEAL : "#fff",
+                      border: isDone
+                        ? "1.5px solid rgba(13,148,136,0.2)"
+                        : isLocked
+                        ? "1px solid rgba(0,0,0,0.06)"
+                        : highlight
+                        ? "none"
+                        : "1px solid rgba(0,0,0,0.08)",
+                      opacity: isLocked ? 0.55 : 1,
+                      boxShadow: highlight ? "0 4px 20px rgba(13,148,136,0.25)" : "none",
+                    }}
+                  >
+                    <div
+                      className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                      style={{
+                        background: isDone ? TEAL : highlight ? "rgba(255,255,255,0.25)" : "rgba(13,148,136,0.1)",
+                        color: isDone || highlight ? "#fff" : TEAL,
+                      }}
+                    >
+                      {isDone ? "✓" : step.num}
                     </div>
-                    <div className="text-[11px] mt-0.5" style={{ color: step.highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
-                      {step.sub}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px]">{isLocked ? "🔒" : step.emoji}</span>
+                        <span
+                          className="text-[12.5px] font-bold"
+                          style={{ color: isDone ? TEAL : highlight ? "#fff" : "#023e8a" }}
+                        >
+                          {step.title}
+                        </span>
+                        {highlight && (
+                          <span
+                            className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}
+                          >
+                            התחלי כאן
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className="text-[11px] mt-0.5"
+                        style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}
+                      >
+                        {isLocked ? `זמין אחרי שלב ${parseInt(step.num) - 1}` : step.sub}
+                      </div>
                     </div>
+                    <span
+                      className="text-[16px] font-bold shrink-0"
+                      style={{ color: isDone ? TEAL : highlight ? "#fff" : isLocked ? "rgba(0,0,0,0.2)" : TEAL }}
+                    >
+                      {isLocked ? "🔒" : "←"}
+                    </span>
                   </div>
-                  <span className="text-[16px] font-bold shrink-0" style={{ color: step.highlight ? "#fff" : TEAL }}>←</span>
-                </div>
-              </Link>
-              {i < 3 && (
-                <div className="flex justify-center my-1">
-                  <div className="w-[1.5px] h-3" style={{ background: "rgba(13,148,136,0.2)" }} />
-                </div>
-              )}
-            </div>
-          ))}
+                </Link>
+                {i < arr.length - 1 && (
+                  <div className="flex justify-center my-1">
+                    <div
+                      className="w-[1.5px] h-3"
+                      style={{ background: isDone ? "rgba(13,148,136,0.4)" : "rgba(13,148,136,0.2)" }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

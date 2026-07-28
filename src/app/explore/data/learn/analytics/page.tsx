@@ -891,16 +891,22 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
+            <button
+              onClick={() => {
+                try {
+                  const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
+                  localStorage.setItem("data-journey", JSON.stringify({ ...journey, analytics: true }));
+                } catch {/* ignore */}
+                window.location.href = "/explore/data/learn/mystery";
+              }}
+              className="w-full py-4 rounded-xl text-[15px] font-black text-white mb-3"
+              style={{ background: TEAL, ...HEEBO }}>
+              מיציתי את הטעימה — קדימה לתעלומת SQL ←
+            </button>
             <Link href="/explore/data/learn" className="block">
-              <button className="w-full py-3.5 rounded-xl text-[14px] font-black text-white mb-3"
-                style={{ background: NAVY, ...HEEBO }}>
-                ← חזרה למרכז הלמידה
-              </button>
-            </Link>
-            <Link href="/explore/data/learn/mystery" className="block">
-              <button className="w-full py-3.5 rounded-xl text-[14px] font-black"
-                style={{ background: "transparent", border: `2px solid ${NAVY}30`, color: NAVY, ...HEEBO }}>
-                מודול SQL — חקירת ההדלפה 🕵️
+              <button className="w-full py-3 rounded-xl text-[13px] font-bold"
+                style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.4)", fontFamily: "'Heebo', sans-serif" }}>
+                חזרה למרכז הלמידה
               </button>
             </Link>
           </div>

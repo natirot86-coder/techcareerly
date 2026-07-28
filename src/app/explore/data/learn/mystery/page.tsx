@@ -1213,10 +1213,32 @@ function RevealPhase() {
         </div>
       </div>
 
+      {/* מיציתי את הטעימה */}
+      <div className="rounded-2xl p-4 mb-4"
+           style={{ background: "rgba(13,148,136,0.06)", border: "1.5px solid rgba(13,148,136,0.2)" }}>
+        <div className="text-[12px] font-bold mb-1" style={{ color: T.teal }}>מה הלאה?</div>
+        <div className="text-[12px] leading-relaxed" style={{ color: "rgba(0,0,0,0.55)" }}>
+          עכשיו עצרי רגע ועבדי על מה שחווית — כלי קצר שעוזר לך להבין אם תחום הדאטה מדבר אלייך.
+        </div>
+      </div>
+
+      <button
+        onClick={() => {
+          try {
+            const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
+            localStorage.setItem("data-journey", JSON.stringify({ ...journey, mystery: true }));
+          } catch {/* ignore */}
+          window.location.href = "/explore/data/experience";
+        }}
+        className="block w-full py-4 rounded-xl text-[15px] font-black text-center mb-3"
+        style={{ background: T.teal, color: "white", fontFamily: "'Heebo', sans-serif" }}>
+        מיציתי את הטעימה — בואי נעבד ←
+      </button>
+
       <Link href="/explore/data/learn"
-        className="block w-full py-3.5 rounded-xl text-[14px] font-black text-center transition-all"
-        style={{ background: T.teal, color: "white" }}>
-        חזרה למרכז למידה ←
+        className="block w-full py-3 rounded-xl text-[13px] font-bold text-center"
+        style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.4)" }}>
+        חזרה למרכז למידה
       </Link>
     </div>
   );
