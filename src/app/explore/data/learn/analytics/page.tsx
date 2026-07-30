@@ -901,7 +901,7 @@ export default function AnalyticsPage() {
               }}
               className="w-full py-4 rounded-xl text-[15px] font-black text-white mb-3"
               style={{ background: TEAL, ...HEEBO }}>
-              סיימתי פה — קדימה להתנסות הבאה בדאטה ←
+              רוצה לצלול עמוק יותר בדאטה ←
             </button>
             <button
               onClick={() => {

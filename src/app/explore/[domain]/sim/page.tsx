@@ -3712,7 +3712,7 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"
             style={{ background: "#0d9488", color: "#fff", fontFamily: "'Heebo', sans-serif" }}
           >
-            סיימתי פה — קדימה להתנסות הבאה בדאטה ←
+            רוצה לצלול עמוק יותר בדאטה ←
           </button>
           <button
             onClick={() => {

@@ -1232,7 +1232,7 @@ function RevealPhase() {
         }}
         className="block w-full py-4 rounded-xl text-[15px] font-black text-center mb-3"
         style={{ background: T.teal, color: "white", fontFamily: "'Heebo', sans-serif" }}>
-        סיימתי פה — קדימה להתנסות הבאה בדאטה ←
+        רוצה לצלול עמוק יותר בדאטה ←
       </button>
 
       <button
