@@ -43,7 +43,7 @@ function SimTeaser({ emoji, challenge }: { emoji: string; challenge: string }) {
           className="text-[10.5px] font-bold uppercase tracking-wide"
           style={{ color: "#fb8500" }}
         >
-          מה מחכה לך בסימולציה
+          מה מחכה לך בטעימה
         </span>
       </div>
       <div className="text-[13px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.65)" }}>{challenge}</div>
@@ -145,7 +145,7 @@ function CodeContent() {
 
       <SimTeaser
         emoji="🐛"
-        challenge="בסימולציה: האפליקציה של הלקוח קורסת. יש לך 3 ניסיונות לאתר את הבאג ולתקן — לפני שהוא מתקשר למנהל שלך."
+        challenge="בטעימה: האפליקציה של הלקוח קורסת. יש לך 3 ניסיונות לאתר את הבאג ולתקן — לפני שהוא מתקשר למנהל שלך."
       />
 
       <SalaryCard min={13000} max={28000} />
@@ -244,7 +244,7 @@ function CyberContent() {
 
       <SimTeaser
         emoji="🔓"
-        challenge="בסימולציה: תתבקשי לבצע penetration test על שרת בדיקה — ולדווח על הממצאים. כמה חולשות תמצאי?"
+        challenge="בטעימה: תתבקשי לבצע penetration test על שרת בדיקה — ולדווח על הממצאים. כמה חולשות תמצאי?"
       />
 
       <SalaryCard min={15000} max={30000} />
@@ -327,7 +327,7 @@ function AIContent() {
 
       <SimTeaser
         emoji="🤖"
-        challenge="בסימולציה: תקבלי 500 ביקורות לקוחות מעורבבות. המשימה — ללמד מודל להבדיל חיובי משלילי. כמה דוגמאות תצטרכי?"
+        challenge="בטעימה: תקבלי 500 ביקורות לקוחות מעורבבות. המשימה — ללמד מודל להבדיל חיובי משלילי. כמה דוגמאות תצטרכי?"
       />
 
       <SalaryCard min={18000} max={35000} />
@@ -410,7 +410,7 @@ function UXContent() {
 
       <SimTeaser
         emoji="🎨"
-        challenge="בסימולציה: תקבלי wireframe גרוע של אפליקציית זימון תורים. המשימה — לזהות 3 בעיות UX ולהציע כל אחת כיצד לתקן."
+        challenge="בטעימה: תקבלי wireframe גרוע של אפליקציית זימון תורים. המשימה — לזהות 3 בעיות UX ולהציע כל אחת כיצד לתקן."
       />
 
       <SalaryCard min={10000} max={22000} />
@@ -545,7 +545,7 @@ function DataContent() {
             {
               num: "1",
               emoji: "📊",
-              title: "סימולציה — חשבי כמו אנליסטית",
+              title: "טעימה — חשבי כמו אנליסטית",
               sub: "CSV עם נתונים אמיתיים · 8 שלבים · ~10 דק'",
               href: "/explore/data/sim",
               doneKey: "sim" as const,
@@ -750,7 +750,7 @@ function MarketingContent() {
 
       <SimTeaser
         emoji="📢"
-        challenge="בסימולציה: תקציב ₪2,000 לחודש, 3 ערוצים. המשימה — להחליט כיצד לפצל כדי להגיע ל-500 לידים. לכל החלטה יש מחיר."
+        challenge="בטעימה: תקציב ₪2,000 לחודש, 3 ערוצים. המשימה — להחליט כיצד לפצל כדי להגיע ל-500 לידים. לכל החלטה יש מחיר."
       />
 
       <SalaryCard min={9000} max={20000} />
@@ -832,7 +832,7 @@ export default function DomainPage() {
           className="block w-full max-w-[500px] text-center py-[14px] rounded-xl text-white font-bold text-[15px]"
           style={{ background: "#fb8500", fontFamily: "'Heebo', sans-serif" }}
         >
-          קדימה לסימולציה ←
+          קדימה לטעימה ←
         </Link>
       </div>
 

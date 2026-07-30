@@ -1,0 +1,47 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add src/app/explore/[domain]/page.tsx src/app/explore/[domain]/sim/page.tsx src/app/explore/data/learn/mystery/page.tsx src/app/explore/data/learn/page.tsx src/app/explore/data/learn/analytics/ package.json package-lock.json)",
+      "Bash(npx vercel inspect hasifaapp.vercel.app)",
+      "Bash(npx vercel env ls --environment=production)",
+      "WebFetch(domain:api.vercel.com)",
+      "Bash(npx vercel git connect)",
+      "Bash(npx vercel git)",
+      "Bash(npx vercel git connect https://github.com/natirot86-coder/techcareerly)",
+      "Bash(npx vercel ls hasifa_app)",
+      "Bash(npx vercel inspect hasifa-2qlwgst5p-natirot86-4356s-projects.vercel.app)",
+      "Bash(git diff HEAD -- src/app/explore/[domain]/sim/page.tsx)",
+      "Bash(git diff HEAD -- src/app/explore/[domain]/page.tsx)",
+      "Bash(git add src/app/explore/[domain]/page.tsx src/app/explore/[domain]/sim/page.tsx src/app/explore/data/learn/analytics/page.tsx src/app/explore/data/learn/mystery/page.tsx src/app/explore/data/experience/)",
+      "Bash(git pull --no-rebase origin master)",
+      "Bash(grep -n \"מיציתי\\\\|data-journey\\\\|experience\" src/app/explore/[domain]/sim/page.tsx)",
+      "Bash(grep -n \"journey\\\\|doneKey\\\\|lockedBy\" src/app/explore/[domain]/page.tsx)",
+      "Bash(grep -n \"function.*Steps\\\\|getSteps\\\\|code.*Step\\\\|codeSteps\" src/app/explore/[domain]/sim/page.tsx)",
+      "WebFetch(domain:www.youtube.com)",
+      "WebFetch(domain:campus.gov.il)",
+      "WebFetch(domain:ramkedem.com)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:noembed.com)",
+      "WebFetch(domain:ytdl-org.github.io)",
+      "WebFetch(domain:ytlarge.com)",
+      "WebFetch(domain:www.googleapis.com)",
+      "Bash(gh issue list --repo natirot86-coder/techcareerly --limit 10)",
+      "Bash(gh issue list --repo natirot86-coder/techcareerly)",
+      "Bash(python3 -c \":*)",
+      "Bash(gh api repos/natirot86-coder/techcareerly/collaborators)",
+      "Bash(gh api repos/natirot86-coder/techcareerly/commits --jq '.[0:5] | .[] | {sha: .sha[0:7], author: .commit.author.name, email: .commit.author.email, msg: .commit.message[0:60]}')",
+      "mcp__claude_ai_monday_com__all_api_read",
+      "mcp__claude_ai_monday_com__all_api_write",
+      "Bash(wc -l c:/Users/user/hasifa_app/src/app/explore/[domain]/page.tsx c:/Users/user/hasifa_app/src/app/explore/[domain]/sim/page.tsx c:/Users/user/hasifa_app/src/app/explore/data/experience/page.tsx c:/Users/user/hasifa_app/src/app/explore/data/learn/analytics/page.tsx c:/Users/user/hasifa_app/src/app/explore/data/learn/mystery/page.tsx c:/Users/user/hasifa_app/src/app/explore/data/learn/page.tsx c:/Users/user/hasifa_app/src/app/dashboard/page.tsx c:/Users/user/hasifa_app/src/app/map/page.tsx)",
+      "Bash(git add src/app/explore/[domain]/sim/page.tsx src/app/explore/data/learn/analytics/page.tsx src/app/explore/data/learn/mystery/page.tsx)",
+      "Bash(git add src/app/explore/data/experience/page.tsx)",
+      "Skill(agent-browser)",
+      "Skill(agent-browser:*)",
+      "Bash(grep -n \"טעימה\" c:/Users/user/hasifa_app/src/app/explore/[domain]/sim/page.tsx)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\user\\hasifa_app\\src\\app\\explore\\[domain]\\sim",
+      "c:\\Users\\user\\hasifa_app\\src\\app\\explore\\[domain]"
+    ]
+  }
+}

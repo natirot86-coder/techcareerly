@@ -112,7 +112,9 @@ const CONSTRUCTS = [
     scaleHint: (g: Gender) => g === "female"
       ? "1 = לא מדמיינת בכלל · 5 = ברורה לי מאוד התמונה"
       : "1 = לא מדמיין בכלל · 5 = ברורה לי מאוד התמונה",
-    openHint: (_g: Gender) => "כתוב/י 2–3 משפטים — מה רואים, מה מרגישים",
+    openHint: (g: Gender) => g === "female"
+      ? "כתבי 2–3 משפטים — מה רואים, מה מרגישים"
+      : "כתוב 2–3 משפטים — מה רואים, מה מרגישים",
     followUps: OUTCOME_FOLLOWUPS,
     scalePhase: "outcome_scale" as Phase,
     openPhase:  "outcome_open"  as Phase,
@@ -289,12 +291,12 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
 
       <Link href="/explore">
         <button className="block w-full py-4 rounded-xl font-black text-[15px] text-white mb-3" style={{ background: NAVY, fontFamily: "'Heebo', sans-serif" }}>
-          חזרה למסלול ←
+          לחקר תחומי הייטק נוספים ←
         </button>
       </Link>
       <Link href="/explore/data">
         <button className="block w-full py-3.5 rounded-xl font-bold text-[14px]" style={{ background: "transparent", border: "1.5px solid rgba(2,62,138,0.2)", color: NAVY, fontFamily: "'Heebo', sans-serif" }}>
-          חזרה לדאטה
+          חזרה לטעימת הדאטה
         </button>
       </Link>
     </div>
@@ -309,12 +311,6 @@ export default function ExperiencePage() {
   const [answers, setAnswers]     = useState<Answers>({});
   const [tapped, setTapped]       = useState<number | null>(null); // scale visual feedback
 
-  useEffect(() => {
-    try {
-      const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
-      localStorage.setItem("data-journey", JSON.stringify({ ...journey, experience: true }));
-    } catch {/* ignore */}
-  }, []);
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -428,7 +424,7 @@ export default function ExperiencePage() {
   // dynamic follow-up question text
   const scaleVal    = answers[construct.scaleKey] as number;
   const openQ       = !isScale && gender && scaleVal
-    ? construct.followUps[scaleVal]?.(gender) ?? "ספר/י לי על הרגע הזה."
+    ? construct.followUps[scaleVal]?.(gender) ?? (gender === "female" ? "ספרי לי על הרגע הזה." : "ספר לי על הרגע הזה.")
     : "";
 
   const questionText = isScale ? construct.scaleQ(gender!) : openQ;
@@ -438,7 +434,7 @@ export default function ExperiencePage() {
       {/* Header */}
       <div className="text-white px-[22px] pt-[26px] pb-7" style={{ background: construct.color }}>
         <div className="max-w-[720px] mx-auto">
-          <Link href="/explore/data/learn/mystery" className="text-[12px] font-bold block mb-5" style={{ opacity: 0.75 }}>
+          <Link href="/explore/data" className="text-[12px] font-bold block mb-5" style={{ opacity: 0.75 }}>
             ← חזרה
           </Link>
 

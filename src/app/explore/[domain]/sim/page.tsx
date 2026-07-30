@@ -3505,7 +3505,7 @@ const DOMAIN_META: Record<string, {
   careerText: string;
 }> = {
   code: {
-    simTitle: "סימולציה — פיתוח",
+    simTitle: "טעימה — פיתוח",
     heroTexts: ["חשבת כמו מפתחת!", "בדרך הנכונה!", "ניצחת את השלב הראשון!"],
     skills: [
       { label: "הבנת מחשבים", val: 80 },
@@ -3517,7 +3517,7 @@ const DOMAIN_META: Record<string, {
     careerText: "כל הקוד שעברת היום — מפתחות ב-Wix, Monday.com, Fiverr ו-IDF Tech כותבות גרסאות מתקדמות שלו כל יום. מירב התחילה בדיוק מפה — ואחרי 14 חודשים קיבלה עבודה.",
   },
   data: {
-    simTitle: "סימולציה — דאטה",
+    simTitle: "טעימה — דאטה",
     heroTexts: ["חשבת כמו אנליסטית!", "הדרך הנכונה לתובנות!", "ניצחת את השלב הראשון!"],
     skills: [
       { label: "סיווג נתונים", val: 75 },
@@ -3529,7 +3529,7 @@ const DOMAIN_META: Record<string, {
     careerText: "כל ניתוח שעשית היום — דאטה אנליסטיות ב-Waze, Monday.com, Bank Hapoalim ו-IDF Tech עושות גרסאות מתקדמות שלו כל יום. תמר התחילה בדיוק מפה — ואחרי שנה קיבלה עבודה.",
   },
   marketing: {
-    simTitle: "סימולציה — שיווק",
+    simTitle: "טעימה — שיווק",
     heroTexts: ["חשבת כמו משווקת!", "בדרך ללקוחות הנכונים!", "ניצחת את השלב הראשון!"],
     skills: [
       { label: "הבנת לקוחות", val: 80 },
@@ -3541,7 +3541,7 @@ const DOMAIN_META: Record<string, {
     careerText: "כל המושגים שלמדת היום — אנשי שיווק ב-Monday.com, WalkMe, Wix ו-SimilarWeb משתמשים בהם כל יום. שלומית התחילה בדיוק מפה — בלי ניסיון טק — ואחרי שנה עבדה מהבית.",
   },
   ai: {
-    simTitle: "סימולציה — AI",
+    simTitle: "טעימה — AI",
     heroTexts: ["חשבת כמו Data Scientist!", "בדרך להבנת ה-AI!", "ניצחת את השלב הראשון!"],
     skills: [
       { label: "הבנת AI", val: 78 },
@@ -3553,7 +3553,7 @@ const DOMAIN_META: Record<string, {
     careerText: "כל מה שגילית היום — Data Scientists ב-Intel, Mobileye, Google ו-Microsoft Israel עובדים איתו כל יום. מאיה התחילה כמורה לביולוגיה ואחרי שנה נכנסה ל-Intel. הרקע שלך — נכס.",
   },
   cyber: {
-    simTitle: "סימולציה — סייבר",
+    simTitle: "טעימה — סייבר",
     heroTexts: ["חשבת כמו מגינת סייבר!", "בדרך הנכונה לאבטחה!", "ניצחת את השלב הראשון!"],
     skills: [
       { label: "זיהוי איומים", val: 78 },
@@ -3565,7 +3565,7 @@ const DOMAIN_META: Record<string, {
     careerText: "כל מה שחווית היום — אנשי סייבר ב-Check Point, CyberArk, Wiz ו-IDF Tech עובדים איתו כל יום. רונית עברה מ-8200 ללא ניסיון סייבר ספציפי — ואחרי קורס נכנסה לתחום.",
   },
   ux: {
-    simTitle: "סימולציה — עיצוב UX",
+    simTitle: "טעימה — עיצוב UX",
     heroTexts: ["חשבת כמו UX Designer!", "בדרך הנכונה לעיצוב!", "ניצחת את השלב הראשון!"],
     skills: [
       { label: "הבנת משתמשים", val: 80 },
@@ -3613,7 +3613,7 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
           {pct >= 80 ? meta.heroTexts[0] : pct >= 55 ? meta.heroTexts[1] : meta.heroTexts[2]}
         </div>
         <div className="text-[13px] mt-2" style={{ color: theme.textFaint }}>
-          {score} מתוך {steps.length} · {meta.simTitle.replace("סימולציה — ", "")}
+          {score} מתוך {steps.length} · {meta.simTitle.replace("טעימה — ", "")}
         </div>
       </div>
 
@@ -3623,7 +3623,7 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
           5 כישורים שגילית היום ✓
         </div>
         <div className="text-[11.5px] mb-4" style={{ color: "rgba(0,0,0,0.45)" }}>
-          לפני הסימולציה — לא הכרת אף אחד מהם
+          לפני הטעימה — לא הכרת אף אחד מהם
         </div>
         <div className="flex flex-col gap-3">
           {skills.map((s, i) => (

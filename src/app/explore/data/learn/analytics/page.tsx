@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import BottomNav from "@/components/ui/BottomNav";
 import {
   LineChart, Line, BarChart, Bar, ScatterChart, Scatter,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -919,6 +920,7 @@ export default function AnalyticsPage() {
         )}
 
       </div>
+      <BottomNav />
     </div>
   );
 }
