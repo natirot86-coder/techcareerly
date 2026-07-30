@@ -1232,14 +1232,21 @@ function RevealPhase() {
         }}
         className="block w-full py-4 rounded-xl text-[15px] font-black text-center mb-3"
         style={{ background: T.teal, color: "white", fontFamily: "'Heebo', sans-serif" }}>
-        מיציתי את הטעימה — בואי נעבד ←
+        סיימתי פה — קדימה להתנסות הבאה בדאטה ←
       </button>
 
-      <Link href="/explore/data/learn"
+      <button
+        onClick={() => {
+          try {
+            const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
+            localStorage.setItem("data-journey", JSON.stringify({ ...journey, mystery: true }));
+          } catch {/* ignore */}
+          window.location.href = "/explore/data/experience";
+        }}
         className="block w-full py-3 rounded-xl text-[13px] font-bold text-center"
-        style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.4)" }}>
-        חזרה למרכז למידה
-      </Link>
+        style={{ background: "transparent", border: "1.5px solid " + T.teal, color: T.teal, fontFamily: "'Heebo', sans-serif" }}>
+        טעמתי מספיק מדאטה — קדימה לתחום הבא ←
+      </button>
     </div>
   );
 }

@@ -901,14 +901,20 @@ export default function AnalyticsPage() {
               }}
               className="w-full py-4 rounded-xl text-[15px] font-black text-white mb-3"
               style={{ background: TEAL, ...HEEBO }}>
-              מיציתי את הטעימה — קדימה לתעלומת SQL ←
+              סיימתי פה — קדימה להתנסות הבאה בדאטה ←
             </button>
-            <Link href="/explore/data/learn" className="block">
-              <button className="w-full py-3 rounded-xl text-[13px] font-bold"
-                style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.4)", fontFamily: "'Heebo', sans-serif" }}>
-                חזרה למרכז הלמידה
-              </button>
-            </Link>
+            <button
+              onClick={() => {
+                try {
+                  const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
+                  localStorage.setItem("data-journey", JSON.stringify({ ...journey, analytics: true }));
+                } catch {/* ignore */}
+                window.location.href = "/explore/data/experience";
+              }}
+              className="w-full py-3 rounded-xl text-[13px] font-bold"
+              style={{ background: "transparent", border: "1.5px solid " + TEAL, color: TEAL, fontFamily: "'Heebo', sans-serif" }}>
+              טעמתי מספיק מדאטה — קדימה לתחום הבא ←
+            </button>
           </div>
         )}
 
