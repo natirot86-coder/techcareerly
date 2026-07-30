@@ -122,7 +122,7 @@ const CONSTRUCTS = [
 ];
 
 const SCALE_EMOJIS = ["", "😐", "🙂", "😊", "😄", "🤩"];
-const SCALE_LABELS = ["", "כלל לא", "קצת", "בסדר", "טוב", "ממש כן!"];
+const SCALE_LABELS = ["", "כלל לא", "קצת", "בינוני", "הרבה", "מאוד!"];
 
 type Answers = Record<string, string | number>;
 
