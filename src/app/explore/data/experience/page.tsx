@@ -70,9 +70,11 @@ const CONSTRUCTS = [
     label: "עניין",
     color: TEAL,
     emoji: "🌟",
-    scaleQ: "בסולם 1–5 — כמה התחום הזה מדבר אליך?",
-    scaleHint: "1 = כלל לא מרגיש/ה חיבור · 5 = מאוד מדבר אליי",
-    openHint: "אפשר לכתוב גם 'לא היה' — חשובה הכנות",
+    scaleQ: (_g: Gender) => "בסולם 1–5 — כמה התחום הזה מדבר אליך?",
+    scaleHint: (g: Gender) => g === "female"
+      ? "1 = כלל לא מרגישה חיבור · 5 = מאוד מדבר אליי"
+      : "1 = כלל לא מרגיש חיבור · 5 = מאוד מדבר אליי",
+    openHint: (_g: Gender) => "אפשר לכתוב גם 'לא היה' — חשובה הכנות",
     followUps: INTEREST_FOLLOWUPS,
     scalePhase: "interest_scale" as Phase,
     openPhase:  "interest_open"  as Phase,
@@ -84,9 +86,15 @@ const CONSTRUCTS = [
     label: "ביטחון",
     color: ORANGE,
     emoji: "💪",
-    scaleQ: "בסולם 1–5 — כמה הרגשת שאת/ה יכול/ה ללמוד ולהצליח בדאטה?",
-    scaleHint: "1 = ממש לא בטוח/ה · 5 = בהחלט יכול/ה",
-    openHint: "אין תשובה נכונה — ספר/י מה הרגשת באמת",
+    scaleQ: (g: Gender) => g === "female"
+      ? "בסולם 1–5 — כמה הרגשת שאת יכולה ללמוד ולהצליח בדאטה?"
+      : "בסולם 1–5 — כמה הרגשת שאתה יכול ללמוד ולהצליח בדאטה?",
+    scaleHint: (g: Gender) => g === "female"
+      ? "1 = ממש לא בטוחה · 5 = בהחלט יכולה"
+      : "1 = ממש לא בטוח · 5 = בהחלט יכול",
+    openHint: (g: Gender) => g === "female"
+      ? "אין תשובה נכונה — ספרי מה הרגשת באמת"
+      : "אין תשובה נכונה — ספר מה הרגשת באמת",
     followUps: EFFICACY_FOLLOWUPS,
     scalePhase: "efficacy_scale" as Phase,
     openPhase:  "efficacy_open"  as Phase,
@@ -98,16 +106,20 @@ const CONSTRUCTS = [
     label: "עתיד",
     color: NAVY,
     emoji: "🔭",
-    scaleQ: "בסולם 1–5 — כמה את/ה מדמיין/ת את עצמך מצליח/ה בתחום?",
-    scaleHint: "1 = לא מדמיין/ת בכלל · 5 = ברורה לי מאוד התמונה",
-    openHint: "כתוב/י 2–3 משפטים — מה רואים, מה מרגישים",
+    scaleQ: (g: Gender) => g === "female"
+      ? "בסולם 1–5 — כמה את מדמיינת את עצמך מצליחה בתחום?"
+      : "בסולם 1–5 — כמה אתה מדמיין את עצמך מצליח בתחום?",
+    scaleHint: (g: Gender) => g === "female"
+      ? "1 = לא מדמיינת בכלל · 5 = ברורה לי מאוד התמונה"
+      : "1 = לא מדמיין בכלל · 5 = ברורה לי מאוד התמונה",
+    openHint: (_g: Gender) => "כתוב/י 2–3 משפטים — מה רואים, מה מרגישים",
     followUps: OUTCOME_FOLLOWUPS,
     scalePhase: "outcome_scale" as Phase,
     openPhase:  "outcome_open"  as Phase,
     scaleKey: "outcome_scale",
     openKey:  "outcome_open",
   },
-] as const;
+];
 
 const SCALE_EMOJIS = ["", "😐", "🙂", "😊", "😄", "🤩"];
 const SCALE_LABELS = ["", "כלל לא", "קצת", "בסדר", "טוב", "ממש כן!"];
@@ -116,9 +128,10 @@ type Answers = Record<string, string | number>;
 
 // ─── Open Question ────────────────────────────────────────────────────────────
 
-function OpenQuestion({ color, hint, onAnswer }: { color: string; hint: string; onAnswer: (v: string) => void }) {
+function OpenQuestion({ color, hint, gender, onAnswer }: { color: string; hint: string; gender: Gender | null; onAnswer: (v: string) => void }) {
   const [text, setText] = useState("");
   const ready = text.trim().length >= 2;
+  const isFemale = gender === "female";
 
   return (
     <div>
@@ -152,7 +165,7 @@ function OpenQuestion({ color, hint, onAnswer }: { color: string; hint: string; 
           cursor: ready ? "pointer" : "not-allowed",
         }}
       >
-        {ready ? "המשיכי ←" : "כתוב/י קודם"}
+        {ready ? (isFemale ? "המשיכי ←" : "המשך ←") : (isFemale ? "כתבי קודם" : "כתוב קודם")}
       </button>
     </div>
   );
@@ -418,7 +431,7 @@ export default function ExperiencePage() {
     ? construct.followUps[scaleVal]?.(gender) ?? "ספר/י לי על הרגע הזה."
     : "";
 
-  const questionText = isScale ? construct.scaleQ : openQ;
+  const questionText = isScale ? construct.scaleQ(gender!) : openQ;
 
   return (
     <div className="min-h-screen" style={{ background: "#fbf9f5" }} dir="rtl">
@@ -466,7 +479,7 @@ export default function ExperiencePage() {
         {isScale ? (
           <>
             <div className="text-[12px] mb-5" style={{ color: "rgba(0,0,0,0.4)" }}>
-              {construct.scaleHint} — לחץ/י לבחור
+              {construct.scaleHint(gender!)} — {gender === "female" ? "לחצי" : "לחץ"} לבחור
             </div>
             <div className="flex flex-col gap-2.5">
               {[1, 2, 3, 4, 5].map((n) => (
@@ -503,7 +516,8 @@ export default function ExperiencePage() {
         ) : (
           <OpenQuestion
             color={construct.color}
-            hint={construct.openHint}
+            hint={construct.openHint(gender!)}
+            gender={gender}
             onAnswer={handleOpen}
           />
         )}
