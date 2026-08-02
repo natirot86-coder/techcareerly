@@ -600,7 +600,7 @@ export default function AnalyticsPage() {
               <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1.5px solid rgba(13,148,136,0.2)" }}>
                 <div className="px-3 pt-2.5 pb-2" style={{ background: "rgba(13,148,136,0.06)" }}>
                   <div className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: TEAL }}>🎥 העמקה</div>
-                  <div className="text-[11px]" dir="rtl" style={{ color: "rgba(0,0,0,0.5)" }}>ויזואליזציית נתונים — Ram Kedem</div>
+                  <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.5)" }}>סרטון של ~5 דק' — ויזואליזציית נתונים, Ram Kedem</div>
                 </div>
                 <div className="relative w-full" style={{ paddingTop: "56.25%", background: "#000" }}>
                   <iframe
