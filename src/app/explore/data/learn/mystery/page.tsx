@@ -529,6 +529,24 @@ function IntroPhase({ onStart }: { onStart: () => void }) {
         </p>
       </NCard>
 
+      {/* Video — מבוא SQL */}
+      <div className="rounded-xl overflow-hidden" style={{ border: "1.5px solid rgba(13,148,136,0.2)" }}>
+        <div className="px-3 pt-2.5 pb-2" style={{ background: "rgba(13,148,136,0.06)" }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: T.teal }}>🎥 לפני שנכנסים לחדר</div>
+          <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.5)" }}>מבוא לשפת SQL — 3 דקות</div>
+        </div>
+        <div className="relative w-full" style={{ paddingTop: "56.25%", background: "#000" }}>
+          <iframe
+            src="https://www.youtube.com/embed/Vb60d3w3Rzc"
+            title="מבוא לשפת SQL"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="absolute inset-0 w-full h-full border-0"
+          />
+        </div>
+      </div>
+
       {/* Step overview */}
       <div className="rounded-xl p-4"
            style={{ background: "rgba(2,62,138,0.04)", border: `1px solid rgba(2,62,138,0.12)` }}>

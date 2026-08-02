@@ -596,6 +596,24 @@ export default function AnalyticsPage() {
                 {CHART_SCENARIO.question}
               </div>
 
+              {/* Video — ויזואליזציית נתונים */}
+              <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1.5px solid rgba(13,148,136,0.2)" }}>
+                <div className="px-3 pt-2.5 pb-2" style={{ background: "rgba(13,148,136,0.06)" }}>
+                  <div className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: TEAL }}>🎥 העמקה</div>
+                  <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.5)" }}>ויזואליזציית נתונים — Ram Kedem</div>
+                </div>
+                <div className="relative w-full" style={{ paddingTop: "56.25%", background: "#000" }}>
+                  <iframe
+                    src="https://www.youtube.com/embed/2MdxfU1jBFg"
+                    title="ויזואליזציית נתונים"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full border-0"
+                  />
+                </div>
+              </div>
+
               {/* Chart preview area */}
               <div className="rounded-xl p-4 mb-4" style={{ background: "#fafafa", border: "1px solid rgba(0,0,0,0.06)" }}>
                 <div className="flex gap-2 mb-3">

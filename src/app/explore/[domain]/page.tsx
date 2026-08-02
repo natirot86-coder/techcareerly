@@ -537,6 +537,24 @@ function DataContent() {
         color={TEAL}
       />
 
+      {/* Video — מה זה דאטה אנליסט */}
+      <div className="rounded-2xl overflow-hidden mb-5" style={{ border: "1.5px solid rgba(13,148,136,0.2)" }}>
+        <div className="px-4 pt-3 pb-2" style={{ background: "rgba(13,148,136,0.06)" }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: "#0d9488" }}>🎥 ראי לפני שממשיכים</div>
+          <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>מה זה דאטה אנליסט — 60 שניות</div>
+        </div>
+        <div className="relative w-full" style={{ paddingTop: "56.25%", background: "#000" }}>
+          <iframe
+            src="https://www.youtube.com/embed/vemlok2E87o"
+            title="מה זה דאטה אנליסט ב-60 שניות"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="absolute inset-0 w-full h-full border-0"
+          />
+        </div>
+      </div>
+
       {/* Journey map */}
       <div className="mb-7">
         <Label text="המסלול שלך בדאטה" />
