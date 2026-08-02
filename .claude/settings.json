@@ -37,7 +37,9 @@
       "Bash(git add src/app/explore/data/experience/page.tsx)",
       "Skill(agent-browser)",
       "Skill(agent-browser:*)",
-      "Bash(grep -n \"טעימה\" c:/Users/user/hasifa_app/src/app/explore/[domain]/sim/page.tsx)"
+      "Bash(grep -n \"טעימה\" c:/Users/user/hasifa_app/src/app/explore/[domain]/sim/page.tsx)",
+      "Bash(grep -n \"SimTeaser\\\\|קדימה לטעימה\\\\|×2.5\\\\|SalaryCard\\\\|LearnMore\\\\|Challenge\" c:/Users/user/hasifa_app/src/app/explore/[domain]/page.tsx)",
+      "Bash(git add src/app/explore/[domain]/page.tsx src/app/explore/data/learn/analytics/page.tsx src/app/explore/data/learn/mystery/page.tsx)"
     ],
     "additionalDirectories": [
       "c:\\Users\\user\\hasifa_app\\src\\app\\explore\\[domain]\\sim",

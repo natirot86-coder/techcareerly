@@ -533,7 +533,7 @@ function IntroPhase({ onStart }: { onStart: () => void }) {
       <div className="rounded-xl overflow-hidden" style={{ border: "1.5px solid rgba(13,148,136,0.2)" }}>
         <div className="px-3 pt-2.5 pb-2" style={{ background: "rgba(13,148,136,0.06)" }}>
           <div className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: T.teal }}>🎥 לפני שנכנסים לחדר</div>
-          <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.5)" }}>מבוא לשפת SQL — 3 דקות</div>
+          <div className="text-[11px]" dir="rtl" style={{ color: "rgba(0,0,0,0.5)" }}>מבוא לשפת SQL — 3 דקות</div>
         </div>
         <div className="relative w-full" style={{ paddingTop: "56.25%", background: "#000" }}>
           <iframe
