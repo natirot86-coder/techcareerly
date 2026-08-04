@@ -656,11 +656,28 @@ function DataContent() {
                           </span>
                         )}
                       </div>
-                      <div
-                        className="text-[11px] mt-0.5"
-                        style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}
-                      >
-                        {isLocked ? `זמין אחרי שלב ${parseInt(step.num) - 1}` : step.sub}
+                      <div className="mt-0.5">
+                        {isLocked ? (
+                          <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+                            זמין אחרי שלב {parseInt(step.num) - 1}
+                          </span>
+                        ) : (() => {
+                          const parts = step.sub.split(/ · (~\d+.*)$/);
+                          return (
+                            <>
+                              <div className="text-[11px]" dir="rtl"
+                                style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                                {parts[0]}
+                              </div>
+                              {parts[1] && (
+                                <div className="text-[10px] mt-0.5 font-bold" dir="rtl"
+                                  style={{ color: highlight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.28)" }}>
+                                  ⏱ {parts[1]}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                     <span
@@ -776,6 +793,363 @@ function MarketingContent() {
   );
 }
 
+// ─── NETWORKS ────────────────────────────────────────────────────────────────
+function NetworksContent() {
+  const [pingLines, setPingLines] = useState<string[]>([]);
+  const [pinging, setPinging] = useState(false);
+  const [pingDone, setPingDone] = useState(false);
+  const [journey, setJourney] = useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("networks-journey");
+      if (saved) setJourney(JSON.parse(saved));
+    } catch {/* ignore */}
+  }, []);
+
+  const BLUE = "#3b82f6";
+
+  const lines = [
+    "PING google.com (142.250.185.14): 56 bytes",
+    "64 bytes: icmp_seq=0 ttl=118 time=11.4ms",
+    "64 bytes: icmp_seq=1 ttl=118 time=10.9ms",
+    "64 bytes: icmp_seq=2 ttl=118 time=12.1ms",
+    "--- google.com ping statistics ---",
+    "3 packets transmitted, 3 received, 0% loss",
+  ];
+
+  function runPing() {
+    if (pinging || pingDone) return;
+    setPinging(true);
+    lines.forEach((line, i) => {
+      setTimeout(() => {
+        setPingLines((prev) => [...prev, line]);
+        if (i === lines.length - 1) { setPinging(false); setPingDone(true); }
+      }, i * 380);
+    });
+  }
+
+  return (
+    <>
+      <div className="mb-6 rounded-2xl p-4 text-[13.5px] leading-[1.7]" style={{ background: "rgba(59,130,246,0.07)" }}>
+        כל פעם שאת גולשת לאתר, שולחת הודעה או מדברת ב-Zoom —{" "}
+        <span className="font-black" style={{ color: "#023e8a" }}>מישהי בנתה את הרשת שמאפשרת את זה.</span>
+      </div>
+
+      {/* 4 Core Concepts with analogies */}
+      <div className="mb-7">
+        <Label text="4 מושגי יסוד — עם אנלוגיות" />
+        <div className="flex flex-col gap-2">
+          {[
+            {
+              emoji: "🏠", term: "IP Address", color: BLUE,
+              analogy: "כתובת הבית של כל מכשיר",
+              explain: "כמו שלכל בית יש כתובת, לכל מחשב יש מספר ייחודי. 142.250.185.14 זו כתובת ה-IP של גוגל.",
+            },
+            {
+              emoji: "📖", term: "DNS", color: "#7c3aed",
+              analogy: "ספר הטלפונים של האינטרנט",
+              explain: "כותבים \"google.com\" — ה-DNS מתרגם לכתובת IP. בלי DNS היינו צריכים לזכור מספרים במקום שמות.",
+            },
+            {
+              emoji: "📦", term: "Packet", color: "#0d9488",
+              analogy: "מעטפה בדואר",
+              explain: "כל הודעה נחתכת לחתיכות קטנות שנוסעות בנפרד ומתאחדות ביעד — כמו שולחים פאזל חתיכה חתיכה.",
+            },
+            {
+              emoji: "🚦", term: "Router", color: "#f97316",
+              analogy: "שוטר תנועה בצומת",
+              explain: "הרשת מלאה בצמתים. ה-Router בכל צומת מחליט לאן לשלוח את ה-packet — שמאל, ישר, ימין?",
+            },
+          ].map(({ emoji, term, color, analogy, explain }) => (
+            <div key={term} className="rounded-xl p-3.5 flex gap-3"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
+              <span className="text-[22px] shrink-0 mt-0.5">{emoji}</span>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[12px] font-black" style={{ color, fontFamily: "'Heebo', sans-serif" }}>{term}</span>
+                  <span className="text-[11px] font-bold" style={{ color: "rgba(0,0,0,0.4)" }}>= {analogy}</span>
+                </div>
+                <div className="text-[11.5px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.5)" }}>{explain}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Ping simulator — analogy first */}
+      <div className="mb-7">
+        <Label text="נסי את זה בעצמך — שלחי Ping לגוגל" />
+        <div className="rounded-xl px-4 py-3 mb-3 flex gap-2 items-start"
+          style={{ background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.15)" }}>
+          <span className="text-[16px] shrink-0">🚪</span>
+          <div className="text-[12.5px] leading-[1.55]" style={{ color: "#1d4ed8" }}>
+            <span className="font-bold">Ping = דפיקה על דלת.</span>{" "}
+            שולחים הודעה לגוגל ומודדים כמה זמן לקח לה לחזור. אם חזרה — הדרך פתוחה.
+          </div>
+        </div>
+        <div className="rounded-2xl overflow-hidden" style={{ boxShadow: "0 4px 24px rgba(59,130,246,0.13)" }}>
+          <div className="flex items-center gap-[6px] px-4 py-[10px]" style={{ background: "#1e293b" }}>
+            <div className="w-[11px] h-[11px] rounded-full" style={{ background: "#ef4444" }} />
+            <div className="w-[11px] h-[11px] rounded-full" style={{ background: "#eab308" }} />
+            <div className="w-[11px] h-[11px] rounded-full" style={{ background: "#22c55e" }} />
+            <span className="text-[11px] mr-2" style={{ color: "#94a3b8" }}>terminal</span>
+          </div>
+          <div className="p-4 font-mono text-[12px] leading-[1.9] min-h-[80px]" style={{ background: "#0f172a", color: "#e2e8f0" }} dir="ltr">
+            <div style={{ color: "#60a5fa" }}>$ ping google.com</div>
+            {pingLines.map((line, i) => {
+              let color = "#e2e8f0";
+              let annotation = "";
+              if (line.includes("0% loss")) { color = "#22c55e"; annotation = "  ← אפס אבידות!"; }
+              else if (line.includes("statistics")) color = "#94a3b8";
+              else if (line.includes("142.250")) annotation = "  ← כתובת IP של גוגל";
+              else if (line.includes("time=")) annotation = "  ← 11ms = מהירות התגובה";
+              return (
+                <div key={i}>
+                  <span style={{ color }}>{line}</span>
+                  {annotation && <span style={{ color: "#475569", fontSize: "10px" }}>{annotation}</span>}
+                </div>
+              );
+            })}
+            {pinging && <div style={{ color: "#60a5fa" }}>▌</div>}
+          </div>
+          <button
+            onClick={runPing}
+            disabled={pinging || pingDone}
+            className="w-full py-[11px] text-[13.5px] font-bold transition-all"
+            style={{ background: pingDone ? "#16a34a" : BLUE, color: "#fff", fontFamily: "'Heebo', sans-serif" }}
+          >
+            {pingDone ? "✓ גוגל ענתה — הדרך פתוחה!" : pinging ? "שולחת דפיקות לגוגל..." : "▶  דפקי על הדלת של גוגל ←"}
+          </button>
+        </div>
+        {pingDone && (
+          <div className="mt-3 rounded-xl px-4 py-3 text-[12.5px] leading-[1.55]"
+            style={{ background: "rgba(22,163,74,0.07)", border: "1px solid rgba(22,163,74,0.2)", color: "#15803d" }}>
+            3 דפיקות נשלחו וחזרו תוך 11 אלפיות שנייה. זה הכלי הראשון שכל Network Engineer מריצה כשמשהו לא עובד.
+          </div>
+        )}
+      </div>
+
+      {/* What does a network engineer do */}
+      <div className="mb-7">
+        <Label text="מה זה בכלל Network Engineer?" />
+        <div className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid rgba(59,130,246,0.12)" }}>
+
+          {/* One-liner */}
+          <div className="text-[13.5px] leading-[1.65] mb-4" style={{ color: "#1e3a5f" }}>
+            כל פעם שאתה שולח הודעה, צופה בסרטון או משלם אונליין — יש מישהו שבנה את הצינורות שמאפשרים את זה.{" "}
+            <span className="font-black" style={{ color: BLUE }}>זה Network Engineer.</span>
+          </div>
+
+          {/* A day in the life */}
+          <div className="text-[10.5px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(0,0,0,0.3)" }}>יום בחיים</div>
+          <div className="flex flex-col gap-3 mb-4">
+            {[
+              { time: "08:30", icon: "☕", text: "מגיעה למשרד, פותחת את לוח הניטור — בודקת שכל הרשת ירוקה" },
+              { time: "09:15", icon: "🔴", text: "alert: שרת בסניף ת\"א לא מגיב. מריצה ping → traceroute → מאתרת שה-switch קרס" },
+              { time: "10:30", icon: "🔧", text: "מחליפה ציוד, מגדירה מחדש את ה-VLAN, מחזירה את הסניף לאוויר" },
+              { time: "14:00", icon: "📐", text: "ישיבת תכנון: איך מרחיבים את הרשת ל-3 סניפים חדשים ברחבי הארץ" },
+              { time: "16:00", icon: "🛡️", text: "עדכון חוקי Firewall — חוסמת IP חשוד שניסה לסרוק את הרשת" },
+            ].map(({ time, icon, text }) => (
+              <div key={time} className="flex gap-3 items-start">
+                <div className="text-[10px] font-black shrink-0 mt-0.5 w-10 text-left" style={{ color: "rgba(0,0,0,0.3)", fontFamily: "monospace" }}>{time}</div>
+                <span className="text-[15px] shrink-0">{icon}</span>
+                <div className="text-[12px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.6)" }}>{text}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Why important */}
+          <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.12)" }}>
+            <div className="text-[10.5px] font-bold uppercase tracking-widest mb-2" style={{ color: BLUE }}>למה זה חשוב?</div>
+            <div className="text-[12px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.6)" }}>
+              בלי Network Engineer — אין אינטרנט, אין Zoom, אין בנקאות אונליין, אין טיסות. כל ארגון עם יותר מ-10 מחשבים צריך מישהו שישמור על הקישוריות. זו תשתית קריטית ממש כמו חשמל ומים.
+            </div>
+          </div>
+
+          {/* Who fits */}
+          <div className="mb-4">
+            <div className="text-[10.5px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "rgba(0,0,0,0.3)" }}>מי מתחבר לתחום הזה?</div>
+            <div className="flex flex-col gap-1.5">
+              {[
+                ["🧩", "אנשים שאוהבים לפתור תעלומות", "כשמשהו לא עובד — הם רוצים לדעת למה"],
+                ["🔌", "כאלה שסקרנים לגבי 'איך הדברים עובדים'", "לא רק לגלוש — להבין מה קורה מתחת לפני השטח"],
+                ["📋", "מסודרים ומתודיים", "רשת טובה דורשת תיעוד, תכנון וסבלנות"],
+                ["🚨", "שאוהבים לחץ טוב", "כשהרשת קורסת — הם הכבאים. זה דחוף, זה חשוב, זה מספק"],
+              ].map(([icon, title, sub]) => (
+                <div key={title} className="flex items-start gap-2.5">
+                  <span className="text-[16px] shrink-0">{icon}</span>
+                  <div>
+                    <div className="text-[12px] font-bold" style={{ color: "#023e8a" }}>{title}</div>
+                    <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>{sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tools + industries */}
+          <div className="pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="text-[10.5px] font-bold mb-2 uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.3)" }}>כלי עבודה</div>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {["Cisco IOS", "Wireshark", "ping / traceroute", "Firewall", "VPN", "AWS Networking"].map(t => (
+                <span key={t} className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                  style={{ background: "rgba(59,130,246,0.08)", color: BLUE }}>{t}</span>
+              ))}
+            </div>
+            <div className="text-[10.5px] font-bold mb-2 uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.3)" }}>תעשיות מובילות</div>
+            <div className="flex flex-wrap gap-1.5">
+              {["בנקאות", "ממשלה", "בריאות", "טלקום", "ענן (Cloud)", "ביטחון"].map(t => (
+                <span key={t} className="text-[11px] px-2.5 py-1 rounded-full"
+                  style={{ background: "rgba(2,62,138,0.06)", color: "#023e8a" }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <WowStat
+        stat="99.99%"
+        label="זמינות שרשתות ארגוניות חייבות לספק"
+        sub="0.01% downtime = 52 דקות בשנה. כל דקה עולה לחברה גדולה ~$5,600."
+        color={BLUE}
+      />
+
+      {/* Video */}
+      <div className="rounded-2xl overflow-hidden mb-5" style={{ border: `1.5px solid rgba(59,130,246,0.2)` }}>
+        <div className="px-4 pt-3 pb-2" style={{ background: "rgba(59,130,246,0.06)" }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: BLUE }}>🎥 ראי לפני שממשיכים</div>
+          <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>סרטון של ~2 דק' — מבוא לאיך עובד האינטרנט</div>
+        </div>
+        <div className="aspect-video">
+          <iframe
+            src="https://www.youtube.com/embed/ad8EOsXFuxE"
+            title="מבוא - איך עובד האינטרנט?"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full"
+          />
+        </div>
+      </div>
+
+      <SimTeaser
+        emoji="🌐"
+        challenge="בטעימה תשלחי בקשה לשרת של גוגל ותראי בדיוק מה קורה בין הרגע שלחצת Enter לרגע שהדף נפתח — DNS, Routing, TCP/IP, HTTP — אחד אחד"
+      />
+
+      {/* Journey map */}
+      <div className="mb-7">
+        <Label text="המסלול שלך ברשתות" />
+        <div className="flex flex-col gap-2">
+          {[
+            {
+              num: "1", emoji: "🌐",
+              title: "טעימה — מה קורה כשלוחצים Enter?",
+              sub: "חמש תחנות: DNS, IP, Routing, TCP, HTTP · ~10 דק'",
+              href: "/explore/networks/sim",
+              doneKey: "sim" as const, lockedBy: null,
+            },
+            {
+              num: "2", emoji: "🛠️",
+              title: "יום בחיי Network Engineer",
+              sub: "תקלה אמיתית — ping, traceroute, nslookup, Post-Mortem · ~15 דק'",
+              href: "/explore/networks/learn/day",
+              doneKey: "day" as const, lockedBy: "sim" as const,
+            },
+            {
+              num: "3", emoji: "🕵️",
+              title: "חקירת תקלה — TechFlow",
+              sub: "חקירת תקלה בחברת SaaS — curl, firewall logs · ~20 דק'",
+              href: "/explore/networks/learn/mystery",
+              doneKey: "mystery" as const, lockedBy: "day" as const,
+            },
+            {
+              num: "4", emoji: "💭",
+              title: "כלי עיבוד החוויה",
+              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              href: "/explore/networks/experience",
+              doneKey: "experience" as const, lockedBy: "mystery" as const,
+            },
+          ].map((step, i, arr) => {
+            const isDone = !!journey[step.doneKey];
+            const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
+            const isFirst = i === 0;
+            const highlight = isFirst && !journey["sim"];
+
+            return (
+              <div key={step.num}>
+                <Link href={isLocked ? "#" : step.href} className="block" onClick={isLocked ? (e) => e.preventDefault() : undefined}>
+                  <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                    style={{
+                      background: isDone ? "rgba(59,130,246,0.06)" : highlight ? BLUE : "#fff",
+                      border: isDone ? "1.5px solid rgba(59,130,246,0.2)" : isLocked ? "1px solid rgba(0,0,0,0.06)" : highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
+                      opacity: isLocked ? 0.55 : 1,
+                      boxShadow: highlight ? "0 4px 20px rgba(59,130,246,0.25)" : "none",
+                    }}
+                  >
+                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                      style={{ background: isDone ? BLUE : highlight ? "rgba(255,255,255,0.25)" : "rgba(59,130,246,0.1)", color: isDone || highlight ? "#fff" : BLUE }}>
+                      {isDone ? "✓" : step.num}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px]">{isLocked ? "🔒" : step.emoji}</span>
+                        <span className="text-[12.5px] font-bold"
+                          style={{ color: isDone ? BLUE : highlight ? "#fff" : "#023e8a" }}>
+                          {step.title}
+                        </span>
+                        {highlight && (
+                          <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                        )}
+                      </div>
+                      <div className="mt-0.5">
+                        {isLocked ? (
+                          <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+                            זמין אחרי שלב {parseInt(step.num) - 1}
+                          </span>
+                        ) : (() => {
+                          const parts = step.sub.split(/ · (~\d+.*)$/);
+                          return (
+                            <>
+                              <div className="text-[11px]" dir="rtl"
+                                style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                                {parts[0]}
+                              </div>
+                              {parts[1] && (
+                                <div className="text-[10px] mt-0.5 font-bold" dir="rtl"
+                                  style={{ color: highlight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.28)" }}>
+                                  ⏱ {parts[1]}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    <span className="text-[16px] font-bold shrink-0"
+                      style={{ color: isDone ? BLUE : highlight ? "#fff" : isLocked ? "rgba(0,0,0,0.2)" : BLUE }}>
+                      {isLocked ? "🔒" : "←"}
+                    </span>
+                  </div>
+                </Link>
+                {i < arr.length - 1 && (
+                  <div className="flex justify-center my-1">
+                    <div className="w-[1.5px] h-3"
+                      style={{ background: isDone ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.2)" }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <SalaryCard min={12000} max={30000} />
+    </>
+  );
+}
+
 // ─── Meta (header data) ───────────────────────────────────────────────────────
 const META: Record<string, { badge: string; label: string; tagline: string; color: string }> = {
   code:      { badge: "פ",  label: "פיתוח תוכנה",      tagline: "הופכות רעיונות לאפליקציות ומוצרים שמשנים חיים",  color: "#3b82f6" },
@@ -784,6 +1158,7 @@ const META: Record<string, { badge: string; label: string; tagline: string; colo
   ux:        { badge: "UX", label: "עיצוב UX/UI",       tagline: "יוצרות חוויות שמרגישות נכון — כל קליק, כל מסך", color: "#db2777" },
   data:      { badge: "ד",  label: "דאטה ואנליטיקס",   tagline: "מוצאות תובנות חבויות שמשנות החלטות עסקיות",     color: "#0d9488" },
   marketing: { badge: "ש",  label: "שיווק דיגיטלי",    tagline: "מחברות מוצרים לאנשים הנכונים בזמן הנכון",       color: "#f97316" },
+  networks:  { badge: "ר",  label: "רשתות ותקשורת",    tagline: "בונות את התשתית שמחזיקה את האינטרנט — כל רגע", color: "#3b82f6" },
 };
 
 const CONTENT_MAP: Record<string, () => React.ReactElement> = {
@@ -793,6 +1168,7 @@ const CONTENT_MAP: Record<string, () => React.ReactElement> = {
   ux:        UXContent,
   data:      DataContent,
   marketing: MarketingContent,
+  networks:  NetworksContent,
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

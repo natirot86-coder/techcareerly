@@ -239,6 +239,7 @@ function SecureAccountBanner() {
 // ─── Desktop sidebar tabs ─────────────────────────────────────────────────────
 const DESKTOP_TABS = [
   { href: "/dashboard", label: "המסע שלי", icon: "⊞" },
+  { href: "/explore", label: "חקר תחומים", icon: "⊙" },
   { href: "/chat", label: "AI Co-pilot", icon: "◎" },
   { href: "/squad", label: "קהילה", icon: "◈" },
   { href: "/contact", label: "רכזת", icon: "◉" },

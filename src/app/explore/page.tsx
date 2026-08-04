@@ -9,10 +9,11 @@ const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 // ─── Domain data ──────────────────────────────────────────────────────────────
 const DOMAINS = [
   { id: "code",      badge: "פ",  label: "פיתוח תוכנה",       shortLabel: "פיתוח",  desc: "בונים אפליקציות, אתרים ומערכות",           color: "#3b82f6" },
+  { id: "data",      badge: "ד",  label: "דאטה ואנליטיקס",    shortLabel: "דאטה",   desc: "מוצאים תובנות בתוך ים של מידע",             color: "#0d9488" },
+  { id: "networks",  badge: "ר",  label: "רשתות ותקשורת",     shortLabel: "רשתות",  desc: "בונים את התשתית שמחזיקה את האינטרנט",       color: "#2563eb" },
   { id: "cyber",     badge: "ס",  label: "סייבר",              shortLabel: "סייבר",  desc: "מגנים על מידע ומערכות מפני תקיפות",         color: "#dc2626" },
   { id: "ai",        badge: "AI", label: "AI ובינה מלאכותית",  shortLabel: "AI",     desc: "מלמדים מחשבים לחשוב ולהחליט",              color: "#7c3aed" },
   { id: "ux",        badge: "UX", label: "עיצוב UX/UI",        shortLabel: "עיצוב",  desc: "יוצרים חוויות שמרגישות נכון",               color: "#db2777" },
-  { id: "data",      badge: "ד",  label: "דאטה ואנליטיקס",    shortLabel: "דאטה",   desc: "מוצאים תובנות בתוך ים של מידע",             color: "#0d9488" },
   { id: "marketing", badge: "ש",  label: "שיווק דיגיטלי",     shortLabel: "שיווק",  desc: "מחברים מוצרים לאנשים הנכונים",              color: "#f97316" },
 ];
 
@@ -22,11 +23,12 @@ type Domain = (typeof DOMAINS)[number];
 function DomainJourneyMap({ ranked }: { ranked: Domain[] }) {
   const pts = [
     { x: 340, y: 30 },
-    { x: 278, y: 60 },
-    { x: 212, y: 30 },
-    { x: 146, y: 60 },
-    { x: 82,  y: 30 },
-    { x: 28,  y: 60 },
+    { x: 290, y: 60 },
+    { x: 240, y: 30 },
+    { x: 190, y: 60 },
+    { x: 140, y: 30 },
+    { x: 90,  y: 60 },
+    { x: 40,  y: 30 },
   ];
 
   const pathD = pts
@@ -283,7 +285,7 @@ export default function ExplorePage() {
           className="w-full max-w-[500px] py-[14px] rounded-xl text-white font-bold text-[15px] transition-all"
           style={{ background: allRanked ? "#023e8a" : "rgba(2,62,138,0.22)", fontFamily: "'Heebo', sans-serif" }}
         >
-          {allRanked ? "בנה את המסלול שלי ←" : `עוד ${6 - ranking.length} לדירוג`}
+          {allRanked ? "בנה את המסלול שלי ←" : `עוד ${DOMAINS.length - ranking.length} לדירוג`}
         </button>
       </div>
 

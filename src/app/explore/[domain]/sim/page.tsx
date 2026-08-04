@@ -2004,34 +2004,82 @@ const MK3: ChoiceStep = {
   concept: "שתי דרכים להביא לקוחות",
   context: (
     <div>
-      <div className="flex gap-3 mb-5">
-        <div
-          className="flex-1 rounded-xl p-3"
-          style={{ background: "rgba(249,115,22,0.07)", border: "1px solid rgba(249,115,22,0.2)" }}
-        >
-          <div className="text-[12px] font-bold mb-2" style={{ color: "#c2410c" }}>PPC</div>
-          <div className="text-[10.5px] font-bold mb-1" style={{ color: "rgba(0,0,0,0.45)" }}>Pay Per Click</div>
-          <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.6)" }}>
-            ✓ תוצאות מיידיות<br />
-            ✓ משלמים על כל לחיצה<br />
-            ✗ עוצר כשהתקציב נגמר
-          </div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        כשמחפשת "נעלי ריצה" בגוגל, תראי שני סוגים של תוצאות — ורוב האנשים לא שמים לב להבדל:
+      </p>
+
+      {/* Google SERP mockup */}
+      <div className="rounded-2xl overflow-hidden mb-5" style={{ border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+        <div className="px-3 py-2 flex items-center gap-2" style={{ background: "#f8fafc", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+          <span className="text-[16px]">🔍</span>
+          <span className="rounded-full px-3 py-1 text-[11px]" style={{ background: "#fff", border: "1px solid #e2e8f0", color: "rgba(0,0,0,0.65)" }}>נעלי ריצה</span>
         </div>
-        <div
-          className="flex-1 rounded-xl p-3"
-          style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.1)" }}
-        >
-          <div className="text-[12px] font-bold mb-2" style={{ color: "#023e8a" }}>SEO</div>
-          <div className="text-[10.5px] font-bold mb-1" style={{ color: "rgba(0,0,0,0.45)" }}>Search Engine Opt.</div>
-          <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.6)" }}>
-            ✓ תנועה חינמית לאורך זמן<br />
-            ✓ בונה אמינות<br />
-            ✗ לוקח חודשים לראות תוצאות
+        {[
+          { title: "Nike Running IL — נעלי ריצה מקצועיות", url: "nike.com › running", paid: true },
+          { title: "Adidas ישראל — ריצה · חינמי מ-₪299",   url: "adidas.co.il",      paid: true },
+          { title: "10 נעלי הריצה הטובות ביותר 2025 — ביקורות", url: "running-il.com", paid: false },
+          { title: "השוואת נעלי ריצה | כל הסוגים עם מחירים",    url: "shoes-compare.co.il", paid: false },
+        ].map((r, i, arr) => (
+          <div key={i} className="px-4 py-3" style={{ background: "#fff", borderBottom: i < arr.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none" }}>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              {r.paid && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(249,115,22,0.12)", color: "#c2410c", border: "1px solid rgba(249,115,22,0.25)" }}>ממומן — PPC</span>
+              )}
+              {!r.paid && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "rgba(2,62,138,0.07)", color: "#1d4ed8", border: "1px solid rgba(2,62,138,0.15)" }}>אורגני — SEO</span>
+              )}
+              <span className="text-[10px]" style={{ color: "rgba(0,0,0,0.35)" }}>{r.url}</span>
+            </div>
+            <div className="text-[12px] font-bold" style={{ color: "#1a0dab" }}>{r.title}</div>
           </div>
+        ))}
+      </div>
+
+      {/* PPC */}
+      <div className="rounded-xl p-4 mb-3" style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}>
+        <div className="flex flex-wrap items-baseline gap-x-2 mb-2">
+          <span className="text-[15px] font-black" style={{ color: "#c2410c" }}>PPC</span>
+          <span className="text-[10px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>Pay Per Click — תשלום על כל לחיצה</span>
+        </div>
+        <div className="text-[12px] leading-[1.75]" style={{ color: "rgba(0,0,0,0.65)" }}>
+          📌 מציבים מודעה בגוגל ומשלמים <strong>רק כשמישהו לוחץ</strong> — בין ₪0.50 ל-₪50 ללחיצה.<br />
+          ✓ מתחיל לעבוד מרגע שהעלית את הקמפיין<br />
+          ✗ ברגע שהתקציב נגמר — נעלם
         </div>
       </div>
-      <div className="text-[11.5px]" style={{ color: "rgba(0,0,0,0.38)" }}>
-        גוגל מציג מודעות PPC בראש התוצאות (מסומן "ממומן"), ואת תוצאות SEO מתחתן.
+
+      {/* SEO */}
+      <div className="rounded-xl p-4 mb-5" style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}>
+        <div className="flex flex-wrap items-baseline gap-x-2 mb-2">
+          <span className="text-[15px] font-black" style={{ color: "#023e8a" }}>SEO</span>
+          <span className="text-[10px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>Search Engine Optimization — קידום אורגני</span>
+        </div>
+        <div className="text-[12px] leading-[1.75]" style={{ color: "rgba(0,0,0,0.65)" }}>
+          📌 כוונון האתר (תוכן, מהירות, קישורים) כך שגוגל <strong>"יאהב"</strong> אותו ויציג אותו גבוה.<br />
+          ✓ חינמי — אחרי שמגיעים, התנועה ממשיכה<br />
+          ✗ לוקח 3–6 חודשים להגיע לעמוד הראשון
+        </div>
+      </div>
+
+      {/* Videos */}
+      <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.35)" }}>🎥 הסברים קצרים בעברית</div>
+      <div className="grid grid-cols-2 gap-2 mb-1">
+        {[
+          { id: "j2oLpmLZ8BI", label: "מה זה SEO?" },
+          { id: "Q2_ISoaj3yY", label: "מה זה גוגל אדס (PPC)?" },
+        ].map(v => (
+          <div key={v.id} className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.1)" }}>
+            <div className="px-2 py-1.5 text-[10px] font-bold" style={{ background: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.55)" }}>{v.label}</div>
+            <div className="relative" style={{ paddingTop: "56.25%" }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${v.id}`}
+                title={v.label}
+                allowFullScreen
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+              />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   ),

@@ -95,7 +95,7 @@
 | data | ✅ מלא | ✅ | ✅ analytics+mystery | ✅ | 🔄 בתהליך |
 | code | ✅ חלקי | ✅ LearnMore | ❌ | ❌ | ✅ |
 | cyber | ✅ בסיסי | ❌ | ❌ | ❌ | ❌ |
-| networks | ❌ לא קיים | ❌ | ❌ | ❌ | ❌ |
+| networks | ✅ מלא | ✅ | ✅ day+mystery | ✅ | ⏳ placeholder |
 
 ---
 

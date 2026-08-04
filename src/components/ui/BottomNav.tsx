@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/dashboard", label: "המסע", icon: "⊞" },
+  { href: "/explore", label: "חקר", icon: "⊙" },
   { href: "/chat", label: "Co-pilot", icon: "◎" },
   { href: "/squad", label: "קהילה", icon: "◈" },
   { href: "/contact", label: "רכזת", icon: "◉" },
