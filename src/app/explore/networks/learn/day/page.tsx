@@ -58,10 +58,11 @@ function Terminal({ lines }: { lines: { text: string; color?: string; label?: st
 // ─── Question ─────────────────────────────────────────────────────────────────
 
 function Question({
-  q, options, correct, okMsg, errMsg, onAnswer,
+  q, options, correct, okMsg, errMsg, onAnswer, nextLabel, onNext,
 }: {
   q: string; options: string[]; correct: number;
   okMsg: string; errMsg: string; onAnswer: (ok: boolean) => void;
+  nextLabel?: string; onNext?: () => void;
 }) {
   const [picked, setPicked] = useState<number | null>(null);
   function pick(i: number) {
@@ -93,14 +94,23 @@ function Question({
         })}
       </div>
       {answered && (
-        <div className="rounded-xl px-4 py-3 text-[12.5px] leading-[1.55] mb-2"
-          style={{
-            background: picked === correct ? "rgba(34,197,94,0.08)" : "rgba(220,38,38,0.07)",
-            border: `1px solid ${picked === correct ? "#22c55e55" : "#dc262644"}`,
-            color: picked === correct ? "#15803d" : "#b91c1c",
-          }}>
-          {picked === correct ? okMsg : errMsg}
-        </div>
+        <>
+          <div className="rounded-xl px-4 py-3 text-[12.5px] leading-[1.55] mb-3"
+            style={{
+              background: picked === correct ? "rgba(34,197,94,0.08)" : "rgba(220,38,38,0.07)",
+              border: `1px solid ${picked === correct ? "#22c55e55" : "#dc262644"}`,
+              color: picked === correct ? "#15803d" : "#b91c1c",
+            }}>
+            {picked === correct ? okMsg : errMsg}
+          </div>
+          {nextLabel && onNext && (
+            <button onClick={onNext}
+              className="w-full py-[13px] rounded-xl font-bold text-[15px] text-white"
+              style={{ background: BLUE, fontFamily: "'Heebo', sans-serif" }}>
+              {nextLabel}
+            </button>
+          )}
+        </>
       )}
     </div>
   );
@@ -600,6 +610,10 @@ export default function DayPage() {
             </div>
           </RevealCard>
 
+          <RevealCard emoji="🎥" title="5 דברים שמהנדסי רשת לומדים בעבודה — בעברית (4 דק')">
+            <VideoEmbed id="rrOPnWr3JSs" label="5 דברים שמהנדסי רשת לומדים בעבודה" />
+          </RevealCard>
+
           <button onClick={() => go("intro")} className="w-full py-[14px] rounded-xl font-bold text-[15px] text-white mt-2"
             style={{ background: BLUE, fontFamily: "'Heebo', sans-serif" }}>
             הבנתי — קדימה לתקלה האמיתית ←
@@ -711,7 +725,9 @@ export default function DayPage() {
             correct={1}
             okMsg="✓ נכון — קודם מאספים נתונים בעצמנו. Ping נותן מידע ראשוני תוך שניות, בלי לסחוב אחרים לפני שיודעים מה קורה."
             errMsg="✗ לפני שפונים לאחרים — צריך להבין מה קורה. Ping הוא הצעד הראשון."
-            onAnswer={ok => { answer(ok); setTimeout(() => go("ping-result"), 800); }}
+            onAnswer={ok => answer(ok)}
+            nextLabel="הרץ Ping ←"
+            onNext={() => go("ping-result")}
           />
         </div>
         <BottomNav />
@@ -792,7 +808,9 @@ export default function DayPage() {
             correct={1}
             okMsg="✓ בדיוק! packet loss = בעיה ב-path. צריך כלי שימפה את הדרך — traceroute. קדימה."
             errMsg="✗ 100% packet loss = חסימה בדרך. הבעיה יכולה להיות בכל router בין המחשב לשרת."
-            onAnswer={ok => { answer(ok); setTimeout(() => go("trace-result"), 800); }}
+            onAnswer={ok => answer(ok)}
+            nextLabel="הרץ Traceroute ←"
+            onNext={() => go("trace-result")}
           />
         </div>
         <BottomNav />
@@ -851,6 +869,10 @@ export default function DayPage() {
             </div>
           </RevealCard>
 
+          <RevealCard emoji="🎥" title="Traceroute — הסבר בעברית (4 דק')">
+            <VideoEmbed id="8f5RhuMhBwY" label="Traceroute: כנראה שאתם קוראים את התוצאות בצורה שגויה" />
+          </RevealCard>
+
           <Question
             q="Hops 1–4 תקינים, hops 5–6 מציגים * * *. איפה הבעיה?"
             options={[
@@ -861,7 +883,9 @@ export default function DayPage() {
             correct={1}
             okMsg="✓ יודעים עכשיו: ISP → backbone = תקין. הבעיה לפני היעד. הכלי הבא — nslookup."
             errMsg="✗ Hops 1–4 תקינים, אז Router והISP בסדר. הבעיה לאחר hop 4."
-            onAnswer={ok => { answer(ok); setTimeout(() => go("dns-result"), 800); }}
+            onAnswer={ok => answer(ok)}
+            nextLabel="הרץ nslookup ←"
+            onNext={() => go("dns-result")}
           />
         </div>
         <BottomNav />
@@ -912,7 +936,9 @@ export default function DayPage() {
             correct={1}
             okMsg="✓ מצוין! מצאת את הבעיה — DNS record מצביע לכתובת פנימית שאינה נגישה. עכשיו — לתקן!"
             errMsg="✗ 10.x.x.x הוא Private IP range — לא נגיש מהאינטרנט. DNS מצביע לכתובת פנימית בטעות."
-            onAnswer={ok => { answer(ok); setTimeout(() => go("fix-it"), 800); }}
+            onAnswer={ok => answer(ok)}
+            nextLabel="לתיקון התקלה ←"
+            onNext={() => go("fix-it")}
           />
         </div>
         <BottomNav />

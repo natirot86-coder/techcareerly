@@ -95,7 +95,7 @@
 | data | ✅ מלא | ✅ | ✅ analytics+mystery | ✅ | 🔄 בתהליך |
 | code | ✅ חלקי | ✅ LearnMore | ❌ | ❌ | ✅ |
 | cyber | ✅ בסיסי | ❌ | ❌ | ❌ | ❌ |
-| networks | ✅ מלא | ✅ | ✅ day+mystery | ✅ | ⏳ placeholder |
+| networks | ✅ מלא | ✅ | ✅ day+mystery | ✅ | ✅ |
 
 ---
 
@@ -109,6 +109,14 @@
 | analytics — step 3 | TBD (נתי מטפל) | ויזואליזציית נתונים |
 
 ---
+
+## 🌐 סרטוני רשתות — IDs מאושרים (ערוץ @Adjacentnode — עברית)
+
+| מיקום | Video ID | נושא |
+|-------|----------|------|
+| `day` — career RevealCard | `rrOPnWr3JSs` | 5 דברים שמהנדסי רשת לומדים בעבודה (4 דק') |
+| `day` — trace-result RevealCard | `8f5RhuMhBwY` | Traceroute — כנראה שאתם קוראים בצורה שגויה (4 דק') |
+| `day` — ping-result RevealCard | `7X8D5anJCRo` | Ping ו-Traceroute הסבר בעברית |
 
 ## 🌐 השראה לתחום רשתות
 
