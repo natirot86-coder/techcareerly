@@ -311,6 +311,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         <div className="flex flex-col gap-2">
           {[
             { emoji: "🏛️", name: "Data.Intro — ניתוח נתונים בפייתון", platform: "Campus.gov.il", lang: "עברית", href: "https://campus.gov.il/en/course/cs-gov-cs-data-dataintro101-he/" },
+            { emoji: "🎥", name: "ניתוח נתונים בעברית — רם קדם", platform: "Upscale Analytics · YouTube", lang: "עברית", href: "https://www.youtube.com/channel/UCXUn5_OcQff_5p-UGvRqH2A" },
             { emoji: "🐱", name: "Intro to Data Analysis", platform: "Kaggle Learn", lang: "אנגלית", href: "https://www.kaggle.com/learn" },
             { emoji: "📊", name: "Google Data Analytics Certificate", platform: "Coursera (audit חינמי)", lang: "אנגלית", href: "https://www.coursera.org/professional-certificates/google-data-analytics" },
           ].map((c) => (
@@ -400,7 +401,16 @@ export default function ExperiencePage() {
             <div className="text-[26px] font-black leading-tight" style={HEEBO}>רגע לפני שנתחיל</div>
           </div>
         </div>
-        <div className="max-w-[720px] mx-auto px-[22px] pt-10 pb-36">
+        <div className="max-w-[720px] mx-auto px-[22px] pt-6 pb-36">
+          <div className="rounded-2xl p-4 mb-6" style={{ background: "rgba(13,148,136,0.05)", border: "1.5px solid rgba(13,148,136,0.15)" }}>
+            <div className="text-[13.5px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.65)" }}>
+              <span className="font-bold" style={{ color: NAVY }}>מה שחווית עכשיו הוא מידע חשוב.</span>{" "}
+              חמש שאלות קצרות יעזרו לך להבין מה זה אמר לך — על העניין שלך, על הביטחון שלך, ועל האופן שבו את רואה את עצמך בתחום.
+            </div>
+            <div className="mt-2 text-[11.5px]" style={{ color: "rgba(0,0,0,0.38)" }}>
+              הרכזת תראה את התשובות לפני הפגישה הבאה · לוקח כחמש דקות
+            </div>
+          </div>
           <div className="text-[20px] font-black mb-2" style={{ color: NAVY, ...HEEBO }}>איך לפנות אליך?</div>
           <div className="text-[13px] mb-8" style={{ color: "rgba(0,0,0,0.45)" }}>
             כדי שהשאלות ישמעו אישיות וטבעיות

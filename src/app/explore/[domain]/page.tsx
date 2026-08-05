@@ -31,6 +31,42 @@ function WowStat({ stat, label, sub, color }: { stat: string; label: string; sub
   );
 }
 
+function JobMarketBlock({ color, demand, hitech, nonHitech, ai }: {
+  color: string; demand: string; hitech: string; nonHitech: string; ai: string;
+}) {
+  return (
+    <div className="mb-7">
+      <Label text="שוק העבודה" />
+      <div className="rounded-2xl p-4" style={{ background: "#fff", border: `1px solid ${color}20` }}>
+        <div className="text-[13px] font-bold mb-3 pb-3 leading-[1.55]"
+          style={{ color: "#023e8a", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+          {demand}
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="rounded-xl px-3 py-2.5" style={{ background: `${color}09`, border: `1px solid ${color}18` }}>
+            <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5"
+              style={{ color: "rgba(0,0,0,0.3)" }}>הייטק</div>
+            <div className="text-[11.5px] font-bold leading-[1.5]" style={{ color }}>{hitech}</div>
+          </div>
+          <div className="rounded-xl px-3 py-2.5"
+            style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.08)" }}>
+            <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5"
+              style={{ color: "rgba(0,0,0,0.3)" }}>מחוץ להייטק</div>
+            <div className="text-[11.5px] font-bold leading-[1.5]" style={{ color: "#023e8a" }}>{nonHitech}</div>
+          </div>
+        </div>
+        <div className="rounded-xl px-3 py-2.5"
+          style={{ background: "rgba(251,133,0,0.06)", border: "1px solid rgba(251,133,0,0.18)" }}>
+          <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#d97706" }}>
+            🤖 AI ועתיד התפקיד
+          </div>
+          <div className="text-[12px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.58)" }}>{ai}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SimTeaser({ emoji, challenge }: { emoji: string; challenge: string }) {
   return (
     <div
@@ -179,6 +215,14 @@ function CodeContent() {
           </div>
         </div>
       </div>
+
+      <JobMarketBlock
+        color={BLUE}
+        demand="עשרות אלפי משרות — הסקטור הגדול ביותר בהייטק הישראלי"
+        hitech="Frontend · Backend · Fullstack · DevOps · Mobile"
+        nonHitech="בנקים · ממשל · ביטחון · כל ארגון גדול"
+        ai="כלי AI (GitHub Copilot, Claude) מכפילים פרודוקטיביות. הדגש עובר מ'לכתוב קוד' ל'לנהל ולאמת קוד שAI כתב'. מפתח שמשלב AI — שווה יותר, לא פחות."
+      />
 
       <SimTeaser
         emoji="🐛"
@@ -423,6 +467,14 @@ function CyberContent() {
           </div>
         </div>
       </div>
+
+      <JobMarketBlock
+        color={RED}
+        demand="מחסור קריטי בישראל ובעולם — הביקוש עולה על ההיצע בפער גדול"
+        hitech="Pentester · SOC Analyst · Security Engineer · Bug Bounty"
+        nonHitech="בנקים (חובה רגולטורית) · ממשל · בריאות · אנרגיה · ביטחון"
+        ai="AI מגביר גם את ההתקפות וגם את הצורך במגינים. אנשי סייבר שמשלבים AI בארסנל שלהם — יוכלו לכסות יותר שטח, לגלות יותר איומים. הביקוש לא יקטן."
+      />
 
       <SimTeaser
         emoji="🔓"
@@ -803,6 +855,14 @@ function DataContent() {
         label="חברות data-driven צומחות פי 2.5 מהמתחרות"
         sub='McKinsey, 2024 — "הנתונים הם הנפט החדש של המאה ה-21"'
         color={TEAL}
+      />
+
+      <JobMarketBlock
+        color={TEAL}
+        demand="אחד הכותרים הנפוצים ביותר בישראל — ביקוש גבוה ויציב"
+        hitech="Product Analyst · Growth Analyst · BI Developer"
+        nonHitech="בנקים (ניהול סיכון) · ביטוח · קמעונאות · בריאות · ממשלה"
+        ai="AI מאיץ — לא מחליף. אנליסטים שעובדים עם AI מוציאים פי שניים עד שלושה יותר. הביקוש לאנליסטים דווקא גדל: יותר חברות יכולות עכשיו להרשות לעצמן data work."
       />
 
       {/* Video — מה זה דאטה אנליסט */}
@@ -1281,6 +1341,14 @@ function NetworksContent() {
         label="זמינות שרשתות ארגוניות חייבות לספק"
         sub="0.01% downtime = 52 דקות בשנה. כל דקה עולה לחברה גדולה ~$5,600."
         color={BLUE}
+      />
+
+      <JobMarketBlock
+        color={BLUE}
+        demand="ביקוש גבוה ויציב — כל ארגון עם תשתית דיגיטלית צריך מומחה רשת"
+        hitech="Cloud Architect · Network Engineer · Infrastructure · DevOps"
+        nonHitech="בנקים · בתי חולים · ממשלה · צבא · טלקום (Bezeq, Partner, Cellcom)"
+        ai="AI מאוטמט ניטור רוטיני — אבל troubleshooting, ארכיטקטורת רשת ואבטחה עדיין דורשים שיפוט אנושי. מהנדסי רשת שמשלבים AI בכלי האבחון שלהם יהיו שווים יותר."
       />
 
       {/* Video */}

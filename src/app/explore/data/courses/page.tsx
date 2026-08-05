@@ -36,15 +36,15 @@ const COURSES: Course[] = [
   },
   {
     emoji: "🎥",
-    platform: "YouTube — Ram Kadam",
-    title: "מדע הנתונים בעברית — Ram Kadam",
+    platform: "Upscale Analytics · YouTube",
+    title: "ניתוח נתונים בעברית — רם קדם",
     lang: "עברית",
     certified: false,
     rating: "4.9",
-    students: "50,000+ צפיות",
+    students: "עשרות אלפי צפיות",
     description:
-      "הערוץ הכי פופולרי לדאטה בעברית. Python, Pandas, ניתוח נתונים, Machine Learning — כולו חינמי ביוטיוב. הסברים ברורים ובקצב נוח.",
-    href: "https://www.youtube.com/@ramkadam7019",
+      "הערוץ הכי ממוקד לדאטה אנליטיקס בעברית. Excel, SQL, Power BI, Tableau ועוד — כולו חינמי ביוטיוב. אחד הקולות המובילים בתחום בישראל.",
+    href: "https://www.youtube.com/channel/UCXUn5_OcQff_5p-UGvRqH2A",
   },
   {
     emoji: "🐱",
