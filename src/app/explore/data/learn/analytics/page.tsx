@@ -928,7 +928,7 @@ export default function AnalyticsPage() {
                   const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
                   localStorage.setItem("data-journey", JSON.stringify({ ...journey, analytics: true }));
                 } catch {/* ignore */}
-                window.location.href = "/explore/data/experience";
+                window.location.href = "/explore/data/courses";
               }}
               className="w-full py-3 rounded-xl text-[13px] font-bold"
               style={{ background: "transparent", border: "1.5px solid " + TEAL, color: TEAL, fontFamily: "'Heebo', sans-serif" }}>

@@ -1064,7 +1064,7 @@ export default function DayPage() {
             style={{ background: BLUE, fontFamily: "'Heebo', sans-serif" }}>
             לתעלומת הרשת ←
           </button>
-          <button onClick={() => saveAndGo("/explore/networks/experience")}
+          <button onClick={() => saveAndGo("/explore/networks/courses")}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"
             style={{ background: "transparent", border: `1.5px solid ${BLUE}`, color: BLUE, fontFamily: "'Heebo', sans-serif" }}>
             מיציתי את הטעימה — קדימה ←
