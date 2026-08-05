@@ -300,32 +300,63 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         </button>
       </Link>
 
-      {/* Courses — compact list */}
+      {/* Courses — card grid */}
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }} className="pt-7">
         <div className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>
           רוצה להעמיק?
         </div>
-        <div className="text-[13px] font-bold mb-4" style={{ color: NAVY }}>
-          קורסי דאטה אנליטיקס חינמיים — מעבר לאפליקציה
+        <div className="text-[14px] font-bold mb-4" style={{ color: NAVY }}>
+          קורסי דאטה אנליטיקס חינמיים
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
-            { emoji: "🏛️", name: "Data.Intro — ניתוח נתונים בפייתון", platform: "Campus.gov.il", lang: "עברית", href: "https://campus.gov.il/en/course/cs-gov-cs-data-dataintro101-he/" },
-            { emoji: "🎥", name: "קורס דאטה אנליסט למתחילים — רם קדם", platform: "ramkedem.com · חינמי", lang: "עברית", href: "https://ramkedem.com/course/%d7%a7%d7%95%d7%a8%d7%a1-%d7%93%d7%90%d7%98%d7%94-%d7%90%d7%a0%d7%9c%d7%99%d7%a1%d7%98-%d7%9c%d7%9e%d7%aa%d7%97%d7%99%d7%9c%d7%99%d7%9d/" },
-            { emoji: "🐱", name: "Intro to Data Analysis", platform: "Kaggle Learn", lang: "אנגלית", href: "https://www.kaggle.com/learn" },
-            { emoji: "📊", name: "Google Data Analytics Certificate", platform: "Coursera (audit חינמי)", lang: "אנגלית", href: "https://www.coursera.org/professional-certificates/google-data-analytics" },
+            {
+              img: "/courses/campus-data.jpg",
+              platform: "Campus.gov.il",
+              title: "Data.Intro — ניתוח נתונים בפייתון",
+              lang: "עברית",
+              href: "https://campus.gov.il/en/course/cs-gov-cs-data-dataintro101-he/",
+            },
+            {
+              img: "/courses/ramkedem-data.jpg",
+              platform: "Upscale Analytics",
+              title: "קורס דאטה אנליסט למתחילים",
+              lang: "עברית",
+              href: "https://ramkedem.com/course/%d7%a7%d7%95%d7%a8%d7%a1-%d7%93%d7%90%d7%98%d7%94-%d7%90%d7%a0%d7%9c%d7%99%d7%a1%d7%98-%d7%9c%d7%9e%d7%aa%d7%97%d7%99%d7%9c%d7%99%d7%9d/",
+            },
+            {
+              img: "/courses/google-data-analytics.jpg",
+              platform: "Google / Coursera",
+              title: "Google Data Analytics Certificate",
+              lang: "אנגלית",
+              href: "https://www.coursera.org/professional-certificates/google-data-analytics",
+            },
           ].map((c) => (
-            <a key={c.name} href={c.href} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all"
-              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", textDecoration: "none" }}>
-              <span className="text-[20px] shrink-0">{c.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[12.5px] font-bold truncate" style={{ color: NAVY }}>{c.name}</div>
-                <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>{c.platform} · {c.lang}</div>
+            <a
+              key={c.title}
+              href={c.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
+            >
+              <div className="overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                <img src={c.img} alt={c.title} className="w-full h-full object-cover" />
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>✓ חינמי</span>
-                <span className="text-[13px]" style={{ color: "rgba(0,0,0,0.3)" }}>←</span>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>
+                  {c.platform}
+                </div>
+                <div className="text-[12px] font-bold leading-[1.4] mb-3 flex-1" style={{ color: NAVY }}>
+                  {c.title}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1.5">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>✓ חינמי</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${TEAL}12`, color: TEAL }}>{c.lang}</span>
+                  </div>
+                  <span className="text-[11px] font-bold" style={{ color: TEAL }}>לקורס ←</span>
+                </div>
               </div>
             </a>
           ))}
