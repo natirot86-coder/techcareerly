@@ -300,32 +300,63 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         </button>
       </Link>
 
-      {/* Courses — compact list */}
+      {/* Courses — card grid */}
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }} className="pt-7">
         <div className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>
           רוצה להעמיק?
         </div>
-        <div className="text-[13px] font-bold mb-4" style={{ color: NAVY }}>
-          קורסי רשתות חינמיים — כדי להמשיך מעבר לאפליקציה
+        <div className="text-[14px] font-bold mb-4" style={{ color: NAVY }}>
+          קורסי רשתות חינמיים
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
-            { emoji: "🏛️", name: "מרושתים", platform: "Campus.gov.il", lang: "עברית", href: "https://campus.gov.il/course/cs-gov-cs-reshatot101/" },
-            { emoji: "🔵", name: "Intro to Networks CCNA 1", platform: "Cisco NetAcad", lang: "אנגלית", href: "https://www.netacad.com/" },
-            { emoji: "🎥", name: "CompTIA Network+ Free", platform: "Professor Messer", lang: "אנגלית", href: "https://www.professormesser.com/" },
-            { emoji: "🌐", name: "How the Internet Works", platform: "Khan Academy", lang: "עברית / אנגלית", href: "https://www.khanacademy.org/computing/computers-and-internet/xcae6f4a7ff015e7d:the-internet" },
+            {
+              img: "/courses/networks-campus.jpg",
+              platform: "Campus.gov.il",
+              title: "מרושתים — איך עובד האינטרנט?",
+              lang: "עברית",
+              href: "https://campus.gov.il/course/cs-gov-cs-reshatot101/",
+            },
+            {
+              img: "/courses/networks-ariel.png",
+              platform: "אוניברסיטת אריאל / Campus.gov.il",
+              title: "תקשורת מחשבים",
+              lang: "עברית",
+              href: "https://campus.gov.il/course/ariel-acd-computers-communication-he/",
+            },
+            {
+              img: "/courses/networks-cisco.png",
+              platform: "Cisco NetAcad",
+              title: "Networking Basics",
+              lang: "אנגלית",
+              href: "https://www.netacad.com/courses/networking-basics",
+            },
           ].map((c) => (
-            <a key={c.name} href={c.href} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all"
-              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", textDecoration: "none" }}>
-              <span className="text-[20px] shrink-0">{c.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[12.5px] font-bold truncate" style={{ color: NAVY }}>{c.name}</div>
-                <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>{c.platform} · {c.lang}</div>
+            <a
+              key={c.title}
+              href={c.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
+            >
+              <div className="overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                <img src={c.img} alt={c.title} className="w-full h-full object-cover" />
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>✓ חינמי</span>
-                <span className="text-[13px]" style={{ color: "rgba(0,0,0,0.3)" }}>←</span>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>
+                  {c.platform}
+                </div>
+                <div className="text-[12px] font-bold leading-[1.4] mb-3 flex-1" style={{ color: NAVY }}>
+                  {c.title}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1.5">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>✓ חינמי</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${BLUE}12`, color: BLUE }}>{c.lang}</span>
+                  </div>
+                  <span className="text-[11px] font-bold" style={{ color: BLUE }}>לקורס ←</span>
+                </div>
               </div>
             </a>
           ))}
