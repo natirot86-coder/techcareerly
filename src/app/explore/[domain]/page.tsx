@@ -74,6 +74,16 @@ function SalaryCard({ min, max }: { min: number; max: number }) {
 function CodeContent() {
   const [ran, setRan] = useState(false);
   const [name, setName] = useState("נועה");
+  const [journey, setJourney] = useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("code-journey");
+      if (saved) setJourney(JSON.parse(saved));
+    } catch {/* ignore */}
+  }, []);
+
+  const BLUE = "#3b82f6";
 
   return (
     <>
@@ -143,10 +153,145 @@ function CodeContent() {
         color="#3b82f6"
       />
 
+      {/* Industry context block */}
+      <div className="mb-7">
+        <Label text="פיתוח תוכנה — הקשר תעשייה" />
+        <div className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid rgba(59,130,246,0.12)" }}>
+          <div className="mb-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.3)" }}>תפקידים מרכזיים</div>
+            <div className="flex flex-wrap gap-1.5">
+              {["Frontend Developer", "Backend Engineer", "Fullstack", "DevOps / Platform", "Mobile Developer"].map(r => (
+                <span key={r} className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(59,130,246,0.08)", color: BLUE }}>{r}</span>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.1)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>שכר</div>
+              <div className="text-[14px] font-black" style={{ color: BLUE, ...HEEBO }}>₪13K – ₪28K</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>לחודש · אחרי ניסיון</div>
+            </div>
+            <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.08)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>נתיב כניסה</div>
+              <div className="text-[11px] font-bold" style={{ color: "#023e8a" }}>Bootcamp · CS · עצמאי</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>שישה עד שמונה עשר חודשים</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <SimTeaser
         emoji="🐛"
         challenge="בטעימה: האפליקציה של הלקוח קורסת. יש לך 3 ניסיונות לאתר את הבאג ולתקן — לפני שהוא מתקשר למנהל שלך."
       />
+
+      {/* Journey map */}
+      <div className="mb-7">
+        <Label text="המסלול שלך בפיתוח תוכנה" />
+        <div className="flex flex-col gap-2">
+          {[
+            {
+              num: "1", emoji: "🐛",
+              title: "טעימה — debug הבאג של הלקוח",
+              sub: "JavaScript runtime · שלושה ניסיונות לאתר ולתקן · ~10 דק'",
+              href: "/explore/code/sim",
+              doneKey: "sim", lockedBy: null as string | null, comingSoon: false,
+            },
+            {
+              num: "2", emoji: "🛠️",
+              title: "יום בחיי מפתח",
+              sub: "sprint · code review · deployment · ~15 דק'",
+              href: "#",
+              doneKey: "day", lockedBy: "sim" as string | null, comingSoon: true,
+            },
+            {
+              num: "3", emoji: "🕵️",
+              title: "תעלומת הקוד",
+              sub: "bug בפרודקשן — git blame, logs, hotfix · ~20 דק'",
+              href: "#",
+              doneKey: "mystery", lockedBy: "day" as string | null, comingSoon: true,
+            },
+            {
+              num: "4", emoji: "💭",
+              title: "כלי עיבוד החוויה",
+              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              href: "#",
+              doneKey: "experience", lockedBy: "mystery" as string | null, comingSoon: true,
+            },
+          ].map((step, i, arr) => {
+            const isDone = !!journey[step.doneKey];
+            const isLocked = step.comingSoon || (step.lockedBy ? !journey[step.lockedBy] : false);
+            const isFirst = i === 0;
+            const highlight = isFirst && !journey["sim"];
+
+            return (
+              <div key={step.num}>
+                <Link href={isLocked ? "#" : step.href} className="block" onClick={isLocked ? (e) => e.preventDefault() : undefined}>
+                  <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                    style={{
+                      background: isDone ? "rgba(59,130,246,0.06)" : highlight ? BLUE : "#fff",
+                      border: isDone ? "1.5px solid rgba(59,130,246,0.2)" : isLocked ? "1px solid rgba(0,0,0,0.06)" : highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
+                      opacity: isLocked ? 0.55 : 1,
+                      boxShadow: highlight ? "0 4px 20px rgba(59,130,246,0.25)" : "none",
+                    }}
+                  >
+                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                      style={{ background: isDone ? BLUE : highlight ? "rgba(255,255,255,0.25)" : "rgba(59,130,246,0.1)", color: isDone || highlight ? "#fff" : BLUE }}>
+                      {isDone ? "✓" : step.num}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px]">{isLocked ? "🔒" : step.emoji}</span>
+                        <span className="text-[12.5px] font-bold"
+                          style={{ color: isDone ? BLUE : highlight ? "#fff" : "#023e8a" }}>
+                          {step.title}
+                        </span>
+                        {highlight && (
+                          <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                        )}
+                        {step.comingSoon && (
+                          <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" }}>בקרוב</span>
+                        )}
+                      </div>
+                      <div className="mt-0.5">
+                        {(() => {
+                          const parts = step.sub.split(/ · (~\d+.*)$/);
+                          return (
+                            <>
+                              <div className="text-[11px]" dir="rtl"
+                                style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                                {parts[0]}
+                              </div>
+                              {parts[1] && (
+                                <div className="text-[10px] mt-0.5 font-bold" dir="rtl"
+                                  style={{ color: highlight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.28)" }}>
+                                  ⏱ {parts[1]}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    <span className="text-[16px] font-bold shrink-0"
+                      style={{ color: isDone ? BLUE : highlight ? "#fff" : isLocked ? "rgba(0,0,0,0.2)" : BLUE }}>
+                      {isLocked ? "🔒" : "←"}
+                    </span>
+                  </div>
+                </Link>
+                {i < arr.length - 1 && (
+                  <div className="flex justify-center my-1">
+                    <div className="w-[1.5px] h-3"
+                      style={{ background: isDone ? "rgba(59,130,246,0.4)" : "rgba(59,130,246,0.2)" }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <SalaryCard min={13000} max={28000} />
     </>
@@ -156,7 +301,17 @@ function CodeContent() {
 // ─── CYBER ───────────────────────────────────────────────────────────────────
 function CyberContent() {
   const [picked, setPicked] = useState<number | null>(null);
+  const [journey, setJourney] = useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("cyber-journey");
+      if (saved) setJourney(JSON.parse(saved));
+    } catch {/* ignore */}
+  }, []);
+
   const ATTACK = 2;
+  const RED = "#dc2626";
 
   const logs = [
     { time: "09:14:02", user: "maya@corp.il", action: "LOGIN", ip: "84.228.17.4" },
@@ -242,10 +397,123 @@ function CyberContent() {
         color="#dc2626"
       />
 
+      {/* Industry context block */}
+      <div className="mb-7">
+        <Label text="סייבר — הקשר תעשייה" />
+        <div className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid rgba(220,38,38,0.12)" }}>
+          <div className="mb-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.3)" }}>תפקידים מרכזיים</div>
+            <div className="flex flex-wrap gap-1.5">
+              {["Penetration Tester", "SOC Analyst", "Security Engineer", "Bug Bounty Hunter", "CISO"].map(r => (
+                <span key={r} className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(220,38,38,0.08)", color: RED }}>{r}</span>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(220,38,38,0.05)", border: "1px solid rgba(220,38,38,0.1)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>שכר</div>
+              <div className="text-[14px] font-black" style={{ color: RED, ...HEEBO }}>₪15K – ₪30K</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>לחודש · אחרי ניסיון</div>
+            </div>
+            <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.08)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>נתיב כניסה</div>
+              <div className="text-[11px] font-bold" style={{ color: "#023e8a" }}>OSCP · Security+ · רקע IDF</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>שניים עשר עד עשרים וארבעה חודשים</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <SimTeaser
         emoji="🔓"
         challenge="בטעימה: תתבקשי לבצע penetration test על שרת בדיקה — ולדווח על הממצאים. כמה חולשות תמצאי?"
       />
+
+      {/* Journey map */}
+      <div className="mb-7">
+        <Label text="המסלול שלך בסייבר" />
+        <div className="flex flex-col gap-2">
+          {[
+            {
+              num: "1", emoji: "🔓",
+              title: "טעימה — penetration test ראשון",
+              sub: "שרת בדיקה · זיהוי חולשות · דוח ממצאים · ~10 דק'",
+              href: "#",
+              doneKey: "sim", lockedBy: null as string | null, comingSoon: true,
+            },
+            {
+              num: "2", emoji: "🛡️",
+              title: "יום בחיי SOC Analyst",
+              sub: "incident response · threat hunting · log analysis · ~15 דק'",
+              href: "#",
+              doneKey: "day", lockedBy: "sim" as string | null, comingSoon: true,
+            },
+            {
+              num: "3", emoji: "🕵️",
+              title: "תעלומת הסייבר",
+              sub: "חקירת פריצה אמיתית — forensics, timeline, attacker TTP · ~20 דק'",
+              href: "#",
+              doneKey: "mystery", lockedBy: "day" as string | null, comingSoon: true,
+            },
+            {
+              num: "4", emoji: "💭",
+              title: "כלי עיבוד החוויה",
+              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              href: "#",
+              doneKey: "experience", lockedBy: "mystery" as string | null, comingSoon: true,
+            },
+          ].map((step, i, arr) => {
+            const isDone = !!journey[step.doneKey];
+            const isLocked = step.comingSoon || (step.lockedBy ? !journey[step.lockedBy] : false);
+
+            return (
+              <div key={step.num}>
+                <div className="rounded-2xl p-4 flex items-center gap-3"
+                  style={{
+                    background: isDone ? "rgba(220,38,38,0.06)" : "#fff",
+                    border: isDone ? "1.5px solid rgba(220,38,38,0.2)" : "1px solid rgba(0,0,0,0.06)",
+                    opacity: isLocked ? 0.55 : 1,
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                    style={{ background: isDone ? RED : "rgba(220,38,38,0.1)", color: isDone ? "#fff" : RED }}>
+                    {isDone ? "✓" : step.num}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px]">{step.emoji}</span>
+                      <span className="text-[12.5px] font-bold" style={{ color: isDone ? RED : "#023e8a" }}>
+                        {step.title}
+                      </span>
+                      <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" }}>בקרוב</span>
+                    </div>
+                    <div className="mt-0.5">
+                      {(() => {
+                        const parts = step.sub.split(/ · (~\d+.*)$/);
+                        return (
+                          <>
+                            <div className="text-[11px]" dir="rtl" style={{ color: "rgba(0,0,0,0.4)" }}>{parts[0]}</div>
+                            {parts[1] && (
+                              <div className="text-[10px] mt-0.5 font-bold" dir="rtl" style={{ color: "rgba(0,0,0,0.28)" }}>⏱ {parts[1]}</div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <span className="text-[16px] font-bold shrink-0" style={{ color: "rgba(0,0,0,0.2)" }}>🔒</span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className="flex justify-center my-1">
+                    <div className="w-[1.5px] h-3" style={{ background: "rgba(220,38,38,0.2)" }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <SalaryCard min={15000} max={30000} />
     </>

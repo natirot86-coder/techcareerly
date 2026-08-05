@@ -59,10 +59,11 @@ function Terminal({ lines }: { lines: { text: string; color?: string }[] }) {
 // ─── Question ────────────────────────────────────────────────────────────────
 
 function Q({
-  q, options, correct, okMsg, errMsg, onAnswer,
+  q, options, correct, okMsg, errMsg, onAnswer, nextLabel, onNext,
 }: {
   q: string; options: string[]; correct: number; okMsg: string; errMsg: string;
   onAnswer?: (ok: boolean) => void;
+  nextLabel?: string; onNext?: () => void;
 }) {
   const [picked, setPicked] = useState<number | null>(null);
 
@@ -97,14 +98,23 @@ function Q({
         })}
       </div>
       {answered && (
-        <div className="mt-3 rounded-xl px-4 py-3 text-[12.5px] leading-[1.55]"
-          style={{
-            background: picked === correct ? "rgba(34,197,94,0.08)" : "rgba(220,38,38,0.07)",
-            border: `1px solid ${picked === correct ? "#22c55e55" : "#dc262644"}`,
-            color: picked === correct ? "#15803d" : "#b91c1c",
-          }}>
-          {picked === correct ? okMsg : errMsg}
-        </div>
+        <>
+          <div className="mt-3 rounded-xl px-4 py-3 text-[12.5px] leading-[1.55]"
+            style={{
+              background: picked === correct ? "rgba(34,197,94,0.08)" : "rgba(220,38,38,0.07)",
+              border: `1px solid ${picked === correct ? "#22c55e55" : "#dc262644"}`,
+              color: picked === correct ? "#15803d" : "#b91c1c",
+            }}>
+            {picked === correct ? okMsg : errMsg}
+          </div>
+          {nextLabel && onNext && (
+            <button onClick={onNext}
+              className="w-full py-[13px] rounded-xl font-bold text-[15px] mt-3 text-white"
+              style={{ background: BLUE, fontFamily: "'Heebo', sans-serif" }}>
+              {nextLabel}
+            </button>
+          )}
+        </>
       )}
     </div>
   );
@@ -239,9 +249,9 @@ function PostMortemMystery({ onDone }: { onDone: () => void }) {
             q={q.q} options={q.options} correct={q.correct} okMsg={q.ok} errMsg={q.err}
             onAnswer={(ok) => {
               const next = [...answers]; next[i] = ok; setAnswers(next);
-              if (i === step && step < 2) setTimeout(() => setStep(i + 1), 600);
-              if (i === 2) setTimeout(onDone, 800);
             }}
+            nextLabel={i < 2 ? `שאלה ${i + 2}/3 ←` : "לסיכום ←"}
+            onNext={() => { if (i < 2) setStep(i + 1); else onDone(); }}
           />
           {i < 2 && <div className="my-2" style={{ borderTop: "1px dashed rgba(0,0,0,0.08)" }} />}
         </div>
@@ -492,19 +502,25 @@ export default function NetworksMysteryPage() {
               <span className="font-bold" style={{ color: NAVY }}>בחרי כלי ראשון לאבחון:</span>
             </div>
 
-            <div className="flex gap-2 mb-5">
-              <ToolButton label="ping aws.amazon.com" onClick={() => { setTool1Used("ping"); }}
-                disabled={false} used={tool1Used === "ping"} />
-              <ToolButton label="nslookup aws.amazon.com" onClick={() => { setTool1Used("nslookup"); }}
-                disabled={false} used={tool1Used === "nslookup"} />
-            </div>
-            <div className="flex gap-2 mb-5">
-              <ToolButton label="curl -I api.techflow.io" onClick={() => { setTool1Used("curl"); }}
-                disabled={false} used={tool1Used === "curl"} />
+            <div className="flex flex-col gap-2 mb-5">
+              <div className="flex gap-2">
+                <ToolButton label="ping aws.amazon.com"
+                  onClick={() => { setTool1Used("ping"); }}
+                  disabled={tool1Answered || (tool1Used !== null && tool1Used !== "ping")}
+                  used={tool1Used === "ping"} />
+                <ToolButton label="nslookup aws.amazon.com"
+                  onClick={() => { setTool1Used("nslookup"); }}
+                  disabled={tool1Answered || (tool1Used !== null && tool1Used !== "nslookup")}
+                  used={tool1Used === "nslookup"} />
+              </div>
+              <ToolButton label="curl -I api.techflow.io"
+                onClick={() => { setTool1Used("curl"); }}
+                disabled={tool1Answered || (tool1Used !== null && tool1Used !== "curl")}
+                used={tool1Used === "curl"} />
             </div>
 
             {/* Ping output */}
-            {tool1Used === "ping" && !tool1Answered && (
+            {tool1Used === "ping" && (
               <div>
                 <Terminal lines={[
                   { text: "$ ping aws.amazon.com", color: "#60a5fa" },
@@ -526,18 +542,11 @@ export default function NetworksMysteryPage() {
                   errMsg="✗ Ping OK לא אומר שהכל עובד — הוא בודק רק IP connectivity."
                   onAnswer={(ok) => { if (ok) addScore(); setTool1Answered(true); }}
                 />
-                {tool1Answered && (
-                  <button onClick={() => advance(2)}
-                    className="w-full py-[13px] rounded-xl font-bold text-[15px] mt-4 text-white"
-                    style={{ background: ORANGE, fontFamily: "'Heebo', sans-serif" }}>
-                    המשך לFirewall Logs ←
-                  </button>
-                )}
               </div>
             )}
 
             {/* nslookup output */}
-            {tool1Used === "nslookup" && !tool1Answered && (
+            {tool1Used === "nslookup" && (
               <div>
                 <Terminal lines={[
                   { text: "$ nslookup aws.amazon.com", color: "#60a5fa" },
@@ -559,18 +568,11 @@ export default function NetworksMysteryPage() {
                   errMsg="✗ DNS תקין = זה לא הגורם. נמשיך לחקור עם curl."
                   onAnswer={(ok) => { if (ok) addScore(); setTool1Answered(true); }}
                 />
-                {tool1Answered && (
-                  <button onClick={() => advance(2)}
-                    className="w-full py-[13px] rounded-xl font-bold text-[15px] mt-4 text-white"
-                    style={{ background: ORANGE, fontFamily: "'Heebo', sans-serif" }}>
-                    המשך לFirewall Logs ←
-                  </button>
-                )}
               </div>
             )}
 
             {/* curl output */}
-            {tool1Used === "curl" && !tool1Answered && (
+            {tool1Used === "curl" && (
               <div>
                 <Terminal lines={[
                   { text: "$ curl -I api.techflow.io", color: "#60a5fa" },
@@ -593,14 +595,16 @@ export default function NetworksMysteryPage() {
                   errMsg="✗ 403 Forbidden = גישה נחסמה. לא שגיאת שרת — חסימה."
                   onAnswer={(ok) => { if (ok) addScore(); setTool1Answered(true); }}
                 />
-                {tool1Answered && (
-                  <button onClick={() => advance(2)}
-                    className="w-full py-[13px] rounded-xl font-bold text-[15px] mt-4 text-white"
-                    style={{ background: ORANGE, fontFamily: "'Heebo', sans-serif" }}>
-                    פתחי Firewall Logs ←
-                  </button>
-                )}
               </div>
+            )}
+
+            {/* Continue button — outside all tool blocks, appears after answering */}
+            {tool1Answered && (
+              <button onClick={() => advance(2)}
+                className="w-full py-[13px] rounded-xl font-bold text-[15px] mt-4 text-white"
+                style={{ background: ORANGE, fontFamily: "'Heebo', sans-serif" }}>
+                פתחי Firewall Logs ←
+              </button>
             )}
           </div>
         )}
@@ -631,7 +635,9 @@ export default function NetworksMysteryPage() {
               correct={1}
               okMsg="✓ בדיוק! הFirewall חוסם גישה מ-IPs חיצוניים לAWS — אלו בדיוק הEngineers שעובדות Remote!"
               errMsg="✗ 185.x.x.x = IP חיצוני. ה-10.x.x.x (ALLOW) הם פנימיים. הבעיה: Firewall חוסם גישה Remote."
-              onAnswer={(ok) => { if (ok) addScore(); setTimeout(() => advance(3), 800); }}
+              onAnswer={(ok) => { if (ok) addScore(); }}
+              nextLabel="פתחי Change Log ←"
+              onNext={() => advance(3)}
             />
           </div>
         )}
@@ -661,7 +667,9 @@ export default function NetworksMysteryPage() {
               correct={1}
               okMsg="✓ מצאת! deployment אוטומטי (production-hotfix-v2.1.4) שינה firewall rule ב-08:47 — בדיוק 15 דקות לפני הדיווחים."
               errMsg="✗ ב-08:47: deploy-bot-v2 שינה Rule #42. deployment אוטומטי = הגורם."
-              onAnswer={(ok) => { if (ok) addScore(); setTimeout(() => advance(4), 800); }}
+              onAnswer={(ok) => { if (ok) addScore(); }}
+              nextLabel="לפתרון התקלה ←"
+              onNext={() => advance(4)}
             />
           </div>
         )}
@@ -691,7 +699,9 @@ export default function NetworksMysteryPage() {
               correct={1}
               okMsg="✓ פתרון נכון ומדויק — rollback + whitelist = מהיר, בטוח, מדויק."
               errMsg="✗ לכבות Firewall = סיכון אבטחה. AWS לא אשמה — הבעיה אצלנו. Rollback + whitelist = הפתרון."
-              onAnswer={(ok) => { if (ok) addScore(); setTimeout(() => advance(5), 800); }}
+              onAnswer={(ok) => { if (ok) addScore(); }}
+              nextLabel="לPost-Mortem ←"
+              onNext={() => advance(5)}
             />
           </div>
         )}
