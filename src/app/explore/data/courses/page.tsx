@@ -36,15 +36,15 @@ const COURSES: Course[] = [
   },
   {
     emoji: "🎥",
-    platform: "Upscale Analytics · YouTube",
-    title: "ניתוח נתונים בעברית — רם קדם",
+    platform: "ramkedem.com",
+    title: "קורס דאטה אנליסט למתחילים — רם קדם",
     lang: "עברית",
     certified: false,
     rating: "4.9",
-    students: "עשרות אלפי צפיות",
+    students: "עשרות אלפי לומדים",
     description:
-      "הערוץ הכי ממוקד לדאטה אנליטיקס בעברית. Excel, SQL, Power BI, Tableau ועוד — כולו חינמי ביוטיוב. אחד הקולות המובילים בתחום בישראל.",
-    href: "https://www.youtube.com/channel/UCXUn5_OcQff_5p-UGvRqH2A",
+      "קורס מבוא מובנה בעברית — חינמי לגמרי. מכסה Excel, SQL, Power BI, Tableau. אחד הקולות המובילים לדאטה אנליטיקס בישראל. נקודת כניסה מצוינת עם מסלול ברור.",
+    href: "https://ramkedem.com/course/%d7%a7%d7%95%d7%a8%d7%a1-%d7%93%d7%90%d7%98%d7%94-%d7%90%d7%a0%d7%9c%d7%99%d7%a1%d7%98-%d7%9c%d7%9e%d7%aa%d7%97%d7%99%d7%9c%d7%99%d7%9d/",
   },
   {
     emoji: "🐱",

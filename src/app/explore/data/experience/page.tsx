@@ -311,7 +311,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         <div className="flex flex-col gap-2">
           {[
             { emoji: "🏛️", name: "Data.Intro — ניתוח נתונים בפייתון", platform: "Campus.gov.il", lang: "עברית", href: "https://campus.gov.il/en/course/cs-gov-cs-data-dataintro101-he/" },
-            { emoji: "🎥", name: "ניתוח נתונים בעברית — רם קדם", platform: "Upscale Analytics · YouTube", lang: "עברית", href: "https://www.youtube.com/channel/UCXUn5_OcQff_5p-UGvRqH2A" },
+            { emoji: "🎥", name: "קורס דאטה אנליסט למתחילים — רם קדם", platform: "ramkedem.com · חינמי", lang: "עברית", href: "https://ramkedem.com/course/%d7%a7%d7%95%d7%a8%d7%a1-%d7%93%d7%90%d7%98%d7%94-%d7%90%d7%a0%d7%9c%d7%99%d7%a1%d7%98-%d7%9c%d7%9e%d7%aa%d7%97%d7%99%d7%9c%d7%99%d7%9d/" },
             { emoji: "🐱", name: "Intro to Data Analysis", platform: "Kaggle Learn", lang: "אנגלית", href: "https://www.kaggle.com/learn" },
             { emoji: "📊", name: "Google Data Analytics Certificate", platform: "Coursera (audit חינמי)", lang: "אנגלית", href: "https://www.coursera.org/professional-certificates/google-data-analytics" },
           ].map((c) => (
