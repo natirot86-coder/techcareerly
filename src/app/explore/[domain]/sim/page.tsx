@@ -3768,7 +3768,7 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
                 const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
                 localStorage.setItem("data-journey", JSON.stringify({ ...journey, sim: true }));
               } catch {/* ignore */}
-              window.location.href = "/explore/data/courses";
+              window.location.href = "/explore/data/experience";
             }}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"
             style={{ background: "transparent", border: "1.5px solid #0d9488", color: "#0d9488", fontFamily: "'Heebo', sans-serif" }}

@@ -1246,7 +1246,7 @@ function RevealPhase() {
             const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
             localStorage.setItem("data-journey", JSON.stringify({ ...journey, mystery: true }));
           } catch {/* ignore */}
-          window.location.href = "/explore/data/courses";
+          window.location.href = "/explore/data/experience";
         }}
         className="block w-full py-4 rounded-xl text-[15px] font-black text-center mb-3"
         style={{ background: T.teal, color: "white", fontFamily: "'Heebo', sans-serif" }}>
@@ -1259,7 +1259,7 @@ function RevealPhase() {
             const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
             localStorage.setItem("data-journey", JSON.stringify({ ...journey, mystery: true }));
           } catch {/* ignore */}
-          window.location.href = "/explore/data/courses";
+          window.location.href = "/explore/data/experience";
         }}
         className="block w-full py-3 rounded-xl text-[13px] font-bold text-center"
         style={{ background: "transparent", border: "1.5px solid " + T.teal, color: T.teal, fontFamily: "'Heebo', sans-serif" }}>

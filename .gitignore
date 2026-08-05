@@ -21,3 +21,7 @@ npm-debug.log*
 next-env.d.ts
 
 .vercel
+--viewport
+
+# Claude Code settings (may contain API keys)
+.claude/

@@ -295,10 +295,41 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         </button>
       </Link>
       <Link href="/explore/data">
-        <button className="block w-full py-3.5 rounded-xl font-bold text-[14px]" style={{ background: "transparent", border: "1.5px solid rgba(2,62,138,0.2)", color: NAVY, fontFamily: "'Heebo', sans-serif" }}>
+        <button className="block w-full py-3.5 rounded-xl font-bold text-[14px] mb-8" style={{ background: "transparent", border: "1.5px solid rgba(2,62,138,0.2)", color: NAVY, fontFamily: "'Heebo', sans-serif" }}>
           חזרה לטעימת הדאטה
         </button>
       </Link>
+
+      {/* Courses — compact list */}
+      <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }} className="pt-7">
+        <div className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>
+          רוצה להעמיק?
+        </div>
+        <div className="text-[13px] font-bold mb-4" style={{ color: NAVY }}>
+          קורסי דאטה אנליטיקס חינמיים — מעבר לאפליקציה
+        </div>
+        <div className="flex flex-col gap-2">
+          {[
+            { emoji: "🏛️", name: "Data.Intro — ניתוח נתונים בפייתון", platform: "Campus.gov.il", lang: "עברית", href: "https://campus.gov.il/en/course/cs-gov-cs-data-dataintro101-he/" },
+            { emoji: "🐱", name: "Intro to Data Analysis", platform: "Kaggle Learn", lang: "אנגלית", href: "https://www.kaggle.com/learn" },
+            { emoji: "📊", name: "Google Data Analytics Certificate", platform: "Coursera (audit חינמי)", lang: "אנגלית", href: "https://www.coursera.org/professional-certificates/google-data-analytics" },
+          ].map((c) => (
+            <a key={c.name} href={c.href} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", textDecoration: "none" }}>
+              <span className="text-[20px] shrink-0">{c.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12.5px] font-bold truncate" style={{ color: NAVY }}>{c.name}</div>
+                <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>{c.platform} · {c.lang}</div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>✓ חינמי</span>
+                <span className="text-[13px]" style={{ color: "rgba(0,0,0,0.3)" }}>←</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
