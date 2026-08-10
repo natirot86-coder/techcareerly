@@ -4,7 +4,7 @@ import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import { ExperienceCTAs } from "@/components/ui/ExperienceCTAs";
 
-const BLUE   = "#3b82f6";
+const RED    = "#dc2626";
 const NAVY   = "#023e8a";
 const ORANGE = "#fb8500";
 const HEEBO  = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -69,9 +69,9 @@ const CONSTRUCTS = [
   {
     id: "interest",
     label: "עניין",
-    color: BLUE,
-    emoji: "🌐",
-    scaleQ: (_g: Gender) => "בסולם 1–5 — כמה רשתות ותקשורת מדברים אליך?",
+    color: RED,
+    emoji: "🛡️",
+    scaleQ: (_g: Gender) => "בסולם 1–5 — כמה סייבר ואבטחת מידע מדברים אליך?",
     scaleHint: (g: Gender) => g === "female"
       ? "1 = כלל לא מרגישה חיבור · 5 = מאוד מדבר אליי"
       : "1 = כלל לא מרגיש חיבור · 5 = מאוד מדבר אליי",
@@ -108,8 +108,8 @@ const CONSTRUCTS = [
     color: NAVY,
     emoji: "🔭",
     scaleQ: (g: Gender) => g === "female"
-      ? "בסולם 1–5 — כמה את מדמיינת את עצמך עובדת עם רשתות ותקשורת?"
-      : "בסולם 1–5 — כמה אתה מדמיין את עצמך עובד עם רשתות ותקשורת?",
+      ? "בסולם 1–5 — כמה את מדמיינת את עצמך עובדת בסייבר?"
+      : "בסולם 1–5 — כמה אתה מדמיין את עצמך עובד בסייבר?",
     scaleHint: (g: Gender) => g === "female"
       ? "1 = לא מדמיינת בכלל · 5 = ברורה לי מאוד התמונה"
       : "1 = לא מדמיין בכלל · 5 = ברורה לי מאוד התמונה",
@@ -185,17 +185,17 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
   const isFemale = gender === "female";
 
   const constructs = [
-    { label: "עניין",   score: interestScore, color: BLUE,   emoji: "🌐", desc: "כמה התחום מדבר אליך" },
-    { label: "ביטחון",  score: efficacyScore, color: ORANGE, emoji: "💪", desc: "כמה האמנת ביכולת שלך ללמוד" },
-    { label: "עתיד",    score: outcomeScore,  color: NAVY,   emoji: "🔭", desc: "כמה ברורה לך התמונה העתידית" },
+    { label: "עניין",   score: interestScore, color: RED,    emoji: "🛡️", desc: "כמה התחום מדבר אליך" },
+    { label: "ביטחון",  score: efficacyScore, color: ORANGE, emoji: "💪",  desc: "כמה האמנת ביכולת שלך ללמוד" },
+    { label: "עתיד",    score: outcomeScore,  color: NAVY,   emoji: "🔭",  desc: "כמה ברורה לך התמונה העתידית" },
   ];
 
   let headline = "", subtext = "", heroEmoji = "";
 
   if (avg >= 4) {
     heroEmoji = "🎯";
-    headline = "יש לך חיבור אמיתי לרשתות";
-    subtext = "שלושת הסימנים — עניין, ביטחון, ותמונה עתידית — נדלקו. זה דיוק נדיר. כדאי לשוחח עם הרכזת על מסלול רשתות ותקשורת מעמיק.";
+    headline = "יש לך חיבור אמיתי לסייבר";
+    subtext = "שלושת הסימנים — עניין, ביטחון, ותמונה עתידית — נדלקו. זה דיוק נדיר. כדאי לשוחח עם הרכזת על מסלול סייבר ואבטחת מידע מעמיק.";
   } else if (interestScore >= 4 && efficacyScore <= 2) {
     heroEmoji = "✨";
     headline = "יש עניין — הביטחון עוד יגיע";
@@ -209,7 +209,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
   } else {
     heroEmoji = "🔍";
     headline = "הטעימה עשתה את שלה";
-    subtext = "תחום הרשתות הוא רק אחד מהאפשרויות. הרכזת תעזור להבין מה מתאים לך יותר — לפעמים הכיוון הנכון נמצא בתחום אחר.";
+    subtext = "תחום הסייבר הוא רק אחד מהאפשרויות. הרכזת תעזור להבין מה מתאים לך יותר — לפעמים הכיוון הנכון נמצא בתחום אחר.";
   }
 
   return (
@@ -260,9 +260,9 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
           מה כתבת
         </div>
         {[
-          { label: "עניין — מה הרגשת?",      id: "interest_open" },
-          { label: "ביטחון — מה הרגשת?",     id: "efficacy_open" },
-          { label: "עתיד — מה ראית?",         id: "outcome_open"  },
+          { label: "עניין — מה הרגשת?",   id: "interest_open" },
+          { label: "ביטחון — מה הרגשת?",  id: "efficacy_open" },
+          { label: "עתיד — מה ראית?",      id: "outcome_open"  },
         ].map(({ label, id }) => {
           const a = answers[id] as string;
           return (
@@ -290,7 +290,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         </div>
       </div>
 
-      <ExperienceCTAs domainId="networks" domainLabel="הרשתות" />
+      <ExperienceCTAs domainId="cyber" domainLabel="הסייבר" />
 
       {/* Courses — card grid */}
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }} className="pt-7">
@@ -298,30 +298,30 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
           רוצה להעמיק?
         </div>
         <div className="text-[14px] font-bold mb-4" style={{ color: NAVY }}>
-          קורסי רשתות חינמיים
+          קורסי סייבר חינמיים
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             {
-              img: "/courses/networks-campus.jpg",
+              img: "/courses/cyber-websec.jpg",
               platform: "Campus.gov.il",
-              title: "מרושתים — איך עובד האינטרנט?",
+              title: "WebSec — לזהות חולשות, לבנות הגנות",
               lang: "עברית",
-              href: "https://campus.gov.il/course/cs-gov-cs-reshatot101/",
+              href: "https://campus.gov.il/course/cs-gov-cs-websec/",
             },
             {
-              img: "/courses/networks-ariel.png",
-              platform: "אוניברסיטת אריאל / Campus.gov.il",
-              title: "תקשורת מחשבים",
+              img: "/courses/cyber-defence.jpg",
+              platform: "Campus.gov.il",
+              title: "מקדם הגנה בסייבר — כלים להתנהלות בטוחה",
               lang: "עברית",
-              href: "https://campus.gov.il/course/ariel-acd-computers-communication-he/",
+              href: "https://campus.gov.il/course/cs-csdefence001/",
             },
             {
-              img: "/courses/networks-cisco.png",
-              platform: "Cisco NetAcad",
-              title: "Networking Basics",
+              img: "/courses/cyber-tau.jpg",
+              platform: "Campus.gov.il — TAU",
+              title: "צעדים ראשונים באבטחת מידע",
               lang: "אנגלית",
-              href: "https://www.netacad.com/courses/networking-basics",
+              href: "https://campus.gov.il/course/tau-acd-rfp4-informationsecurity101-en/",
             },
           ].map((c) => (
             <a
@@ -332,8 +332,13 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
               className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
               style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
             >
-              <div className="overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                <img src={c.img} alt={c.title} className="w-full h-full object-cover" />
+              <div className="overflow-hidden flex items-center justify-center"
+                style={{ aspectRatio: "16/9", background: "rgba(220,38,38,0.06)" }}>
+                {c.img ? (
+                  <img src={c.img} alt={c.title} className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                ) : null}
+                <span className="text-[32px]">🛡️</span>
               </div>
               <div className="p-3 flex flex-col flex-1">
                 <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>
@@ -345,9 +350,9 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1.5">
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>✓ חינמי</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${BLUE}12`, color: BLUE }}>{c.lang}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: `${RED}12`, color: RED }}>{c.lang}</span>
                   </div>
-                  <span className="text-[11px] font-bold" style={{ color: BLUE }}>לקורס ←</span>
+                  <span className="text-[11px] font-bold" style={{ color: RED }}>לקורס ←</span>
                 </div>
               </div>
             </a>
@@ -360,7 +365,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function NetworksExperiencePage() {
+export default function CyberExperiencePage() {
   const [phase, setPhase]     = useState<Phase>("gender");
   const [gender, setGender]   = useState<Gender | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
@@ -401,9 +406,9 @@ export default function NetworksExperiencePage() {
       setPhase("outcome_scale");
     } else {
       try {
-        localStorage.setItem("networks-experience", JSON.stringify(newAnswers));
-        const journey = JSON.parse(localStorage.getItem("networks-journey") || "{}");
-        localStorage.setItem("networks-journey", JSON.stringify({ ...journey, experience: true }));
+        localStorage.setItem("cyber-experience", JSON.stringify(newAnswers));
+        const journey = JSON.parse(localStorage.getItem("cyber-journey") || "{}");
+        localStorage.setItem("cyber-journey", JSON.stringify({ ...journey, experience: true }));
       } catch {/* ignore */}
       setPhase("done");
     }
@@ -415,14 +420,14 @@ export default function NetworksExperiencePage() {
   if (phase === "gender") {
     return (
       <div className="min-h-screen" style={{ background: "#fbf9f5" }} dir="rtl">
-        <div className="text-white px-[22px] pt-[26px] pb-[30px]" style={{ background: BLUE }}>
+        <div className="text-white px-[22px] pt-[26px] pb-[30px]" style={{ background: RED }}>
           <div className="max-w-[720px] mx-auto">
-            <div className="text-[12px] mb-2" style={{ opacity: 0.75 }}>כלי עיבוד החוויה · רשתות ותקשורת</div>
+            <div className="text-[12px] mb-2" style={{ opacity: 0.75 }}>כלי עיבוד החוויה · סייבר ואבטחת מידע</div>
             <div className="text-[26px] font-black leading-tight" style={HEEBO}>רגע לפני שנתחיל</div>
           </div>
         </div>
         <div className="max-w-[720px] mx-auto px-[22px] pt-6 pb-36">
-          <div className="rounded-2xl p-4 mb-6" style={{ background: "rgba(59,130,246,0.05)", border: "1.5px solid rgba(59,130,246,0.15)" }}>
+          <div className="rounded-2xl p-4 mb-6" style={{ background: "rgba(220,38,38,0.05)", border: "1.5px solid rgba(220,38,38,0.15)" }}>
             <div className="text-[13.5px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.65)" }}>
               <span className="font-bold" style={{ color: NAVY }}>מה שחווית עכשיו הוא מידע חשוב.</span>{" "}
               חמש שאלות קצרות יעזרו לך להבין מה זה אמר לך — על העניין שלך, על הביטחון שלך, ועל האופן שבו את רואה את עצמך בתחום.
@@ -439,7 +444,7 @@ export default function NetworksExperiencePage() {
             <button
               onClick={() => handleGender("female")}
               className="w-full py-5 rounded-2xl text-[17px] font-black text-right px-6 transition-all active:scale-[0.98]"
-              style={{ background: BLUE, color: "#fff", ...HEEBO }}
+              style={{ background: RED, color: "#fff", ...HEEBO }}
             >
               אליה — בלשון נקבה
             </button>
@@ -462,9 +467,9 @@ export default function NetworksExperiencePage() {
   if (phase === "done") {
     return (
       <div className="min-h-screen" style={{ background: "#fbf9f5" }} dir="rtl">
-        <div className="text-white px-[22px] pt-[26px] pb-[30px]" style={{ background: BLUE }}>
+        <div className="text-white px-[22px] pt-[26px] pb-[30px]" style={{ background: RED }}>
           <div className="max-w-[720px] mx-auto">
-            <div className="text-[12px] mb-2" style={{ opacity: 0.75 }}>כלי עיבוד החוויה · רשתות ותקשורת</div>
+            <div className="text-[12px] mb-2" style={{ opacity: 0.75 }}>כלי עיבוד החוויה · סייבר ואבטחת מידע</div>
             <div className="text-[26px] font-black leading-tight" style={HEEBO}>הסיכום שלך ✓</div>
           </div>
         </div>
@@ -494,11 +499,11 @@ export default function NetworksExperiencePage() {
       {/* Header */}
       <div className="text-white px-[22px] pt-[26px] pb-7" style={{ background: construct.color }}>
         <div className="max-w-[720px] mx-auto">
-          <Link href="/explore/networks" className="text-[12px] font-bold block mb-5" style={{ opacity: 0.75 }}>
+          <Link href="/explore/cyber" className="text-[12px] font-bold block mb-5" style={{ opacity: 0.75 }}>
             ← חזרה
           </Link>
 
-          {/* Progress bar — 6 segments */}
+          {/* Progress bar */}
           <div className="flex items-center gap-1.5 mb-6">
             {PHASE_ORDER.map((_, i) => (
               <div
@@ -555,15 +560,6 @@ export default function NetworksExperiencePage() {
                     <span className="text-[14px] font-bold" style={{ color: tapped === n ? construct.color : "#023e8a" }}>
                       {n} — {SCALE_LABELS[n]}
                     </span>
-                  </div>
-                  <div
-                    className="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
-                    style={{
-                      borderColor: tapped === n ? construct.color : "rgba(0,0,0,0.15)",
-                      background:  tapped === n ? construct.color : "transparent",
-                    }}
-                  >
-                    {tapped === n && <span className="text-white text-[10px] font-black">✓</span>}
                   </div>
                 </button>
               ))}

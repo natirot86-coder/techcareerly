@@ -687,6 +687,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
       </div>
 
       <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+        <div className="rounded-2xl overflow-hidden mb-4" style={{ boxShadow: "0 2px 14px rgba(0,0,0,0.12)" }}>
+          <img src="/domains/noc-room.jpeg" alt="" className="w-full object-cover" style={{ height: "200px" }} />
+        </div>
         <p className="text-[13.5px] leading-[1.7] mb-6" style={{ color: "rgba(0,0,0,0.55)" }}>
           כל פעם שאת גולשת — שלושה שחקנים מדברים ביניהם.
           בואי נכיר אותם לפני שנצלול לפנים.

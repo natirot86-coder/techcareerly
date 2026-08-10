@@ -25,3 +25,7 @@ next-env.d.ts
 
 # Claude Code settings (may contain API keys)
 .claude/
+
+# Session cookies / auth tokens — never commit
+campus-cookies.txt
+*-cookies.txt

@@ -94,7 +94,7 @@
 |------|-----------|----------|------------|-----------|---------|
 | data | ✅ מלא | ✅ | ✅ analytics+mystery | ✅ | 🔄 בתהליך |
 | code | ✅ חלקי | ✅ LearnMore | ❌ | ❌ | ✅ |
-| cyber | ✅ בסיסי | ❌ | ❌ | ❌ | ❌ |
+| cyber | ✅ מלא | ✅ alert triage | ✅ day+mystery | ✅ | ❌ |
 | networks | ✅ מלא | ✅ | ✅ day+mystery | ✅ | ✅ |
 
 ---

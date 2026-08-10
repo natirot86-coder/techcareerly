@@ -179,16 +179,43 @@ function Stage3({ tasks, simDone }: { tasks: Task[]; simDone: Record<string, boo
 
 // ─── Stage 4 ──────────────────────────────────────────────────────────────────
 function Stage4() {
+  const [quizDone, setQuizDone] = useState(false);
+  const [shortlistCount, setShortlistCount] = useState(0);
+  const [pathsDone, setPathsDone] = useState(false);
+
+  useEffect(() => {
+    try {
+      setQuizDone(!!localStorage.getItem("paths-quiz"));
+      setShortlistCount(JSON.parse(localStorage.getItem("paths-shortlist") || "[]").length);
+      setPathsDone(!!localStorage.getItem("paths-journey"));
+    } catch { /* empty storage */ }
+  }, []);
+
   return (
     <div className="flex flex-col gap-[10px]">
-      <div className="bg-[rgba(2,62,138,0.05)] border border-[rgba(2,62,138,0.12)] rounded-xl p-4">
-        <div className="text-[12px] font-bold text-[rgba(0,0,0,0.45)] mb-1">התחום שנבחר</div>
-        <div className="text-[15px] font-bold text-navy">פיתוח Full Stack</div>
-      </div>
+      <Link
+        href="/paths"
+        className="block rounded-xl p-4"
+        style={{ background: "rgba(251,133,0,0.07)", border: "1px solid rgba(251,133,0,0.22)" }}
+      >
+        <div className="text-[13.5px] font-bold text-navy mb-[3px]">
+          {pathsDone ? "מסלול הלימודים שלך" : "חקר מסלולי לימוד"}
+        </div>
+        <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>
+          {pathsDone
+            ? "השלמת את החקר — הרשימה והשאלות שמורות אצלך"
+            : shortlistCount > 0
+              ? `${shortlistCount} מוסדות ברשימה שלך`
+              : "מה חשוב לך? איזה מסלול מתאים? אילו מוסדות?"}
+        </div>
+        <div className="text-[12px] font-bold mt-2" style={{ color: "#fb8500" }}>
+          {pathsDone ? "לסיכום שלי ←" : shortlistCount > 0 ? "להמשיך מאיפה שעצרת ←" : "קדימה לבחירת מסלול לימודים ←"}
+        </div>
+      </Link>
       <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mt-2">המשימות שלך</div>
-      <TaskCard label="חקר מוסדות לימוד" status="pending" />
-      <TaskCard label="השוואת תוכניות לימוד" status="pending" />
-      <TaskCard label="מפגש שלישי עם הרכזת" status="pending" />
+      <TaskCard label="מיפוי מה חשוב לי במסלול" status={quizDone ? "done" : "pending"} progress={quizDone ? 100 : 0} />
+      <TaskCard label="חקר מוסדות ובניית רשימה" status={shortlistCount > 0 ? "done" : "pending"} progress={shortlistCount > 0 ? 100 : 0} />
+      <TaskCard label="שאלות לפגישה השלישית" status={pathsDone ? "done" : "pending"} progress={pathsDone ? 100 : 0} />
     </div>
   );
 }

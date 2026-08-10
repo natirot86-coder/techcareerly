@@ -294,6 +294,9 @@ export default function AnalyticsPage() {
         {/* ── INTRO ─────────────────────────────────────────────────────────── */}
         {phase === "intro" && (
           <div>
+            <div className="rounded-2xl overflow-hidden mb-4" style={{ boxShadow: "0 2px 14px rgba(0,0,0,0.12)" }}>
+              <img src="/domains/data-workspace.jpeg" alt="" className="w-full object-cover" style={{ height: "200px" }} />
+            </div>
             {/* Card 1: Mini-example walkthrough */}
             <div className="rounded-2xl p-5 mb-4" style={{ background: "#fff", boxShadow: "0 2px 14px rgba(2,62,138,0.07)" }}>
               <div className="text-[15px] font-black mb-2" style={{ color: NAVY, ...HEEBO }}>

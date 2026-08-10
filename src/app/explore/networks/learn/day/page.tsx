@@ -484,7 +484,11 @@ export default function DayPage() {
         {Header}
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
           <div className="text-[22px] leading-tight mb-1" style={{ color: NAVY, ...HEEBO }}>מה באמת עושה Network Engineer?</div>
-          <div className="text-[13px] mb-6" style={{ color: "rgba(0,0,0,0.42)" }}>לפני שנצלול לתקלה אמיתית — בואי נבין את התפקיד</div>
+          <div className="text-[13px] mb-4" style={{ color: "rgba(0,0,0,0.42)" }}>לפני שנצלול לתקלה אמיתית — בואי נבין את התפקיד</div>
+
+          <div className="rounded-2xl overflow-hidden mb-5" style={{ boxShadow: "0 2px 14px rgba(0,0,0,0.12)" }}>
+            <img src="/domains/network-engineer.jpeg" alt="" className="w-full object-cover" style={{ height: "200px" }} />
+          </div>
 
           {/* Timeline — נשאר גלוי */}
           <div className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.35)" }}>יום עבודה טיפוסי</div>

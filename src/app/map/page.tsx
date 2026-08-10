@@ -34,7 +34,7 @@ type Edge = {
 // ─── Canvas ───────────────────────────────────────────────────────────────────
 
 const W = 960;
-const H = 980;
+const H = 1240;
 const NH = 44;   // node height default
 
 // ─── Nodes ────────────────────────────────────────────────────────────────────
@@ -48,9 +48,8 @@ const NODES: Node[] = [
   { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 510,  cy: 60,  w: 110, color: "#023e8a" },
 
   // ── Bottom nav (soon) ─────────────────────────────────────────────────────
-  { id: "chat",    label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,    cx: 770, cy: 20,  w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
-  { id: "squad",   label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`,   cx: 770, cy: 80,  w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
-  { id: "contact", label: "רכזת",        sub: "בקרוב", url: `${BASE}/contact`, cx: 770, cy: 140, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "chat",  label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,  cx: 770, cy: 40,  w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 770, cy: 110, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
 
   // ── Explore ───────────────────────────────────────────────────────────────
   { id: "explore", label: "חקר תחומים", sub: "דירוג 7 תחומים", url: `${BASE}/explore`, cx: 510, cy: 190, w: 140, color: "#fb8500" },
@@ -79,10 +78,25 @@ const NODES: Node[] = [
   { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 185, cy: 780, w: 130, color: "#0d9488" },
   { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 185, cy: 890, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
 
+  // ── Learn — Cyber ─────────────────────────────────────────────────────────
+  { id: "cyber-day",        label: "יום בחיי SOC",      sub: "Ransomware response",      url: `${BASE}/explore/cyber/learn/day`,     cx: 560, cy: 560, w: 130, color: "#dc2626" },
+  { id: "cyber-mystery",    label: "תעלומת הדלף",       sub: "Data breach forensics",    url: `${BASE}/explore/cyber/learn/mystery`, cx: 560, cy: 670, w: 130, color: "#dc2626" },
+  { id: "cyber-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",             url: `${BASE}/explore/cyber/experience`,    cx: 560, cy: 780, w: 140, color: "#dc2626", badge: "חדש", badgeColor: "#dc2626" },
+
   // ── Learn — Networks ──────────────────────────────────────────────────────
   { id: "networks-day",        label: "יום בחיי",          sub: "Network Engineer · 5 שלבים",   url: `${BASE}/explore/networks/learn/day`,     cx: 790, cy: 560, w: 148, color: "#2563eb" },
   { id: "networks-mystery",    label: "תעלומת TechFlow",   sub: "Firewall · DNS · curl",         url: `${BASE}/explore/networks/learn/mystery`, cx: 790, cy: 670, w: 130, color: "#2563eb" },
   { id: "networks-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",                  url: `${BASE}/explore/networks/experience`,    cx: 790, cy: 780, w: 140, color: "#2563eb", badge: "חדש", badgeColor: "#2563eb" },
+
+  // ── סיכום והכנה לפגישה 2 ─────────────────────────────────────────────────
+  { id: "results", label: "סיכום הטעימות", sub: "הכנה לפגישה עם הרכזת", url: `${BASE}/explore/results`, cx: 510, cy: 980, w: 165, color: "#fb8500" },
+
+  // ── פגישה 2 עם הרכזת ─────────────────────────────────────────────────────
+  { id: "contact", label: "קביעת פגישה 2", sub: "Cal.com · יומן",        url: `${BASE}/contact`,        cx: 350, cy: 1080, w: 140, color: "#023e8a" },
+  { id: "booked",  label: "הפגישה נקבעה",  sub: "מה להביא לפגישה",       url: `${BASE}/contact/booked`, cx: 660, cy: 1080, w: 145, color: "#023e8a", badge: "חדש", badgeColor: "#023e8a" },
+
+  // ── שלב 4 — מסלול לימודים ────────────────────────────────────────────────
+  { id: "paths", label: "מסלולי לימוד", sub: "הסבר · שאלון · השוואה · מוסדות · שאלות", url: `${BASE}/paths`, cx: 510, cy: 1180, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
 ];
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
@@ -93,9 +107,8 @@ const EDGES: Edge[] = [
   { from: "onboarding", to: "dashboard",  label: "סיום שאלון" },
 
   // Dashboard → bottom nav
-  { from: "dashboard", to: "chat",    dashed: true, color: "#6b7280" },
-  { from: "dashboard", to: "squad",   dashed: true, color: "#6b7280" },
-  { from: "dashboard", to: "contact", dashed: true, color: "#6b7280" },
+  { from: "dashboard", to: "chat",  dashed: true, color: "#6b7280" },
+  { from: "dashboard", to: "squad", dashed: true, color: "#6b7280" },
 
   // Dashboard → explore (stage 3)
   { from: "dashboard", to: "explore", label: "שלב 3 — כנס לחקור" },
@@ -127,6 +140,11 @@ const EDGES: Edge[] = [
   { from: "analytics", to: "mystery",    label: "מיציתי ←",     color: "#0d9488" },
   { from: "mystery",   to: "experience", label: "מיציתי ←",     color: "#0d9488" },
 
+  // Cyber learn flow (sequential)
+  { from: "s-cyber",         to: "cyber-day",         label: "מיציתי ←",  color: "#dc2626" },
+  { from: "cyber-day",       to: "cyber-mystery",     label: "מיציתי ←",  color: "#dc2626" },
+  { from: "cyber-mystery",   to: "cyber-experience",  label: "מיציתי ←",  color: "#dc2626" },
+
   // Networks learn flow (sequential)
   { from: "s-networks",        to: "networks-day",        label: "מיציתי ←",          color: "#2563eb" },
   { from: "networks-day",      to: "networks-mystery",    label: "מיציתי ←",          color: "#2563eb" },
@@ -134,6 +152,18 @@ const EDGES: Edge[] = [
 
   // Sim → next domain (conceptual)
   { from: "s-code", to: "explore", label: "תחום הבא", dashed: true, color: "#d97706" },
+
+  // כלי עיבוד החוויה → סיכום (נפתח אחרי 2+ תחומים)
+  { from: "experience",          to: "results", label: "2+ תחומים ←", color: "#fb8500" },
+  { from: "cyber-experience",    to: "results", color: "#fb8500", dashed: true },
+  { from: "networks-experience", to: "results", color: "#fb8500", dashed: true },
+
+  // סיכום → פגישה 2 → אישור
+  { from: "results", to: "contact", label: "לקביעת פגישה", color: "#023e8a" },
+  { from: "contact", to: "booked",  label: "אישור Cal.com", color: "#023e8a" },
+
+  // אישור → שלב 4 (דרך הדשבורד או כפתור "חקר" בניווט)
+  { from: "booked", to: "paths", label: "לחקר מסלולים", color: "#7c3aed" },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -255,7 +285,7 @@ function Arrows() {
     >
       <defs>
         {/* Arrowhead markers per color */}
-        {["#023e8a", "#fb8500", "#d97706", "#0d9488", "#6b7280", "#2563eb"].map(c => (
+        {["#023e8a", "#fb8500", "#d97706", "#0d9488", "#6b7280", "#2563eb", "#dc2626", "#7c3aed"].map(c => (
           <marker
             key={c}
             id={`arrow-${c.replace("#", "")}`}
@@ -329,13 +359,20 @@ const LABELS = [
   { text: "דפי תחום (×7)",        x: 10,  y: 285, color: "#fb8500" },
   { text: "סימולציות (×7)",        x: 10,  y: 395, color: "#d97706" },
   { text: "מרכז למידה — דאטה",    x: 10,  y: 515, color: "#0d9488" },
-  { text: "מרכז למידה — רשתות",   x: 500, y: 515, color: "#2563eb" },
+  { text: "מרכז למידה — סייבר",   x: 370, y: 515, color: "#dc2626" },
+  { text: "מרכז למידה — רשתות",   x: 660, y: 515, color: "#2563eb" },
   { text: "אנליטיקה בשטח",        x: 10,  y: 625, color: "#0d9488" },
-  { text: "יום בחיי Network Eng", x: 500, y: 625, color: "#2563eb" },
+  { text: "יום בחיי — סייבר",     x: 370, y: 625, color: "#dc2626" },
+  { text: "יום בחיי Network Eng", x: 660, y: 625, color: "#2563eb" },
   { text: "תעלומת SQL",            x: 10,  y: 735, color: "#0d9488" },
-  { text: "תעלומת רשת",           x: 500, y: 735, color: "#2563eb" },
+  { text: "תעלומת הדלף — סייבר",  x: 370, y: 735, color: "#dc2626" },
+  { text: "תעלומת רשת",           x: 660, y: 735, color: "#2563eb" },
   { text: "כלי עיבוד החוויה",     x: 10,  y: 845, color: "#0d9488" },
-  { text: "כלי עיבוד — רשתות",   x: 500, y: 845, color: "#2563eb" },
+  { text: "כלי עיבוד — סייבר",   x: 370, y: 845, color: "#dc2626" },
+  { text: "כלי עיבוד — רשתות",   x: 660, y: 845, color: "#2563eb" },
+  { text: "סיכום והכנה לפגישה",   x: 10,  y: 935,  color: "#fb8500" },
+  { text: "פגישה 2 עם הרכזת",     x: 10,  y: 1035, color: "#023e8a" },
+  { text: "שלב 4 — מסלול לימודים · נפתח גם מהדשבורד ומכפתור 'חקר' בניווט", x: 10, y: 1135, color: "#7c3aed" },
 ];
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -364,8 +401,10 @@ export default function MapPage() {
             { color: "#fb8500", label: "חקר תחומים" },
             { color: "#d97706", label: "סימולציות" },
             { color: "#0d9488", label: "מרכז למידה" },
-            { color: "#6b7280", label: "בקרוב" },
             { color: "#2563eb", label: "מרכז למידה — רשתות" },
+            { color: "#dc2626", label: "מרכז למידה — סייבר" },
+            { color: "#7c3aed", label: "שלב 4 — מסלול לימודים" },
+            { color: "#6b7280", label: "בקרוב" },
           ].map(({ color, label }) => (
             <div key={color} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(0,0,0,0.55)" }}>
               <div style={{ width: 10, height: 10, borderRadius: 99, background: color }} />
@@ -395,7 +434,10 @@ export default function MapPage() {
               <line x1={0} y1={505} x2={870} y2={505} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
               <line x1={0} y1={615} x2={870} y2={615} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
               <line x1={0} y1={725} x2={870} y2={725} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={835} x2={870} y2={835} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              <line x1={0} y1={835}  x2={870} y2={835}  stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              <line x1={0} y1={925}  x2={W}   y2={925}  stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              <line x1={0} y1={1025} x2={W}   y2={1025} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              <line x1={0} y1={1125} x2={W}   y2={1125} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
 
               {LABELS.map(l => (
                 <text key={l.text} x={l.x} y={l.y + 10} fontSize={9} fill={l.color} fontWeight={700}

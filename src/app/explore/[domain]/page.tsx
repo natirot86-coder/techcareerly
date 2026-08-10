@@ -366,12 +366,22 @@ function CyberContent() {
   return (
     <>
       <div className="mb-6 rounded-2xl p-4 text-[13.5px] leading-[1.7]" style={{ background: "rgba(220,38,38,0.07)" }}>
-        כל יום נתקפות אלפי חברות בישראל. רוב האנשים לא יודעים.{" "}
-        <span className="font-black" style={{ color: "#023e8a" }}>את תהיי זאת שעוצרת את ההתקפה.</span>
+        כל יום נתקפות מאות חברות בישראל.{" "}
+        <span className="font-black" style={{ color: "#023e8a" }}>
+          SOC Analyst היא זאת שמזהה, עוצרת ומדווחת — לפני שהנזק מתפשט.
+        </span>
       </div>
 
       <div className="mb-7">
         <Label text="זיהי את הכניסה החשודה — לחצי על השורה" />
+        <div className="rounded-xl px-4 py-3 mb-3 flex gap-2 items-start"
+          style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
+          <span className="text-[16px] shrink-0">🔍</span>
+          <div className="text-[12.5px] leading-[1.55]" style={{ color: "#b91c1c" }}>
+            <span className="font-bold">כל שלוש השורות הן אותו user.</span>{" "}
+            אבל אחת מהן חשודה — למה?
+          </div>
+        </div>
         <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #dc262622", boxShadow: "0 4px 24px rgba(220,38,38,0.1)" }}>
           <div className="px-4 py-2 font-mono text-[10px] flex gap-3" style={{ background: "#1a0a0a", color: "#4b5563" }} dir="ltr">
             <span className="w-[72px]">TIME</span>
@@ -428,27 +438,62 @@ function CyberContent() {
             }}
           >
             {picked === ATTACK
-              ? "✓ מצוין! IP שונה לחלוטין לאותו משתמש = האקר שגנב סיסמה. מה עושים? נועלים חשבון + פותחים חקירה."
-              : "✗ שים לב לשורה האחרונה — IP אחר לגמרי לאותו user. זה סימן קלאסי לפריצה."}
+              ? "✓ מצוין! IP שונה לחלוטין לאותו user = מישהי גנבה סיסמה. מה עושים? נועלים חשבון + פותחים חקירה."
+              : "✗ שימי לב לשורה האחרונה — IP אחר לגמרי, ניסיונות כושלים. זה סימן קלאסי לפריצה."}
           </div>
         )}
       </div>
 
       <WowStat
-        stat="#8"
-        label="ישראל בדירוג הגלובלי של יצוא סייבר"
-        sub="תעשייה של $11B — 45% מהשוק הגלובלי. הביקוש לא מפסיק לגדול."
-        color="#dc2626"
+        stat="3.5M+"
+        label="מחסור במקצועני סייבר בעולם"
+        sub="כל חברה צריכה מישהי שמגנה עליה — הביקוש עולה בהרבה על ההיצע"
+        color={RED}
       />
 
-      {/* Industry context block */}
+      {/* Two career paths */}
+      <div className="mb-7">
+        <Label text="שני נתיבי קריירה בסייבר" />
+        <div className="flex flex-col gap-3">
+          <div className="rounded-2xl p-4" style={{ background: "rgba(220,38,38,0.05)", border: "1.5px solid rgba(220,38,38,0.18)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[18px]">🎓</span>
+              <span className="text-[13px] font-black" style={{ color: RED }}>נתיב מהיר: SOC Analyst</span>
+            </div>
+            <div className="text-[11.5px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.58)" }}>
+              קורס הכשרה · שישה חודשים · ₪12,000–₪18,000 לחודש{"\n"}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {["CompTIA Security+", "eJPT", "TryHackMe SOC Level 1"].map(c => (
+                <span key={c} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(220,38,38,0.1)", color: RED }}>{c}</span>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl p-4" style={{ background: "rgba(2,62,138,0.04)", border: "1.5px solid rgba(2,62,138,0.12)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[18px]">🔬</span>
+              <span className="text-[13px] font-black" style={{ color: "#023e8a" }}>נתיב עמוק: Pentester / Security Researcher</span>
+            </div>
+            <div className="text-[11.5px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.58)" }}>
+              תואר + ניסיון עצמאי · שנים · ₪20,000–₪40,000 לחודש
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {["OSCP", "CEH", "Bug Bounty"].map(c => (
+                <span key={c} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(2,62,138,0.08)", color: "#023e8a" }}>{c}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Industry context */}
       <div className="mb-7">
         <Label text="סייבר — הקשר תעשייה" />
         <div className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid rgba(220,38,38,0.12)" }}>
           <div className="mb-3">
             <div className="text-[10.5px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.3)" }}>תפקידים מרכזיים</div>
             <div className="flex flex-wrap gap-1.5">
-              {["Penetration Tester", "SOC Analyst", "Security Engineer", "Bug Bounty Hunter", "CISO"].map(r => (
+              {["SOC Analyst", "Security Analyst", "Incident Responder", "Penetration Tester", "Security Engineer"].map(r => (
                 <span key={r} className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(220,38,38,0.08)", color: RED }}>{r}</span>
               ))}
             </div>
@@ -456,13 +501,13 @@ function CyberContent() {
           <div className="flex gap-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
             <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(220,38,38,0.05)", border: "1px solid rgba(220,38,38,0.1)" }}>
               <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>שכר</div>
-              <div className="text-[14px] font-black" style={{ color: RED, ...HEEBO }}>₪15K – ₪30K</div>
-              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>לחודש · אחרי ניסיון</div>
+              <div className="text-[14px] font-black" style={{ color: RED, ...HEEBO }}>₪12K – ₪40K</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>לחודש · לפי נתיב</div>
             </div>
             <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.08)" }}>
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>נתיב כניסה</div>
-              <div className="text-[11px] font-bold" style={{ color: "#023e8a" }}>OSCP · Security+ · רקע IDF</div>
-              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>שניים עשר עד עשרים וארבעה חודשים</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>נתיב כניסה מהיר</div>
+              <div className="text-[11px] font-bold" style={{ color: "#023e8a" }}>Security+ · eJPT</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>שישה חודשים הכשרה</div>
             </div>
           </div>
         </div>
@@ -471,14 +516,67 @@ function CyberContent() {
       <JobMarketBlock
         color={RED}
         demand="מחסור קריטי בישראל ובעולם — הביקוש עולה על ההיצע בפער גדול"
-        hitech="Pentester · SOC Analyst · Security Engineer · Bug Bounty"
+        hitech="SOC Analyst · Security Engineer · Pentester · Bug Bounty"
         nonHitech="בנקים (חובה רגולטורית) · ממשל · בריאות · אנרגיה · ביטחון"
-        ai="AI מגביר גם את ההתקפות וגם את הצורך במגינים. אנשי סייבר שמשלבים AI בארסנל שלהם — יוכלו לכסות יותר שטח, לגלות יותר איומים. הביקוש לא יקטן."
+        ai="AI מגביר גם את ההתקפות וגם את הצורך במגינים. אנשי סייבר שמשלבים AI בארסנל שלהם — יכסו יותר שטח ויגלו יותר איומים. הביקוש לא יקטן."
       />
 
+      {/* News article cards */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על הסייבר בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/cyber-boom.jpeg",
+              summary: "ה-AI מחליף מפתחים — ויוצר בום בביקוש לאנשי סייבר",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/hkqnr8zlme",
+            },
+            {
+              img: "/articles/cyber-investment.jpeg",
+              summary: "יוני 2026: הסייבר הישראלי גייס 922 מיליון דולר בחודש אחד",
+              source: "Israel Defense",
+              href: "https://www.israeldefense.co.il/node/69457",
+            },
+            {
+              img: "/articles/cyber-salary.jpeg",
+              summary: "שכר ממוצע של 18,455 ₪ לחודש — אחד מהגבוהים בהייטק",
+              source: "RT-ED",
+              href: "https://rt-ed.co.il/articles/cybersecurity-salary/",
+            },
+          ].map((a) => (
+            <a
+              key={a.href}
+              href={a.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(220,38,38,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
+            >
+              <div className="overflow-hidden" style={{ aspectRatio: "16/9", background: "rgba(220,38,38,0.06)" }}>
+                <img
+                  src={a.img}
+                  alt={a.summary}
+                  className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] mb-3 flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+                <div className="flex justify-end">
+                  <span className="text-[11px] font-bold" style={{ color: "#dc2626" }}>קריאה ←</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <SimTeaser
-        emoji="🔓"
-        challenge="בטעימה: תתבקשי לבצע penetration test על שרת בדיקה — ולדווח על הממצאים. כמה חולשות תמצאי?"
+        emoji="🛡️"
+        challenge="בטעימה תהיי SOC Analyst לדקות ספורות — תקבלי 5 alerts אמיתיים ותחליטי: ALLOW, INVESTIGATE, או BLOCK"
       />
 
       {/* Journey map */}
@@ -487,78 +585,100 @@ function CyberContent() {
         <div className="flex flex-col gap-2">
           {[
             {
-              num: "1", emoji: "🔓",
-              title: "טעימה — penetration test ראשון",
-              sub: "שרת בדיקה · זיהוי חולשות · דוח ממצאים · ~10 דק'",
-              href: "#",
-              doneKey: "sim", lockedBy: null as string | null, comingSoon: true,
+              num: "1", emoji: "🛡️",
+              title: "טעימה — triage של SOC Analyst",
+              sub: "חמישה alerts אמיתיים · ALLOW / INVESTIGATE / BLOCK · ~8 דק'",
+              href: "/explore/cyber/sim",
+              doneKey: "sim" as const, lockedBy: null,
             },
             {
-              num: "2", emoji: "🛡️",
+              num: "2", emoji: "🔥",
               title: "יום בחיי SOC Analyst",
-              sub: "incident response · threat hunting · log analysis · ~15 דק'",
-              href: "#",
-              doneKey: "day", lockedBy: "sim" as string | null, comingSoon: true,
+              sub: "Ransomware response · triage · logs · בידוד · ~15 דק'",
+              href: "/explore/cyber/learn/day",
+              doneKey: "day" as const, lockedBy: "sim" as const,
             },
             {
               num: "3", emoji: "🕵️",
-              title: "תעלומת הסייבר",
-              sub: "חקירת פריצה אמיתית — forensics, timeline, attacker TTP · ~20 דק'",
-              href: "#",
-              doneKey: "mystery", lockedBy: "day" as string | null, comingSoon: true,
+              title: "תעלומת הדלף — CyberSec Inc.",
+              sub: "חקירת data breach · זיהוי הגורם · ~20 דק'",
+              href: "/explore/cyber/learn/mystery",
+              doneKey: "mystery" as const, lockedBy: "day" as const,
             },
             {
               num: "4", emoji: "💭",
               title: "כלי עיבוד החוויה",
-              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
-              href: "#",
-              doneKey: "experience", lockedBy: "mystery" as string | null, comingSoon: true,
+              sub: "שש שאלות · ~5 דק'",
+              href: "/explore/cyber/experience",
+              doneKey: "experience" as const, lockedBy: "mystery" as const,
             },
           ].map((step, i, arr) => {
             const isDone = !!journey[step.doneKey];
-            const isLocked = step.comingSoon || (step.lockedBy ? !journey[step.lockedBy] : false);
+            const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
+            const isFirst = i === 0;
+            const highlight = isFirst && !journey["sim"];
 
             return (
               <div key={step.num}>
-                <div className="rounded-2xl p-4 flex items-center gap-3"
-                  style={{
-                    background: isDone ? "rgba(220,38,38,0.06)" : "#fff",
-                    border: isDone ? "1.5px solid rgba(220,38,38,0.2)" : "1px solid rgba(0,0,0,0.06)",
-                    opacity: isLocked ? 0.55 : 1,
-                  }}
-                >
-                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
-                    style={{ background: isDone ? RED : "rgba(220,38,38,0.1)", color: isDone ? "#fff" : RED }}>
-                    {isDone ? "✓" : step.num}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px]">{step.emoji}</span>
-                      <span className="text-[12.5px] font-bold" style={{ color: isDone ? RED : "#023e8a" }}>
-                        {step.title}
-                      </span>
-                      <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                        style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" }}>בקרוב</span>
+                <Link href={isLocked ? "#" : step.href} className="block" onClick={isLocked ? (e) => e.preventDefault() : undefined}>
+                  <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                    style={{
+                      background: isDone ? "rgba(220,38,38,0.06)" : highlight ? RED : "#fff",
+                      border: isDone ? "1.5px solid rgba(220,38,38,0.2)" : isLocked ? "1px solid rgba(0,0,0,0.06)" : highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
+                      opacity: isLocked ? 0.55 : 1,
+                      boxShadow: highlight ? "0 4px 20px rgba(220,38,38,0.25)" : "none",
+                    }}
+                  >
+                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                      style={{ background: isDone ? RED : highlight ? "rgba(255,255,255,0.25)" : "rgba(220,38,38,0.1)", color: isDone || highlight ? "#fff" : RED }}>
+                      {isDone ? "✓" : step.num}
                     </div>
-                    <div className="mt-0.5">
-                      {(() => {
-                        const parts = step.sub.split(/ · (~\d+.*)$/);
-                        return (
-                          <>
-                            <div className="text-[11px]" dir="rtl" style={{ color: "rgba(0,0,0,0.4)" }}>{parts[0]}</div>
-                            {parts[1] && (
-                              <div className="text-[10px] mt-0.5 font-bold" dir="rtl" style={{ color: "rgba(0,0,0,0.28)" }}>⏱ {parts[1]}</div>
-                            )}
-                          </>
-                        );
-                      })()}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px]">{isLocked ? "🔒" : step.emoji}</span>
+                        <span className="text-[12.5px] font-bold"
+                          style={{ color: isDone ? RED : highlight ? "#fff" : "#023e8a" }}>
+                          {step.title}
+                        </span>
+                        {highlight && (
+                          <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                        )}
+                      </div>
+                      <div className="mt-0.5">
+                        {isLocked ? (
+                          <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+                            זמין אחרי שלב {parseInt(step.num) - 1}
+                          </span>
+                        ) : (() => {
+                          const parts = step.sub.split(/ · (~\d+.*)$/);
+                          return (
+                            <>
+                              <div className="text-[11px]" dir="rtl"
+                                style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                                {parts[0]}
+                              </div>
+                              {parts[1] && (
+                                <div className="text-[10px] mt-0.5 font-bold" dir="rtl"
+                                  style={{ color: highlight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.28)" }}>
+                                  ⏱ {parts[1]}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
+                    <span className="text-[16px] font-bold shrink-0"
+                      style={{ color: isDone ? RED : highlight ? "#fff" : isLocked ? "rgba(0,0,0,0.2)" : RED }}>
+                      {isLocked ? "🔒" : "←"}
+                    </span>
                   </div>
-                  <span className="text-[16px] font-bold shrink-0" style={{ color: "rgba(0,0,0,0.2)" }}>🔒</span>
-                </div>
+                </Link>
                 {i < arr.length - 1 && (
                   <div className="flex justify-center my-1">
-                    <div className="w-[1.5px] h-3" style={{ background: "rgba(220,38,38,0.2)" }} />
+                    <div className="w-[1.5px] h-3"
+                      style={{ background: isDone ? "rgba(220,38,38,0.4)" : "rgba(220,38,38,0.2)" }} />
                   </div>
                 )}
               </div>
@@ -567,7 +687,7 @@ function CyberContent() {
         </div>
       </div>
 
-      <SalaryCard min={15000} max={30000} />
+      <SalaryCard min={12000} max={40000} />
     </>
   );
 }

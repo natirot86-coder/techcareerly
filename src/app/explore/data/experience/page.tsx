@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import { ExperienceCTAs } from "@/components/ui/ExperienceCTAs";
 
 const TEAL   = "#0d9488";
 const NAVY   = "#023e8a";
@@ -289,16 +290,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         </div>
       </div>
 
-      <Link href="/explore">
-        <button className="block w-full py-4 rounded-xl font-black text-[15px] text-white mb-3" style={{ background: NAVY, fontFamily: "'Heebo', sans-serif" }}>
-          לחקר תחומי הייטק נוספים ←
-        </button>
-      </Link>
-      <Link href="/explore/data">
-        <button className="block w-full py-3.5 rounded-xl font-bold text-[14px] mb-8" style={{ background: "transparent", border: "1.5px solid rgba(2,62,138,0.2)", color: NAVY, fontFamily: "'Heebo', sans-serif" }}>
-          חזרה לטעימת הדאטה
-        </button>
-      </Link>
+      <ExperienceCTAs domainId="data" domainLabel="הדאטה" />
 
       {/* Courses — card grid */}
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }} className="pt-7">
