@@ -21,7 +21,10 @@ npm-debug.log*
 next-env.d.ts
 
 .vercel
+# קבצי זבל שנוצרים כשדגל CLI מתפרש כשם קובץ
 --viewport
+--width
+--height
 
 # Claude Code settings (may contain API keys)
 .claude/

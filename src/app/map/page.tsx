@@ -34,7 +34,7 @@ type Edge = {
 // ─── Canvas ───────────────────────────────────────────────────────────────────
 
 const W = 960;
-const H = 1240;
+const H = 1450;
 const NH = 44;   // node height default
 
 // ─── Nodes ────────────────────────────────────────────────────────────────────
@@ -96,7 +96,18 @@ const NODES: Node[] = [
   { id: "booked",  label: "הפגישה נקבעה",  sub: "מה להביא לפגישה",       url: `${BASE}/contact/booked`, cx: 660, cy: 1080, w: 145, color: "#023e8a", badge: "חדש", badgeColor: "#023e8a" },
 
   // ── שלב 4 — מסלול לימודים ────────────────────────────────────────────────
-  { id: "paths", label: "מסלולי לימוד", sub: "הסבר · שאלון · השוואה · מוסדות · שאלות", url: `${BASE}/paths`, cx: 510, cy: 1180, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
+  { id: "paths", label: "מסלולי לימוד", sub: "8 מסכים — לחצו על כל אחד למטה", url: `${BASE}/paths`, cx: 510, cy: 1180, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
+
+  // ── שמונת המסכים של שלב 4 ────────────────────────────────────────────────
+  // כל אחד נפתח ישירות עם נתוני דמו, בלי לעבור את כל הזרימה
+  { id: "p-intro",        label: "פתיחה",          sub: "מה נעשה כאן",         url: `${BASE}/paths?reset=1`,                  cx: 150, cy: 1290, w: 120, color: "#8b5cf6" },
+  { id: "p-quiz",         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,        cx: 350, cy: 1290, w: 115, color: "#8b5cf6" },
+  { id: "p-result",       label: "המסלול המומלץ",  sub: "השוואת 3 מסלולים",    url: `${BASE}/paths?demo=1&phase=result`,      cx: 550, cy: 1290, w: 135, color: "#8b5cf6" },
+  { id: "p-blockers",     label: "מה עומד בדרך",   sub: "חסם ← פתרון + תאריך", url: `${BASE}/paths?demo=1&phase=blockers`,    cx: 780, cy: 1290, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
+  { id: "p-institutions", label: "מוסדות",         sub: "בניית רשימה",         url: `${BASE}/paths?demo=1&phase=institutions`, cx: 780, cy: 1390, w: 120, color: "#8b5cf6" },
+  { id: "p-prep",         label: "שאלות לפגישה",   sub: "נוצרות מהתשובות",     url: `${BASE}/paths?demo=1&phase=prep`,        cx: 550, cy: 1390, w: 135, color: "#8b5cf6" },
+  { id: "p-research",     label: "ערכת חקר",       sub: "אופציונלי",           url: `${BASE}/paths?demo=1&phase=research`,    cx: 350, cy: 1390, w: 115, color: "#8b5cf6" },
+  { id: "p-done",         label: "סיכום",          sub: "לפני/בפגישה + CTA",   url: `${BASE}/paths?demo=1&phase=done`,        cx: 150, cy: 1390, w: 120, color: "#8b5cf6", badge: "סיום", badgeColor: "#8b5cf6" },
 ];
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
@@ -164,6 +175,17 @@ const EDGES: Edge[] = [
 
   // אישור → שלב 4 (דרך הדשבורד או כפתור "חקר" בניווט)
   { from: "booked", to: "paths", label: "לחקר מסלולים", color: "#7c3aed" },
+
+  // שמונת המסכים של שלב 4, לפי הסדר
+  { from: "paths",          to: "p-intro",        color: "#8b5cf6" },
+  { from: "p-intro",        to: "p-quiz",         color: "#8b5cf6" },
+  { from: "p-quiz",         to: "p-result",       color: "#8b5cf6" },
+  { from: "p-result",       to: "p-blockers",     color: "#8b5cf6" },
+  { from: "p-blockers",     to: "p-institutions", color: "#fb8500" },
+  { from: "p-institutions", to: "p-prep",         color: "#8b5cf6" },
+  { from: "p-prep",         to: "p-research",     label: "אופציונלי", dashed: true, color: "#8b5cf6" },
+  { from: "p-research",     to: "p-done",         color: "#8b5cf6" },
+  { from: "p-done",         to: "contact",        label: "קביעת פגישה 3", dashed: true, color: "#023e8a" },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -285,7 +307,7 @@ function Arrows() {
     >
       <defs>
         {/* Arrowhead markers per color */}
-        {["#023e8a", "#fb8500", "#d97706", "#0d9488", "#6b7280", "#2563eb", "#dc2626", "#7c3aed"].map(c => (
+        {["#023e8a", "#fb8500", "#d97706", "#0d9488", "#6b7280", "#2563eb", "#dc2626", "#7c3aed", "#8b5cf6"].map(c => (
           <marker
             key={c}
             id={`arrow-${c.replace("#", "")}`}
@@ -373,6 +395,7 @@ const LABELS = [
   { text: "סיכום והכנה לפגישה",   x: 10,  y: 935,  color: "#fb8500" },
   { text: "פגישה 2 עם הרכזת",     x: 10,  y: 1035, color: "#023e8a" },
   { text: "שלב 4 — מסלול לימודים · נפתח גם מהדשבורד ומכפתור 'חקר' בניווט", x: 10, y: 1135, color: "#7c3aed" },
+  { text: "שמונת המסכים של שלב 4 — לחיצה פותחת כל מסך ישירות עם נתוני דמו", x: 10, y: 1235, color: "#8b5cf6" },
 ];
 
 // ─── Main ────────────────────────────────────────────────────────────────────
@@ -438,6 +461,7 @@ export default function MapPage() {
               <line x1={0} y1={925}  x2={W}   y2={925}  stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
               <line x1={0} y1={1025} x2={W}   y2={1025} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
               <line x1={0} y1={1125} x2={W}   y2={1125} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              <line x1={0} y1={1225} x2={W}   y2={1225} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
 
               {LABELS.map(l => (
                 <text key={l.text} x={l.x} y={l.y + 10} fontSize={9} fill={l.color} fontWeight={700}
