@@ -10,6 +10,19 @@
 
 export type Track = "bootcamp" | "mahat" | "degree";
 
+/** תחומי הטעימה בשלב 3 — מוסד מוצג רק אם הוא רלוונטי לתחום שהמשתמש טעם */
+export type Domain = "code" | "data" | "cyber" | "networks" | "ai" | "ux" | "marketing";
+
+export const DOMAIN_LABEL: Record<Domain, string> = {
+  code: "פיתוח תוכנה",
+  data: "דאטה ואנליטיקס",
+  cyber: "סייבר",
+  networks: "רשתות ותקשורת",
+  ai: "בינה מלאכותית",
+  ux: "עיצוב UX/UI",
+  marketing: "שיווק דיגיטלי",
+};
+
 export type Institution = {
   id: string;
   name: string;
@@ -34,6 +47,8 @@ export type Institution = {
   industry: string;
   /** מבנה הלימודים — ימים, ערב, היקף */
   schedule: string;
+  /** לאילו תחומים המוסד הזה רלוונטי בכלל */
+  domains: Domain[];
 
   // ── יצירת קשר לחקר עצמי ──
   // ⚠️ לא ממציאים מספרים. שדה ריק = "אין לנו, הרכזת תשיג".
@@ -79,6 +94,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "08-6461781",
     contactEmail: "kasay@bgu.ac.il",
     openDays: "",
+    domains: ["code", "data", "cyber", "networks", "ai"],
     status: "active",
     notes: "החזק ביותר לדרום. הסכם המדויק למדעי המחשב לא אומת — לא לצטט מספר.",
     verified: "8.2026 — אתר בן-גוריון",
@@ -102,6 +118,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "data", "ai"],
     status: "active",
     notes: "אין הנדסת תוכנה או הנדסת חשמל עצמאיות — רק מדעי המחשב ומערכות מידע. חשוב לציין אם היעד הוא הנדסה.",
     verified: "8.2026 — דיקנט הסטודנטים",
@@ -125,6 +142,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "סדנת מיון במאי · קורס הכנה במתמטיקה יוני–אוגוסט",
+    domains: ["code", "data", "ai"],
     status: "active",
     notes: "גילוי חשוב — לא היה ברשימה המקורית. הקריטריון כלכלי-חברתי, לא מוצא. לא מוזכרת פריפריה גיאוגרפית במפורש.",
     verified: "8.2026 — אתר רייכמן",
@@ -148,6 +166,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "data", "cyber", "ai"],
     status: "active",
     notes: "B.Sc בדאטה סיינס חדש מתשפ״ז. נתוני התמיכה לא נבדקו — לברר.",
     verified: "8.2026 — אתר ספיר",
@@ -171,6 +190,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "data", "ai"],
     status: "needs-check",
     notes: "אפקה מפרסמת מחקר עצמי לפיו 5 יח׳ מתמטיקה הן המנבא הטוב ביותר להצלחה. שכר לימוד ותמיכות לא אומתו.",
     verified: "8.2026 — חלקי",
@@ -194,6 +214,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "cyber"],
     status: "active",
     notes: "הסף הנמוך ביותר שנמצא. טוב לדרום.",
     verified: "8.2026 — אתר המכללה",
@@ -218,6 +239,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "data", "ai"],
     status: "active",
     notes: "מוצגת עם אזהרה אדומה לפי החלטת נתי. הנתון: 33% אי-המשך לשנה ב׳ מול 4.7% (למ״ס 406/2022). מי שכן הולך — חייב להתחיל עם 4 קורסים לפחות; מי שמתחיל בקורס אחד, כ-68% לא ממשיכים.",
     verified: "8.2026 — למ״ס + אתר האו״פ",
@@ -241,6 +263,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "networks"],
     status: "hidden",
     notes: "הוסתרה: גיאוגרפיה לא מתאימה לקהילות היעד בנגב ובצפון, אין תשתית תמיכה לקהילה (כ-3% מהסטודנטים), ודרישת פיזיקה 5 יח׳ מסננת. להחזיר רק אם יימצא טעם.",
     verified: "8.2026",
@@ -266,6 +289,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "1700-70-22-60",
     contactEmail: "",
     openDays: "יום פתוח 8 בספטמבר",
+    domains: ["code", "networks", "cyber"],
     status: "active",
     notes: "יום פתוח 8.9.2026. מחירים רק דרך 1700-70-22-60. הנדסאי תוכנה, אלקטרוניקה, תשתיות רשת וענן.",
     verified: "8.2026 — אתר אורט",
@@ -289,6 +313,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "networks", "ux"],
     status: "active",
     notes: "קריטי לקהל שלנו: מועמדים מעל גיל 30 נדרשים למכינות.",
     verified: "8.2026 — חלקי",
@@ -312,6 +337,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "networks"],
     status: "needs-check",
     notes: "⚠️ הפער המשמעותי ביותר. SCE היא היסטורית מהמוסדות עם ריכוז הסטודנטים יוצאי אתיופיה הגבוה בדרום, אבל האתר חוסם גישה אוטומטית. עדיפות ראשונה לבדיקה ידנית.",
     verified: "לא אומת",
@@ -335,6 +361,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "ux"],
     status: "active",
     notes: "התמחויות AI, סייבר ומשחקים. אפשר להיכנס בסמסטר ב׳.",
     verified: "8.2026 — אתר שנקר",
@@ -360,6 +387,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "08-3738000",
     contactEmail: "avigail@tech-career.org",
     openDays: "מפגש חשיפה כחלק מתהליך הקבלה",
+    domains: ["cyber", "networks", "data"],
     status: "active",
     notes: "הארגון שלנו. מחזורים פתוחים: Cyber-Network Analyst ו-Cloud-Network Engineer ב-30.8.2026, QA Automation ב-20.10.2026. ⚠️ לאמת פנימית: גובה מלגת הקיום ותנאי המגורים לא מפורסמים באתר. גם אי-התאמה בין ״2,000 שעות״ בדף הבית ל-245-250 שעות בקורסים הפתוחים.",
     verified: "8.2026 — אתר טק-קריירה",
@@ -383,6 +411,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "data", "cyber"],
     status: "active",
     notes: "30-40 משתתפים למחזור, מאות בשנה.",
     verified: "8.2026 — כתבת Calcalist",
@@ -406,8 +435,9 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
-    status: "active",
-    notes: "לא תחליף להכשרה מלאה — כלי טעימה והעשרה. אין מסגרת ואין השמה.",
+    domains: ["code", "data", "cyber", "networks", "ai", "ux", "marketing"],
+    status: "hidden",
+    notes: "הוסתר בהחלטת נתי: כלי העשרה, לא מסלול לימודים. לימוד עצמאי בלי מחזור, בלי מסגרת ובלי השמה — בדיוק מה שאנחנו מזהירים מפניו באוניברסיטה הפתוחה. משמש בשלב 3 כהעשרה.",
     verified: "8.2026",
   },
   {
@@ -429,6 +459,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "data", "ai"],
     status: "needs-check",
     notes: "פרטים ומחירים ל-2026 לא אומתו.",
     verified: "לא אומת",
@@ -452,13 +483,104 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
+    domains: ["code", "networks", "cyber", "ux", "marketing"],
     status: "active",
     notes: "מסחרי ויקר יחסית. זכאים לשוברי הכשרה מקצועית יכולים לקבל סבסוד של עד 90%.",
     verified: "8.2026",
+  },
+  {
+    id: "shenkar-design",
+    name: "שנקר — עיצוב",
+    track: "degree",
+    why: "אחד ממוסדות העיצוב המובילים בארץ. תקשורת חזותית ועיצוב, עם מעבר טבעי ל-UX/UI בתעשיית הטק. הקבלה מבוססת תיק עבודות ולא פסיכומטרי — לוגיקה אחרת לגמרי מתואר במדעי המחשב.",
+    tag: "עיצוב",
+    tagColor: "#db2777",
+    link: "https://www.shenkar.ac.il",
+    location: "רמת גן",
+    tuition: "לא אומת",
+    admission: "תיק עבודות ומבחני התאמה — לא פסיכומטרי",
+    noPsychometric: "כן — הקבלה מבוססת תיק עבודות",
+    support: "לא אומת",
+    industry: "מוניטין חזק בתעשיית העיצוב והטק",
+    schedule: "מלא, יומי",
+    contactName: "",
+    contactRole: "",
+    contactPhone: "",
+    contactEmail: "",
+    openDays: "",
+    domains: ["ux"],
+    status: "needs-check",
+    notes: "⚠️ נוסף כדי לסגור את החור ב-UX — לא אומת בסשן הזה. לאמת תנאי קבלה, שכר לימוד ומסלולים לפני שמפנים מועמד.",
+    verified: "לא אומת",
+  },
+  {
+    id: "bezalel",
+    name: "בצלאל",
+    track: "degree",
+    why: "אקדמיה לאמנות ועיצוב, ירושלים. תקשורת חזותית ועיצוב מדיה — המסלול הקלאסי לעיצוב מוצר דיגיטלי. קבלה על בסיס תיק עבודות.",
+    tag: "עיצוב",
+    tagColor: "#db2777",
+    link: "https://www.bezalel.ac.il",
+    location: "ירושלים",
+    tuition: "לא אומת",
+    admission: "תיק עבודות ומיון — לא פסיכומטרי",
+    noPsychometric: "כן — תיק עבודות",
+    support: "לא אומת",
+    industry: "מוניטין גבוה, בוגרים בתעשיית המוצר",
+    schedule: "מלא, יומי",
+    contactName: "",
+    contactRole: "",
+    contactPhone: "",
+    contactEmail: "",
+    openDays: "",
+    domains: ["ux"],
+    status: "needs-check",
+    notes: "⚠️ נוסף כדי לסגור את החור ב-UX — לא אומת בסשן הזה. תחרותי מאוד; לבדוק אם ריאלי לקהל שלנו.",
+    verified: "לא אומת",
+  },
+  {
+    id: "hit-design",
+    name: "HIT חולון — עיצוב",
+    track: "degree",
+    why: "פקולטה לעיצוב במוסד טכנולוגי — שילוב לא שכיח של עיצוב וטכנולוגיה תחת קורת גג אחת, וזה בדיוק המקום שבו UX חי.",
+    tag: "עיצוב + טק",
+    tagColor: "#db2777",
+    link: "https://www.hit.ac.il",
+    location: "חולון",
+    tuition: "לא אומת",
+    admission: "תיק עבודות ומיון",
+    noPsychometric: "כן — תיק עבודות",
+    support: "לא אומת",
+    industry: "קרוב לחגורת ההייטק",
+    schedule: "לא אומת",
+    contactName: "",
+    contactRole: "",
+    contactPhone: "",
+    contactEmail: "",
+    openDays: "",
+    domains: ["ux"],
+    status: "needs-check",
+    notes: "⚠️ נוסף כדי לסגור את החור ב-UX — לא אומת בסשן הזה.",
+    verified: "לא אומת",
   },
 ];
 
 /** מה שהמשתמש רואה באפליקציה — ללא המוסתרים */
 export function visibleByTrack(track: Track): Institution[] {
   return INSTITUTIONS.filter(i => i.track === track && i.status !== "hidden");
+}
+
+/**
+ * מוסדות רלוונטיים לתחומים שהמשתמש טעם.
+ * אם לא נבחרו תחומים — מחזיר הכל, כדי שמי שהגיע ישירות לשלב 4 לא ייתקע.
+ */
+export function visibleFor(track: Track, domains: Domain[]): Institution[] {
+  const all = visibleByTrack(track);
+  if (!domains.length) return all;
+  return all.filter(i => i.domains.some(d => domains.includes(d)));
+}
+
+/** האם בכלל קיים מסלול כזה בתחום הזה */
+export function trackExistsFor(track: Track, domains: Domain[]): boolean {
+  return visibleFor(track, domains).length > 0;
 }

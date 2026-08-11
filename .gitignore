@@ -32,3 +32,6 @@ next-env.d.ts
 # Session cookies / auth tokens — never commit
 campus-cookies.txt
 *-cookies.txt
+
+# ארכיוני handoff — התיקיות המחולצות נשמרות, ה-zip מיותר
+*.zip

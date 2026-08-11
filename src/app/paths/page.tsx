@@ -5,12 +5,16 @@ import BottomNav from "@/components/ui/BottomNav";
 import { visibleByTrack } from "@/data/institutions";
 import { track as trackEvent } from "@vercel/analytics";
 import JourneyStrip from "@/components/ui/JourneyStrip";
+import AllPaths from "@/components/ui/AllPaths";
+import TrackDetail from "@/components/ui/TrackDetail";
+import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 
 /** שם התת-שלב שמוצג בפס ההתקדמות */
 const PHASE_LABEL: Record<string, string> = {
   intro: "מבינים מה עומד על הפרק",
   quiz: "עונים על 6 שאלות",
   result: "המסלול שמתאים לך",
+  routes: "איך מגיעים למשרה ראשונה",
   blockers: "מפרקים את החסמים",
   institutions: "בוחרים מוסדות",
   prep: "שאלות לפגישה",
@@ -22,7 +26,7 @@ const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 
-type Phase = "intro" | "quiz" | "result" | "blockers" | "institutions" | "prep" | "research" | "done";
+type Phase = "intro" | "quiz" | "result" | "routes" | "blockers" | "institutions" | "prep" | "research" | "done";
 
 /** תשובות מהחקר העצמי מול המוסדות */
 type Answer = "yes" | "no" | "unknown";
@@ -492,6 +496,14 @@ export default function PathsPage() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [research, setResearch] = useState<Record<string, ResearchEntry>>({});
   const [meetingBooked, setMeetingBooked] = useState(false);
+  /** ציוני העניין מכלי עיבוד החוויה בשלב 3 */
+  const [domainInterest, setDomainInterest] = useState<Partial<Record<Domain, number>>>({});
+  const [domainChoice, setDomainChoice] = useState<"one" | "two" | "open" | null>(null);
+  const [chosenDomain, setChosenDomain] = useState<Domain | null>(null);
+  /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
+  const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
+  /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
+  const [activeDomain, setActiveDomain] = useState<Domain | null>(null);
   const [thinking, setThinking] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -527,6 +539,8 @@ export default function PathsPage() {
           { name: "מכללת ספיר", track: "degree" },
         ]);
         setActiveTrack(recommendTrack(demo));
+        setDomainInterest({ cyber: 5, networks: 4, code: 3 });
+        setDomainChoice("open");
         setResearch({
           "bgu-sicket": {
             status: "done",
@@ -553,6 +567,23 @@ export default function PathsPage() {
       const savedR = localStorage.getItem("paths-research");
       if (savedR) setResearch(JSON.parse(savedR));
       setMeetingBooked(localStorage.getItem("meeting-booked") === "true");
+
+      // ציוני העניין משלב 3 — מה שכלי עיבוד החוויה שמר לכל תחום
+      const interest: Partial<Record<Domain, number>> = {};
+      (Object.keys(DOMAIN_LABEL) as Domain[]).forEach(d => {
+        try {
+          const raw = localStorage.getItem(`${d}-experience`);
+          if (!raw) return;
+          const score = JSON.parse(raw)?.interest_scale;
+          if (typeof score === "number") interest[d] = score;
+        } catch { /* ignore */ }
+      });
+      setDomainInterest(interest);
+
+      const savedChoice = localStorage.getItem("paths-domain-choice");
+      if (savedChoice === "one" || savedChoice === "two" || savedChoice === "open") setDomainChoice(savedChoice);
+      const savedDomain = localStorage.getItem("paths-domain") as Domain | null;
+      if (savedDomain) setChosenDomain(savedDomain);
       const savedPhase = localStorage.getItem("paths-phase") as Phase | null;
       if (savedPhase) setPhase(savedPhase);
     } catch { /* ignore */ }
@@ -601,8 +632,28 @@ export default function PathsPage() {
     trackEvent("paths_phase", { phase: p });
   }
 
-  const PHASE_ORDER: Phase[] = ["intro", "quiz", "result", "blockers", "institutions", "prep", "research", "done"];
+  const PHASE_ORDER: Phase[] = ["intro", "quiz", "result", "routes", "blockers", "institutions", "prep", "research", "done"];
   const phaseIndex = PHASE_ORDER.indexOf(phase);
+
+  /**
+   * התחומים שמוצגים בצירים.
+   * מדורגים לפי עניין ולא לפי מסוגלות — דירוג לפי מסוגלות היה מסתיר
+   * מהמשתמש בדיוק את התחום שהוא הכי רוצה, כי אצל דור ראשון להשכלה גבוהה
+   * תחושת המסוגלות נמוכה באופן שיטתי ולא מוצדק.
+   */
+  const topDomains: { id: Domain; interest: number }[] = (() => {
+    if (domainChoice === "one" && chosenDomain) {
+      return [{ id: chosenDomain, interest: domainInterest[chosenDomain] ?? 0 }];
+    }
+    const scored = (Object.keys(DOMAIN_LABEL) as Domain[])
+      .filter(d => domainInterest[d] !== undefined)
+      .map(d => ({ id: d, interest: domainInterest[d] ?? 0 }))
+      .sort((a, b) => b.interest - a.interest);
+    return scored.slice(0, domainChoice === "two" ? 2 : 3);
+  })();
+
+  /** התחום המוצג — הנבחר, או המעניין ביותר כברירת מחדל */
+  const shown = topDomains.find(d => d.id === activeDomain) ?? topDomains[0] ?? null;
 
   const Header = (
     <div className="text-white px-[22px] pt-[26px] pb-[30px] shrink-0" style={{ background: NAVY }}>
@@ -884,12 +935,208 @@ export default function PathsPage() {
           })}
 
           <button
-            onClick={() => goToPhase("blockers")}
+            onClick={() => goToPhase("routes")}
             className="w-full py-4 rounded-2xl text-white text-[15px] font-black mt-2 active:scale-[0.98] transition-transform"
             style={{ background: NAVY, ...HEEBO }}
           >
-            מה עומד בדרך שלי ←
+            איך זה נראה בתחום שלי ←
           </button>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ── Routes to a first job ──────────────────────────────────────────────────
+  if (phase === "routes") {
+    const knownDomains = (Object.keys(DOMAIN_LABEL) as Domain[]).filter(d => domainInterest[d] !== undefined);
+
+    function chooseDomain(c: "one" | "two" | "open", d?: Domain) {
+      setDomainChoice(c);
+      localStorage.setItem("paths-domain-choice", c);
+      if (d) { setChosenDomain(d); localStorage.setItem("paths-domain", d); }
+      else { setChosenDomain(null); localStorage.removeItem("paths-domain"); }
+      trackEvent("paths_domain_choice", { choice: c });
+    }
+
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <JourneyStrip current={4} phaseLabel={PHASE_LABEL.routes} phaseIndex={3} phaseTotal={8} />
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+
+          <div className="text-[22px] leading-tight mb-2" style={{ ...HEEBO, color: NAVY }}>
+            איך מגיעים למשרה ראשונה
+          </div>
+          <div className="text-[13px] leading-[1.8] mb-6" style={{ color: "rgba(0,0,0,0.55)" }}>
+            לא כל דרך מגיעה לאותו מקום.
+            <br />
+            הנה איך זה נראה בפועל — מהיום ועד המשכורת הראשונה.
+          </div>
+
+          {/* One question, instead of guessing how settled he is */}
+          {!domainChoice && (
+            <div className="rounded-2xl p-5 mb-5" style={{ background: "#fff", border: "1.5px solid rgba(2,62,138,0.15)" }}>
+              <div className="text-[16px] leading-tight mb-3" style={{ ...HEEBO, color: NAVY }}>
+                יש לך כבר תחום שאת/ה די בטוח/ה בו?
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={() => chooseDomain("two")}
+                  className="w-full rounded-xl px-4 py-3 text-right"
+                  style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
+                >
+                  <div className="text-[13px] font-bold" style={{ color: NAVY }}>מתלבט/ת בין שניים</div>
+                </button>
+                <button
+                  onClick={() => chooseDomain("open")}
+                  className="w-full rounded-xl px-4 py-3 text-right"
+                  style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
+                >
+                  <div className="text-[13px] font-bold" style={{ color: NAVY }}>עוד לא סגור/ה</div>
+                  <div className="text-[11.5px] mt-0.5" style={{ color: "rgba(0,0,0,0.45)" }}>נראה לך כמה אפשרויות</div>
+                </button>
+                {knownDomains.length > 0 && (
+                  <>
+                    <div className="text-[11.5px] font-bold mt-2 mb-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>
+                      כן — והתחום הוא:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {knownDomains.map(d => (
+                        <button
+                          key={d}
+                          onClick={() => chooseDomain("one", d)}
+                          className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
+                          style={{ background: `${ORANGE}12`, color: "#92400e", border: `1px solid ${ORANGE}35` }}
+                        >
+                          {DOMAIN_LABEL[d]}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Nobody explored anything — be honest instead of showing an empty screen */}
+          {domainChoice && topDomains.length === 0 && (
+            <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(251,133,0,0.07)", border: "1.5px solid rgba(251,133,0,0.22)" }}>
+              <div className="text-[15px] mb-2" style={{ ...HEEBO, color: "#92400e" }}>עוד לא טעמת אף תחום</div>
+              <div className="text-[12.5px] leading-[1.8] mb-3" style={{ color: "rgba(0,0,0,0.6)" }}>
+                בלי זה אנחנו לא יודעים מה מדליק אותך — וזה בדיוק מה שקובע איזה מסלול נכון.
+                שווה לחזור לטעימות, זה לוקח כמה דקות לתחום.
+              </div>
+              <Link
+                href="/explore"
+                className="block w-full py-3 text-center text-white text-[14px] font-black rounded-xl"
+                style={{ background: ORANGE, ...HEEBO }}
+              >
+                לטעימות ←
+              </Link>
+            </div>
+          )}
+
+          {/* One domain per section — comparison, or the open track's detail */}
+          {openTrack ? (
+            <TrackDetail
+              domain={openTrack.domain}
+              track={openTrack.track}
+              onBack={() => setOpenTrack(null)}
+              onInstitutions={() => { setActiveTrack(openTrack.track); goToPhase("institutions"); }}
+            />
+          ) : shown ? (
+            <div className="mb-8 mx-auto w-full max-w-[390px] md:max-w-[640px]">
+              {/* Switcher — one domain on screen at a time, the others a tap away */}
+              {topDomains.length > 1 && (
+                <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+                  {topDomains.map(d => {
+                    const on = d.id === shown.id;
+                    return (
+                      <button
+                        key={d.id}
+                        onClick={() => { setActiveDomain(d.id); trackEvent("paths_domain_switch", { domain: d.id }); }}
+                        className="shrink-0 rounded-xl px-3 py-2 text-right transition-all"
+                        style={{
+                          background: on ? NAVY : "#fff",
+                          border: `1px solid ${on ? NAVY : "rgba(0,0,0,0.12)"}`,
+                        }}
+                      >
+                        <div className="text-[12.5px] font-black" style={{ color: on ? "#fff" : "rgba(0,0,0,0.6)" }}>
+                          {DOMAIN_LABEL[d.id]}
+                        </div>
+                        <div className="flex gap-[3px] mt-1">
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <div key={n} style={{
+                              width: 6, height: 6, borderRadius: 999,
+                              background: n <= d.interest ? (on ? "#fff" : ORANGE) : (on ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.12)"),
+                            }} />
+                          ))}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex items-baseline justify-between gap-3 mb-3">
+                <div className="text-[19px] font-black" style={{ color: "#1a1a1a" }}>
+                  {DOMAIN_LABEL[shown.id]}
+                </div>
+                {shown.interest ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10.5px] font-bold" style={{ color: "#8a8177" }}>העניין שלך</span>
+                    <div className="flex gap-[3px]">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <div key={n} style={{
+                          width: 7, height: 7, borderRadius: 999,
+                          background: n <= shown.interest ? ORANGE : "rgba(0,0,0,0.12)",
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* authored at 390; on desktop the whole block widens together so the
+                  heading and the diagram stay on one measure */}
+              <div>
+                <AllPaths
+                  domain={shown.id}
+                  onSelect={t => { setOpenTrack({ domain: shown.id, track: t }); window.scrollTo({ top: 0, behavior: "smooth" }); trackEvent("paths_track_open", { domain: shown.id, track: t }); }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {topDomains.length > 1 && (
+            <div className="rounded-2xl px-4 py-3.5 mb-5 flex items-start gap-3" style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.1)" }}>
+              <span className="text-[17px] shrink-0 mt-0.5">💡</span>
+              <div className="text-[12px] leading-[1.75]" style={{ color: "rgba(0,0,0,0.6)" }}>
+                שים/י לב לעניין שלך ולא רק למה שקצר וזול. <span className="font-bold">מה שמעניין אותך הוא מה שיחזיק אותך כשיהיה קשה</span> —
+                וזה משפיע על הסיכוי לסיים יותר מכל דבר אחר.
+              </div>
+            </div>
+          )}
+
+          {domainChoice && !openTrack && (
+            <>
+              <button
+                onClick={() => goToPhase("blockers")}
+                className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+                style={{ background: NAVY, ...HEEBO }}
+              >
+                מה עומד בדרך שלי ←
+              </button>
+              <button
+                onClick={() => { setDomainChoice(null); localStorage.removeItem("paths-domain-choice"); }}
+                className="w-full mt-3 text-[12px] font-bold"
+                style={{ color: "rgba(0,0,0,0.35)" }}
+              >
+                ↩ לשנות את התחומים
+              </button>
+            </>
+          )}
         </div>
         <BottomNav />
       </div>

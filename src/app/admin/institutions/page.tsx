@@ -7,7 +7,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { INSTITUTIONS, type Institution, type Track } from "@/data/institutions";
+import { INSTITUTIONS, DOMAIN_LABEL, type Institution, type Track, type Domain } from "@/data/institutions";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -73,6 +73,14 @@ export default function AdminInstitutionsPage() {
     persist(items.map(i => (i.id === id ? { ...i, [key]: value } : i)));
   }
 
+  function toggleDomain(id: string, d: Domain) {
+    persist(items.map(i =>
+      i.id === id
+        ? { ...i, domains: i.domains.includes(d) ? i.domains.filter(x => x !== d) : [...i.domains, d] }
+        : i
+    ));
+  }
+
   function setStatus(id: string, status: Institution["status"]) {
     persist(items.map(i => (i.id === id ? { ...i, status } : i)));
   }
@@ -92,6 +100,7 @@ export default function AdminInstitutionsPage() {
       location: "", tuition: "", admission: "", noPsychometric: "",
       support: "", industry: "", schedule: "",
       contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
+      domains: [],
       status: "needs-check", notes: "", verified: "",
     }, ...items]);
     setOpenId(id);
@@ -219,12 +228,43 @@ export default function AdminInstitutionsPage() {
                 {/* Editor */}
                 {open && (
                   <div className="px-4 pb-4 pt-1" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                    <div className="mb-3">
-                      <label className="text-[11px] font-black block mb-1" style={{ color: "rgba(0,0,0,0.45)" }}>מסלול</label>
-                      <select value={inst.track} onChange={e => update(inst.id, "track", e.target.value)}
-                        className="text-[12.5px] px-2.5 py-1.5 rounded-lg" style={{ border: "1px solid rgba(0,0,0,0.14)" }}>
-                        {(Object.keys(TRACK_LABEL) as Track[]).map(t => <option key={t} value={t}>{TRACK_LABEL[t]}</option>)}
-                      </select>
+                    <div className="mb-3 flex flex-wrap gap-5 items-start">
+                      <div>
+                        <label className="text-[11px] font-black block mb-1" style={{ color: "rgba(0,0,0,0.45)" }}>מסלול</label>
+                        <select value={inst.track} onChange={e => update(inst.id, "track", e.target.value)}
+                          className="text-[12.5px] px-2.5 py-1.5 rounded-lg" style={{ border: "1px solid rgba(0,0,0,0.14)" }}>
+                          {(Object.keys(TRACK_LABEL) as Track[]).map(t => <option key={t} value={t}>{TRACK_LABEL[t]}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex-1 min-w-[280px]">
+                        <label className="text-[11px] font-black block mb-1.5" style={{ color: "rgba(0,0,0,0.45)" }}>
+                          תחומים רלוונטיים — קובע למי המוסד יוצג
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(Object.keys(DOMAIN_LABEL) as Domain[]).map(d => {
+                            const on = inst.domains.includes(d);
+                            return (
+                              <button
+                                key={d}
+                                onClick={() => toggleDomain(inst.id, d)}
+                                className="text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all"
+                                style={{
+                                  background: on ? NAVY : "#fff",
+                                  color: on ? "#fff" : "rgba(0,0,0,0.4)",
+                                  border: `1px solid ${on ? NAVY : "rgba(0,0,0,0.14)"}`,
+                                }}
+                              >
+                                {DOMAIN_LABEL[d]}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {inst.domains.length === 0 && (
+                          <div className="text-[11px] mt-1.5 font-bold" style={{ color: "#b91c1c" }}>
+                            בלי תחום המוסד לא יוצג לאף אחד
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))" }}>
                       {FIELDS.map(f => (
