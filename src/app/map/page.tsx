@@ -46,8 +46,8 @@ const BASE = "https://hasifaapp.vercel.app";
 const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────
   { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 60,  cy: 190,  w: 82,  color: "#023e8a" },
-  { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 792,  cy: 190,  w: 92, color: "#023e8a" },
-  { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + טעימה + הכנה", url: `${BASE}/waiting`, cx: 900, cy: 190, w: 100, color: "#0ea5e9", badge: "חדש", badgeColor: "#0ea5e9" },
+  { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 830,  cy: 190,  w: 92, color: "#023e8a" },
+  { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + טעימה + הכנה", url: `${BASE}/waiting`, cx: 250, cy: 308, w: 100, color: "#0ea5e9", badge: "חדש", badgeColor: "#0ea5e9" },
 
 
   // ששת מסכי האונבורדינג (Step 0–5 בקוד). לא נפתחים ישירות — הזרימה רציפה
@@ -111,12 +111,12 @@ const NODES: Node[] = [
   { id: "results", label: "סיכום הטעימות", sub: "הכנה לפגישה עם הרכזת", url: `${BASE}/explore/results`, cx: 510, cy: 1093, w: 165, color: "#fb8500" },
 
   // ── פגישה 2 עם הרכזת ─────────────────────────────────────────────────────
-  { id: "booked",  label: "הפגישה נקבעה", sub: "מה להביא — משתנה לפי פגישה", url: `${BASE}/contact/booked`, cx: 500, cy: 308, w: 165, color: "#023e8a" },
+  { id: "booked",  label: "הפגישה נקבעה", sub: "מה להביא — משתנה לפי פגישה", url: `${BASE}/contact/booked`, cx: 810, cy: 308, w: 165, color: "#023e8a" },
 
   // (הפגישות ממוקמות כל אחת בשלב שלה)
   // הדף בוחר לבד לפי מצב המועמד; ?m= הוא לבדיקה ידנית
 
-  { id: "m1", label: "פגישה 1", sub: "היכרות · אין מה להביא", url: `${BASE}/contact?m=1`, cx: 250, cy: 308, w: 150, color: "#0ea5e9", kind: "meeting" },
+  { id: "m1", label: "פגישה 1", sub: "היכרות · אין מה להביא", url: `${BASE}/contact?m=1`, cx: 600, cy: 308, w: 150, color: "#0ea5e9", kind: "meeting" },
   { id: "m2", label: "פגישה 2", sub: "בחירת תחום", url: `${BASE}/contact?m=2`, cx: 510, cy: 1183, w: 140, color: "#0ea5e9", kind: "meeting" },
   { id: "m3", label: "פגישה 3", sub: "נעילת מסלול", url: `${BASE}/contact?m=3`, cx: 510, cy: 1578, w: 140, color: "#0ea5e9", kind: "meeting" },
 
@@ -256,36 +256,61 @@ function nodeRect(n: Node) {
 }
 
 // SVG path between two nodes — straight lines, smart entry/exit points
-function edgePath(from: Node, to: Node): string {
+type EdgeGeom = { d: string; lx: number; ly: number };
+
+/**
+ * מסלול הקשת + נקודת התווית.
+ *
+ * קשתות קדימה מצוירות כ**מרפק מעוגל** — ירידה אנכית, קטע אופקי באמצע הדרך,
+ * וירידה לתוך היעד — במקום קו אלכסוני שחוצה מלבנים וטקסט. התווית יושבת על
+ * הקטע האופקי, ששם אין תוכן מתחתיה.
+ */
+function edgeGeom(from: Node, to: Node): EdgeGeom {
   const fh = from.h ?? NH;
   const th = to.h ?? NH;
   const dx = to.cx - from.cx;
   const dy = to.cy - from.cy;
 
-  // Horizontal connections: same row OR side-panel (large dx, small dy)
+  // אותה שורה — צד אל צד
   const isHorizontal = Math.abs(dy) <= 30 || (Math.abs(dx) > 150 && Math.abs(dy) < 100);
   if (isHorizontal) {
     const x1 = dx > 0 ? from.cx + from.w / 2 + 2 : from.cx - from.w / 2 - 2;
     const x2 = dx > 0 ? to.cx - to.w / 2 - 2 : to.cx + to.w / 2 + 2;
-    return `M ${x1} ${from.cy} L ${x2} ${to.cy}`;
+    return { d: `M ${x1} ${from.cy} L ${x2} ${to.cy}`, lx: (x1 + x2) / 2, ly: (from.cy + to.cy) / 2 - 9 };
   }
 
-  // Back-edge (going upward) — curve around left side
+  // קשת חוזרת (מעלה) — עוקפת משמאל
   if (dy < 0) {
     const x1 = from.cx - from.w / 2 - 2;
     const y1 = from.cy;
     const x2 = to.cx - to.w / 2 - 2;
     const y2 = to.cy + th / 2;
     const midX = Math.min(x1, x2) - 40;
-    return `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+    return { d: `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`, lx: midX + 12, ly: (y1 + y2) / 2 };
   }
 
-  // Forward vertical/diagonal: bottom-center → top-center, straight line
+  // קדימה — מרפק מעוגל דרך אמצע הגובה
   const x1 = from.cx;
   const y1 = from.cy + fh / 2 + 2;
   const x2 = to.cx;
   const y2 = to.cy - th / 2 - 2;
-  return `M ${x1} ${y1} L ${x2} ${y2}`;
+  const midY = (y1 + y2) / 2;
+
+  if (Math.abs(dx) < 8) {
+    return { d: `M ${x1} ${y1} L ${x2} ${y2}`, lx: x1, ly: midY };
+  }
+
+  const sx = Math.sign(x2 - x1);
+  const r = Math.max(4, Math.min(14, Math.abs(x2 - x1) / 2 - 2, (y2 - y1) / 2 - 2));
+  const d = [
+    `M ${x1} ${y1}`,
+    `L ${x1} ${midY - r}`,
+    `Q ${x1} ${midY} ${x1 + sx * r} ${midY}`,
+    `L ${x2 - sx * r} ${midY}`,
+    `Q ${x2} ${midY} ${x2} ${midY + r}`,
+    `L ${x2} ${y2}`,
+  ].join(" ");
+  return { d, lx: (x1 + x2) / 2, ly: midY };
 }
 
 // ─── Node Component ───────────────────────────────────────────────────────────
@@ -385,15 +410,7 @@ function Arrows() {
 
         const color = edge.color || from.color;
         const markerId = `arrow-${color.replace("#", "")}`;
-        const d = edgePath(from, to);
-
-        // Mid point for label
-        const fh = from.h ?? NH;
-        const th = to.h ?? NH;
-        const x1 = from.cx, y1 = from.cy + fh / 2;
-        const x2 = to.cx,   y2 = to.cy - th / 2;
-        const mx = (x1 + x2) / 2;
-        const my = (y1 + y2) / 2;
+        const { d, lx, ly } = edgeGeom(from, to);
 
         return (
           <g key={i}>
@@ -407,19 +424,32 @@ function Arrows() {
               markerEnd={`url(#${markerId})`}
             />
             {edge.label && (
-              <text
-                x={mx}
-                y={my}
-                textAnchor="middle"
-                fontSize={8}
-                fill={color}
-                opacity={0.8}
-                fontFamily="'Heebo', sans-serif"
-                fontWeight="bold"
-              >
-                <rect x={mx - 28} y={my - 8} width={56} height={11} fill="white" rx={3} opacity={0.85} />
-                {edge.label}
-              </text>
+              <>
+                {/* עד עכשיו ה-rect ישב בתוך <text> — SVG לא חוקי, ולכן מעולם
+                    לא צויר והכתב שכב ישירות על הקווים. אחים, לא מקוננים. */}
+                <rect
+                  x={lx - edge.label.length * 3.2 - 5}
+                  y={ly - 7.5}
+                  width={edge.label.length * 6.4 + 10}
+                  height={15}
+                  rx={7.5}
+                  fill="#fff"
+                  stroke={color}
+                  strokeOpacity={0.25}
+                  strokeWidth={1}
+                />
+                <text
+                  x={lx}
+                  y={ly + 3}
+                  textAnchor="middle"
+                  fontSize={8}
+                  fill={color}
+                  fontFamily="'Heebo', sans-serif"
+                  fontWeight="bold"
+                >
+                  {edge.label}
+                </text>
+              </>
             )}
           </g>
         );
@@ -438,10 +468,10 @@ type Band = { label: string; top: number; color: string; cross?: boolean };
 
 const BANDS: Band[] = [
   { label: "כלים רוחביים — פנימי, לאורך כל המסע", top: 14, color: "#475569", cross: true },
-  { label: "שלב 1 · טרום אינטייק — הרשמה והמתנה", top: 116, color: "#023e8a" },
-  { label: "שלב 2 · אינטייק — פגישת ההיכרות", top: 250, color: "#0ea5e9" },
-  { label: "שלב 3 · חשיפה — טעימות הייטק", top: 370, color: "#fb8500" },
-  { label: "שלב 4 · מסלול לימודים", top: 1236, color: "#7c3aed" },
+  { label: "שלב 1 · טרום אינטייק — פתיחת חשבון", top: 116, color: "#023e8a" },
+  { label: "שלב 2 · אינטייק — היכרות, נסגר בפגישה", top: 250, color: "#0ea5e9" },
+  { label: "שלב 3 · חשיפה — טעימות, נסגר בפגישה", top: 370, color: "#fb8500" },
+  { label: "שלב 4 · מסלול לימודים — נסגר בפגישה", top: 1236, color: "#7c3aed" },
   { label: "שלב 5 · לוגיסטיקה ומלגות", top: 1630, color: "#059669" },
 ];
 
@@ -470,6 +500,14 @@ export default function MapPage() {
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div style={{ fontSize: 10, opacity: 0.5, letterSpacing: 3, marginBottom: 6 }}>TECHCAREERLY</div>
           <div style={{ fontSize: 26, fontWeight: 900, fontFamily: "'Heebo', sans-serif" }}>מפת האפליקציה</div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10, marginBottom: 2 }}>
+            <a href="/map/flows" style={{ fontSize: 12, fontWeight: 700, padding: "5px 11px", borderRadius: 8, background: "rgba(255,255,255,0.14)", color: "#fff" }}>
+              מסע עם צילומים והסבר ←
+            </a>
+            <a href="/map/grid" style={{ fontSize: 12, fontWeight: 700, padding: "5px 11px", borderRadius: 8, background: "rgba(255,255,255,0.14)", color: "#fff" }}>
+              גריד כל המסכים ←
+            </a>
+          </div>
           <div style={{ fontSize: 12, marginTop: 4, opacity: 0.65 }}>
             {totalScreens} מסכים · לחיצה = פתיחת המסך · חצים = מעבר ניווט אמיתי
           </div>

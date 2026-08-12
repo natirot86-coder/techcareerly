@@ -70,8 +70,9 @@ export default function BottomNav() {
         })}
       </nav>
     </header>
-    {/* מרווח שמפצה על הסרגל הקבוע, בדסקטופ בלבד */}
-    <div className="hidden md:block" style={{ height: 55 }} />
+    {/* המרווח שמפצה על הסרגל הקבוע עבר ל-globals.css, על ה-body.
+        כאן הוא היה חסר תועלת: BottomNav מרונדר בתחתית כל דף, ולכן המרווח
+        ישב מתחת לתוכן במקום מעליו והסרגל חתך את ראש המסך */}
 
     <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden flex border-t border-[rgba(2,62,138,0.1)] bg-card" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       {/* Logo */}

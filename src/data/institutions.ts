@@ -61,6 +61,16 @@ export type Institution = {
   /** ימים פתוחים ואירועי חשיפה — פרונטלי או זום */
   openDays: string;
 
+  /**
+   * מזהה מ-scholarships.ts — **התוכנית שהיא הדלת** של המוסד הזה.
+   *
+   * הכלל: הדלת הספציפית גוברת על השער הכללי. "אוניברסיטת תל אביב" הוא שער
+   * כללי שמדור הרישום שלו יגיד "אינך עומד בתנאים"; "תוכנית אדמאס" היא דלת
+   * שנבנתה עבור הקהל שלנו, עם מסלול קבלה חלופי, רכזת בשם ומלגה. אותו מוסד,
+   * סיכוי אחר לגמרי — ולכן התוכנית מובילה בתצוגה, והמוסד הוא ההקשר.
+   */
+  programId?: string;
+
   // ── ניהול פנימי ──
   /**
    * אושר על ידי נתי. נפרד מ-status בכוונה: מוסד יכול להיות פעיל באתר
@@ -82,6 +92,7 @@ export const INSTITUTIONS: Institution[] = [
   // ─── תואר אקדמי ─────────────────────────────────────────────────────────────
   {
     id: "bgu",
+    programId: "sicket",
     name: "אוניברסיטת בן-גוריון",
     track: "degree",
     why: "המסלול הייעודי הקונקרטי ביותר בארץ: פסיכומטרי עד 100 נקודות מתחת לסף עדיין נשקל, רכז ייעודי לאורך כל התואר, קרן דוד עד 12,000 ₪, סבסוד מעונות והחזרי נסיעות. פארק ההייטק גב-ים צמוד לקמפוס עם צינור התמחויות אמיתי.",
@@ -130,7 +141,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "runi-keren-or",
-    name: "קרן אור — אוניברסיטת רייכמן",
+    programId: "runi-keren-or",
+    name: "אוניברסיטת רייכמן",
     track: "degree",
     why: "מדעי המחשב ללא פסיכומטרי וללא צורך בציוני בגרות גבוהים. מימון כמעט מלא — משלמים בערך כמו במוסד מתוקצב. כולל קורס הכנה במתמטיקה, תוכנית שפורסת את העומס, וליווי אישי. הקריטריון הוא כלכלי-חברתי.",
     tag: "ללא פסיכומטרי", tagColor: "#7c3aed",
@@ -154,7 +166,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "tau-admas",
-    name: "אוניברסיטת תל אביב — תוכנית אדמאס",
+    programId: "tau-admas",
+    name: "אוניברסיטת תל אביב",
     track: "degree",
     why: "תוכנית ייעודית לסטודנטים יוצאי אתיופיה באוניברסיטה מובילה: מלגות שכר לימוד ומחיה, צוות יועצות אישי, ליווי אקדמי, סדנאות למידה וסיוע כספי לשירותים במהלך הלימודים. והכי חשוב — יש מסלול קבלה חלופי למי שלא עומד בתנאי הקבלה הרגילים, ונציג קבלה מיוחדת יוצר קשר.",
     tag: "מסלול ייעודי", tagColor: ORANGE,
@@ -501,7 +514,7 @@ export const INSTITUTIONS: Institution[] = [
     track: "bootcamp",
     why: "מלגות שמכסות את שכר הלימוד במלואו לאוכלוסיות בתת-ייצוג — ויוצאי אתיופיה נמצאים ברשימה במפורש. יותר מ-15 מסלולים: פיתוח, QA, דאטה, סייבר, UX/UI, ניהול מוצר, AI ועוד, באורך 4–7 חודשים. הקבלה על בסיס יכולת ולא ציונים, ורייכמן מנסחים את זה מפורשות: המימון אינו חסם ואינו שיקול בקבלה.",
     tag: "מלגה מלאה", tagColor: ORANGE,
-    link: "https://www.runi.ac.il/schools/high-tech",
+    link: "https://www.graitechschool.co.il/",
     location: "Google תל אביב · רייכמן הרצליה · אמדוקס שדרות · רעננה · חיפה",
     tuition: "מלגה מכסה שכר לימוד מלא לאוכלוסיות בתת-ייצוג. דמי מחיה — לא אומת",
     admission: "על בסיס כישורים ויכולות, לא ציונים. יש קורסי הכנה במתמטיקה ובאנגלית",
@@ -539,8 +552,9 @@ export const INSTITUTIONS: Institution[] = [
     contactEmail: "",
     openDays: "מחזורים נפתחים בספטמבר ובאוקטובר",
     domains: ["networks", "cyber", "code"],
-    status: "active",
-    notes: "רלוונטי רק ללוחמים משוחררים — לא לכל מי ששירת. דמי הקיום דווחו בסביבות 2,300 ₪ לחודש אך לא אומתו במקור רשמי.",
+    status: "hidden",
+    approved: false,
+    notes: "⚠️ הועבר ל-scholarships.ts כתוכנית (lohamim-hitech). היא אינה מלמדת — האתר עצמו אומר ״לוחמים להייטק מבית עתידים״: תוכנית הפניה שמשבצת ל-IITC, סלע וקרנליוס. מוסתר ולא נמחק כדי שלא יוחזר בטעות.",
     verified: "12.8.2026 — techidf.co.il",
   },
   {
@@ -916,7 +930,101 @@ export const INSTITUTIONS: Institution[] = [
     notes: "📞 לאמת עלות, אילו מסלולים פעילים במחזור הקרוב, ומה בדיוק תפקיד עמותת תנופה לעתיד. הזכירו גם מסלול הסבה ל-COBOL — נישתי אבל עם ביקוש אמיתי בבנקים ובממשלה.",
     verified: "12.8.2026 — bluetech-ed.co.il",
   },
+
+  // ── גופים שמפעילים קורסים ממומנים של האגף לחיילים משוחררים ──
+  // אומת 13.8.2026 ישירות מאתר האגף. אלה לא מוסדות שנרשמים אליהם ישירות —
+  // נכנסים אליהם דרך הקורס הממומן, ולכן הלינק שמוצג למועמד הוא של הקורס.
+  {
+    id: "cornelius",
+    name: "מכללת קרנליוס",
+    track: "bootcamp",
+    why: "מפעילה את קורס מיישם הגנת סייבר במימון האגף, וגם קורס DevOps במסגרת לוחמים להייטק עם הסמכת AWS.",
+    warn: "לימודי בוקר, ארבעה ימים בשבוע — לא מתאים למי שעובד ביום.",
+    tag: "ממומן האגף", tagColor: "#059669",
+    link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/cyber-security-implementation-course.aspx",
+    location: "לא אומת",
+    tuition: "השתתפות עצמית 1,000 ₪ בלבד — ניתן לממן מהפיקדון. השאר ממומן על ידי האגף",
+    admission: "חיילים משוחררים עד 5 שנים · בודדים ומילואימניקים פעילים עד 10 שנים",
+    noPsychometric: "כן",
+    support: "מענק התמדה 5,000 ₪ לאוכלוסיות מיוחדות",
+    industry: "מיישם הגנת סייבר. במסגרת לוחמים להייטק — גם DevOps עם הסמכת AWS",
+    schedule: "כ-4 חודשים · בוקר, ארבעה ימים בשבוע, 09:00–16:00",
+    contactName: "", contactRole: "האגף לחיילים משוחררים", contactPhone: "*5266", contactEmail: "", openDays: "",
+    domains: ["cyber", "networks"],
+    status: "active",
+    notes: "אומת 13.8.2026 מאתר האגף. 📞 לאמת מיקום פיזי ומועדי מחזורים.",
+    verified: "13.8.2026 — hachvana.mod.gov.il",
+  },
+  {
+    id: "analiza",
+    name: "מכללת אנליזה",
+    track: "bootcamp",
+    why: "מרכז הכשרות הייטק בהרצליה, בפיקוח האגף להכשרה מקצועית. מפעילה קורס Data Science במימון האגף, ומציעה מסלולי ערב 18:00–21:00 שמתאימים למי שעובד.",
+    tag: "ממומן האגף", tagColor: "#059669",
+    link: "https://www.hachvana.mod.gov.il/MainEducation/ProfessionalTraining/Pages/data-SCIENCE-course.aspx",
+    location: "הרצליה · ומסלולים באונליין",
+    tuition: "בקורס הממומן: השתתפות עצמית 1,000 ₪ בלבד, פחות ללוחמים ולבודדים. שאר הקורסים — המחיר לא מפורסם",
+    admission: "לקורס הממומן: משוחררים עד 5 שנים · בודדים ומילואימניקים עד 10 שנים",
+    noPsychometric: "כן",
+    support: "מרכז קריירה — ליווי אישי, הכנה לראיונות וחיבור למעסיקים",
+    industry: "סייבר, DevOps, Salesforce, ענן, דאטה ו-QA. המכללה מפרסמת 85% השמה — לא אומת ממקור עצמאי",
+    schedule: "בקורס הממומן: כ-3 חודשים, ארבעה ימים בשבוע 09:30–15:00. שאר המסלולים: 200 שעות, בוקר או ערב 18:00–21:00",
+    contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
+    domains: ["data", "cyber", "networks", "code"],
+    status: "active",
+    notes: "יש להם גם דף קורסים חינם למילואימניקים. ⚠️ נתון ההשמה 85% הוא שיווקי ולא מאומת — לא להציג כעובדה. 📞 לאמת מחירי המסלולים שאינם ממומנים.",
+    verified: "13.8.2026 — hachvana.mod.gov.il + analiza.org.il",
+  },
+  {
+    id: "netivei-udi",
+    name: "עמותת בנתיבי אודי",
+    track: "bootcamp",
+    why: "עמותה שמפעילה קורס DevOps במימון האגף, בהשתתפות עצמית מהנמוכות שיש.",
+    tag: "ממומן האגף", tagColor: "#059669",
+    link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/netiveiudi.aspx",
+    location: "לא אומת",
+    tuition: "השתתפות עצמית 2,000 ₪ · ללוחמים ולחיילים בודדים 1,000 ₪. ניתן לממן מהפיקדון",
+    admission: "משוחררים עד 5 שנים · בודדים ומילואימניקים פעילים עד 10 שנים",
+    noPsychometric: "כן",
+    support: "לא אומת",
+    industry: "DevOps",
+    schedule: "כ-4.5 חודשים · מחזור נפתח 1.11.2026",
+    contactName: "", contactRole: "האגף לחיילים משוחררים", contactPhone: "*5266", contactEmail: "", openDays: "",
+    domains: ["code", "networks"],
+    status: "active",
+    notes: "אומת 13.8.2026 מאתר האגף.",
+    verified: "13.8.2026 — hachvana.mod.gov.il",
+  },
+  {
+    id: "mission-ai",
+    name: "Mission AI",
+    track: "bootcamp",
+    why: "קורס בניית מערכות AI ואוטומציה במימון האגף, אונליין ובשעות ערב — אחד הבודדים שמתאים למי שעובד ביום.",
+    tag: "ממומן האגף", tagColor: "#059669",
+    link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/ai-course1.aspx",
+    location: "אונליין בזום · עד שלושה מפגשים פיזיים, אחד מהם במכללה האקדמית כנרת",
+    tuition: "השתתפות עצמית 980 ₪ בלבד — הנמוכה ביותר שמצאנו. ניתן לממן מהפיקדון",
+    admission: "בדיקת התאמה ושאלון מקצועי. **אין צורך בידע מוקדם בתכנות**",
+    noPsychometric: "כן",
+    support: "לא אומת",
+    industry: "בניית וניהול צוותי סוכנים (Agents) וכלי AI",
+    schedule: "כ-4 חודשים · ראשון ורביעי 17:00–20:00 · מחזור שני נפתח 25.10.2026",
+    contactName: "", contactRole: "האגף לחיילים משוחררים", contactPhone: "*5266", contactEmail: "", openDays: "",
+    domains: ["ai", "code"],
+    status: "active",
+    notes: "פתיחת הקורס מותנית במספר מינימלי של נרשמים. הרשמה עד יום הפתיחה על בסיס מקום פנוי.",
+    verified: "13.8.2026 — hachvana.mod.gov.il",
+  },
 ];
+
+/**
+ * הכותרת שהמועמד רואה. כשיש תוכנית — **היא מובילה והמוסד הוא ההקשר**:
+ * "סיקט · אוניברסיטת בן-גוריון" ולא "אוניברסיטת בן-גוריון".
+ * מקבלת את שם התוכנית מבחוץ כדי שלא ייווצר תלות מעגלית בין קובצי הדאטה.
+ */
+export function displayTitle(inst: Institution, programName?: string): string {
+  return programName ? `${programName.split(" — ")[0]} · ${inst.name}` : inst.name;
+}
 
 /** מה שהמשתמש רואה באפליקציה — ללא המוסתרים */
 export function visibleByTrack(track: Track): Institution[] {

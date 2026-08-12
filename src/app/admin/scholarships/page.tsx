@@ -53,6 +53,8 @@ function windowText(f: Funding): string {
 export default function AdminScholarshipsPage() {
   const [items, setItems] = useState<Funding[]>(FUNDING);
   const [openId, setOpenId] = useState<string | null>(null);
+  /** קריאה קודם, עריכה רק בבקשה מפורשת — ראה ההערה ב-/admin/institutions */
+  const [editId, setEditId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FundingKind | "all" | "pending">("all");
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
@@ -226,9 +228,62 @@ export default function AdminScholarshipsPage() {
                 )}
               </div>
 
+              {/* Read view */}
+              {isOpen && editId !== f.id && (
+                <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", padding: "14px 16px", background: "#fcfbf9" }}>
+                  {f.status === "needs-check" && f.notes && (
+                    <div style={{ background: "rgba(251,133,0,0.09)", color: "#92400e", borderRadius: 10, padding: 13, marginBottom: 12, fontSize: 12.5, lineHeight: 1.75 }}>
+                      <b>מה נשאר לאמת · </b>{f.notes}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 13.5, lineHeight: 1.8, color: "rgba(0,0,0,0.78)" }}>{f.what}</div>
+                  {f.catch && (
+                    <div style={{ background: "#fff7ec", color: "#8a4d00", borderRadius: 10, padding: 13, marginTop: 10, fontSize: 12.5, lineHeight: 1.75 }}>
+                      <b>המלכודת · </b>{f.catch}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px 24px", marginTop: 12 }}>
+                    {([
+                      ["חלון הגשה", windowText(f)],
+                      ["מי זכאי", f.who ?? ""],
+                      ["סכום", f.amount ? `${f.amount.toLocaleString("he-IL")} ₪` : (f.amountNote ?? "")],
+                      ["מוסדות", linked.join(" · ")],
+                      ["איש קשר", f.contact ?? ""],
+                      ["אומת", f.verified ?? "לא אומת"],
+                    ] as [string, string][]).filter(([, v]) => v && v.trim()).map(([k, v]) => (
+                      <div key={k} style={{ padding: "4px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: "rgba(0,0,0,0.35)" }}>{k}</div>
+                        <div style={{ fontSize: 12.5, lineHeight: 1.7, color: "rgba(0,0,0,0.72)" }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {f.covers && f.covers.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
+                      {f.covers.map(c => (
+                        <span key={c} style={{ fontSize: 11.5, padding: "4px 10px", borderRadius: 99, background: "rgba(5,150,105,0.1)", color: "#047857", fontWeight: 600 }}>{c}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
+                    <button onClick={() => setEditId(f.id)} style={{ fontSize: 12.5, fontWeight: 800, padding: "8px 16px", borderRadius: 9, border: "none", background: ORANGE, color: "#fff", cursor: "pointer" }}>
+                      עריכה
+                    </button>
+                    {f.link && (
+                      <a href={f.link} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 9, background: "rgba(2,62,138,0.07)", color: NAVY }}>
+                        לאתר ↗
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Editor */}
-              {isOpen && (
+              {isOpen && editId === f.id && (
                 <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", padding: "14px 16px", background: "#fcfbf9", display: "flex", flexDirection: "column", gap: 12 }}>
+                  <button onClick={() => setEditId(null)} style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 700, padding: "6px 13px", borderRadius: 9, border: "none", background: "rgba(2,62,138,0.07)", color: NAVY, cursor: "pointer" }}>
+                    ← סיום עריכה
+                  </button>
                   {/* מה שהמועמד מקבל בפועל — קריאה בלבד, כי זו רשימה ולא טקסט */}
                   {f.covers && f.covers.length > 0 && (
                     <div>

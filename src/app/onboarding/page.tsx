@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { saveOnboarding } from "@/lib/candidate";
+import { JOURNEY } from "@/data/journey";
+
+// שמות השלבים — מ-src/data/journey.ts בלבד, אין כאן רשימה שנייה
+const JOURNEY_LABELS = JOURNEY.map(s => s.candidate);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
@@ -18,7 +22,7 @@ const BLOCKER_OPTIONS = [
   "לא היה לי זמן",
   "פחד מכישלון",
 ];
-const JOURNEY_LABELS = ["הרשמה לאפליקציה", "פגישת פתיחה", "טעימות הייטק", "מסלולי לימודים", "צ׳קליסט", "הרשמה ללימודים"];
+
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
 // ─── Gender text helper ────────────────────────────────────────────────────────
@@ -107,19 +111,31 @@ function OnboardingHeader({ step, onBack }: { step: Step; onBack?: () => void })
           );
         })}
       </div>
+      {/* עד עכשיו היו כאן שלוש נקודות בלי מילה אחת — לא היה ברור מה נשאר */}
+      <div className="flex mt-2">
+        {["פרטים", "עניין", "מה עצר אותך"].map((label, i) => (
+          <div key={label} style={{ flex: i < 2 ? 1 : "none" }} className="flex justify-start">
+            <span className="text-[10px] font-bold leading-none"
+              style={{ color: "#fff", opacity: i + 1 === step ? 1 : 0.45 }}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 // ─── Journey Map SVG ──────────────────────────────────────────────────────────
 function JourneyMap() {
+  // RTL: שלב 1 מימין. ה-x-ים ממוינים יורד כדי שהדרך תיקרא לכיוון הקריאה
   const pts = [
-    { x: 28, y: 28 },
-    { x: 90, y: 58 },
-    { x: 156, y: 28 },
-    { x: 222, y: 58 },
-    { x: 286, y: 28 },
-    { x: 340, y: 58 },
+    { x: 340, y: 28 },
+    { x: 278, y: 58 },
+    { x: 212, y: 28 },
+    { x: 146, y: 58 },
+    { x: 82,  y: 28 },
+    { x: 28,  y: 58 },
   ];
 
   const pathD = pts
@@ -287,9 +303,18 @@ function WizardTour({ gender, onDone }: { gender: Gender; onDone: () => void }) 
     <div className="flex flex-col min-h-full" style={{ background: cur.bg }}>
       {/* Top bar */}
       <div className="flex items-center justify-between px-[22px] pt-[20px] pb-4">
-        <span className="text-[11px] font-bold tracking-wide" style={{ color: cur.iconBg, opacity: 0.8 }}>
-          {cur.tag}
-        </span>
+        <div className="flex items-center gap-3">
+          {/* בלי זה הסיור הוא כיוון אחד: מי שלחץ "הבא" מהר מדי איבד את ההסבר */}
+          {slide > 0 && (
+            <button type="button" onClick={() => setSlide(s => s - 1)}
+              className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>
+              → חזרה
+            </button>
+          )}
+          <span className="text-[11px] font-bold tracking-wide" style={{ color: cur.iconBg, opacity: 0.8 }}>
+            {cur.tag}
+          </span>
+        </div>
         <button type="button" onClick={onDone} className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.3)" }}>
           דלג
         </button>
@@ -332,12 +357,18 @@ function WizardTour({ gender, onDone }: { gender: Gender; onDone: () => void }) 
       <div className="px-[22px] pb-8 pt-4 flex flex-col gap-4">
         <div className="flex justify-center gap-[6px]">
           {TOUR_SLIDES.map((_, i) => (
-            <div
+            <button
               key={i}
+              type="button"
+              onClick={() => setSlide(i)}
+              aria-label={`שקופית ${i + 1}`}
               style={{
                 width: i === slide ? 22 : 8,
                 height: 8,
                 borderRadius: 4,
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
                 background: i === slide ? cur.iconBg : "rgba(0,0,0,0.15)",
                 transition: "width 0.2s, background 0.2s",
               }}
@@ -557,13 +588,18 @@ function Step4({ firstName, gender, blockers, onDone }: {
   firstName: string; gender: Gender; blockers: string[]; onDone: () => void;
 }) {
   const blockerNote = blockers.length > 0
-    ? "שמנו לב מה עצר אותך עד היום — הרכזת תתייחס לזה ישירות בפגישת הפתיחה."
+    ? "שמנו לב מה עצר אותך עד היום — זה יעלה בפגישה, וזו בדיוק המטרה שלה."
     : null;
 
+  /*
+   * הטקסט כאן אמר "הרכזת תיצור איתך קשר לתיאום פגישה — מפגש פנים אל פנים",
+   * וזה סתר את האפליקציה: **הוא** קובע את המועד בעצמו, מיד, ואנחנו לא יודעים
+   * אם הפגישה פרונטלית או בזום. מה שכתוב עכשיו הוא מה שבאמת קורה.
+   */
   const bullets = [
-    "הרכזת תיצור איתך קשר לתיאום פגישת היכרות — מפגש פנים אל פנים",
-    "בפגישה תכירו, תדברו על המסלול שלך, ותצאו לדרך יחד",
-    "בינתיים — המסע שלך באפליקציה כבר פתוח",
+    "עכשיו בוחרים מועד לפגישת ההיכרות — ישר מכאן, ובלי לחכות לשיחה",
+    "בפגישה תכירו, תדברו על מה שמעניין אותך, ותבנו יחד תוכנית",
+    "עד אז המסע שלך באפליקציה כבר פתוח, ואפשר להציץ",
   ];
 
   return (

@@ -56,8 +56,30 @@ export type Funding = {
   blocks?: string[];
   /** מזהי מוסדות מ-institutions.ts */
   institutions?: string[];
-  /** ריק = רלוונטי לכל המסלולים */
+  /**
+   * המסלול שהתוכנית שייכת אליו. **חובה בתוכניות** — מעטפת של אקדמיה, של
+   * מה״ט ושל הכשרה מקצועית הן דברים שונים, ואי אפשר להשוות ביניהן.
+   * ריק = מלגה שרלוונטית לכל המסלולים.
+   */
   tracks?: Track[];
+
+  // ── ניקוד ─────────────────────────────────────────────────────────────────
+  //
+  // הדירוג לא מודד "איכות" אלא **מה מחזיק אדם עד הסוף**. לקהל שלנו הגורם
+  // המכריע אינו איכות ההוראה אלא המעטפת: מי מחזיק אותך כשנהיה קשה, ומאיפה
+  // מגיע הכסף בינתיים. קורס לבד = אתה לבד.
+  //
+  // ⚠️ אימות הוא **תקרה ולא משקל**: פריט needs-check לא יכול לעקוף פריט
+  // מאומת, כמה שהמעטפת שלו נשמעת טוב. אחרת מספיק שיווק טוב כדי לנצח.
+
+  /** ליווי אישי, רכז/ת, חונכות — עד ההשמה */
+  support?: "full" | "partial" | "none";
+  /** מאיפה מגיע הכסף בזמן הלימודים */
+  money?: "free-plus-stipend" | "free" | "subsidised" | "deposit" | "paid";
+  /** התחייבות להשמה מול סיוע בלבד */
+  placement?: "committed" | "assisted" | "none";
+  /** בלי תואר, בלי פסיכומטרי, ערב, או פריפריה — כמה מהם מתקיימים */
+  access?: number;
 
   link?: string;
   contact?: string;
@@ -207,9 +229,67 @@ export const FUNDING: Funding[] = [
     docs: ["id", "income"],
   },
 
+  {
+    id: "peripheria45",
+    name: "גרים בפריפריה 45",
+    kind: "scholarship",
+    what:
+      "מימון מלא של שנה א׳ בתואר — עד 12,017 ₪ — לתושבי אזורי עדיפות לאומית. המלגה מועברת לפיקדון האישי.",
+    catch:
+      "אין כפל בין מלגות הפריפריה של האגף — מממשים רק אחת מ-44/45/46. הזכאות דורשת כתובת רשומה בפריפריה בחמש מתוך שש השנים שלפני הלימודים. ולוחמי מילואים עם 100% מימון ממלגת מילואים אינם זכאים.",
+    who:
+      "משוחררים ומסיימי שירות לאומי-אזרחי מאזורי עדיפות לאומית · עד 5 שנים מהשחרור (בודדים ומילואימניקים — עד 10)",
+    opensAt: { d: 3, m: 8 },
+    amount: 12017,
+    amountNote: "עד 100% משכר הלימוד האוניברסיטאי של שנה א׳, נכון לתשפ״ו. מועבר לפיקדון עד 31.3.2027",
+    blocks: ["yeud44", "yeud46"],
+    tracks: ["degree"],
+    link: "https://www.hachvana.mod.gov.il/MainEducation/HachvanaScholarship/Pages/Perypheria45.aspx",
+    status: "active",
+    notes: "אומת 13.8.2026 ישירות מאתר האגף. רק מוסדות מל״ג שהמדינה משתתפת בתקציבם.",
+    docs: ["id", "discharge", "enrollment"],
+    verified: "13.8.2026 — hachvana.mod.gov.il",
+  },
+  {
+    id: "mashpiim",
+    name: "משפיעים בלימודים — דמי קיום",
+    kind: "scholarship",
+    what:
+      "12,000 ₪ דמי קיום ללוחמים ולתומכי לחימה משוחררים, תמורת 90 שעות עשייה חברתית ו-10 שעות הכשרה. מי שביצע 60+ ימי מילואים ב-2026 מקבל עוד 6,000 ₪ ישירות לחשבון.",
+    who: "לוחמים ותומכי לחימה משוחררים, סטודנטים במוסדות מוכרים",
+    amount: 12000,
+    amountNote: "בשני תשלומים דרך האגודה למען החייל. תרומת קרן אדמונד דה רוטשילד",
+    windowNote: "ההרשמה לתשפ״ו הסתיימה (3.9–31.12.2025). לעקוב אחרי מועדי תשפ״ז",
+    tracks: ["degree", "mahat"],
+    link: "https://www.hachvana.mod.gov.il/MainEducation/HachvanaScholarship/Pages/mashpim.aspx",
+    status: "active",
+    notes: "אומת 13.8.2026 מאתר האגף. דמי קיום — לא שכר לימוד — ולכן ככל הנראה מצטברת עם מלגות שכר לימוד. 📞 לאמת כפל.",
+    docs: ["id", "discharge", "enrollment"],
+    verified: "13.8.2026 — hachvana.mod.gov.il",
+  },
+  {
+    id: "mahat-90",
+    name: "מלגת הנדסאים — 90% משכר הלימוד",
+    kind: "scholarship",
+    what:
+      "האגף מממן 90% משכר הלימוד של מה״ט ללומדי הנדסאי וטכנאי במכללות הטכנולוגיות — כולל מכינות קדם-הנדסאים למי שלא עומד בתנאי הקבלה.",
+    catch:
+      "הזכאות נבדקת דרך מוסד הלימודים במועד ההרשמה, לא בהגשה נפרדת. מי שמפסיק את הלימודים עלול להידרש להחזר.",
+    who: "משוחררים עד 5 שנים · בודדים עד 10 שנים · מי שהזכאות שלו מסתיימת באמצע ממשיך לקבל אם לומד ברצף",
+    amountNote: "90% משכר הלימוד שנקבע ע״י מה״ט, מועבר ישירות למכללה. מתעדכן מדי שנה",
+    tracks: ["mahat"],
+    link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx",
+    status: "active",
+    notes:
+      "אומת 13.8.2026 מאתר האגף. **זה הנתון שהופך את מה״ט כמעט חינמי למשוחררים** — ויחד עם עתידאים (מימון מלא + מלגה חודשית) מסלול ההנדסאים ממומן כמעט לגמרי. כולל מכינות קדם-הנדסאים — כלומר גם דלת למי שאין לו תנאי קבלה.",
+    docs: ["id", "discharge"],
+    verified: "13.8.2026 — hachvana.mod.gov.il",
+  },
+
   // ─── תוכניות ───────────────────────────────────────────────────────────────
   {
     id: "techleaders",
+    support: "full", money: "free-plus-stipend", placement: "assisted", access: 2,
     name: "TechLeaders",
     kind: "program",
     what:
@@ -236,6 +316,7 @@ export const FUNDING: Funding[] = [
   },
   {
     id: "atudim",
+    support: "full", money: "free-plus-stipend", placement: "committed", access: 1,
     name: "עתידים לתעשייה",
     kind: "program",
     closesAt: { d: 31, m: 8 },
@@ -253,6 +334,7 @@ export const FUNDING: Funding[] = [
   },
   {
     id: "tau-admas",
+    support: "full", money: "subsidised", placement: "assisted", access: 2,
     name: "אדמאס — אוניברסיטת תל אביב",
     kind: "program",
     what:
@@ -270,6 +352,7 @@ export const FUNDING: Funding[] = [
   },
   {
     id: "runi-keren-or",
+    support: "partial", money: "subsidised", placement: "none", access: 1,
     name: "קרן אור — אוניברסיטת רייכמן",
     kind: "program",
     what: "מלגה משמעותית שמורידה את שכר הלימוד ברייכמן לרמה קרובה למתוקצב, עם ליווי.",
@@ -283,6 +366,7 @@ export const FUNDING: Funding[] = [
   },
   {
     id: "sicket",
+    support: "full", money: "subsidised", placement: "assisted", access: 2,
     name: "סיקט — אוניברסיטת בן-גוריון",
     kind: "program",
     what:
@@ -297,6 +381,7 @@ export const FUNDING: Funding[] = [
   },
   {
     id: "taasuka-innovation",
+    support: "none", money: "free", placement: "committed", access: 1,
     name: "המסלול המסובסד — שירות התעסוקה ורשות החדשנות",
     kind: "program",
     what:
@@ -316,7 +401,66 @@ export const FUNDING: Funding[] = [
     docs: ["id", "discharge"],
   },
   {
+    id: "lohamim-hitech",
+    name: "לוחמים להייטק",
+    kind: "program",
+    support: "full", money: "free-plus-stipend", placement: "committed", access: 2,
+    what:
+      "תוכנית ההפניה של עתידים ללוחמים משוחררים: עד 80% מימון שכר לימוד, דמי קיום חודשיים, ליווי אישי והשמה. משבצת למסלולים ב-IITC, סלע וקרנליוס — בלי צורך ברקע טכנולוגי.",
+    catch:
+      "ללוחמים ולוחמות בלבד — לא לכל מי ששירת. המיון: טופס, מבחן התאמה וראיון. עדיפות מפורשת לתושבי פריפריה.",
+    who: "לוחמים בשירות, לקראת שחרור, או עד 5 שנים מהשחרור (עד 10 באישור הקרן ולמילואימניקים פעילים)",
+    covers: ["עד 80% משכר הלימוד", "דמי קיום חודשיים לפי קריטריונים", "השתתפות עצמית מהפיקדון", "ליווי אישי והשמה"],
+    institutions: ["iitc", "cornelius"],
+    tracks: ["bootcamp"],
+    link: "https://techidf.co.il/",
+    status: "active",
+    notes:
+      "מופעלת על ידי עתידים עם Start-Up Nation Central והאגף. הקורסים המשובצים ב-courses.ts. דמי הקיום דווחו ~2,300 ₪ לחודש אך לא אומתו במקור רשמי — לא להציג סכום. מחזורים בספטמבר-אוקטובר.",
+    docs: ["id", "discharge"],
+    verified: "13.8.2026",
+  },
+  {
+    id: "mod-hitech",
+    name: "קורסי הייטק ממומנים — האגף לחיילים משוחררים",
+    kind: "program",
+    support: "partial", money: "subsidised", placement: "none", access: 2,
+    what:
+      "האגף מממן את רוב שכר הלימוד בשבעה קורסי הייטק, ומשאיר השתתפות עצמית של 980–2,000 ₪ שאפשר לשלם מהפיקדון — כלומר בפועל בלי הוצאה מהכיס.",
+    catch:
+      "בחלק מהקורסים מענק התמדה של 5,000 ₪ לאוכלוסיות מיוחדות — גדול מההשתתפות העצמית, כלומר הקורס יכול לצאת ברווח. רוב הקורסים בשעות בוקר.",
+    who: "משוחררים עד 5 שנים מהשחרור · בודדים ומילואימניקים פעילים עד 10 שנים",
+    covers: ["רוב שכר הלימוד", "השתתפות עצמית מהפיקדון", "מענק התמדה 5,000 ₪ בחלק מהקורסים"],
+    tracks: ["bootcamp"],
+    link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/default.aspx",
+    contact: "*5266",
+    status: "active",
+    notes: "אומת 13.8.2026 ישירות מאתר האגף. הקורסים עצמם ב-courses.ts — מפעילים: ITQ, קרנליוס, אנליזה, בנתיבי אודי, Mission AI.",
+    docs: ["id", "discharge"],
+    verified: "13.8.2026 — hachvana.mod.gov.il",
+  },
+  {
+    id: "atidaim",
+    name: "עתידאים",
+    kind: "program",
+    support: "full", money: "free-plus-stipend", placement: "committed", access: 3,
+    what:
+      "המעטפת של מה״ט: תואר הנדסאי בשיתוף התעשייה, במימון מלא ועם מלגה חודשית לכל תקופת הלימודים.",
+    catch:
+      "התוכנית בנויה סביב מעסיק ספציפי — התמחות והשמה מולו. שווה לברר איזה מעסיק פתוח במחזור הקרוב לפני שנרשמים.",
+    who:
+      "צעירים מהפריפריה. **מתקבלים גם עם בגרות חלקית** — ציון עובר בשלושה מקצועות (מתמטיקה 3 יח״ל, אנגלית 3 יח״ל, עברית 2 יח״ל), מכינת רענון במתמטיקה וראיון אישי",
+    covers: ["מימון מלא של הלימודים", "מלגה חודשית לכל התקופה", "התנסות מעשית בתעשייה", "ליווי והשמה"],
+    tracks: ["mahat"],
+    link: "https://www.atidaim.co.il/",
+    status: "needs-check",
+    notes:
+      "בשיתוף מה״ט והיחידה להכוונת חיילים משוחררים. אומת 13.8.2026 ממקורות משניים — 📞 לאמת מול עתידים: גובה המלגה, אילו מעסיקים פתוחים במחזור הקרוב, ואילו מסלולי הנדסאי רלוונטיים לטק (ראינו מכטרוניקה, אינטל וחברת החשמל). **הכניסה עם בגרות חלקית היא הנתון החשוב ביותר כאן** ודורשת אימות ישיר.",
+    docs: ["id", "grades", "income"],
+  },
+  {
     id: "hackeru-miluim",
+    support: "partial", money: "subsidised", placement: "committed", access: 2,
     name: "נבחרת המילואים — HackerU והג׳וינט",
     kind: "program",
     what:
@@ -353,4 +497,76 @@ export function fundingFor(track: Track): Funding[] {
 export const KIND_LABEL: Record<FundingKind, string> = {
   scholarship: "מלגה",
   program: "תוכנית",
+};
+
+// ─── דירוג ───────────────────────────────────────────────────────────────────
+
+/**
+ * הניקוד גלוי בכוונה: הוא מחזיר גם **את הסיבות**, לא רק מספר.
+ *
+ * דירוג הוא טענה — "זה טוב יותר בשבילך" — וצריך להיות אפשר להגן עליה מול
+ * מועמד ומול רכזת. מספר בלי נימוק נקרא כשרירותי, ומי שנמצא מתחת לקיפול
+ * פשוט לא קיים.
+ */
+export type Score = { total: number; reasons: string[]; capped: boolean };
+
+const SUPPORT_PTS = { full: 4, partial: 2, none: 0 } as const;
+const MONEY_PTS = {
+  "free-plus-stipend": 4, free: 3, subsidised: 2, deposit: 2, paid: 0,
+} as const;
+const PLACEMENT_PTS = { committed: 2, assisted: 1, none: 0 } as const;
+
+const MONEY_WORD: Record<NonNullable<Funding["money"]>, string> = {
+  "free-plus-stipend": "ללא עלות + מלגת קיום",
+  free: "ללא עלות",
+  subsidised: "מסובסד",
+  deposit: "נכנס לפיקדון החייל המשוחרר",
+  paid: "בתשלום מלא",
+};
+
+/** תקרה לפריט שלא אומת מול הגוף עצמו */
+export const UNVERIFIED_CAP = 6;
+
+export function scoreFunding(f: Funding): Score {
+  const reasons: string[] = [];
+  let total = 0;
+
+  if (f.support) {
+    total += SUPPORT_PTS[f.support];
+    if (f.support === "full") reasons.push("מעטפת מלאה — ליווי אישי עד ההשמה");
+    else if (f.support === "partial") reasons.push("ליווי חלקי");
+  }
+  if (f.money) {
+    total += MONEY_PTS[f.money];
+    if (f.money !== "paid") reasons.push(MONEY_WORD[f.money]);
+  }
+  if (f.placement) {
+    total += PLACEMENT_PTS[f.placement];
+    if (f.placement === "committed") reasons.push("התחייבות להשמה");
+  }
+  if (f.access) {
+    total += Math.min(3, f.access);
+    reasons.push("נגיש — בלי חסמי כניסה גבוהים");
+  }
+
+  const capped = f.status === "needs-check" && total > UNVERIFIED_CAP;
+  if (capped) {
+    total = UNVERIFIED_CAP;
+    reasons.push("⚠️ לא אומת מול הגוף עצמו — הניקוד מוגבל");
+  }
+  return { total, reasons, capped };
+}
+
+/** התוכניות של מסלול מסוים, מהגבוה לנמוך */
+export function programsFor(track: Track): { funding: Funding; score: Score }[] {
+  return visibleFunding()
+    .filter(f => f.kind === "program" && f.tracks?.includes(track))
+    .map(f => ({ funding: f, score: scoreFunding(f) }))
+    .sort((a, b) => b.score.total - a.score.total);
+}
+
+export const TRACK_TITLE: Record<Track, string> = {
+  degree: "תואר אקדמי",
+  mahat: "מה״ט — הנדסאים",
+  bootcamp: "הכשרה מקצועית",
 };

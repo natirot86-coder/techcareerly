@@ -1,8 +1,11 @@
+import { JOURNEY } from "@/data/journey";
+
 interface Props {
   currentStage: number; // 1-6
 }
 
-const LABELS = ["הרשמה", "פגישת פתיחה", "טעימות הייטק", "מסלולי לימוד", "צ׳קליסט", "הרשמה ללימוד"];
+// שמות השלבים מגיעים מ-src/data/journey.ts — אין כאן רשימה משלה
+const LABELS = JOURNEY.map(s => s.short);
 
 export default function ProgressDots({ currentStage }: Props) {
   return (

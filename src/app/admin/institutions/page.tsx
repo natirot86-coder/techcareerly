@@ -8,6 +8,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { INSTITUTIONS, DOMAIN_LABEL, type Institution, type Track, type Domain } from "@/data/institutions";
+import { coursesNeedingAttention, STATE_LABEL } from "@/data/courses";
+import { FUNDING } from "@/data/scholarships";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -52,6 +54,12 @@ const FIELDS: { key: keyof Institution; label: string; long?: boolean }[] = [
 export default function AdminInstitutionsPage() {
   const [items, setItems] = useState<Institution[]>(INSTITUTIONS);
   const [openId, setOpenId] = useState<string | null>(null);
+  /**
+   * פתיחת מוסד מציגה **קריאה**, לא טופס.
+   * אישור הוא משימה של קריאה: השאלה היא "זה מה שאנחנו רוצים שהוא יראה?",
+   * ואי אפשר לענות עליה כשמולך 19 שדות קלט. עריכה היא מצב נפרד ומכוון.
+   */
+  const [editId, setEditId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Track | "all" | "pending">("all");
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
@@ -218,10 +226,32 @@ export default function AdminInstitutionsPage() {
         </div>
       </div>
 
-      {/* Rows */}
+      {/* פס פעולה — מה שדורש טיפול, במקום שבו אתה ממילא נמצא */}
+      <AttentionStrip pendingCount={pending.length} needsCheck={items.filter(i => i.status === "needs-check").length} />
+
+      {/* Rows — מקובצים לפי מסלול. תואר קודם, כי עליו אנחנו ממליצים */}
       <div className="px-6 pb-16">
         <div className="max-w-[1000px] mx-auto flex flex-col gap-2.5">
-          {shown.map(inst => {
+          {(filter === "all" || filter === "pending"
+            ? (["degree", "mahat", "bootcamp"] as Track[]).flatMap(t => {
+                const group = shown.filter(i => i.track === t);
+                return group.length ? [{ __header: t } as unknown as Institution, ...group] : [];
+              })
+            : shown
+          ).map(inst => {
+            if ((inst as unknown as { __header?: Track }).__header) {
+              const t = (inst as unknown as { __header: Track }).__header;
+              const programs = FUNDING.filter(f => f.kind === "program" && f.status !== "hidden" && f.tracks?.includes(t)).length;
+              return (
+                <div key={`h-${t}`} className="flex items-center gap-3 pt-4 pb-0.5">
+                  <span className="text-[14px] font-black" style={{ color: NAVY }}>{TRACK_LABEL[t]}</span>
+                  <span className="text-[11px] font-bold" style={{ color: "rgba(0,0,0,0.35)" }}>
+                    {shown.filter(i => i.track === t).length} מוסדות · {programs} תוכניות מעטפת
+                  </span>
+                  <div className="flex-1 h-px" style={{ background: "rgba(2,62,138,0.12)" }} />
+                </div>
+              );
+            }
             const open = openId === inst.id;
             const st = STATUS_META[inst.status];
             return (
@@ -262,9 +292,74 @@ export default function AdminInstitutionsPage() {
                     style={{ color: "#dc2626", background: "rgba(220,38,38,0.07)" }}>מחק</button>
                 </div>
 
+                {/* Read view — מה שהמועמד רואה, ומה שנשאר לאמת */}
+                {open && editId !== inst.id && (
+                  <div className="px-4 pb-4 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                    {/* השאלה הפתוחה היא הפעולה הבאה, ולכן היא ראשונה ולא קבורה */}
+                    {inst.status === "needs-check" && inst.notes && (
+                      <div className="rounded-xl p-3.5 mb-3 text-[12.5px] leading-[1.75]"
+                        style={{ background: "rgba(251,133,0,0.09)", color: "#92400e" }}>
+                        <span className="font-black">מה נשאר לאמת · </span>{inst.notes}
+                      </div>
+                    )}
+                    {inst.warn && (
+                      <div className="rounded-xl p-3.5 mb-3 text-[12.5px] leading-[1.75]"
+                        style={{ background: "rgba(220,38,38,0.07)", color: "#b91c1c" }}>
+                        <span className="font-black">אזהרה למועמד · </span>{inst.warn}
+                      </div>
+                    )}
+
+                    <div className="rounded-xl p-4 mb-3" style={{ background: "#fcfbf9", border: "1px solid rgba(0,0,0,0.06)" }}>
+                      <div className="text-[11px] font-black mb-2" style={{ color: "rgba(0,0,0,0.4)" }}>
+                        מה שהמועמד רואה
+                      </div>
+                      <div className="text-[13px] leading-[1.8]" style={{ color: "rgba(0,0,0,0.75)" }}>{inst.why}</div>
+                      <a href={inst.link} target="_blank" rel="noopener noreferrer"
+                        className="inline-block mt-2.5 text-[12px] font-bold px-3 py-1.5 rounded-lg"
+                        style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}>
+                        לאתר הרשמי ↗
+                      </a>
+                    </div>
+
+                    <div className="grid gap-x-6 gap-y-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))" }}>
+                      {([
+                        ["מיקום", inst.location], ["שכר לימוד", inst.tuition],
+                        ["מבנה הלימודים", inst.schedule], ["תנאי קבלה", inst.admission],
+                        ["ללא פסיכומטרי", inst.noPsychometric], ["תמיכה ומעטפת", inst.support],
+                        ["קשרי תעשייה", inst.industry], ["ימים פתוחים", inst.openDays],
+                      ] as [string, string][]).filter(([, v]) => v && v.trim()).map(([k, v]) => (
+                        <div key={k} className="py-1" style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+                          <div className="text-[10.5px] font-black" style={{ color: "rgba(0,0,0,0.35)" }}>{k}</div>
+                          <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.72)" }}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {(inst.contactName || inst.contactPhone || inst.contactEmail) && (
+                      <div className="rounded-xl p-3.5 mt-3 text-[12.5px] leading-[1.8]"
+                        style={{ background: "rgba(5,150,105,0.06)", color: "#065f46" }}>
+                        <span className="font-black">איש קשר · </span>
+                        {[inst.contactName, inst.contactRole, inst.contactPhone, inst.contactEmail]
+                          .filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 mt-3.5">
+                      <button onClick={() => setEditId(inst.id)} className="text-[12.5px] font-black px-4 py-2 rounded-lg"
+                        style={{ background: ORANGE, color: "#fff" }}>עריכה</button>
+                      <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.35)" }}>
+                        {inst.verified ? `אומת: ${inst.verified}` : "לא אומת"}
+                        {" · "}{inst.domains.map(d => DOMAIN_LABEL[d]).join(" · ")}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Editor */}
-                {open && (
+                {open && editId === inst.id && (
                   <div className="px-4 pb-4 pt-1" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                    <button onClick={() => setEditId(null)} className="text-[12px] font-bold my-2.5 px-3 py-1.5 rounded-lg"
+                      style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}>← סיום עריכה</button>
                     <div className="mb-3 flex flex-wrap gap-5 items-start">
                       <div>
                         <label className="text-[11px] font-black block mb-1" style={{ color: "rgba(0,0,0,0.45)" }}>מסלול</label>
@@ -340,6 +435,35 @@ export default function AdminInstitutionsPage() {
           {toast}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * מה שדורש פעולה — כולל **קורסים שהמחזור שלהם עבר**, שכבר ירדו מהמועמד
+ * מעצמם ומחכים כאן לתאריך חדש. זה הפינג: לא מייל ולא התראה, אלא המסך
+ * שהאדמין ממילא פותח.
+ */
+function AttentionStrip({ pendingCount, needsCheck }: { pendingCount: number; needsCheck: number }) {
+  const courses = coursesNeedingAttention();
+  if (!pendingCount && !needsCheck && !courses.length) return null;
+  return (
+    <div className="px-6 pt-3">
+      <div className="max-w-[1000px] mx-auto rounded-xl px-4 py-3 flex flex-wrap gap-x-6 gap-y-1.5 items-center"
+        style={{ background: "rgba(251,133,0,0.08)", border: "1px solid rgba(251,133,0,0.25)" }}>
+        <span className="text-[12px] font-black" style={{ color: "#92400e" }}>דורש טיפול:</span>
+        {pendingCount > 0 && (
+          <span className="text-[12px] font-bold" style={{ color: "#92400e" }}>{pendingCount} ממתינים לאישור</span>
+        )}
+        {needsCheck > 0 && (
+          <span className="text-[12px] font-bold" style={{ color: "#92400e" }}>{needsCheck} דורשים אימות</span>
+        )}
+        {courses.map(({ course, state }) => (
+          <span key={course.id} className="text-[12px]" style={{ color: "#b91c1c" }}>
+            <b>{course.name}</b> — {STATE_LABEL[state]}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

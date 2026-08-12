@@ -13,14 +13,13 @@
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 
-export const JOURNEY_STAGES = [
-  { n: 1, short: "הרשמה", full: "טרום אינטייק" },
-  { n: 2, short: "פגישה", full: "אינטייק עם הרכזת" },
-  { n: 3, short: "חשיפה", full: "טעימות הייטק" },
-  { n: 4, short: "מסלול", full: "מסלול לימודים" },
-  { n: 5, short: "מלגות", full: "לוגיסטיקה ומלגות" },
-  { n: 6, short: "רישום", full: "רישום סופי" },
-];
+import { JOURNEY } from "@/data/journey";
+
+/**
+ * שמות השלבים מגיעים מ-src/data/journey.ts. `short` הוא מה שמופיע מתחת
+ * לנקודה, `full` הוא השם המלא שהמועמד רואה — ולא שפת הארגון.
+ */
+export const JOURNEY_STAGES = JOURNEY.map(s => ({ n: s.n, short: s.short, full: s.candidate }));
 
 export default function JourneyStrip({
   current,
