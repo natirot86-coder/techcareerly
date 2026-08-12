@@ -3112,6 +3112,231 @@ const UX6: ChoiceStep = {
 const STEPS_UX: Step[] = [UX0, UX1, UX2, UX3, UX4, UX5, UX6];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// STEPS — qa  (בדיקות תוכנה / QA)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const QA0: ChoiceStep = {
+  kind: "choice",
+  tag: "נקודת פתיחה",
+  concept: "QA — מה זה בעצם?",
+  context: (
+    <div>
+      <div
+        className="rounded-2xl p-4 mb-5 flex gap-4 items-start"
+        style={{ background: "rgba(217,119,6,0.07)", border: "1px solid rgba(217,119,6,0.18)" }}
+      >
+        <div
+          className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-[22px] font-black text-white"
+          style={{ background: "#d97706", ...HEEBO }}
+        >
+          ד
+        </div>
+        <div>
+          <div className="text-[13px] font-bold" style={{ color: "#92400e" }}>הדס, 31, מחיפה</div>
+          <div className="text-[12.5px] mt-1 leading-[1.6]" style={{ color: "rgba(0,0,0,0.6)" }}>
+            "הייתי מורה במשך שמונה שנים. גיליתי שQA לא דורש כתיבת קוד מאפס — זה דורש חשיבה ביקורתית וסקרנות. היום אני QA Engineer ב-Riskified."
+          </div>
+        </div>
+      </div>
+      <p className="text-[13.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.62)" }}>
+        <span className="font-bold" style={{ color: "#d97706" }}>QA = Quality Assurance</span> — הבטחת איכות.
+        <br />לפני שכל פיצ&apos;ר יוצא ללקוחות — מישהי בודקת שהוא באמת עובד.
+      </p>
+    </div>
+  ),
+  question: "מה בעיקר עושה בודקת QA?",
+  options: [
+    "כותבת את כל הפיצ'רים בעצמה מאפס",
+    "מוצאת דרכים לשבור את המוצר לפני שהלקוחות ישברו אותו",
+    "מעצבת את הממשק הגרפי של האפליקציה",
+  ],
+  correct: 1,
+  okMsg: "בדיוק! QA חושבת כמו 'עורכת דין של השטן' — היא מנסה להוכיח שהמוצר לא עובד, לפני שהוא מגיע ללקוחות. זו לא בדיקה שטחית, זו חשיבה שיטתית על כל מה שיכול להשתבש.",
+  errMsg: "לא בדיוק. QA לא כותבת את הפיצ'ר ולא מעצבת אותו — היא זו שמנסה 'לשבור' אותו בכל דרך אפשרית, כדי לתפוס בעיות לפני שהלקוחות יתפסו אותן.",
+  learned: "QA = Quality Assurance | תפקידה: למצוא בעיות לפני שהלקוח מוצא אותן",
+};
+
+const QA1: ChoiceStep = {
+  kind: "choice",
+  tag: "מקרה בדיקה",
+  concept: "מהו מקרה בדיקה (Test Case) טוב?",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        טופס הרשמה עם שדה אימייל. שתי בודקות כתבו מקרה בדיקה שונה:
+      </p>
+      <div className="flex flex-col gap-3 mb-4">
+        <div className="rounded-xl p-3" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
+          <div className="text-[11px] font-bold mb-1" style={{ color: "#b91c1c" }}>בודקת א׳:</div>
+          <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.6)" }}>"בדקתי שהטופס עובד."</div>
+        </div>
+        <div className="rounded-xl p-3" style={{ background: "rgba(217,119,6,0.06)", border: "1px solid rgba(217,119,6,0.18)" }}>
+          <div className="text-[11px] font-bold mb-1" style={{ color: "#92400e" }}>בודקת ב׳:</div>
+          <div className="text-[12px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.6)" }}>
+            "הזנתי test@mail.com ← מצפה: הרשמה מצליחה.
+            <br />הזנתי testmail.com (בלי @) ← מצפה: הודעת שגיאה."
+          </div>
+        </div>
+      </div>
+    </div>
+  ),
+  question: "מה הופך מקרה בדיקה למועיל?",
+  options: [
+    "תיאור כללי כמו 'בדקתי שהטופס עובד'",
+    "צעדים מדויקים + קלט ספציפי + תוצאה צפויה ברורה",
+    "בדיקה אחת שמכסה את כל התרחישים בבת אחת",
+  ],
+  correct: 1,
+  okMsg: "נכון! מקרה בדיקה טוב = קלט מדויק + פעולה + תוצאה צפויה ברורה. כך כל אחת שקוראת אותו יודעת בדיוק מה לבדוק ומה אמור לקרות — בלי ניחושים.",
+  errMsg: "לא. 'בדקתי שזה עובד' לא אומר כלום למי שקורא אחריך. מקרה בדיקה טוב כולל: קלט מדויק, צעדים לביצוע, ותוצאה צפויה ברורה — כדי שאפשר יהיה לחזור עליו בדיוק.",
+  learned: "מקרה בדיקה טוב = קלט מדויק + צעדים + תוצאה צפויה",
+};
+
+const QA2: SequenceStep = {
+  kind: "sequence",
+  tag: "מחזור חיים של באג",
+  concept: "Bug Lifecycle — מה קורה אחרי שמוצאים באג?",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        גילית שכפתור <span className="font-bold">"שלחי"</span> לא מגיב במובייל. מה קורה מהרגע הזה?
+      </p>
+      <div className="rounded-xl p-4" style={{ background: "rgba(217,119,6,0.05)", border: "1px solid rgba(217,119,6,0.15)" }}>
+        <div className="text-[11.5px] leading-[1.9]" style={{ color: "rgba(0,0,0,0.6)" }}>
+          לכל באג יש מסלול קבוע — מהרגע שגילית אותו ועד שהוא סגור לגמרי.
+          דילוג על שלב אחד עלול לגרום לתיקון בלי בדיקה, או לבאג ש"נעלם" בלי שתוקן באמת.
+        </div>
+      </div>
+    </div>
+  ),
+  instruction: "סדרי את שלבי מחזור חיי הבאג — לחצי לפי הסדר הנכון:",
+  items: ["אימות התיקון (Verify)", "דיווח הבאג (Report)", "תיקון בקוד (Fix)", "מיון ותיעדוף (Triage)"],
+  correctOrder: [1, 3, 2, 0],
+  okMsg: "מדויק! Report → Triage → Fix → Verify. בלי הסדר הזה, באגים נעלמים בתוך התהליך — או מתוקנים בלי שאף אחת בדקה שהתיקון באמת עבד.",
+  errMsg: "הסדר הנכון: קודם מדווחים על הבאג (Report), אז ממיינים כמה הוא דחוף (Triage), אז מתקנים בקוד (Fix), ולבסוף מוודאים (Verify) שהתיקון עבד.",
+  learned: "Bug lifecycle: Report → Triage → Fix → Verify",
+};
+
+const QA3: ChoiceStep = {
+  kind: "choice",
+  tag: "Severity vs Priority",
+  concept: "חומרה מול דחיפות — לא אותו דבר",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        <span className="font-bold" style={{ color: "#d97706" }}>Severity</span> = כמה חמור הבאג טכנית.{" "}
+        <span className="font-bold" style={{ color: "#023e8a" }}>Priority</span> = כמה דחוף לתקן אותו עכשיו.
+        <br />הם לא תמיד הולכים ביחד:
+      </p>
+      <div className="flex gap-3 mb-4">
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(217,119,6,0.06)", border: "1px solid rgba(217,119,6,0.18)" }}>
+          <div className="text-[11px] font-bold mb-1" style={{ color: "#92400e" }}>באג A</div>
+          <div className="text-[11px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.6)" }}>הלוגו קצת עקום בדף "אודות"</div>
+        </div>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
+          <div className="text-[11px] font-bold mb-1" style={{ color: "#b91c1c" }}>באג B</div>
+          <div className="text-[11px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.6)" }}>אף אחד לא יכול להתחבר למערכת</div>
+        </div>
+      </div>
+    </div>
+  ),
+  question: "איזה באג הוא High Severity אבל יכול להיות Low Priority?",
+  options: [
+    "מסך התחברות שקורס לגמרי עבור כל המשתמשים",
+    "קריסה קשה (crash) בפיצ'ר נדיר שרק 0.1% מהמשתמשים בכלל נכנסים אליו",
+    "כפתור בצבע לא מדויק בדף שאף אחד לא מבקר בו",
+  ],
+  correct: 1,
+  okMsg: "נכון! Severity גבוהה (זה קורס לגמרי) אבל Priority יכולה להיות נמוכה יחסית — כי כמעט אף אחד לא נתקל בזה. ההחלטה מה לתקן קודם משלבת את שני הצירים.",
+  errMsg: "לא. האפשרות הראשונה היא Severity וגם Priority גבוהות (קריסה + כולם נפגעים). השלישית — שתיהן נמוכות. התשובה: קריסה קשה בפיצ'ר נדיר — טכנית חמור, אבל לא דחוף כי מעט אנשים נתקלים בו.",
+  learned: "Severity = כמה חמור טכנית | Priority = כמה דחוף לתקן",
+};
+
+const QA4: ChoiceStep = {
+  kind: "choice",
+  tag: "דיווח באג",
+  concept: "מה חסר בדיווח באג לקוי?",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        דיווח באג שהתקבל אצל צוות הפיתוח:
+      </p>
+      <div className="rounded-xl p-3.5 mb-4" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
+        <div className="text-[12.5px]" style={{ color: "#b91c1c" }}>"האפליקציה לא עובדת. תתקנו בבקשה."</div>
+      </div>
+      <div className="text-[11.5px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+        מפתח שמקבל את זה — לא יודע איפה להתחיל.
+      </div>
+    </div>
+  ),
+  question: "מה הכי חשוב להוסיף לדיווח הזה כדי שמפתח יוכל לפעול?",
+  options: [
+    "תמונת פרופיל של הבודקת",
+    "צעדים מדויקים לשחזור הבעיה (Steps to Reproduce)",
+    "כמה זמן עבדה על הבדיקה",
+  ],
+  correct: 1,
+  okMsg: "בדיוק! בלי צעדים לשחזור (Steps to Reproduce), מפתח לא יכול לדעת מה קרה, איפה, ובאילו תנאים. \"לא עובד\" לא ניתן לתיקון — \"לחצתי X, ואז Y קרה במקום Z\" כן.",
+  errMsg: "לא. הדבר הקריטי ביותר שחסר הוא צעדים מדויקים לשחזור הבעיה — בלי זה, אין למפתח שום דרך לדעת מה בכלל השתבש.",
+  learned: "דיווח באג טוב = Steps to Reproduce + Expected vs Actual + סביבה",
+};
+
+const QA5: ChoiceStep = {
+  kind: "choice",
+  tag: "בדיקות רגרסיה",
+  concept: "למה בודקים דברים ישנים אחרי שינוי חדש?",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.62)" }}>
+        מפתחת הוסיפה תמיכה בקוד הנחה ל-checkout. QA בודקת גם את זרימת התשלום הרגילה — לא רק את הפיצ'ר החדש.
+      </p>
+    </div>
+  ),
+  question: "למה בודקים גם את זרימת התשלום הרגילה, לא רק את הפיצ'ר החדש?",
+  options: [
+    "כי אין מה לעשות בזמן שממתינים לפיצ'ר הבא",
+    "כי שינוי בקוד יכול לשבור בטעות משהו שכבר עבד קודם (רגרסיה)",
+    "כי זה נדרש בחוק לבדוק הכל מחדש",
+  ],
+  correct: 1,
+  okMsg: "נכון! זו בדיוק ה'רגרסיה' — שינוי במקום אחד בקוד שובר משהו שעבד במקום אחר. בדיקות רגרסיה מוודאות שהחדש לא הרס את הישן.",
+  errMsg: "לא. הסיבה האמיתית: כל שינוי בקוד עלול לשבור בטעות משהו שכבר עבד — זו 'רגרסיה'. לכן בודקים מחדש גם את מה שכבר היה תקין.",
+  learned: "Regression testing = לוודא ששינוי חדש לא שבר משהו ישן",
+};
+
+const QA6: ChoiceStep = {
+  kind: "choice",
+  tag: "ידני מול אוטומטי",
+  concept: "מתי לבדוק ידנית ומתי לבנות אוטומציה?",
+  context: (
+    <div>
+      <div className="flex gap-3 mb-4">
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.1)" }}>
+          <div className="text-[11px] font-bold mb-1.5" style={{ color: "#023e8a" }}>בדיקה ידנית</div>
+          <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.55)" }}>פיצ'רים חדשים · שיפוט UX · תרחישים שמשתנים כל הזמן</div>
+        </div>
+        <div className="flex-1 rounded-xl p-3" style={{ background: "rgba(217,119,6,0.06)", border: "1px solid rgba(217,119,6,0.18)" }}>
+          <div className="text-[11px] font-bold mb-1.5" style={{ color: "#92400e" }}>אוטומציה</div>
+          <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.55)" }}>בדיקות שחוזרות בכל גרסה · יציבות לאורך זמן</div>
+        </div>
+      </div>
+    </div>
+  ),
+  question: "איזו בדיקה הכי משתלם להפוך לאוטומטית?",
+  options: [
+    "בדיקה חדשה על פיצ'ר שרק עכשיו נבנה ומשתנה כל יום",
+    "בדיקה שחוזרת על עצמה בכל גרסה — כמו 'האם התחברות עדיין עובדת'",
+    "שיפוט האם עיצוב חדש 'מרגיש נכון' למשתמשת",
+  ],
+  correct: 1,
+  okMsg: "בדיוק! אוטומציה משתלמת על בדיקות חוזרות ויציבות — כמו login. פיצ'רים שמשתנים כל הזמן ושיפוטים סובייקטיביים (UX) עדיין דורשים עין אנושית.",
+  errMsg: "לא. אוטומציה הכי משתלמת על בדיקות שחוזרות בלי שינוי בכל גרסה (כמו login). פיצ'רים שעדיין משתנים, ושאלות טעם/UX — דורשים בודקת אנושית.",
+  learned: "אוטומציה = לבדיקות חוזרות ויציבות | ידני = לפיצ'רים חדשים ולשיפוט אנושי",
+};
+
+const STEPS_QA: Step[] = [QA0, QA1, QA2, QA3, QA4, QA5, QA6];
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEQUENCE INTERACTION
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -3624,6 +3849,18 @@ const DOMAIN_META: Record<string, {
     ],
     careerText: "כל מה שחווית היום — UX Designers ב-Fiverr, Monday.com, WalkMe ו-IDF Tech עובדות איתו כל יום. לילך התחילה ממדעי חברה ואחרי שנה הפכה ל-UX Researcher.",
   },
+  qa: {
+    simTitle: "טעימה — QA",
+    heroTexts: ["חשבת כמו בודקת QA!", "בדרך הנכונה לאיכות!", "ניצחת את השלב הראשון!"],
+    skills: [
+      { label: "חשיבה ביקורתית", val: 78 },
+      { label: "זיהוי מקרי קצה", val: 72 },
+      { label: "כתיבת מקרה בדיקה", val: 68 },
+      { label: "תיעוד באגים", val: 75 },
+      { label: "בדיקות רגרסיה", val: 62 },
+    ],
+    careerText: "כל מה שבדקת היום — QA Engineers ב-Wix, Monday.com, Fiverr ו-Riskified עושות גרסאות מתקדמות שלו כל יום. הדס עברה מהוראה ל-QA אחרי קורס בן 4 חודשים — ואחרי חצי שנה קיבלה עבודה.",
+  },
 };
 
 function getSteps(domain: string): Step[] {
@@ -3632,6 +3869,7 @@ function getSteps(domain: string): Step[] {
   if (domain === "ai") return STEPS_AI;
   if (domain === "cyber") return STEPS_CYBER;
   if (domain === "ux") return STEPS_UX;
+  if (domain === "qa") return STEPS_QA;
   return STEPS_CODE; // default (code)
 }
 
@@ -4033,7 +4271,7 @@ function getNextDomain(currentDomain: string): string | null {
   }
 }
 
-const IMPLEMENTED_DOMAINS = new Set(["code", "data", "marketing", "ai", "cyber", "ux"]);
+const IMPLEMENTED_DOMAINS = new Set(["code", "data", "marketing", "ai", "cyber", "ux", "qa"]);
 
 export default function SimPage() {
   const { domain } = useParams();
@@ -4190,6 +4428,11 @@ export default function SimPage() {
                 const totalSteps = getSteps(domainStr).length;
                 saveSimulationProgress(domainStr, totalSteps, true, s);
                 updateTask(`sim-${domainStr}`, "done", 100);
+                // Unlock the domain's "day in the life" step in its journey map
+                try {
+                  const journey = JSON.parse(localStorage.getItem(`${domainStr}-journey`) || "{}");
+                  localStorage.setItem(`${domainStr}-journey`, JSON.stringify({ ...journey, sim: true }));
+                } catch {/* ignore */}
               }}
             />
           )}

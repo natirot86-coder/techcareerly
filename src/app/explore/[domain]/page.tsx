@@ -239,32 +239,32 @@ function CodeContent() {
               title: "טעימה — debug הבאג של הלקוח",
               sub: "JavaScript runtime · שלושה ניסיונות לאתר ולתקן · ~10 דק'",
               href: "/explore/code/sim",
-              doneKey: "sim", lockedBy: null as string | null, comingSoon: false,
+              doneKey: "sim" as const, lockedBy: null,
             },
             {
               num: "2", emoji: "🛠️",
               title: "יום בחיי מפתח",
-              sub: "sprint · code review · deployment · ~15 דק'",
-              href: "#",
-              doneKey: "day", lockedBy: "sim" as string | null, comingSoon: true,
+              sub: "triage · code review · git flow · post-mortem · ~15 דק'",
+              href: "/explore/code/learn/day",
+              doneKey: "day" as const, lockedBy: "sim" as const,
             },
             {
               num: "3", emoji: "🕵️",
               title: "תעלומת הקוד",
-              sub: "bug בפרודקשן — git blame, logs, hotfix · ~20 דק'",
-              href: "#",
-              doneKey: "mystery", lockedBy: "day" as string | null, comingSoon: true,
+              sub: "regression בפרודקשן — git log, blame, logs · ~20 דק'",
+              href: "/explore/code/learn/mystery",
+              doneKey: "mystery" as const, lockedBy: "day" as const,
             },
             {
               num: "4", emoji: "💭",
               title: "כלי עיבוד החוויה",
               sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
-              href: "#",
-              doneKey: "experience", lockedBy: "mystery" as string | null, comingSoon: true,
+              href: "/explore/code/experience",
+              doneKey: "experience" as const, lockedBy: "mystery" as const,
             },
           ].map((step, i, arr) => {
             const isDone = !!journey[step.doneKey];
-            const isLocked = step.comingSoon || (step.lockedBy ? !journey[step.lockedBy] : false);
+            const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
             const isFirst = i === 0;
             const highlight = isFirst && !journey["sim"];
 
@@ -294,13 +294,13 @@ function CodeContent() {
                           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
                             style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
                         )}
-                        {step.comingSoon && (
-                          <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" }}>בקרוב</span>
-                        )}
                       </div>
                       <div className="mt-0.5">
-                        {(() => {
+                        {isLocked ? (
+                          <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+                            זמין אחרי שלב {parseInt(step.num) - 1}
+                          </span>
+                        ) : (() => {
                           const parts = step.sub.split(/ · (~\d+.*)$/);
                           return (
                             <>
@@ -1606,6 +1606,254 @@ function NetworksContent() {
   );
 }
 
+// ─── QA ──────────────────────────────────────────────────────────────────────
+function QAContent() {
+  const [picked, setPicked] = useState<number | null>(null);
+  const [journey, setJourney] = useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("qa-journey");
+      if (saved) setJourney(JSON.parse(saved));
+    } catch {/* ignore */}
+  }, []);
+
+  const AMBER = "#d97706";
+  const BUGGY_ROW = 2;
+
+  const cart = [
+    { label: "חולצה × 2 — ₪49.90 ליחידה", total: "₪99.80" },
+    { label: "מכנסיים × 1", total: "₪129.90" },
+    { label: "סה\"כ לתשלום", total: "₪199.80" },
+  ];
+
+  return (
+    <>
+      <div className="mb-6 rounded-2xl p-4 text-[13.5px] leading-[1.7]" style={{ background: "rgba(217,119,6,0.08)" }}>
+        כל אפליקציה יוצאת עם באגים — השאלה היא רק כמה מהם הלקוחות רואים.{" "}
+        <span className="font-black" style={{ color: "#023e8a" }}>
+          בודקת QA היא זו שתופסת אותם קודם.
+        </span>
+      </div>
+
+      <div className="mb-7">
+        <Label text="מצאי את הבאג — לחצי על השורה החשודה" />
+        <div className="rounded-xl px-4 py-3 mb-3 flex gap-2 items-start"
+          style={{ background: "rgba(217,119,6,0.06)", border: "1px solid rgba(217,119,6,0.15)" }}>
+          <span className="text-[16px] shrink-0">🧾</span>
+          <div className="text-[12.5px] leading-[1.55]" style={{ color: "#92400e" }}>
+            <span className="font-bold">זו קבלה מעגלת קניות אמיתית.</span>{" "}
+            שורה אחת בה לא מסתכמת נכון — איזו?
+          </div>
+        </div>
+        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(217,119,6,0.2)", boxShadow: "0 4px 24px rgba(217,119,6,0.1)" }}>
+          {cart.map((row, i) => {
+            const isCorrect = i === BUGGY_ROW;
+            const showResult = picked !== null;
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={picked !== null}
+                onClick={() => setPicked(i)}
+                className="w-full"
+              >
+                <div
+                  className="px-4 py-3 flex items-center justify-between border-t text-[13px] text-right transition-all"
+                  style={{
+                    borderColor: "rgba(0,0,0,0.06)",
+                    background: showResult && isCorrect
+                      ? "rgba(22,163,74,0.08)"
+                      : picked === i
+                      ? "rgba(220,38,38,0.06)"
+                      : "#fff",
+                    fontWeight: i === 2 ? 700 : 400,
+                  }}
+                >
+                  <span style={{ color: "#1c1c1c" }}>{row.label}</span>
+                  <span style={{ color: "#1c1c1c" }}>{row.total}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {picked !== null && (
+          <div
+            className="mt-3 rounded-xl px-4 py-3 text-[12.5px] leading-[1.55]"
+            style={{
+              background: picked === BUGGY_ROW ? "rgba(22,163,74,0.08)" : "rgba(220,38,38,0.08)",
+              border: `1px solid ${picked === BUGGY_ROW ? "#16a34a44" : "#dc262644"}`,
+              color: picked === BUGGY_ROW ? "#15803d" : "#b91c1c",
+            }}
+          >
+            {picked === BUGGY_ROW
+              ? "✓ מדויק! ₪99.80 + ₪129.90 = ₪229.70 — לא ₪199.80. פער של ₪30 בכל הזמנה. QA טובה בודקת גם חשבון פשוט, לא רק אם המסך נטען."
+              : "✗ שימי לב לסכום הכולל: ₪99.80 + ₪129.90 אמור להיות ₪229.70, לא ₪199.80. זה בדיוק סוג הבאג שבדיקה ידנית תופסת תוך שניות."}
+          </div>
+        )}
+      </div>
+
+      <WowStat
+        stat="100×"
+        label="באג שנתפס אחרי ההשקה עולה עד פי 100 מבאג שנתפס בשלב התכנון"
+        sub="כלל אצבע ותיק בתעשייה — ככל שתופסים באג מוקדם יותר, התיקון זול יותר"
+        color={AMBER}
+      />
+
+      {/* Industry context block */}
+      <div className="mb-7">
+        <Label text="בדיקות תוכנה — הקשר תעשייה" />
+        <div className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid rgba(217,119,6,0.15)" }}>
+          <div className="mb-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.3)" }}>תפקידים מרכזיים</div>
+            <div className="flex flex-wrap gap-1.5">
+              {["QA Engineer", "Manual Tester", "QA Automation Engineer", "SDET", "Test Lead"].map(r => (
+                <span key={r} className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: "rgba(217,119,6,0.1)", color: AMBER }}>{r}</span>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(217,119,6,0.06)", border: "1px solid rgba(217,119,6,0.15)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>שכר</div>
+              <div className="text-[14px] font-black" style={{ color: AMBER, ...HEEBO }}>₪11K – ₪24K</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>לחודש · לפי נתיב (ידני/אוטומציה)</div>
+            </div>
+            <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.08)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>נתיב כניסה</div>
+              <div className="text-[11px] font-bold" style={{ color: "#023e8a" }}>קורס QA · בלי צורך בקוד</div>
+              <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>שלושה עד חמישה חודשים</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <JobMarketBlock
+        color={AMBER}
+        demand="נקודת כניסה מהירה להייטק — כמעט כל חברת תוכנה צריכה בודקת איכות"
+        hitech="QA Engineer · Automation Engineer · SDET · Test Lead"
+        nonHitech="פינטק · e-commerce · בריאות דיגיטלית · ממשלה"
+        ai="כלי AI מייצרים מקרי בדיקה ומזהים אנומליות אוטומטית — אבל שיפוט על מה 'חשוב לבדוק' ואילו מקרי קצה מסוכנים עדיין דורש בודקת אנושית. QA שמשלבת AI בתהליך העבודה — עובדת מהר יותר, לא מיותרת."
+      />
+
+      <SimTeaser
+        emoji="🐞"
+        challenge="בטעימה: שבעה מקרים קצרים — מציאת מקרה בדיקה טוב, סידור מחזור חיי באג, הבחנה בין Severity ל-Priority, ועוד."
+      />
+
+      {/* Journey map */}
+      <div className="mb-7">
+        <Label text="המסלול שלך ב-QA" />
+        <div className="flex flex-col gap-2">
+          {[
+            {
+              num: "1", emoji: "🐞",
+              title: "טעימה — מצאי את הבאג",
+              sub: "שבעה מקרים · מקרי בדיקה · Bug lifecycle · Severity/Priority · ~10 דק'",
+              href: "/explore/qa/sim",
+              doneKey: "sim" as const, lockedBy: null,
+            },
+            {
+              num: "2", emoji: "🛠️",
+              title: "יום בחיי QA Engineer",
+              sub: "triage · כתיבת מקרי בדיקה · דיווח באג · regression · ~15 דק'",
+              href: "/explore/qa/learn/day",
+              doneKey: "day" as const, lockedBy: "sim" as const,
+            },
+            {
+              num: "3", emoji: "🕵️",
+              title: "תעלומה: איך זה עבר את ה-QA?",
+              sub: "חקירת coverage ולוגי CI — למה הבאג לא נתפס · ~20 דק'",
+              href: "/explore/qa/learn/mystery",
+              doneKey: "mystery" as const, lockedBy: "day" as const,
+            },
+            {
+              num: "4", emoji: "💭",
+              title: "כלי עיבוד החוויה",
+              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              href: "/explore/qa/experience",
+              doneKey: "experience" as const, lockedBy: "mystery" as const,
+            },
+          ].map((step, i, arr) => {
+            const isDone = !!journey[step.doneKey];
+            const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
+            const isFirst = i === 0;
+            const highlight = isFirst && !journey["sim"];
+
+            return (
+              <div key={step.num}>
+                <Link href={isLocked ? "#" : step.href} className="block" onClick={isLocked ? (e) => e.preventDefault() : undefined}>
+                  <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                    style={{
+                      background: isDone ? "rgba(217,119,6,0.06)" : highlight ? AMBER : "#fff",
+                      border: isDone ? "1.5px solid rgba(217,119,6,0.2)" : isLocked ? "1px solid rgba(0,0,0,0.06)" : highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
+                      opacity: isLocked ? 0.55 : 1,
+                      boxShadow: highlight ? "0 4px 20px rgba(217,119,6,0.25)" : "none",
+                    }}
+                  >
+                    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                      style={{ background: isDone ? AMBER : highlight ? "rgba(255,255,255,0.25)" : "rgba(217,119,6,0.1)", color: isDone || highlight ? "#fff" : AMBER }}>
+                      {isDone ? "✓" : step.num}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px]">{isLocked ? "🔒" : step.emoji}</span>
+                        <span className="text-[12.5px] font-bold"
+                          style={{ color: isDone ? AMBER : highlight ? "#fff" : "#023e8a" }}>
+                          {step.title}
+                        </span>
+                        {highlight && (
+                          <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                        )}
+                      </div>
+                      <div className="mt-0.5">
+                        {isLocked ? (
+                          <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+                            זמין אחרי שלב {parseInt(step.num) - 1}
+                          </span>
+                        ) : (() => {
+                          const parts = step.sub.split(/ · (~\d+.*)$/);
+                          return (
+                            <>
+                              <div className="text-[11px]" dir="rtl"
+                                style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                                {parts[0]}
+                              </div>
+                              {parts[1] && (
+                                <div className="text-[10px] mt-0.5 font-bold" dir="rtl"
+                                  style={{ color: highlight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.28)" }}>
+                                  ⏱ {parts[1]}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    <span className="text-[16px] font-bold shrink-0"
+                      style={{ color: isDone ? AMBER : highlight ? "#fff" : isLocked ? "rgba(0,0,0,0.2)" : AMBER }}>
+                      {isLocked ? "🔒" : "←"}
+                    </span>
+                  </div>
+                </Link>
+                {i < arr.length - 1 && (
+                  <div className="flex justify-center my-1">
+                    <div className="w-[1.5px] h-3"
+                      style={{ background: isDone ? "rgba(217,119,6,0.4)" : "rgba(217,119,6,0.2)" }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <SalaryCard min={11000} max={24000} />
+    </>
+  );
+}
+
 // ─── Meta (header data) ───────────────────────────────────────────────────────
 const META: Record<string, { badge: string; label: string; tagline: string; color: string }> = {
   code:      { badge: "פ",  label: "פיתוח תוכנה",      tagline: "הופכות רעיונות לאפליקציות ומוצרים שמשנים חיים",  color: "#3b82f6" },
@@ -1615,6 +1863,7 @@ const META: Record<string, { badge: string; label: string; tagline: string; colo
   data:      { badge: "ד",  label: "דאטה ואנליטיקס",   tagline: "מוצאות תובנות חבויות שמשנות החלטות עסקיות",     color: "#0d9488" },
   marketing: { badge: "ש",  label: "שיווק דיגיטלי",    tagline: "מחברות מוצרים לאנשים הנכונים בזמן הנכון",       color: "#f97316" },
   networks:  { badge: "ר",  label: "רשתות ותקשורת",    tagline: "בונות את התשתית שמחזיקה את האינטרנט — כל רגע", color: "#3b82f6" },
+  qa:        { badge: "QA", label: "בדיקות תוכנה",     tagline: "תופסות את הבאגים לפני שהלקוחות מוצאים אותם",   color: "#d97706" },
 };
 
 const CONTENT_MAP: Record<string, () => React.ReactElement> = {
@@ -1625,6 +1874,7 @@ const CONTENT_MAP: Record<string, () => React.ReactElement> = {
   data:      DataContent,
   marketing: MarketingContent,
   networks:  NetworksContent,
+  qa:        QAContent,
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

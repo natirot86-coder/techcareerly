@@ -6,7 +6,7 @@ const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY  = "#023e8a";
 const ORANGE = "#fb8500";
 
-const ALL_DOMAINS = ["code","data","networks","cyber","ai","ux","marketing"];
+const ALL_DOMAINS = ["code","data","networks","cyber","ai","ux","marketing","qa"];
 
 function countCompleted(): number {
   return ALL_DOMAINS.filter(id => {
