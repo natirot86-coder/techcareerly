@@ -50,6 +50,7 @@ const NODES: Node[] = [
   // ── Bottom nav (soon) ─────────────────────────────────────────────────────
   { id: "chat",  label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,  cx: 770, cy: 40,  w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
   { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 770, cy: 110, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "admin", label: "ניהול מוסדות", sub: "29 מוסדות · פנימי", url: `${BASE}/admin/institutions`, cx: 770, cy: 190, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
   // ── Explore ───────────────────────────────────────────────────────────────
   { id: "explore", label: "חקר תחומים", sub: "דירוג 7 תחומים", url: `${BASE}/explore`, cx: 510, cy: 190, w: 140, color: "#fb8500" },
@@ -96,18 +97,19 @@ const NODES: Node[] = [
   { id: "booked",  label: "הפגישה נקבעה",  sub: "מה להביא לפגישה",       url: `${BASE}/contact/booked`, cx: 660, cy: 1080, w: 145, color: "#023e8a", badge: "חדש", badgeColor: "#023e8a" },
 
   // ── שלב 4 — מסלול לימודים ────────────────────────────────────────────────
-  { id: "paths", label: "מסלולי לימוד", sub: "8 מסכים — לחצו על כל אחד למטה", url: `${BASE}/paths`, cx: 510, cy: 1180, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
+  { id: "paths", label: "מסלולי לימוד", sub: "9 מסכים — לחצו על כל אחד למטה", url: `${BASE}/paths`, cx: 510, cy: 1180, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
 
   // ── שמונת המסכים של שלב 4 ────────────────────────────────────────────────
   // כל אחד נפתח ישירות עם נתוני דמו, בלי לעבור את כל הזרימה
-  { id: "p-intro",        label: "פתיחה",          sub: "מה נעשה כאן",         url: `${BASE}/paths?reset=1`,                  cx: 150, cy: 1290, w: 120, color: "#8b5cf6" },
-  { id: "p-quiz",         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,        cx: 350, cy: 1290, w: 115, color: "#8b5cf6" },
-  { id: "p-result",       label: "המסלול המומלץ",  sub: "השוואת 3 מסלולים",    url: `${BASE}/paths?demo=1&phase=result`,      cx: 550, cy: 1290, w: 135, color: "#8b5cf6" },
-  { id: "p-blockers",     label: "מה עומד בדרך",   sub: "חסם ← פתרון + תאריך", url: `${BASE}/paths?demo=1&phase=blockers`,    cx: 780, cy: 1290, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
-  { id: "p-institutions", label: "מוסדות",         sub: "בניית רשימה",         url: `${BASE}/paths?demo=1&phase=institutions`, cx: 780, cy: 1390, w: 120, color: "#8b5cf6" },
-  { id: "p-prep",         label: "שאלות לפגישה",   sub: "נוצרות מהתשובות",     url: `${BASE}/paths?demo=1&phase=prep`,        cx: 550, cy: 1390, w: 135, color: "#8b5cf6" },
-  { id: "p-research",     label: "ערכת חקר",       sub: "אופציונלי",           url: `${BASE}/paths?demo=1&phase=research`,    cx: 350, cy: 1390, w: 115, color: "#8b5cf6" },
-  { id: "p-done",         label: "סיכום",          sub: "לפני/בפגישה + CTA",   url: `${BASE}/paths?demo=1&phase=done`,        cx: 150, cy: 1390, w: 120, color: "#8b5cf6", badge: "סיום", badgeColor: "#8b5cf6" },
+  { id: "p-intro",        label: "פתיחה",          sub: "מה נעשה כאן",         url: `${BASE}/paths?reset=1`,                   cx: 110, cy: 1290, w: 110, color: "#8b5cf6" },
+  { id: "p-quiz",         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,         cx: 280, cy: 1290, w: 115, color: "#8b5cf6" },
+  { id: "p-result",       label: "המסלול המומלץ",  sub: "ניקוד משוקלל",        url: `${BASE}/paths?demo=1&phase=result`,       cx: 450, cy: 1290, w: 135, color: "#8b5cf6" },
+  { id: "p-routes",       label: "כל הדרכים מכאן", sub: "3 מסלולים כקווי רכבת", url: `${BASE}/paths?demo=1&phase=routes`,       cx: 640, cy: 1290, w: 145, color: "#8b5cf6", badge: "חדש", badgeColor: "#8b5cf6" },
+  { id: "p-blockers",     label: "מה עומד בדרך",   sub: "חסם ← פתרון + תאריך", url: `${BASE}/paths?demo=1&phase=blockers`,     cx: 840, cy: 1290, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
+  { id: "p-institutions", label: "מוסדות",         sub: "בניית רשימה",         url: `${BASE}/paths?demo=1&phase=institutions`, cx: 840, cy: 1395, w: 120, color: "#8b5cf6" },
+  { id: "p-prep",         label: "שאלות לפגישה",   sub: "נוצרות מהתשובות",     url: `${BASE}/paths?demo=1&phase=prep`,         cx: 640, cy: 1395, w: 135, color: "#8b5cf6" },
+  { id: "p-research",     label: "ערכת חקר",       sub: "אופציונלי",           url: `${BASE}/paths?demo=1&phase=research`,     cx: 430, cy: 1395, w: 115, color: "#8b5cf6" },
+  { id: "p-done",         label: "סיכום",          sub: "לפני/בפגישה + CTA",   url: `${BASE}/paths?demo=1&phase=done`,         cx: 220, cy: 1395, w: 120, color: "#8b5cf6", badge: "סיום", badgeColor: "#8b5cf6" },
 ];
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
@@ -180,7 +182,8 @@ const EDGES: Edge[] = [
   { from: "paths",          to: "p-intro",        color: "#8b5cf6" },
   { from: "p-intro",        to: "p-quiz",         color: "#8b5cf6" },
   { from: "p-quiz",         to: "p-result",       color: "#8b5cf6" },
-  { from: "p-result",       to: "p-blockers",     color: "#8b5cf6" },
+  { from: "p-result",       to: "p-routes",       color: "#8b5cf6" },
+  { from: "p-routes",       to: "p-blockers",     color: "#8b5cf6" },
   { from: "p-blockers",     to: "p-institutions", color: "#fb8500" },
   { from: "p-institutions", to: "p-prep",         color: "#8b5cf6" },
   { from: "p-prep",         to: "p-research",     label: "אופציונלי", dashed: true, color: "#8b5cf6" },
@@ -395,7 +398,7 @@ const LABELS = [
   { text: "סיכום והכנה לפגישה",   x: 10,  y: 935,  color: "#fb8500" },
   { text: "פגישה 2 עם הרכזת",     x: 10,  y: 1035, color: "#023e8a" },
   { text: "שלב 4 — מסלול לימודים · נפתח גם מהדשבורד ומכפתור 'חקר' בניווט", x: 10, y: 1135, color: "#7c3aed" },
-  { text: "שמונת המסכים של שלב 4 — לחיצה פותחת כל מסך ישירות עם נתוני דמו", x: 10, y: 1235, color: "#8b5cf6" },
+  { text: "תשעת המסכים של שלב 4 — לחיצה פותחת כל מסך ישירות עם נתוני דמו", x: 10, y: 1235, color: "#8b5cf6" },
 ];
 
 // ─── Main ────────────────────────────────────────────────────────────────────
