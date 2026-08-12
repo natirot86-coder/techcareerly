@@ -251,6 +251,21 @@ export const COURSES: Course[] = [
     status: "active",
     verified: "2026-08-13",
   },
+  {
+    id: "mod-netivei-cyber",
+    name: "סייבר — בנתיבי אודי",
+    institutionId: "netivei-udi",
+    programId: "mod-hitech",
+    link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/netiveiudi.aspx",
+    cycleNote: "לא אומת — לברר מול העמותה",
+    what: "מקורות משניים מייחסים לעמותה גם הכשרת סייבר, לצד ה-DevOps.",
+    who: "חיילים משוחררים — בחלק מהמסלולים חינם לגמרי לתושבי העוטף, הדרום והצפון",
+    cost: "לא אומת",
+    domains: ["cyber"],
+    status: "hidden",
+    notes: "🔴 מוסתר עד אימות: הכתבה שמצאנו מערבבת בין ׳Cyber Research Experts׳ של Infinity Labs לבין קורסי העמותה, ואי אפשר לדעת מה של מי. 📞 שיחה אחת לעמותה סוגרת את זה — וגם את שאלת החינם לעוטף.",
+    verified: "2026-08-13",
+  },
 ];
 
 // ─── מחזור ───────────────────────────────────────────────────────────────────
