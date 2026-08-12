@@ -34,7 +34,9 @@ function ProgressSummary({ candidate, simCount, currentStage }: {
           { done: daysSince >= 0, label: `הצטרפת לפני ${daysSince === 0 ? "היום" : `${daysSince} ימים`}` },
           { done: !!candidate.onboarding_completed_at, label: "שאלון אישי הושלם" },
           { done: simCount > 0, label: `${simCount} מתוך 6 סימולציות הושלמו` },
-          { done: currentStage >= 2, label: "אושרת על ידי הרכזת" },
+          // היה כתוב כאן "אושרת על ידי הרכזת" — והרכזת לא אישרה כלום.
+          // השלב עלה כשהמועמד לחץ על כפתור בעצמו. עכשיו זה מה שבאמת קרה.
+          { done: currentStage >= 2, label: "קבעת פגישת היכרות" },
         ].map((item, i) => (
           <div key={i} className="flex items-center gap-2 text-[12.5px]">
             <span style={{ color: item.done ? "#6fbf8a" : "rgba(0,0,0,0.25)", fontSize: 14 }}>
@@ -62,59 +64,62 @@ function ProgressSummary({ candidate, simCount, currentStage }: {
 function Stage1() {
   return (
     <div className="flex flex-col gap-[10px]">
-      <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mb-1">המשימות שלך</div>
+      {/*
+        עד עכשיו ישב כאן "המתנה לאישור הרכזת" עם מספר וואטסאפ שלא קיים
+        (972500000000) — כלומר המתנה פסיבית לאישור שאין לו איפה לקרות,
+        והפעולה היחידה שהוצעה הובילה לשומקום.
+        מה שבאמת פותח את ההמשך הוא קביעת הפגישה, וזה מה שמוצע כאן.
+      */}
+      <Link
+        href="/contact?m=1"
+        className="block rounded-xl p-4"
+        style={{ background: "rgba(251,133,0,0.07)", border: "1px solid rgba(251,133,0,0.22)" }}
+      >
+        <div className="text-[13.5px] font-bold text-navy mb-[3px]">הצעד הבא: לקבוע פגישת היכרות</div>
+        <div className="text-[12px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.5)" }}>
+          שיחה של כ-45 דקות. לא מביאים כלום ואין מה להתכונן — רק מכירים ובונים תוכנית.
+        </div>
+        <div className="text-[12px] font-bold mt-2" style={{ color: "#fb8500" }}>
+          לבחירת מועד ←
+        </div>
+      </Link>
+      <Link href="/waiting" className="text-[12px] font-bold text-center py-2" style={{ color: "#023e8a" }}>
+        מה מחכה לי בפגישה?
+      </Link>
+
+      <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mt-1">המשימות שלך</div>
       <TaskCard label="הורדת האפליקציה" status="done" />
       <TaskCard label="מילוי שאלון בסיס" status="done" />
-      <TaskCard label="המתנה לאישור הרכזת" status="in-progress" />
-
-      {/* Upgraded waiting card */}
-      <div
-        className="rounded-xl p-4 mt-2 flex flex-col gap-3"
-        style={{
-          background: "rgba(2,62,138,0.04)",
-          border: "1px solid rgba(2,62,138,0.1)",
-        }}
-      >
-        <div>
-          <div className="text-[13.5px] font-bold text-navy">הרכזת שלנו בטיפול בבקשתך</div>
-          <div className="text-[12.5px] mt-1" style={{ color: "rgba(0,0,0,0.5)" }}>
-            בדרך כלל מגיבים תוך יום עסקים
-          </div>
-        </div>
-        <a
-          href="https://wa.me/972500000000"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 border rounded-xl px-4 py-[10px] text-[13px] font-bold"
-          style={{ borderColor: "rgba(2,62,138,0.2)", color: "#023e8a", background: "#fff" }}
-        >
-          שלחי הודעת WhatsApp לרכזת
-        </a>
-      </div>
+      <TaskCard label="קביעת פגישת היכרות" status="pending" />
     </div>
   );
 }
 
 // ─── Stage 2 ──────────────────────────────────────────────────────────────────
-function Stage2({ onConfirm, tasks }: { onConfirm: () => void; tasks: Task[] }) {
-  const meetingTask = tasks.find(t => t.task_key === "intake-meeting");
-  const confirmed = meetingTask?.status === "done";
-
-  function handleConfirm() {
-    updateTask("intake-meeting", "done", 100);
-    onConfirm();
-  }
-
+function Stage2({ tasks }: { tasks: Task[] }) {
   return (
     <div className="flex flex-col gap-[10px]">
+      {/* מרחב ההמתנה. עד עכשיו ישבו כאן שם רכזת ומועד מומצאים — הוסרו */}
+      <Link
+        href="/waiting"
+        className="block rounded-xl p-4"
+        style={{ background: "rgba(251,133,0,0.07)", border: "1px solid rgba(251,133,0,0.22)" }}
+      >
+        <div className="text-[13.5px] font-bold text-navy mb-[3px]">הדרך שלך עד הפגישה</div>
+        <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>
+          איפה את/ה עומד/ת, טעימה קצרה אחת, ומה מחכה בפגישה
+        </div>
+        <div className="text-[12px] font-bold mt-2" style={{ color: "#fb8500" }}>
+          למרחב ההמתנה ←
+        </div>
+      </Link>
+      {/* הכפתור "אישור הגעה למפגש" הוסר מכאן. הסימון עבר למרחב ההמתנה,
+          שם הוא נשאל אחרי שהמועד עבר ובניסוח אנושי ("איך היה?") ולא
+          כמשימה בירוקרטית שמופיעה עוד לפני שהפגישה קרתה */}
       <div className="bg-white border border-[rgba(2,62,138,0.08)] rounded-xl p-4">
-        <div className="text-[12px] font-bold text-[rgba(0,0,0,0.45)] mb-1">המפגש הקרוב שלך</div>
-        <div className="text-[15px] font-bold text-navy">מפגש אינטייק עם דנה</div>
-        <div className="text-[13px] text-[rgba(0,0,0,0.5)] mt-1">יום ב׳ · 14:00 · פגישה פרונטלית</div>
-        <div className="mt-3">
-          <Button variant={confirmed ? "outline" : "orange"} onClick={handleConfirm}>
-            {confirmed ? "הגעה אושרה ✓" : "אישור הגעה למפגש"}
-          </Button>
+        <div className="text-[12px] font-bold text-[rgba(0,0,0,0.45)] mb-1">אחרי הפגישה</div>
+        <div className="text-[13px] text-[rgba(0,0,0,0.5)] leading-[1.7]">
+          כשהמועד יעבור נשאל אותך איך היה, ואז ייפתחו שבעת התחומים של שלב החשיפה.
         </div>
       </div>
       <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mt-2">המשימות שלך</div>
@@ -222,12 +227,44 @@ function Stage4() {
 
 // ─── Stage 5 ──────────────────────────────────────────────────────────────────
 function Stage5() {
+  const [openCount, setOpenCount] = useState(0);
+  const [doneCount, setDoneCount] = useState(0);
+  const [docCount, setDocCount] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    try {
+      const tasks = JSON.parse(localStorage.getItem("plan-tasks") || "[]") as { status: string }[];
+      setOpenCount(tasks.filter(t => t.status === "open").length);
+      setDoneCount(tasks.filter(t => t.status === "done").length);
+      setDocCount(JSON.parse(localStorage.getItem("plan-docs") || "[]").length);
+      setStarted(!!localStorage.getItem("plan-intro-seen"));
+    } catch { /* empty storage */ }
+  }, []);
+
   return (
     <div className="flex flex-col gap-[10px]">
-      <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mb-1">המשימות שלך</div>
-      <TaskCard label="בדיקת זכאות למלגה" status="pending" />
-      <TaskCard label="הכנת מסמכים פיננסיים" status="pending" />
-      <TaskCard label="יצירת קשר עם המוסד" status="pending" />
+      <Link
+        href="/plan"
+        className="block rounded-xl p-4"
+        style={{ background: "rgba(251,133,0,0.07)", border: "1px solid rgba(251,133,0,0.22)" }}
+      >
+        <div className="text-[13.5px] font-bold text-navy mb-[3px]">התוכנית שלי</div>
+        <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>
+          {started
+            ? openCount > 0
+              ? `${openCount} משימות פתוחות${doneCount > 0 ? ` · ${doneCount} כבר סגורות` : ""}`
+              : "אין משימות פתוחות כרגע"
+            : "מלגות, הרשמה, כסף ומגורים — לפי חודשים, פעולה אחת בכל פעם"}
+        </div>
+        <div className="text-[12px] font-bold mt-2" style={{ color: "#fb8500" }}>
+          {started ? "להמשיך מאיפה שעצרת ←" : "לראות את התוכנית ←"}
+        </div>
+      </Link>
+      <div className="text-[13px] font-bold text-[rgba(0,0,0,0.55)] mt-2">המשימות שלך</div>
+      <TaskCard label="לראות את החשבון — כמה זה עולה וכמה המלגות מכסות" status={started ? "done" : "pending"} progress={started ? 100 : 0} />
+      <TaskCard label="להגיש למלגות שהחלון שלהן פתוח" status={doneCount > 0 ? "done" : "pending"} progress={doneCount > 0 ? 100 : 0} />
+      <TaskCard label="לאסוף את המסמכים שביקשו ממך" status={docCount > 0 ? "done" : "pending"} progress={docCount > 0 ? 100 : 0} />
     </div>
   );
 }
@@ -320,13 +357,36 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // דרוס עם המצב האמיתי מ-Supabase ברגע שהוא מגיע
+  /**
+   * השלב נגזר מקביעת הפגישות, ולא מאישור של רכזת.
+   *
+   * הסיבה: אין לרכזת שום מקום לאשר בו — אין מאנדיי ואין מסך רכזת. עד עכשיו
+   * מי שקידם את השלב היה המועמד עצמו בלחיצה על "אישור הגעה", כלומר השער
+   * היה פיקציה: הוא לא עצר אף אחד, אבל כן שיקר למי שבאמת המתין.
+   *
+   * מה שמקדם הוא **פעולה אמיתית שקרתה**: פגישה שנקבעה.
+   * לוקחים את המקסימום בין מה שנגזר לבין מה ששמור בסופאבייס, כדי שרכזת
+   * שתקדם ידנית בעתיד לא תידרס.
+   */
   useEffect(() => {
+    const flag = (k: string) => localStorage.getItem(k) === "true";
+    const has = (k: string) => !!localStorage.getItem(k);
+    // ⚠️ קביעת פגישה איננה השתתפות בה. לכן שלב 2 נגזר מהקביעה, אבל שלב 3
+    // ומעלה נגזרים ממה שהמועמד **עשה בפועל** — ולא מהזמנה ביומן.
+    const derived =
+      has("plan-tasks") || has("plan-intro-seen") ? 5
+        : has("paths-quiz") || has("paths-journey") ? 4
+          : has("waiting-taste") && flag("meeting-1-attended") ? 3
+            : flag("meeting-1-booked") ? 2
+              : 1;
+    setCurrentStage(s => Math.max(s, derived));
+
     getCandidate().then((c) => {
       if (!c) return;
       setCandidate(c);
       if (c.first_name) setUserName(c.first_name);
-      setCurrentStage(c.current_stage);
+      setCurrentStage(Math.max(c.current_stage, derived));
+      if (derived > c.current_stage) updateCurrentStage(derived);
     });
     isAnonymousSession().then(setIsAnonymous);
     // Load sim progress for stage 3
@@ -350,7 +410,7 @@ export default function DashboardPage() {
   function renderStage() {
     switch (currentStage) {
       case 1: return <Stage1 />;
-      case 2: return <Stage2 onConfirm={() => setShowToast(true)} tasks={tasks} />;
+      case 2: return <Stage2 tasks={tasks} />;
       case 3: return <Stage3 tasks={tasks} simDone={simDone} />;
       case 4: return <Stage4 />;
       case 5: return <Stage5 />;

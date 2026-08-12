@@ -16,14 +16,28 @@ export default function BottomNav() {
   const [exploreHref, setExploreHref] = useState("/explore");
 
   useEffect(() => {
-    const booked = localStorage.getItem("meeting-booked") === "true";
+    // הטאב "חקר" מוביל למקום שבו המשתמש באמת נמצא במסע, ולא לדף קבוע.
+    // נבדק מהמאוחר למוקדם.
+    //
+    // ⚠️ `meeting-booked` הוא דגל היסטורי מהתקופה שבה הייתה במערכת פגישה אחת
+    // בלבד — פגישה 2. מאז הוא נדלק גם לפגישה 1, ולכן **אסור להסתמך עליו כאן**:
+    // מי שקבע פגישת היכרות היה מגיע לשלב 4 לפני שדיבר עם אדם אחד.
+    // הדגלים הממוספרים הם המקור היחיד.
+    const ls = (k: string) => localStorage.getItem(k) === "true";
+    const inPlan = !!localStorage.getItem("plan-intro-seen") || !!localStorage.getItem("plan-tasks");
     const inPaths = !!localStorage.getItem("paths-quiz") || !!localStorage.getItem("paths-journey");
-    if (booked || inPaths) setExploreHref("/paths");
+    const met2 = ls("meeting-2-booked") || ls("meeting-3-booked");
+    const met1 = ls("meeting-1-booked");
+
+    if (inPlan) setExploreHref("/plan");
+    else if (inPaths || met2) setExploreHref("/paths");
+    else if (met1) setExploreHref("/waiting");
   }, []);
 
   const hrefFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreHref : t.href);
   const isActive = (href: string) =>
-    path.startsWith(href) || (href === "/paths" && path.startsWith("/explore"));
+    path.startsWith(href) ||
+    ((href === "/paths" || href === "/plan" || href === "/waiting") && path.startsWith("/explore"));
 
   return (
     <>

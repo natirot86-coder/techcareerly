@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #ece7de; }
+  * { box-sizing: border-box; }
+  a { color: #023e8a; }
+  a:hover { color: #012c62; }
+  button { font-family: inherit; }
+  ::selection { background: #ffe3bd; }
+</style>
+</helmet>
+<div dir="rtl" style="min-height:100vh;display:flex;justify-content:center;font-family:Heebo,'Noto Sans Hebrew',sans-serif;color:#1b1f27;background:#ece7de">
+  <div style="width:390px;min-height:100vh;background:#fbf9f5;position:relative;overflow:hidden">
+
+    <sc-if value="{{ isHub }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:28px 20px 40px">
+        <div style="font-size:15px;color:#5c6473;font-weight:500">{{ greeting }}</div>
+        <div style="font-size:30px;font-weight:800;line-height:1.25;margin-top:6px;letter-spacing:-0.02em">אתה בדרך.<br>נשארה פגישה אחת קטנה.</div>
+
+        <div style="margin-top:20px;background:#023e8a;border-radius:26px;padding:22px;color:#fff">
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <div style="font-size:44px;font-weight:800;line-height:1">{{ daysLeft }}</div>
+            <div style="font-size:16px;font-weight:500;opacity:0.85">{{ daysWord }} לפגישה הראשונה</div>
+          </div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:4px;font-size:15px;opacity:0.92">
+            <div>{{ meetingDate }} · {{ meetingTime }}</div>
+            <div>עם {{ coordinatorName }} · {{ meetingChannel }}</div>
+          </div>
+        </div>
+
+        <div style="margin-top:26px;font-size:14px;font-weight:700;color:#5c6473">עד אז, שלושה דברים כאן</div>
+
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
+          <button type="button" onClick="{{ goNow }}" style="text-align:right;border:none;cursor:pointer;background:#fff;border-radius:24px;padding:20px;box-shadow:0 2px 12px rgba(2,62,138,0.07);display:flex;flex-direction:column;gap:6px" style-hover="background:#f4f7fc">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:34px;height:34px;border-radius:999px;background:#eaf0f9;display:flex;align-items:center;justify-content:center;color:#023e8a;font-size:17px;font-weight:800">1</div>
+              <div style="font-size:19px;font-weight:700">מה קורה עכשיו</div>
+            </div>
+            <div style="font-size:15px;color:#5c6473;line-height:1.55">איפה אתה במסע, ומה יקרה בפגישה.</div>
+          </button>
+
+          <button type="button" onClick="{{ goTaste }}" style="text-align:right;border:none;cursor:pointer;background:#fff;border-radius:24px;padding:20px;box-shadow:0 2px 12px rgba(2,62,138,0.07);display:flex;flex-direction:column;gap:6px" style-hover="background:#fff8ee">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:34px;height:34px;border-radius:999px;background:#fff3e2;display:flex;align-items:center;justify-content:center;color:#b35e00;font-size:17px;font-weight:800">2</div>
+              <div style="font-size:19px;font-weight:700">טעימה אחת</div>
+              <sc-if value="{{ tasteDone }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-right:auto;font-size:12px;font-weight:700;color:#059669;background:#e7f6f0;padding:4px 10px;border-radius:999px">הושלם</div>
+              </sc-if>
+            </div>
+            <div style="font-size:15px;color:#5c6473;line-height:1.55">כמה דקות שנותנות תחושה איך עולם אחד נראה מבפנים.</div>
+          </button>
+
+          <button type="button" onClick="{{ goPrep }}" style="text-align:right;border:none;cursor:pointer;background:#fff;border-radius:24px;padding:20px;box-shadow:0 2px 12px rgba(2,62,138,0.07);display:flex;flex-direction:column;gap:6px" style-hover="background:#f2faf6">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:34px;height:34px;border-radius:999px;background:#e7f6f0;display:flex;align-items:center;justify-content:center;color:#046c4e;font-size:17px;font-weight:800">3</div>
+              <div style="font-size:19px;font-weight:700">לקראת הפגישה</div>
+              <sc-if value="{{ prepHighlighted }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-right:auto;font-size:12px;font-weight:700;color:#b35e00;background:#fff3e2;padding:4px 10px;border-radius:999px">הבא בתור</div>
+              </sc-if>
+            </div>
+            <div style="font-size:15px;color:#5c6473;line-height:1.55">מה תהיה השיחה, ומה שווה לחשוב עליו לפני.</div>
+          </button>
+        </div>
+
+        <div style="margin-top:26px;font-size:14px;color:#8a919d;line-height:1.6;text-align:center">אין כאן מה לסיים ואין ציון.<br>מה שתספיק — מספיק.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isNow }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:22px 20px 40px">
+        <button type="button" onClick="{{ goHub }}" style="border:none;background:transparent;cursor:pointer;color:#023e8a;font-size:15px;font-weight:700;padding:6px 0">← חזרה</button>
+        <div style="font-size:28px;font-weight:800;margin-top:10px;letter-spacing:-0.02em">מה קורה עכשיו</div>
+
+        <div style="margin-top:22px;background:#fff;border-radius:24px;padding:22px;box-shadow:0 2px 12px rgba(2,62,138,0.07)">
+          <div style="font-size:14px;font-weight:700;color:#5c6473">איפה אתה במסע</div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:0">
+            <sc-for list="{{ journey }}" as="step" hint-placeholder-count="4">
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="display:flex;flex-direction:column;align-items:center;align-self:stretch">
+                  <div style="{{ step.dotStyle }}"></div>
+                  <div style="{{ step.lineStyle }}"></div>
+                </div>
+                <div style="padding-bottom:18px">
+                  <div style="{{ step.titleStyle }}">{{ step.title }}</div>
+                  <div style="font-size:14px;color:#8a919d;margin-top:2px">{{ step.note }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;background:#eaf0f9;border-radius:24px;padding:22px">
+          <div style="font-size:14px;font-weight:700;color:#023e8a">הפגישה</div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;font-size:16px;font-weight:500">
+            <div>{{ meetingDate }}, {{ meetingTime }}</div>
+            <div>{{ meetingChannel }}</div>
+            <div>עם {{ coordinatorName }}</div>
+            <div style="color:#5c6473">{{ meetingLength }}</div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;background:#fff;border-radius:24px;padding:22px;box-shadow:0 2px 12px rgba(2,62,138,0.07)">
+          <div style="font-size:14px;font-weight:700;color:#5c6473">מה יקרה בה</div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:16px;line-height:1.6">{{ coordinatorName }} תרצה להכיר אותך. מאיפה אתה, מה עשית עד היום, ומה מעניין אותך.</div>
+            <div style="font-size:16px;line-height:1.6">תשאל אותה כל מה שבא לך. גם דברים שנשמעים לך בסיסיים.</div>
+            <div style="font-size:16px;line-height:1.6">בסוף תדעו יחד מה השלב הבא.</div>
+          </div>
+          <div style="margin-top:18px;background:#e7f6f0;border-radius:16px;padding:14px 16px;font-size:15px;font-weight:500;color:#046c4e;line-height:1.55">זו שיחה, לא ראיון. אין מה להתכונן ואין מה להביא.</div>
+        </div>
+
+        <button type="button" onClick="{{ goHub }}" style="margin-top:22px;width:100%;border:none;cursor:pointer;background:#023e8a;color:#fff;font-size:17px;font-weight:700;padding:16px;border-radius:999px" style-hover="background:#012c62">הבנתי</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTaste }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:22px 20px 40px">
+        <button type="button" onClick="{{ backFromTaste }}" style="border:none;background:transparent;cursor:pointer;color:#023e8a;font-size:15px;font-weight:700;padding:6px 0">← חזרה</button>
+
+        <sc-if value="{{ isChoose }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="font-size:28px;font-weight:800;margin-top:10px;letter-spacing:-0.02em">טעימה אחת</div>
+            <div style="font-size:16px;color:#5c6473;line-height:1.6;margin-top:10px">בחר עולם אחד להציץ בו לכמה דקות.</div>
+            <div style="margin-top:14px;background:#fff3e2;border-radius:20px;padding:16px;font-size:15px;line-height:1.6;color:#7a4100">זו לא בחירה של מקצוע ואף אחד לא סופר את זה. אחר כך אפשר להציץ גם באחרים.</div>
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ domains }}" as="d" hint-placeholder-count="7">
+                <button type="button" onClick="{{ d.pick }}" style="text-align:right;border:1px solid #e6e1d8;cursor:pointer;background:#fff;border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:3px" style-hover="border-color:#fb8500;background:#fffaf3">
+                  <div style="font-size:17px;font-weight:700">{{ d.name }}</div>
+                  <div style="font-size:14px;color:#5c6473">{{ d.blurb }}</div>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isFrame }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#b35e00;margin-top:10px">{{ domainName }}</div>
+            <div style="font-size:27px;font-weight:800;margin-top:6px;line-height:1.3;letter-spacing:-0.02em">{{ frameTitle }}</div>
+            <div style="margin-top:18px;background:#fff;border-radius:24px;padding:22px;box-shadow:0 2px 12px rgba(2,62,138,0.07);display:flex;flex-direction:column;gap:14px">
+              <div style="font-size:16px;line-height:1.6">שתי דקות. אין ציון, אין תשובה נכונה, ואי אפשר להיכשל.</div>
+              <div style="font-size:16px;line-height:1.6">המטרה היא להרגיש איך העולם הזה נראה מבפנים. לא לגלות מה מתאים לך.</div>
+              <div style="font-size:16px;line-height:1.6">מה שתשים לב אליו, תוכל לספר ל{{ coordinatorName }} בפגישה.</div>
+            </div>
+            <button type="button" onClick="{{ startSim }}" style="margin-top:20px;width:100%;border:none;cursor:pointer;background:#fb8500;color:#fff;font-size:17px;font-weight:700;padding:16px;border-radius:999px" style-hover="background:#e07600">יאללה, מתחילים</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isExternal }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:27px;font-weight:800;margin-top:10px;letter-spacing:-0.02em">{{ domainName }}</div>
+            <div style="margin-top:18px;border:2px dashed #cfd6e2;border-radius:24px;padding:28px 22px;text-align:center;background:#f4f6fa">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8a919d;letter-spacing:0.04em">SIMULATION SLOT</div>
+              <div style="font-size:16px;line-height:1.6;margin-top:12px">כאן נפתחת הסימולציה הקיימת של {{ domainName }} מתוך האפליקציה.</div>
+            </div>
+            <button type="button" onClick="{{ finishSim }}" style="margin-top:20px;width:100%;border:none;cursor:pointer;background:#023e8a;color:#fff;font-size:17px;font-weight:700;padding:16px;border-radius:999px" style-hover="background:#012c62">סיימתי</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isLabel }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#b35e00;margin-top:10px">{{ domainName }} · שלב 1 מתוך 2</div>
+            <div style="font-size:25px;font-weight:800;margin-top:6px;line-height:1.3;letter-spacing:-0.02em">תלמד את המערכת מה זה "כן"</div>
+            <div style="font-size:16px;color:#5c6473;line-height:1.6;margin-top:10px">עבור על היצורים וסמן. אתה מחליט מה כן ומה לא — אין תשובה נכונה.</div>
+
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ trainItems }}" as="it" hint-placeholder-count="6">
+                <div style="{{ it.rowStyle }}">
+                  <div style="width:64px;display:flex;align-items:center;justify-content:center">
+                    <div style="{{ it.blobStyle }}"></div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-right:auto">
+                    <button type="button" onClick="{{ it.no }}" style="{{ it.noStyle }}">לא</button>
+                    <button type="button" onClick="{{ it.yes }}" style="{{ it.yesStyle }}">כן</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ showHint }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;background:#fff3e2;border-radius:20px;padding:16px;font-size:15px;line-height:1.6;color:#7a4100">אין פה טעות. תבחר משהו שמושך אותך — למשל כל הגדולים — ותסמן לפיו.</div>
+            </sc-if>
+
+            <sc-if value="{{ hasGuess }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;background:#eaf0f9;border-radius:20px;padding:16px;font-size:16px;line-height:1.6;color:#023e8a;font-weight:500">{{ guessLine }}</div>
+            </sc-if>
+
+            <sc-if value="{{ canContinue }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ toTest }}" style="margin-top:18px;width:100%;border:none;cursor:pointer;background:#fb8500;color:#fff;font-size:17px;font-weight:700;padding:16px;border-radius:999px" style-hover="background:#e07600">עכשיו תן לה לנחש</button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTest }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#b35e00;margin-top:10px">{{ domainName }} · שלב 2 מתוך 2</div>
+            <div style="font-size:25px;font-weight:800;margin-top:6px;line-height:1.3;letter-spacing:-0.02em">עכשיו תורה</div>
+            <div style="font-size:16px;color:#5c6473;line-height:1.6;margin-top:10px">יצור חדש שהיא לא ראתה. {{ testCounter }}</div>
+
+            <div style="margin-top:20px;background:#fff;border-radius:26px;padding:26px;box-shadow:0 2px 12px rgba(2,62,138,0.07);display:flex;flex-direction:column;align-items:center;gap:20px">
+              <div style="{{ testBlobStyle }}"></div>
+              <div style="font-size:18px;font-weight:700;text-align:center;line-height:1.5">{{ testGuessLine }}</div>
+            </div>
+
+            <div style="margin-top:16px;display:flex;gap:10px">
+              <button type="button" onClick="{{ testWrong }}" style="flex:1;border:1px solid #cfd6e2;cursor:pointer;background:#fff;color:#023e8a;font-size:16px;font-weight:700;padding:15px;border-radius:999px" style-hover="background:#eaf0f9">פספסה</button>
+              <button type="button" onClick="{{ testRight }}" style="flex:1;border:none;cursor:pointer;background:#059669;color:#fff;font-size:16px;font-weight:700;padding:15px;border-radius:999px" style-hover="background:#047857">קלעה</button>
+            </div>
+            <div style="margin-top:14px;font-size:14px;color:#8a919d;line-height:1.6;text-align:center">גם כשהיא טועה זה בסדר. ככה מערכות לומדות.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:27px;font-weight:800;margin-top:14px;line-height:1.3;letter-spacing:-0.02em">לימדת מערכת כלל.</div>
+            <div style="font-size:16px;color:#5c6473;line-height:1.6;margin-top:10px">בלי שורת קוד אחת. {{ scoreLine }}</div>
+
+            <div style="margin-top:18px;background:#fff;border-radius:24px;padding:22px;box-shadow:0 2px 12px rgba(2,62,138,0.07)">
+              <div style="font-size:14px;font-weight:700;color:#5c6473">מה שעשית נקרא</div>
+              <div style="font-size:20px;font-weight:800;margin-top:4px">לימוד מכונה מדוגמאות</div>
+              <div style="font-size:16px;line-height:1.6;margin-top:10px">נתת דוגמאות, המערכת מצאה את הכלל, ואז ניחשה על משהו חדש.</div>
+            </div>
+
+            <sc-if value="{{ showCrossDomain }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:14px;background:#eaf0f9;border-radius:24px;padding:22px">
+                <div style="font-size:14px;font-weight:700;color:#023e8a">אותו רעיון עובד גם ב־</div>
+                <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-for list="{{ related }}" as="r" hint-placeholder-count="3">
+                    <div style="background:#fff;border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;color:#023e8a">{{ r.name }}</div>
+                  </sc-for>
+                </div>
+                <div style="font-size:15px;line-height:1.6;margin-top:14px;color:#1b1f27">רוב הדברים בהייטק נוגעים זה בזה. אף אחד לא בוחר עכשיו.</div>
+              </div>
+            </sc-if>
+
+            <div style="margin-top:14px;background:#fff3e2;border-radius:24px;padding:22px">
+              <div style="font-size:16px;font-weight:700;color:#7a4100">שווה להביא לפגישה</div>
+              <div style="font-size:16px;line-height:1.6;margin-top:8px;color:#7a4100">מה שמת לב שאתה עושה כדי להחליט? {{ coordinatorName }} תדע לקחת את זה הלאה.</div>
+            </div>
+
+            <div style="margin-top:18px;display:flex;flex-direction:column;gap:10px">
+              <button type="button" onClick="{{ goPrep }}" style="width:100%;border:none;cursor:pointer;background:#023e8a;color:#fff;font-size:17px;font-weight:700;padding:16px;border-radius:999px" style-hover="background:#012c62">להכנה לפגישה</button>
+              <button type="button" onClick="{{ goHub }}" style="width:100%;border:1px solid #cfd6e2;cursor:pointer;background:#fff;color:#023e8a;font-size:16px;font-weight:700;padding:15px;border-radius:999px" style-hover="background:#eaf0f9">חזרה לדף הבית</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPrep }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:22px 20px 40px">
+        <button type="button" onClick="{{ goHub }}" style="border:none;background:transparent;cursor:pointer;color:#023e8a;font-size:15px;font-weight:700;padding:6px 0">← חזרה</button>
+        <div style="font-size:28px;font-weight:800;margin-top:10px;line-height:1.3;letter-spacing:-0.02em">לפגישה הזאת<br>אתה לא מביא כלום.</div>
+        <div style="font-size:16px;color:#5c6473;line-height:1.6;margin-top:12px">אין מסמכים, אין שיעורי בית, ואין מה להוכיח. {{ coordinatorName }} רוצה להכיר אותך.</div>
+
+        <div style="margin-top:22px;background:#fff;border-radius:24px;padding:22px;box-shadow:0 2px 12px rgba(2,62,138,0.07)">
+          <div style="font-size:14px;font-weight:700;color:#5c6473">על מה תהיה השיחה</div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ talkAbout }}" as="t" hint-placeholder-count="3">
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <div style="width:7px;height:7px;border-radius:999px;background:#fb8500;margin-top:9px;flex:none"></div>
+                <div style="font-size:16px;line-height:1.6">{{ t.text }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;background:#e7f6f0;border-radius:24px;padding:22px">
+          <div style="font-size:16px;font-weight:700;color:#046c4e">אין שאלה שאפשר ליפול בה</div>
+          <div style="font-size:16px;line-height:1.6;margin-top:8px;color:#065f46">אם משהו לא ברור, אפשר להגיד "עוד לא חשבתי על זה". זו תשובה מצוינת.</div>
+        </div>
+
+        <div style="margin-top:14px;background:#fff;border-radius:24px;padding:22px;box-shadow:0 2px 12px rgba(2,62,138,0.07)">
+          <div style="font-size:14px;font-weight:700;color:#5c6473">מה שווה לחשוב עליו</div>
+          <div style="font-size:14px;color:#8a919d;margin-top:4px">בראש. לא צריך לכתוב.</div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ prepQuestions }}" as="q" hint-placeholder-count="3">
+              <div style="border:1px solid #eee9e0;border-radius:18px;padding:16px;font-size:16px;line-height:1.55;font-weight:500">{{ q.text }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;text-align:center;font-size:15px;color:#8a919d;line-height:1.6">נתראה ב{{ meetingDate }}.<br>פשוט תגיע.</div>
+        <button type="button" onClick="{{ goHub }}" style="margin-top:18px;width:100%;border:none;cursor:pointer;background:#023e8a;color:#fff;font-size:17px;font-weight:700;padding:16px;border-radius:999px" style-hover="background:#012c62">חזרה לדף הבית</button>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;userName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;אבי&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;תוכן&quot;},&quot;coordinatorName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;שירה&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;תוכן&quot;},&quot;meetingDate&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;יום שלישי, 25.8&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;תוכן&quot;},&quot;meetingTime&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;17:00&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;תוכן&quot;},&quot;meetingChannel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;בזום&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;תוכן&quot;},&quot;meetingLength&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;כ־45 דקות&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;תוכן&quot;},&quot;daysUntil&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:9,&quot;min&quot;:1,&quot;max&quot;:60,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;תוכן&quot;},&quot;domainMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;בחירה חופשית&quot;,&quot;תחום קבוע&quot;],&quot;default&quot;:&quot;בחירה חופשית&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;התנהגות&quot;},&quot;fixedDomain&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;פיתוח תוכנה&quot;,&quot;דאטה ואנליטיקס&quot;,&quot;סייבר&quot;,&quot;רשתות ותקשורת&quot;,&quot;בינה מלאכותית&quot;,&quot;עיצוב UX/UI&quot;,&quot;שיווק דיגיטלי&quot;],&quot;default&quot;:&quot;בינה מלאכותית&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;התנהגות&quot;},&quot;showCrossDomain&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;התנהגות&quot;}}">
+const DOMAINS = [
+  { id: 'dev', name: 'פיתוח תוכנה', blurb: 'לבנות משהו שעובד, שלב אחרי שלב.' },
+  { id: 'data', name: 'דאטה ואנליטיקס', blurb: 'למצוא סיפור בתוך מספרים.' },
+  { id: 'cyber', name: 'סייבר', blurb: 'לשים לב למה שלא מסתדר.' },
+  { id: 'net', name: 'רשתות ותקשורת', blurb: 'להבין איך דברים מדברים זה עם זה.' },
+  { id: 'ai', name: 'בינה מלאכותית', blurb: 'ללמד מערכת להבחין בין דברים.' },
+  { id: 'ux', name: 'עיצוב UX/UI', blurb: 'לראות איפה אנשים נתקעים.' },
+  { id: 'mkt', name: 'שיווק דיגיטלי', blurb: 'להבין למה אנשים לוחצים.' }
+];
+
+const TRAIN = [
+  { id: 't1', size: 'big', color: 'warm', fill: 'solid' },
+  { id: 't2', size: 'small', color: 'cool', fill: 'solid' },
+  { id: 't3', size: 'big', color: 'cool', fill: 'ring' },
+  { id: 't4', size: 'small', color: 'warm', fill: 'ring' },
+  { id: 't5', size: 'big', color: 'warm', fill: 'ring' },
+  { id: 't6', size: 'small', color: 'cool', fill: 'ring' }
+];
+
+const TEST = [
+  { id: 'x1', size: 'big', color: 'cool', fill: 'solid' },
+  { id: 'x2', size: 'small', color: 'warm', fill: 'solid' },
+  { id: 'x3', size: 'big', color: 'warm', fill: 'solid' }
+];
+
+const VALUE_LABEL = {
+  size: { big: 'לגדולים', small: 'לקטנים' },
+  color: { warm: 'לכתומים', cool: 'לכחולים' },
+  fill: { solid: 'למלאים', ring: 'לחלולים' }
+};
+
+class Component extends DCLogic {
+  state = { screen: 'hub', domain: null, phase: 'choose', labels: {}, hint: false, testIdx: 0, hits: 0, tasteDone: false };
+
+  componentWillUnmount() { clearTimeout(this._hintTimer); }
+
+  go(screen) { this.setState({ screen: screen }); window.scrollTo(0, 0); }
+
+  pickDomain(d) {
+    this.setState({ domain: d, phase: 'frame' });
+    window.scrollTo(0, 0);
+  }
+
+  startSim() {
+    const d = this.state.domain;
+    if (d && d.id === 'ai') {
+      this.setState({ phase: 'label', labels: {}, hint: false });
+      clearTimeout(this._hintTimer);
+      this._hintTimer = setTimeout(() => {
+        if (Object.keys(this.state.labels).length === 0) this.setState({ hint: true });
+      }, 12000);
+    } else {
+      this.setState({ phase: 'external' });
+    }
+    window.scrollTo(0, 0);
+  }
+
+  label(id, val) {
+    const labels = Object.assign({}, this.state.labels);
+    labels[id] = val;
+    this.setState({ labels: labels, hint: false });
+    clearTimeout(this._hintTimer);
+  }
+
+  rule() {
+    const labels = this.state.labels;
+    const ids = Object.keys(labels);
+    const yes = ids.filter(id => labels[id]);
+    const no = ids.filter(id => !labels[id]);
+    if (!yes.length) return null;
+    const byId = {};
+    TRAIN.forEach(it => { byId[it.id] = it; });
+    let best = null;
+    ['size', 'color', 'fill'].forEach(attr => {
+      const values = {};
+      ids.forEach(id => {
+        const v = byId[id][attr];
+        values[v] = values[v] || { y: 0, n: 0 };
+        if (labels[id]) values[v].y++; else values[v].n++;
+      });
+      let pure = 0;
+      Object.keys(values).forEach(v => { pure += Math.max(values[v].y, values[v].n); });
+      const score = pure / ids.length;
+      let yesValue = null, bestY = -1;
+      Object.keys(values).forEach(v => {
+        const net = values[v].y - values[v].n;
+        if (net > bestY) { bestY = net; yesValue = v; }
+      });
+      if (!best || score > best.score) best = { attr: attr, yesValue: yesValue, score: score };
+    });
+    if (no.length === 0) best.score = 1;
+    return best;
+  }
+
+  predict(item) {
+    const r = this.rule();
+    if (!r) return true;
+    return item[r.attr] === r.yesValue;
+  }
+
+  blobStyle(item, scale) {
+    const s = scale || 1;
+    const d = (item.size === 'big' ? 54 : 30) * s;
+    const c = item.color === 'warm' ? '#fb8500' : '#023e8a';
+    const base = 'width:' + d + 'px;height:' + d + 'px;border-radius:999px;transition:all .2s;';
+    return item.fill === 'solid'
+      ? base + 'background:' + c
+      : base + 'background:transparent;border:' + (5 * s) + 'px solid ' + c;
+  }
+
+  renderVals() {
+    const p = this.props;
+    const st = this.state;
+    const coordinatorName = p.coordinatorName ?? 'שירה';
+    const meetingDate = p.meetingDate ?? 'יום שלישי, 25.8';
+    const domain = st.domain;
+    const isAi = !!domain && domain.id === 'ai';
+    const rule = this.rule();
+    const labelCount = Object.keys(st.labels).length;
+    const testItem = TEST[Math.min(st.testIdx, TEST.length - 1)];
+    const guessed = rule ? this.predict(testItem) : true;
+
+    const journeySteps = [
+      { title: 'מילאת שאלון', note: 'הושלם', state: 'done' },
+      { title: 'פגישת היכרות', note: 'בעוד ' + (p.daysUntil ?? 9) + ' ימים', state: 'now' },
+      { title: 'פגישת המשך', note: 'נקבע יחד בפגישה', state: 'next' },
+      { title: 'ומשם ממשיכים', note: 'צעד אחרי צעד', state: 'next', last: true }
+    ];
+
+    return {
+      greeting: 'היי ' + (p.userName ?? 'אבי') + ',',
+      coordinatorName: coordinatorName,
+      meetingDate: meetingDate,
+      meetingTime: p.meetingTime ?? '17:00',
+      meetingChannel: p.meetingChannel ?? 'בזום',
+      meetingLength: p.meetingLength ?? 'כ־45 דקות',
+      daysLeft: p.daysUntil ?? 9,
+      daysWord: (p.daysUntil ?? 9) === 1 ? 'יום' : 'ימים',
+
+      isHub: st.screen === 'hub',
+      isNow: st.screen === 'now',
+      isTaste: st.screen === 'taste',
+      isPrep: st.screen === 'prep',
+      tasteDone: st.tasteDone,
+      prepHighlighted: st.tasteDone,
+
+      goHub: () => this.go('hub'),
+      goNow: () => this.go('now'),
+      goPrep: () => this.go('prep'),
+      goTaste: () => {
+        const mode = p.domainMode ?? 'בחירה חופשית';
+        if (mode === 'תחום קבוע') {
+          const fixed = DOMAINS.find(d => d.name === (p.fixedDomain ?? 'בינה מלאכותית')) || DOMAINS[4];
+          this.setState({ screen: 'taste', domain: fixed, phase: 'frame' });
+        } else {
+          this.setState({ screen: 'taste', phase: 'choose', domain: null });
+        }
+        window.scrollTo(0, 0);
+      },
+      backFromTaste: () => {
+        if (st.phase === 'choose' || st.phase === 'frame' || st.phase === 'done') this.go('hub');
+        else this.setState({ phase: 'frame' });
+      },
+
+      domains: DOMAINS.map(d => ({ name: d.name, blurb: d.blurb, pick: () => this.pickDomain(d) })),
+      domainName: domain ? domain.name : '',
+      frameTitle: isAi ? 'תלמד מערכת להבדיל בין שני דברים' : 'הצצה קצרה לעולם הזה',
+
+      isChoose: st.screen === 'taste' && st.phase === 'choose',
+      isFrame: st.screen === 'taste' && st.phase === 'frame',
+      isExternal: st.screen === 'taste' && st.phase === 'external',
+      isLabel: st.screen === 'taste' && st.phase === 'label',
+      isTest: st.screen === 'taste' && st.phase === 'test',
+      isDone: st.screen === 'taste' && st.phase === 'done',
+
+      startSim: () => this.startSim(),
+      finishSim: () => { this.setState({ phase: 'done', tasteDone: true }); window.scrollTo(0, 0); },
+
+      showHint: st.hint,
+      hasGuess: labelCount >= 2 && !!rule,
+      guessLine: rule ? 'אני מתחילה להבין. נראה שאתה אומר כן ' + VALUE_LABEL[rule.attr][rule.yesValue] + '.' : '',
+      canContinue: labelCount >= 4,
+      trainItems: TRAIN.map(it => {
+        const v = st.labels[it.id];
+        const picked = v === true ? '#059669' : (v === false ? '#cfd6e2' : null);
+        return {
+          rowStyle: 'display:flex;align-items:center;gap:10px;background:#fff;border-radius:20px;padding:12px 16px;border:2px solid ' + (picked || '#f0ebe2') + ';transition:border-color .2s',
+          blobStyle: this.blobStyle(it),
+          yes: () => this.label(it.id, true),
+          no: () => this.label(it.id, false),
+          yesStyle: 'border:none;cursor:pointer;border-radius:999px;padding:10px 20px;font-size:15px;font-weight:700;' + (v === true ? 'background:#059669;color:#fff' : 'background:#e7f6f0;color:#046c4e'),
+          noStyle: 'border:none;cursor:pointer;border-radius:999px;padding:10px 20px;font-size:15px;font-weight:700;' + (v === false ? 'background:#5c6473;color:#fff' : 'background:#f0f1f4;color:#5c6473')
+        };
+      }),
+      toTest: () => { this.setState({ phase: 'test', testIdx: 0, hits: 0 }); window.scrollTo(0, 0); },
+
+      testCounter: (st.testIdx + 1) + ' מתוך ' + TEST.length,
+      testBlobStyle: this.blobStyle(testItem, 1.5),
+      testGuessLine: 'היא מנחשת: ' + (guessed ? 'כן' : 'לא') + '. צדקה?',
+      testRight: () => this.advanceTest(true),
+      testWrong: () => this.advanceTest(false),
+
+      scoreLine: st.hits === TEST.length ? 'היא קלעה בכל שלוש.' : 'היא קלעה ב־' + st.hits + ' מתוך ' + TEST.length + '. גם ככה לומדים.',
+      showCrossDomain: (p.showCrossDomain ?? true),
+      related: [{ name: 'דאטה ואנליטיקס' }, { name: 'סייבר' }, { name: 'שיווק דיגיטלי' }],
+
+      journey: journeySteps.map((s, i) => ({
+        title: s.title,
+        note: s.note,
+        dotStyle: s.state === 'done'
+          ? 'width:14px;height:14px;border-radius:999px;background:#059669;flex:none'
+          : (s.state === 'now'
+            ? 'width:14px;height:14px;border-radius:999px;background:#fb8500;box-shadow:0 0 0 5px #fff3e2;flex:none'
+            : 'width:14px;height:14px;border-radius:999px;background:#e2ddd3;flex:none'),
+        lineStyle: s.last ? 'display:none' : 'width:2px;flex:1;background:#ece7de;margin:4px 0',
+        titleStyle: s.state === 'now'
+          ? 'font-size:17px;font-weight:800;color:#1b1f27'
+          : 'font-size:17px;font-weight:600;color:' + (s.state === 'done' ? '#1b1f27' : '#8a919d')
+      })),
+
+      talkAbout: [
+        { text: 'מאיפה אתה, ומה עשית עד היום.' },
+        { text: 'מה מעניין אותך, גם אם עוד לא ברור לך בדיוק.' },
+        { text: 'מה אתה רוצה מהתקופה הקרובה.' }
+      ],
+      prepQuestions: [
+        { text: 'מה בא לך ש' + coordinatorName + ' תדע עליך?' },
+        { text: 'מה עשית פעם ונהנית ממנו — לא חייב מחשבים.' },
+        { text: 'מה הכי בא לך לשאול אותה?' }
+      ]
+    };
+  }
+
+  advanceTest(hit) {
+    const next = this.state.testIdx + 1;
+    const hits = this.state.hits + (hit ? 1 : 0);
+    if (next >= TEST.length) {
+      this.setState({ hits: hits, phase: 'done', tasteDone: true });
+      window.scrollTo(0, 0);
+    } else {
+      this.setState({ hits: hits, testIdx: next });
+    }
+  }
+}
+</script>
+</body>
+</html>

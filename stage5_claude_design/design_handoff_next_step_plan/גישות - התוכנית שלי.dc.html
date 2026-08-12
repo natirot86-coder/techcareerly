@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #f1efe9; font-family: Heebo, system-ui, sans-serif; }
+  a { color: #023e8a; }
+  a:hover { color: #fb8500; }
+</style>
+</helmet>
+
+<section dir="rtl" style="padding: 56px 48px 80px; display: flex; flex-direction: column; gap: 32px; font-family: Heebo, sans-serif;">
+  <div style="display: flex; flex-direction: column; gap: 10px; max-width: 720px;">
+    <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: #fb8500;">סבב 1 · גישות</div>
+    <h1 style="margin: 0; font-size: 34px; font-weight: 800; color: #023e8a; line-height: 1.2;">איך מציגים תוכנית של חודשים בלי קיר משימות</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #4b4740; text-wrap: pretty;">שלוש גישות ליחס בין "הפעולה הבאה" לשאר התוכנית. אותו תוכן בכל אחת — משתנה רק מה רואים ראשון, ומה נדרש כדי לראות את השאר.</p>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+
+    <div id="1a" style="display: flex; flex-direction: column; gap: 14px; width: 390px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 26px; padding: 0 9px; border-radius: 999px; background: #023e8a; color: #fff; font-size: 13px; font-weight: 700;">1a</span>
+        <span style="font-size: 19px; font-weight: 800; color: #1c1a16;">עוגן — כרטיס בראש התוכנית</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5c574e; text-wrap: pretty;">מסך אחד. הפעולה הקרובה יושבת בראש בגודל שלא ניתן לפספס, וכל התוכנית מתחתיה מכווצת לחמש שורות תחום. גלילה אחת מראה גם דחיפות וגם תמונה מלאה.</p>
+
+      <div style="width: 390px; height: 720px; background: #fbf9f5; border: 1px solid #e2ddd2; border-radius: 26px; overflow: hidden; box-shadow: 0 18px 40px rgba(2,62,138,0.12); display: flex; flex-direction: column;">
+        <div style="padding: 18px 20px 14px; display: flex; align-items: baseline; justify-content: space-between;">
+          <div style="font-size: 22px; font-weight: 800; color: #023e8a;">התוכנית שלי</div>
+          <div style="font-size: 13px; color: #8a8377;">מאי 2026</div>
+        </div>
+
+        <div style="margin: 0 16px; padding: 18px; border-radius: 18px; background: #023e8a; color: #fff; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="padding: 4px 10px; border-radius: 999px; background: #dc2626; font-size: 12px; font-weight: 700;">נסגר בעוד 12 יום</span>
+            <span style="font-size: 12px; font-weight: 500; color: #b9cdea;">הפעולה הבאה</span>
+          </div>
+          <div style="font-size: 21px; font-weight: 800; line-height: 1.3;">להגיש בקשה למלגת מרום</div>
+          <div style="font-size: 14px; line-height: 1.55; color: #dbe6f5;">יש לך 4 מתוך 5 מסמכים. חסר רק אישור שחרור.</div>
+          <div style="display: flex; gap: 10px; padding-top: 2px;">
+            <div style="flex: 1; text-align: center; padding: 12px; border-radius: 12px; background: #fb8500; font-size: 15px; font-weight: 700;">להתחיל</div>
+            <div style="padding: 12px 16px; border-radius: 12px; background: rgba(255,255,255,0.14); font-size: 15px; font-weight: 500;">אחר כך</div>
+          </div>
+        </div>
+
+        <div style="padding: 22px 20px 8px; font-size: 13px; font-weight: 700; color: #8a8377; letter-spacing: 0.04em;">כל התוכנית</div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 16px;">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+              <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">איפה אגור</div>
+              <div style="font-size: 13px; color: #dc2626; font-weight: 500;">מעונות נסגרים ב־31.5</div>
+            </div>
+            <div style="font-size: 13px; font-weight: 700; color: #8a8377;">1/4</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+              <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">מאיפה יבוא כסף</div>
+              <div style="font-size: 13px; color: #7a746a;">תקציב, מלגות, עבודה חלקית</div>
+            </div>
+            <div style="font-size: 13px; font-weight: 700; color: #8a8377;">2/4</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+              <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">תנאי קבלה</div>
+              <div style="font-size: 13px; color: #059669; font-weight: 600;">הכל סגור</div>
+            </div>
+            <div style="font-size: 13px; font-weight: 700; color: #059669;">3/3</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+              <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">הרשמה למוסד</div>
+              <div style="font-size: 13px; color: #7a746a;">נפתח ביוני</div>
+            </div>
+            <div style="font-size: 13px; font-weight: 700; color: #8a8377;">0/3</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+              <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">הגשת מלגות</div>
+              <div style="font-size: 13px; color: #7a746a;">3 מלגות, 2 עוד פתוחות</div>
+            </div>
+            <div style="font-size: 13px; font-weight: 700; color: #8a8377;">1/3</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 14px 16px; background: #fff; border: 1px solid #e7e2d9; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; line-height: 1.6; color: #3c3830;"><b style="color:#059669;">פותר:</b> אין ניווט בין דחיפות לתמונה מלאה. גם מי שנכנס לדקה רואה את מה שבוער.</div>
+        <div style="font-size: 13px; line-height: 1.6; color: #3c3830;"><b style="color:#dc2626;">סיכון:</b> חמש שורות תחום עדיין נראות כמו רשימה. כשאין דדליין קרוב, הכרטיס העליון מתרוקן ממשמעות.</div>
+      </div>
+    </div>
+
+    <div id="1b" style="display: flex; flex-direction: column; gap: 14px; width: 390px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 26px; padding: 0 9px; border-radius: 999px; background: #023e8a; color: #fff; font-size: 13px; font-weight: 700;">1b</span>
+        <span style="font-size: 19px; font-weight: 800; color: #1c1a16;">ציר זמן — התוכנית לפי חודשים</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5c574e; text-wrap: pretty;">"הפעולה הבאה" היא מסך נפרד ומסך הבית. התוכנית היא מסך שני, מסודרת לפי זמן ולא לפי תחום: מה בחודש הזה, מה אחריו, ומה עוד רחוק. חודש רחוק מקופל.</p>
+
+      <div style="width: 390px; height: 720px; background: #fbf9f5; border: 1px solid #e2ddd2; border-radius: 26px; overflow: hidden; box-shadow: 0 18px 40px rgba(2,62,138,0.12); display: flex; flex-direction: column;">
+        <div style="padding: 18px 20px 12px; display: flex; gap: 8px;">
+          <div style="padding: 9px 16px; border-radius: 999px; background: #fff; border: 1px solid #ece7dc; font-size: 14px; font-weight: 600; color: #7a746a;">הפעולה הבאה</div>
+          <div style="padding: 9px 16px; border-radius: 999px; background: #023e8a; font-size: 14px; font-weight: 700; color: #fff;">התוכנית</div>
+        </div>
+
+        <div style="flex: 1; overflow: hidden; padding: 8px 16px 0; display: flex; flex-direction: column; gap: 18px;">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 10px; height: 10px; border-radius: 999px; background: #dc2626;"></div>
+              <div style="font-size: 17px; font-weight: 800; color: #1c1a16;">מאי — החודש</div>
+            </div>
+            <div style="border-right: 2px solid #f0d5d5; margin-right: 4px; padding-right: 16px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="padding: 14px 16px; background: #fff; border: 1px solid #f3d2d2; border-radius: 14px; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">להגיש למלגת מרום</div>
+                <div style="font-size: 13px; font-weight: 600; color: #dc2626;">נסגר בעוד 12 יום · חסר מסמך אחד</div>
+              </div>
+              <div style="padding: 14px 16px; background: #fff; border: 1px solid #f3d2d2; border-radius: 14px; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">להירשם למעונות</div>
+                <div style="font-size: 13px; font-weight: 600; color: #dc2626;">נסגר ב־31.5</div>
+              </div>
+              <div style="padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 16px; font-weight: 700; color: #1c1a16;">לדבר בבית על התקציב</div>
+                <div style="font-size: 13px; color: #7a746a;">בלי תאריך</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 10px; height: 10px; border-radius: 999px; background: #fb8500;"></div>
+              <div style="font-size: 17px; font-weight: 800; color: #1c1a16;">יוני</div>
+            </div>
+            <div style="border-right: 2px solid #ece7dc; margin-right: 4px; padding-right: 16px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px; font-size: 16px; font-weight: 700; color: #1c1a16;">טפסי הרשמה למכללה</div>
+              <div style="padding: 14px 16px; background: #fff; border: 1px solid #ece7dc; border-radius: 14px; font-size: 16px; font-weight: 700; color: #1c1a16;">דמי הרשמה — 320 ₪</div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 10px; height: 10px; border-radius: 999px; background: #cfc9bd;"></div>
+              <div style="font-size: 17px; font-weight: 800; color: #8a8377;">יולי—ספטמבר</div>
+            </div>
+            <div style="margin-right: 4px; padding: 14px 16px; background: #f6f3ec; border: 1px dashed #ddd6c8; border-radius: 14px; font-size: 14px; color: #7a746a;">5 משימות · פסיכומטרי, מעבר דירה, עבודה חלקית ‹ לפתוח</div>
+          </div>
+        </div>
+
+        <div style="display: flex; padding: 10px 16px 16px; gap: 8px; border-top: 1px solid #ece7dc; background: #fff;">
+          <div style="flex: 1; text-align: center; font-size: 12px; font-weight: 700; color: #023e8a; padding-top: 8px;">הפעולה הבאה</div>
+          <div style="flex: 1; text-align: center; font-size: 12px; color: #8a8377; padding-top: 8px;">התוכנית</div>
+          <div style="flex: 1; text-align: center; font-size: 12px; color: #8a8377; padding-top: 8px;">מסמכים</div>
+          <div style="flex: 1; text-align: center; font-size: 12px; color: #8a8377; padding-top: 8px;">לרכזת</div>
+        </div>
+      </div>
+
+      <div style="padding: 14px 16px; background: #fff; border: 1px solid #e7e2d9; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; line-height: 1.6; color: #3c3830;"><b style="color:#059669;">פותר:</b> תוכנית של חודשים נראית כמו חודשים. מה שרחוק לא תופס מקום, והחודש הנוכחי אף פעם לא ארוך מדי.</div>
+        <div style="font-size: 13px; line-height: 1.6; color: #3c3830;"><b style="color:#dc2626;">סיכון:</b> משימות בלי תאריך צריכות בית. שני מסכים = יותר ניווט, וצריך לוודא שהמסך הראשון תמיד מוביל לשני.</div>
+      </div>
+    </div>
+
+    <div id="1c" style="display: flex; flex-direction: column; gap: 14px; width: 390px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 26px; padding: 0 9px; border-radius: 999px; background: #023e8a; color: #fff; font-size: 13px; font-weight: 700;">1c</span>
+        <span style="font-size: 19px; font-weight: 800; color: #1c1a16;">שני מצבים — "עכשיו" ו"הכל"</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5c574e; text-wrap: pretty;">מסך אחד עם מתג. ברירת המחדל היא "עכשיו": פעולה אחת, מסך כמעט ריק. "הכל" פורש את חמשת התחומים. האפליקציה תמיד נפתחת ב"עכשיו".</p>
+
+      <div style="display: flex; gap: 12px;">
+        <div style="width: 189px; height: 720px; background: #fbf9f5; border: 1px solid #e2ddd2; border-radius: 20px; overflow: hidden; box-shadow: 0 18px 40px rgba(2,62,138,0.12); display: flex; flex-direction: column;">
+          <div style="padding: 12px; display: flex; background: #efece4; margin: 12px; border-radius: 999px; gap: 4px; padding: 4px;">
+            <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 999px; background: #023e8a; color: #fff; font-size: 12px; font-weight: 700;">עכשיו</div>
+            <div style="flex: 1; text-align: center; padding: 7px 0; font-size: 12px; font-weight: 600; color: #7a746a;">הכל</div>
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 0 14px 60px;">
+            <div style="align-self: flex-start; padding: 4px 10px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 700;">12 יום</div>
+            <div style="font-size: 20px; font-weight: 800; color: #023e8a; line-height: 1.3;">להגיש למלגת מרום</div>
+            <div style="font-size: 13px; line-height: 1.55; color: #5c574e;">4 מתוך 5 מסמכים מוכנים. חסר אישור שחרור.</div>
+            <div style="padding: 11px; border-radius: 12px; background: #fb8500; color: #fff; text-align: center; font-size: 14px; font-weight: 700;">להתחיל</div>
+            <div style="font-size: 12px; color: #8a8377; text-align: center;">אחרי זה: מעונות, 31.5</div>
+          </div>
+        </div>
+
+        <div style="width: 189px; height: 720px; background: #fbf9f5; border: 1px solid #e2ddd2; border-radius: 20px; overflow: hidden; box-shadow: 0 18px 40px rgba(2,62,138,0.12); display: flex; flex-direction: column;">
+          <div style="display: flex; background: #efece4; margin: 12px; border-radius: 999px; gap: 4px; padding: 4px;">
+            <div style="flex: 1; text-align: center; padding: 7px 0; font-size: 12px; font-weight: 600; color: #7a746a;">עכשיו</div>
+            <div style="flex: 1; text-align: center; padding: 7px 0; border-radius: 999px; background: #023e8a; color: #fff; font-size: 12px; font-weight: 700;">הכל</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 12px;">
+            <div style="padding: 11px 12px; background: #fff; border: 1px solid #ece7dc; border-radius: 12px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 14px; font-weight: 700; color: #1c1a16;">איפה אגור</div>
+              <div style="font-size: 11px; color: #dc2626; font-weight: 600;">מעונות · 31.5</div>
+              <div style="height: 4px; border-radius: 999px; background: #efece4; margin-top: 3px;"><div style="width: 25%; height: 4px; border-radius: 999px; background: #023e8a;"></div></div>
+            </div>
+            <div style="padding: 11px 12px; background: #fff; border: 1px solid #ece7dc; border-radius: 12px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 14px; font-weight: 700; color: #1c1a16;">מאיפה יבוא כסף</div>
+              <div style="font-size: 11px; color: #7a746a;">2 מתוך 4</div>
+              <div style="height: 4px; border-radius: 999px; background: #efece4; margin-top: 3px;"><div style="width: 50%; height: 4px; border-radius: 999px; background: #023e8a;"></div></div>
+            </div>
+            <div style="padding: 11px 12px; background: #fff; border: 1px solid #ece7dc; border-radius: 12px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 14px; font-weight: 700; color: #1c1a16;">תנאי קבלה</div>
+              <div style="font-size: 11px; color: #059669; font-weight: 600;">הכל סגור</div>
+              <div style="height: 4px; border-radius: 999px; background: #efece4; margin-top: 3px;"><div style="width: 100%; height: 4px; border-radius: 999px; background: #059669;"></div></div>
+            </div>
+            <div style="padding: 11px 12px; background: #fff; border: 1px solid #ece7dc; border-radius: 12px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 14px; font-weight: 700; color: #1c1a16;">הרשמה למוסד</div>
+              <div style="font-size: 11px; color: #7a746a;">נפתח ביוני</div>
+              <div style="height: 4px; border-radius: 999px; background: #efece4; margin-top: 3px;"><div style="width: 0%; height: 4px; border-radius: 999px; background: #023e8a;"></div></div>
+            </div>
+            <div style="padding: 11px 12px; background: #fff; border: 1px solid #ece7dc; border-radius: 12px; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 14px; font-weight: 700; color: #1c1a16;">הגשת מלגות</div>
+              <div style="font-size: 11px; color: #7a746a;">1 מתוך 3</div>
+              <div style="height: 4px; border-radius: 999px; background: #efece4; margin-top: 3px;"><div style="width: 33%; height: 4px; border-radius: 999px; background: #023e8a;"></div></div>
+            </div>
+            <div style="padding: 11px 12px; border: 1px dashed #ddd6c8; border-radius: 12px; font-size: 12px; color: #8a8377; text-align: center;">להוסיף תחום</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 14px 16px; background: #fff; border: 1px solid #e7e2d9; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; line-height: 1.6; color: #3c3830;"><b style="color:#059669;">פותר:</b> "פעולה אחת" מקבלת מסך שלם ולא פינה. התמונה המלאה במרחק לחיצה אחת, בלי מסך נוסף.</div>
+        <div style="font-size: 13px; line-height: 1.6; color: #3c3830;"><b style="color:#dc2626;">סיכון:</b> מתג שקוף למשתמש חדש. יש סיכוי שרוב האנשים לעולם לא ילחצו על "הכל" — וזו גם יכולה להיות תכונה, לא באג.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="max-width: 760px; padding: 20px 22px; background: #023e8a; border-radius: 18px; color: #fff; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 15px; font-weight: 800;">ההמלצה שלי: <a href="#1c" style="color:#fb8500;">1c</a>, עם מנגנון החודשים של <a href="#1b" style="color:#fb8500;">1b</a> בתוך מצב "הכל"</div>
+    <div style="font-size: 14px; line-height: 1.65; color: #dbe6f5; text-wrap: pretty;">מצב "עכשיו" מקיים את "פעולה אחת בכל רגע" בלי פשרה, ומצב "הכל" נותן בעלות — עריכה, מחיקה, הוספה. הסדר לפי זמן שם את מה שרחוק במקום שבו הוא לא מלחיץ. שאלה פתוחה אחת: האם "הכל" מסודר לפי תחום או לפי חודש. אני נוטה לתחום, עם התאריכים כתגיות.</div>
+  </div>
+</section>
+
+</x-dc>
+</body>
+</html>

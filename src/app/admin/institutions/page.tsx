@@ -52,7 +52,7 @@ const FIELDS: { key: keyof Institution; label: string; long?: boolean }[] = [
 export default function AdminInstitutionsPage() {
   const [items, setItems] = useState<Institution[]>(INSTITUTIONS);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Track | "all">("all");
+  const [filter, setFilter] = useState<Track | "all" | "pending">("all");
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -81,6 +81,14 @@ export default function AdminInstitutionsPage() {
     ));
   }
 
+  function approve(id: string) {
+    persist(items.map(i => (i.id === id ? { ...i, approved: true } : i)));
+  }
+
+  function reject(id: string) {
+    persist(items.map(i => (i.id === id ? { ...i, approved: false, status: "hidden" } : i)));
+  }
+
   function setStatus(id: string, status: Institution["status"]) {
     persist(items.map(i => (i.id === id ? { ...i, status } : i)));
   }
@@ -95,7 +103,7 @@ export default function AdminInstitutionsPage() {
   function addNew() {
     const id = `new-${Date.now()}`;
     persist([{
-      id, name: "מוסד חדש", track: filter === "all" ? "degree" : filter,
+      id, name: "מוסד חדש", track: (filter === "all" || filter === "pending") ? "degree" : filter,
       why: "", tag: "חדש", tagColor: NAVY, link: "",
       location: "", tuition: "", admission: "", noPsychometric: "",
       support: "", industry: "", schedule: "",
@@ -135,7 +143,10 @@ export default function AdminInstitutionsPage() {
     flash("שוחזר למקור");
   }
 
-  const shown = filter === "all" ? items : items.filter(i => i.track === filter);
+  const pending = items.filter(i => i.approved === undefined);
+  const shown = filter === "pending"
+    ? pending
+    : filter === "all" ? items : items.filter(i => i.track === filter);
   const counts = {
     active: items.filter(i => i.status === "active").length,
     check: items.filter(i => i.status === "needs-check").length,
@@ -151,6 +162,7 @@ export default function AdminInstitutionsPage() {
           <div className="text-[26px] mt-3" style={HEEBO}>ניהול מוסדות</div>
           <div className="text-[12.5px] mt-1" style={{ opacity: 0.7 }}>
             {items.length} מוסדות · {counts.active} פעילים · {counts.check} דורשים אימות · {counts.hidden} מוסתרים
+            {pending.length > 0 && <span className="font-black"> · {pending.length} ממתינים לאישורך</span>}
           </div>
         </div>
       </div>
@@ -172,6 +184,15 @@ export default function AdminInstitutionsPage() {
       {/* Toolbar */}
       <div className="px-6 pt-4 pb-2 sticky top-0 z-20" style={{ background: "#f5f3ef" }}>
         <div className="max-w-[1000px] mx-auto flex flex-wrap gap-2 items-center">
+          <button onClick={() => setFilter("pending")}
+            className="text-[12px] font-black px-3 py-1.5 rounded-lg transition-all"
+            style={{
+              background: filter === "pending" ? ORANGE : "#fff",
+              color: filter === "pending" ? "#fff" : ORANGE,
+              border: `1.5px solid ${ORANGE}`,
+            }}>
+            ממתינים לאישור ({pending.length})
+          </button>
           {(["all", "degree", "mahat", "bootcamp"] as const).map(t => (
             <button key={t} onClick={() => setFilter(t)}
               className="text-[12px] font-bold px-3 py-1.5 rounded-lg transition-all"
@@ -184,6 +205,8 @@ export default function AdminInstitutionsPage() {
             </button>
           ))}
           <div className="flex-1" />
+          <Link href="/admin/scholarships" className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
+            style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>ללוח המלגות ←</Link>
           <button onClick={addNew} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
             style={{ background: "#fff", color: NAVY, border: "1px solid rgba(2,62,138,0.2)" }}>+ מוסד חדש</button>
           <button onClick={reset} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
@@ -221,6 +244,20 @@ export default function AdminInstitutionsPage() {
                     <option value="needs-check">דורש אימות</option>
                     <option value="hidden">מוסתר</option>
                   </select>
+                  {inst.approved === undefined ? (
+                    <>
+                      <button onClick={() => approve(inst.id)} className="text-[12px] font-black px-3 py-1 rounded-lg shrink-0"
+                        style={{ color: "#fff", background: "#047857" }}>✓ אשר</button>
+                      <button onClick={() => reject(inst.id)} className="text-[12px] font-bold px-3 py-1 rounded-lg shrink-0"
+                        style={{ color: "#b91c1c", background: "rgba(220,38,38,0.08)" }}>✕ לא</button>
+                    </>
+                  ) : inst.approved ? (
+                    <span className="text-[11.5px] font-bold px-2.5 py-1 rounded-lg shrink-0"
+                      style={{ color: "#047857", background: "rgba(5,150,105,0.1)" }}>✓ אושר</span>
+                  ) : (
+                    <span className="text-[11.5px] font-bold px-2.5 py-1 rounded-lg shrink-0"
+                      style={{ color: "rgba(0,0,0,0.4)", background: "rgba(0,0,0,0.05)" }}>נדחה</span>
+                  )}
                   <button onClick={() => remove(inst.id)} className="text-[11.5px] font-bold px-2.5 py-1 rounded-lg shrink-0"
                     style={{ color: "#dc2626", background: "rgba(220,38,38,0.07)" }}>מחק</button>
                 </div>

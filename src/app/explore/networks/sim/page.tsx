@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import { saveSimulationProgress, updateTask } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const BLUE = "#3b82f6";
@@ -583,6 +584,9 @@ function ResultScreen({ score, answers }: { score: number; answers: boolean[] })
       const journey = JSON.parse(localStorage.getItem("networks-journey") || "{}");
       localStorage.setItem("networks-journey", JSON.stringify({ ...journey, sim: true }));
     } catch {/* ignore */}
+    // הסימולציות הייעודיות נבנו בנפרד מהדף הגנרי ולכן פספסו את השמירה לבקאנד
+    saveSimulationProgress("networks", STEPS.length, true, score);
+    updateTask("sim-networks", "done", 100);
     window.location.href = href;
   }
 

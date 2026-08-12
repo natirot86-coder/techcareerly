@@ -549,7 +549,7 @@ export default function PathsPage() {
         setDomainInterest({ cyber: 5, networks: 4, code: 3 });
         setDomainChoice("open");
         setResearch({
-          "bgu-sicket": {
+          "bgu": {
             status: "done",
             answers: { route: "yes", money: "yes", support: "yes", event: "unknown" },
             note: "דיברתי עם שושי מהיחידה. אמרה שעם הפסיכומטרי שלי אפשר להגיש דרך סיקט.",
@@ -1824,12 +1824,23 @@ export default function PathsPage() {
 
         {/* State-aware CTA */}
         {meetingBooked ? (
-          <div className="rounded-2xl p-5 mb-3 text-center" style={{ background: "rgba(5,150,105,0.07)", border: "1.5px solid rgba(5,150,105,0.25)" }}>
-            <div className="text-[15px] mb-1" style={{ ...HEEBO, color: "#047857" }}>✓ הפגישה שלך כבר קבועה</div>
-            <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.55)" }}>
-              כל מה שנשאר הוא להגיע עם מה שהכנת כאן.
+          <>
+            <div className="rounded-2xl p-5 mb-3 text-center" style={{ background: "rgba(5,150,105,0.07)", border: "1.5px solid rgba(5,150,105,0.25)" }}>
+              <div className="text-[15px] mb-1" style={{ ...HEEBO, color: "#047857" }}>✓ הפגישה שלך כבר קבועה</div>
+              <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.55)" }}>
+                כל מה שנשאר הוא להגיע עם מה שהכנת כאן.
+              </div>
             </div>
-          </div>
+            {/* הגשר לשלב 5 — רק אחרי שהמסלול ננעל בפגישה, כדי שלא ייכנס
+                ללוגיסטיקה של מסלול שעוד לא נבחר */}
+            <Link
+              href="/plan"
+              className="block w-full py-4 text-center text-white text-[15px] font-black rounded-2xl mb-2.5 active:scale-[0.98] transition-transform"
+              style={{ background: ORANGE, ...HEEBO }}
+            >
+              נעלת מסלול? להתחיל לסדר את הדרך אליו ←
+            </Link>
+          </>
         ) : (
           <>
             <Link
