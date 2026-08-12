@@ -158,6 +158,12 @@ export default function AdminScholarshipsPage() {
           ))}
           <div style={{ marginRight: "auto", display: "flex", gap: 8 }}>
             <Link
+              href="/admin/courses"
+              style={{ fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 8, background: "rgba(2,62,138,0.08)", color: NAVY }}
+            >
+              ללוח הקורסים ←
+            </Link>
+            <Link
               href="/admin/institutions"
               style={{ fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 8, background: "rgba(2,62,138,0.08)", color: NAVY }}
             >

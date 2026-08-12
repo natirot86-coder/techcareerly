@@ -64,6 +64,7 @@ const NODES: Node[] = [
   { id: "admin", label: "ניהול מוסדות", sub: "29 מוסדות · פנימי", url: `${BASE}/admin/institutions`, cx: 110, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-funding", label: "ניהול מלגות", sub: "17 מלגות ותוכניות · פנימי", url: `${BASE}/admin/scholarships`, cx: 285, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "reset", label: "בדיקה מההתחלה", sub: "מוחק הכל · פנימי", url: `${BASE}/reset`, cx: 900, cy: 62, w: 130, color: "#dc2626", badge: "ניקוי", badgeColor: "#dc2626" },
+  { id: "admin-courses", label: "ניהול קורסים", sub: "מוסד × מעטפת · פנימי", url: `${BASE}/admin/courses`, cx: 540, cy: 118, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-analytics", label: "אנליטיקות", sub: "מה קורה באפליקציה · פנימי", url: `${BASE}/admin/analytics`, cx: 460, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
   // ── Explore ───────────────────────────────────────────────────────────────

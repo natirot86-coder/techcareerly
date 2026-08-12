@@ -213,6 +213,8 @@ export default function AdminInstitutionsPage() {
             </button>
           ))}
           <div className="flex-1" />
+          <Link href="/admin/courses" className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
+            style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>ללוח הקורסים ←</Link>
           <Link href="/admin/scholarships" className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
             style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>ללוח המלגות ←</Link>
           <button onClick={addNew} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
