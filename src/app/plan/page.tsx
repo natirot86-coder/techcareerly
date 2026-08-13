@@ -101,8 +101,10 @@ export default function PlanPage() {
     setApps(read<Record<string, AppStatus>>(LS.apps, {}));
 
     const v = params.get("view") as View | null;
+    const remembered = localStorage.getItem("plan-last-view") as View | null;
     if (v) setView(v);
     else if (!localStorage.getItem(LS.intro)) setView("intro");
+    else if (remembered && remembered !== "intro" && remembered !== "rejected") setView(remembered);
     setReady(true);
   }, []);
 
@@ -168,7 +170,7 @@ export default function PlanPage() {
           {(["plan", "money", "docs", "coord"] as const).map(v => (
             <button
               key={v}
-              onClick={() => setView(v)}
+              onClick={() => { setView(v); localStorage.setItem("plan-last-view", v); }}
               className="flex-1 py-2 rounded-lg text-[12.5px] font-bold transition-colors"
               style={{
                 background: view === v ? "#fff" : "transparent",
