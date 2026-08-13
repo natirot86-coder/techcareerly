@@ -8,6 +8,7 @@ import JourneyStrip from "@/components/ui/JourneyStrip";
 import AllPaths from "@/components/ui/AllPaths";
 import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
+import { savePathsAnswers, logEvent } from "@/lib/candidate";
 
 /** שם התת-שלב שמוצג בפס ההתקדמות */
 const PHASE_LABEL: Record<string, string> = {
@@ -608,6 +609,7 @@ export default function PathsPage() {
       setQIndex(qIndex + 1);
       // איזו שאלה מאבדת אנשים — ברזולוציה של שאלה בודדת
       trackEvent("paths_question", { answered: qIndex + 1 });
+      logEvent("paths_question", { answered: String(qIndex + 1) });
     } else {
       const rec = recommendTrack(next);
       setActiveTrack(rec);
@@ -615,6 +617,9 @@ export default function PathsPage() {
       localStorage.setItem("paths-phase", "result");
       trackEvent("paths_phase", { phase: "result" });
       trackEvent("paths_recommendation", { track: rec });
+      // שיקוף לסופאבייס — מהיום מועמד שמחליף טלפון לא מאבד את התשובות
+      savePathsAnswers({ answers: next as unknown as Record<string, string>, recommendation: rec });
+      logEvent("paths_quiz_done", { recommendation: rec });
     }
   }
 

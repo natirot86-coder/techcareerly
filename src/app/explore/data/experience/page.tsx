@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import { ExperienceCTAs } from "@/components/ui/ExperienceCTAs";
+import { saveScctScore, logEvent } from "@/lib/candidate";
 
 const TEAL   = "#0d9488";
 const NAVY   = "#023e8a";
@@ -405,6 +406,20 @@ export default function ExperiencePage() {
     } else {
       try {
         localStorage.setItem("data-experience", JSON.stringify(newAnswers));
+        /*
+         * מדד השליחות נשמר לסופאבייס: עניין גבוה + מסוגלות נמוכה הוא בדיוק
+         * האדם שבשבילו הארגון קיים, ועד היום הציונים חיו רק בדפדפן.
+         * הסקאלות בכלי הן 1-5 — בדיוק מה ש-scct_scores מצפה לו.
+         */
+        saveScctScore(
+          "data",
+          Number(newAnswers["interest_scale"]) || null,
+          Number(newAnswers["efficacy_scale"]) || null,
+          Number(newAnswers["outcome_scale"]) || null,
+          [newAnswers["interest_open"], newAnswers["efficacy_open"], newAnswers["outcome_open"]]
+            .filter(Boolean).join(" | ") || undefined
+        );
+        logEvent("scct_done", { domain: "data" });
         const journey = JSON.parse(localStorage.getItem("data-journey") || "{}");
         localStorage.setItem("data-journey", JSON.stringify({ ...journey, experience: true }));
       } catch {/* ignore */}

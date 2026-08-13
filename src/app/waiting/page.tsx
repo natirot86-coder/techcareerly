@@ -30,6 +30,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { track as trackEvent } from "@vercel/analytics";
 import { coordinatorFor } from "@/data/meetings";
+import { logEvent } from "@/lib/candidate";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -160,6 +161,7 @@ export default function WaitingPage() {
     localStorage.setItem("meeting-1-attended", v);
     setAttended(v);
     trackEvent("meeting1_checkin", { result: v });
+    logEvent("meeting1_checkin", { result: v });
     if (v === "missed") {
       // הסיגנל החזק ביותר ל-At Risk בכל הפאנל, ואין דרך אחרת להשיג אותו
       localStorage.setItem("at-risk", "missed-meeting-1");

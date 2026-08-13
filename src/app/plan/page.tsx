@@ -24,6 +24,7 @@ import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import { track as trackEvent } from "@vercel/analytics";
+import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
 import {
   BUDGETED_TUITION, SCHOLARSHIPS, RECOMMENDED_STACK, DOC_CATALOG,
@@ -108,14 +109,17 @@ export default function PlanPage() {
   const saveTasks = (next: PlanTask[]) => {
     setTasks(next);
     localStorage.setItem(LS.tasks, JSON.stringify(next));
+    syncPlanTasks(next); // שיקוף — fire-and-forget, לא חוסם UI
   };
   const saveDocs = (next: PlanDoc[]) => {
     setDocs(next);
     localStorage.setItem(LS.docs, JSON.stringify(next));
+    syncPlanDocuments(next);
   };
   const saveApps = (next: Record<string, AppStatus>) => {
     setApps(next);
     localStorage.setItem(LS.apps, JSON.stringify(next));
+    syncPlanApplications(next);
   };
 
   const open = tasks.filter(t => t.status === "open");
@@ -202,7 +206,7 @@ export default function PlanPage() {
           />
         )}
 
-        {view === "money" && <MoneyView />}
+        {view === "money" && <MoneyOnce />}
 
         {view === "docs" && (
           <DocsView
@@ -630,6 +634,13 @@ function TaskRow({
 }
 
 // ─── החשבון — מספר במקום הרגעה ────────────────────────────────────────────────
+
+/** עוטף שרושם פתיחה אחת של מסך החשבון — אחד ממדדי שלב 5 באנליטיקות */
+function MoneyOnce() {
+  useEffect(() => { logEvent("plan_money_opened"); }, []);
+  return <MoneyView />;
+}
+
 
 function MoneyView() {
   const perach = SCHOLARSHIPS.find(s => s.id === "perach")!;

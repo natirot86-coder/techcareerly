@@ -1,8 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
-import { saveSimulationProgress, updateTask } from "@/lib/candidate";
+import { saveSimulationProgress, updateTask, logEvent } from "@/lib/candidate";
 
 const HEEBO  = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const RED    = "#dc2626";
@@ -644,6 +644,9 @@ function DonePhase({ answers }: { answers: Record<number, { verdict: Verdict; co
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function CyberSim() {
+  // תחילת סימולציה — בלי זה אי אפשר להבדיל נטישה באמצע מאי-פתיחה
+  useEffect(() => { logEvent("sim_start", { domain: "cyber" }); }, []);
+
   const [phase, setPhase]       = useState<Phase>("intro");
   const [alertIdx, setAlertIdx] = useState(0);
   const [answers, setAnswers]   = useState<Record<number, { verdict: Verdict; correct: boolean }>>({});

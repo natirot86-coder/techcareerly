@@ -5,6 +5,7 @@ import Cal, { getCalApi } from "@calcom/embed-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Link from "next/link";
 import { calLinkFor, currentMeeting, MEETING_META, type MeetingNum } from "@/data/meetings";
+import { logEvent } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -58,6 +59,8 @@ export default function ContactPage() {
           localStorage.setItem("meeting-booked", "true");
           localStorage.setItem(`meeting-${meeting}-booked`, "true");
           localStorage.setItem(`meeting-${meeting}-booked-at`, new Date().toISOString());
+          // כוכב הצפון: פאנל הפגישות באנליטיקות נבנה מהאירוע הזה
+          logEvent("meeting_booked", { n: String(meeting) });
 
           /*
            * שומרים את **מועד הפגישה** ולא רק את העובדה שנקבעה.

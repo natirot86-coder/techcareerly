@@ -1,8 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
-import { saveSimulationProgress, updateTask } from "@/lib/candidate";
+import { saveSimulationProgress, updateTask, logEvent } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const BLUE = "#3b82f6";
@@ -791,6 +791,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function NetworksSimPage() {
+  // תחילת סימולציה — בלי זה אי אפשר להבדיל נטישה באמצע מאי-פתיחה
+  useEffect(() => { logEvent("sim_start", { domain: "networks" }); }, []);
+
   const [showIntro, setShowIntro] = useState(true);
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
