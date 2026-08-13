@@ -21,6 +21,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { JOURNEY_STAGES } from "@/components/ui/JourneyStrip";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
+import AdminGate from "@/components/AdminGate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -56,7 +57,7 @@ const EXPECTED_MIX: Record<string, number> = { degree: 52, mahat: 10, bootcamp: 
 
 const QUIZ_LABELS = ["שעות", "כסף", "השכלה", "ילדים", "יציבות", "מיקום"];
 
-export default function AdminAnalyticsPage() {
+function AdminAnalyticsPage() {
   const [s, setS] = useState<Stats | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -552,4 +553,9 @@ function Hours({ data, live }: { data: Record<string, number>; live: boolean }) 
       </div>
     </div>
   );
+}
+
+/** הלוח עטוף בשער הניהול — קוד אחד לכל הלוחות, נבדק מול השרת */
+export default function GatedPage() {
+  return <AdminGate><AdminAnalyticsPage /></AdminGate>;
 }

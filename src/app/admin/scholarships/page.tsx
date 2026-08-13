@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FUNDING, KIND_LABEL, type Funding, type FundingKind } from "@/data/scholarships";
 import { INSTITUTIONS } from "@/data/institutions";
+import AdminGate from "@/components/AdminGate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -50,7 +51,7 @@ function windowText(f: Funding): string {
   return "אין תאריכים";
 }
 
-export default function AdminScholarshipsPage() {
+function AdminScholarshipsPage() {
   const [items, setItems] = useState<Funding[]>(FUNDING);
   const [openId, setOpenId] = useState<string | null>(null);
   /** קריאה קודם, עריכה רק בבקשה מפורשת — ראה ההערה ב-/admin/institutions */
@@ -366,4 +367,9 @@ export default function AdminScholarshipsPage() {
       )}
     </div>
   );
+}
+
+/** הלוח עטוף בשער הניהול — קוד אחד לכל הלוחות, נבדק מול השרת */
+export default function GatedPage() {
+  return <AdminGate><AdminScholarshipsPage /></AdminGate>;
 }

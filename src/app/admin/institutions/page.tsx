@@ -10,6 +10,7 @@ import Link from "next/link";
 import { INSTITUTIONS, DOMAIN_LABEL, type Institution, type Track, type Domain } from "@/data/institutions";
 import { coursesNeedingAttention, STATE_LABEL } from "@/data/courses";
 import { FUNDING } from "@/data/scholarships";
+import AdminGate from "@/components/AdminGate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -51,7 +52,7 @@ const FIELDS: { key: keyof Institution; label: string; long?: boolean }[] = [
   { key: "verified", label: "אומת לאחרונה" },
 ];
 
-export default function AdminInstitutionsPage() {
+function AdminInstitutionsPage() {
   const [items, setItems] = useState<Institution[]>(INSTITUTIONS);
   const [openId, setOpenId] = useState<string | null>(null);
   /**
@@ -468,4 +469,9 @@ function AttentionStrip({ pendingCount, needsCheck }: { pendingCount: number; ne
       </div>
     </div>
   );
+}
+
+/** הלוח עטוף בשער הניהול — קוד אחד לכל הלוחות, נבדק מול השרת */
+export default function GatedPage() {
+  return <AdminGate><AdminInstitutionsPage /></AdminGate>;
 }
