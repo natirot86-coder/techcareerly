@@ -35,8 +35,8 @@ type Edge = {
 
 // ─── Canvas ───────────────────────────────────────────────────────────────────
 
-const W = 990;
-const H = 1885;
+const W = 1150;
+const H = 1900;
 const NH = 44;   // node height default
 
 // ─── Nodes ────────────────────────────────────────────────────────────────────
@@ -45,126 +45,126 @@ const BASE = process.env.NODE_ENV === "development" ? "http://localhost:3000" : 
 
 const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────
-  { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 60,  cy: 190,  w: 82,  color: "#023e8a" },
-  { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 800,  cy: 190,  w: 92, color: "#023e8a" },
-  { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + טעימה + הכנה", url: `${BASE}/waiting`, cx: 930, cy: 190, w: 100, color: "#0ea5e9", badge: "חדש", badgeColor: "#0ea5e9" },
+  { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 65,  cy: 195,  w: 82,  color: "#023e8a" },
+  { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 920,  cy: 195,  w: 92, color: "#023e8a" },
+  { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + טעימה + הכנה", url: `${BASE}/waiting`, cx: 1060, cy: 195, w: 100, color: "#0ea5e9", badge: "חדש", badgeColor: "#0ea5e9" },
 
 
   // ששת מסכי האונבורדינג (Step 0–5 בקוד). לא נפתחים ישירות — הזרימה רציפה
-  { id: "ob-0", label: "פתיחה",       sub: "מה האפליקציה עושה", url: `${BASE}/onboarding`, cx: 165,  cy: 190, w: 92, color: "#3b82f6" },
-  { id: "ob-1", label: "פרטים", sub: "שם · גיל · אזור", url: `${BASE}/onboarding`, cx: 268, cy: 190, w: 92, color: "#3b82f6" },
-  { id: "ob-2", label: "עניין בטק",   sub: "סולם עצמי",     url: `${BASE}/onboarding`, cx: 371, cy: 190, w: 92, color: "#3b82f6" },
-  { id: "ob-3", label: "חסמים",        sub: "מה עוצר אותך",    url: `${BASE}/onboarding`, cx: 474, cy: 190, w: 92, color: "#3b82f6" },
-  { id: "ob-4", label: "סיום השאלון",  sub: "מה קורה עכשיו",   url: `${BASE}/onboarding`, cx: 577, cy: 190, w: 92, color: "#3b82f6" },
-  { id: "ob-5", label: "סיור", sub: "שקופיות",       url: `${BASE}/onboarding`, cx: 683, cy: 190, w: 98, color: "#3b82f6" },
+  { id: "ob-0", label: "פתיחה",       sub: "מה האפליקציה עושה", url: `${BASE}/onboarding`, cx: 185,  cy: 195, w: 92, color: "#3b82f6" },
+  { id: "ob-1", label: "פרטים", sub: "שם · גיל · אזור", url: `${BASE}/onboarding`, cx: 305, cy: 195, w: 92, color: "#3b82f6" },
+  { id: "ob-2", label: "עניין בטק",   sub: "סולם עצמי",     url: `${BASE}/onboarding`, cx: 425, cy: 195, w: 92, color: "#3b82f6" },
+  { id: "ob-3", label: "חסמים",        sub: "מה עוצר אותך",    url: `${BASE}/onboarding`, cx: 545, cy: 195, w: 92, color: "#3b82f6" },
+  { id: "ob-4", label: "סיום השאלון",  sub: "מה קורה עכשיו",   url: `${BASE}/onboarding`, cx: 665, cy: 195, w: 92, color: "#3b82f6" },
+  { id: "ob-5", label: "סיור", sub: "שקופיות",       url: `${BASE}/onboarding`, cx: 790, cy: 195, w: 98, color: "#3b82f6" },
 
   // ── Bottom nav (soon) ─────────────────────────────────────────────────────
-  { id: "chat",  label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,  cx: 350, cy: 118,  w: 105, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
-  { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 470, cy: 118, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
-  { id: "admin", label: "ניהול מוסדות", sub: "29 מוסדות · פנימי", url: `${BASE}/admin/institutions`, cx: 95, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "admin-funding", label: "ניהול מלגות", sub: "17 מלגות ותוכניות · פנימי", url: `${BASE}/admin/scholarships`, cx: 255, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "reset", label: "בדיקה מההתחלה", sub: "מוחק הכל · פנימי", url: `${BASE}/reset`, cx: 955, cy: 62, w: 130, color: "#dc2626", badge: "ניקוי", badgeColor: "#dc2626" },
-  { id: "admin-degrees", label: "תחומים ותארים", sub: "מיפוי תואר×מוסד · פנימי", url: `${BASE}/admin/degrees`, cx: 695, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "admin-coordinator", label: "מסך הרכזת", sub: "מי צריך אותי היום · פנימי", url: `${BASE}/admin/coordinator`, cx: 835, cy: 62, w: 135, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "admin-courses", label: "ניהול קורסים", sub: "מוסד × מעטפת · פנימי", url: `${BASE}/admin/courses`, cx: 555, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "chat",  label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,  cx: 940, cy: 122,  w: 105, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 1075, cy: 122, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "admin", label: "ניהול מוסדות", sub: "29 מוסדות · פנימי", url: `${BASE}/admin/institutions`, cx: 85, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-funding", label: "ניהול מלגות", sub: "17 מלגות ותוכניות · פנימי", url: `${BASE}/admin/scholarships`, cx: 250, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "reset", label: "בדיקה מההתחלה", sub: "מוחק הכל · פנימי", url: `${BASE}/reset`, cx: 1045, cy: 62, w: 130, color: "#dc2626", badge: "ניקוי", badgeColor: "#dc2626" },
+  { id: "admin-degrees", label: "תחומים ותארים", sub: "מיפוי תואר×מוסד · פנימי", url: `${BASE}/admin/degrees`, cx: 730, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-coordinator", label: "מסך הרכזת", sub: "מי צריך אותי היום · פנימי", url: `${BASE}/admin/coordinator`, cx: 885, cy: 62, w: 135, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-courses", label: "ניהול קורסים", sub: "מוסד × מעטפת · פנימי", url: `${BASE}/admin/courses`, cx: 575, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-analytics", label: "אנליטיקות", sub: "מה קורה באפליקציה · פנימי", url: `${BASE}/admin/analytics`, cx: 415, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
   // ── Explore ───────────────────────────────────────────────────────────────
-  { id: "explore", label: "חקר תחומים", sub: "דירוג 8 תחומים", url: `${BASE}/explore`, cx: 510, cy: 428, w: 140, color: "#fb8500" },
+  { id: "explore", label: "חקר תחומים", sub: "דירוג 8 תחומים", url: `${BASE}/explore`, cx: 575, cy: 455, w: 140, color: "#fb8500" },
 
   // ── Domain pages ──────────────────────────────────────────────────────────
-  { id: "d-code",      label: "קוד",       url: `${BASE}/explore/code`,      cx: 58,  cy: 523, w: 72, color: "#fb8500" },
-  { id: "d-data",      label: "דאטה",      url: `${BASE}/explore/data`,      cx: 178, cy: 523, w: 72, color: "#fb8500" },
-  { id: "d-marketing", label: "מרקטינג",   url: `${BASE}/explore/marketing`, cx: 300, cy: 523, w: 80, color: "#fb8500" },
-  { id: "d-ai",        label: "AI",        url: `${BASE}/explore/ai`,        cx: 412, cy: 523, w: 60, color: "#fb8500" },
-  { id: "d-cyber",     label: "סייבר",     url: `${BASE}/explore/cyber`,     cx: 512, cy: 523, w: 72, color: "#fb8500" },
-  { id: "d-ux",        label: "UX",        url: `${BASE}/explore/ux`,        cx: 616, cy: 523, w: 60, color: "#fb8500" },
-  { id: "d-networks",  label: "רשתות",     url: `${BASE}/explore/networks`,  cx: 724, cy: 523, w: 76, color: "#fb8500" },
-  { id: "d-qa",        label: "QA",        url: `${BASE}/explore/qa`,        cx: 848, cy: 523, w: 60, color: "#fb8500" },
+  { id: "d-code",      label: "קוד",       url: `${BASE}/explore/code`,      cx: 70,  cy: 555, w: 72, color: "#fb8500" },
+  { id: "d-data",      label: "דאטה",      url: `${BASE}/explore/data`,      cx: 208, cy: 555, w: 72, color: "#fb8500" },
+  { id: "d-marketing", label: "מרקטינג",   url: `${BASE}/explore/marketing`, cx: 348, cy: 555, w: 80, color: "#fb8500" },
+  { id: "d-ai",        label: "AI",        url: `${BASE}/explore/ai`,        cx: 478, cy: 555, w: 60, color: "#fb8500" },
+  { id: "d-cyber",     label: "סייבר",     url: `${BASE}/explore/cyber`,     cx: 596, cy: 555, w: 72, color: "#fb8500" },
+  { id: "d-ux",        label: "UX",        url: `${BASE}/explore/ux`,        cx: 716, cy: 555, w: 60, color: "#fb8500" },
+  { id: "d-networks",  label: "רשתות",     url: `${BASE}/explore/networks`,  cx: 840, cy: 555, w: 76, color: "#fb8500" },
+  { id: "d-qa",        label: "QA",        url: `${BASE}/explore/qa`,        cx: 985, cy: 555, w: 60, color: "#fb8500" },
 
   // ── Simulations ───────────────────────────────────────────────────────────
-  { id: "s-code",      label: "sim / קוד",      url: `${BASE}/explore/code/sim`,      cx: 58,  cy: 618, w: 90,  color: "#d97706" },
-  { id: "s-data",      label: "sim / דאטה",     url: `${BASE}/explore/data/sim`,      cx: 178, cy: 618, w: 90,  color: "#d97706" },
-  { id: "s-marketing", label: "sim / מרקטינג",  url: `${BASE}/explore/marketing/sim`, cx: 300, cy: 618, w: 110, color: "#d97706" },
-  { id: "s-ai",        label: "sim / AI",       url: `${BASE}/explore/ai/sim`,        cx: 412, cy: 618, w: 80,  color: "#d97706" },
-  { id: "s-cyber",     label: "sim / סייבר",    url: `${BASE}/explore/cyber/sim`,     cx: 512, cy: 618, w: 100, color: "#d97706" },
-  { id: "s-ux",        label: "sim / UX",       url: `${BASE}/explore/ux/sim`,        cx: 616, cy: 618, w: 80,  color: "#d97706" },
-  { id: "s-networks",  label: "sim / רשתות",    url: `${BASE}/explore/networks/sim`,  cx: 724, cy: 618, w: 100, color: "#d97706" },
-  { id: "s-qa",        label: "sim / QA",       url: `${BASE}/explore/qa/sim`,        cx: 848, cy: 618, w: 90,  color: "#d97706" },
+  { id: "s-code",      label: "sim / קוד",      url: `${BASE}/explore/code/sim`,      cx: 70,  cy: 655, w: 90,  color: "#d97706" },
+  { id: "s-data",      label: "sim / דאטה",     url: `${BASE}/explore/data/sim`,      cx: 208, cy: 655, w: 90,  color: "#d97706" },
+  { id: "s-marketing", label: "sim / מרקטינג",  url: `${BASE}/explore/marketing/sim`, cx: 348, cy: 655, w: 110, color: "#d97706" },
+  { id: "s-ai",        label: "sim / AI",       url: `${BASE}/explore/ai/sim`,        cx: 478, cy: 655, w: 80,  color: "#d97706" },
+  { id: "s-cyber",     label: "sim / סייבר",    url: `${BASE}/explore/cyber/sim`,     cx: 596, cy: 655, w: 100, color: "#d97706" },
+  { id: "s-ux",        label: "sim / UX",       url: `${BASE}/explore/ux/sim`,        cx: 716, cy: 655, w: 80,  color: "#d97706" },
+  { id: "s-networks",  label: "sim / רשתות",    url: `${BASE}/explore/networks/sim`,  cx: 840, cy: 655, w: 100, color: "#d97706" },
+  { id: "s-qa",        label: "sim / QA",       url: `${BASE}/explore/qa/sim`,        cx: 985, cy: 655, w: 90,  color: "#d97706" },
 
   // ── Learn — Code ──────────────────────────────────────────────────────────
-  { id: "code-day",        label: "יום בחיי מפתח",   sub: "triage · review",     url: `${BASE}/explore/code/learn/day`,     cx: 58, cy: 723, w: 115, color: "#3b82f6" },
-  { id: "code-mystery",    label: "תעלומת הקוד",     sub: "git blame · regression", url: `${BASE}/explore/code/learn/mystery`, cx: 58, cy: 818, w: 110, color: "#3b82f6" },
-  { id: "code-experience", label: "עיבוד חוויה",     sub: "6 שאלות SCCT",        url: `${BASE}/explore/code/experience`,    cx: 58, cy: 913, w: 115, color: "#3b82f6", badge: "חדש", badgeColor: "#3b82f6" },
+  { id: "code-day",        label: "יום בחיי מפתח",   sub: "triage · review",     url: `${BASE}/explore/code/learn/day`,     cx: 70, cy: 760, w: 115, color: "#3b82f6" },
+  { id: "code-mystery",    label: "תעלומת הקוד",     sub: "git blame · regression", url: `${BASE}/explore/code/learn/mystery`, cx: 70, cy: 855, w: 110, color: "#3b82f6" },
+  { id: "code-experience", label: "עיבוד חוויה",     sub: "6 שאלות SCCT",        url: `${BASE}/explore/code/experience`,    cx: 70, cy: 950, w: 115, color: "#3b82f6", badge: "חדש", badgeColor: "#3b82f6" },
 
   // ── Learn — Data ──────────────────────────────────────────────────────────
-  { id: "learn",      label: "מרכז למידה",     sub: "7 מודולים",        url: `${BASE}/explore/data/learn`,             cx: 178, cy: 723, w: 120, color: "#0d9488" },
-  { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 178, cy: 818, w: 120, color: "#0d9488" },
-  { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 178, cy: 913, w: 130, color: "#0d9488" },
-  { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 178, cy: 1008, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
+  { id: "learn",      label: "מרכז למידה",     sub: "7 מודולים",        url: `${BASE}/explore/data/learn`,             cx: 208, cy: 760, w: 120, color: "#0d9488" },
+  { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 208, cy: 855, w: 120, color: "#0d9488" },
+  { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 208, cy: 950, w: 130, color: "#0d9488" },
+  { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 208, cy: 1045, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
 
   // ── Learn — Cyber ─────────────────────────────────────────────────────────
-  { id: "cyber-day",        label: "יום בחיי SOC",      sub: "Ransomware response",      url: `${BASE}/explore/cyber/learn/day`,     cx: 512, cy: 723, w: 130, color: "#dc2626" },
-  { id: "cyber-mystery",    label: "תעלומת הדלף",       sub: "Data breach forensics",    url: `${BASE}/explore/cyber/learn/mystery`, cx: 512, cy: 818, w: 130, color: "#dc2626" },
-  { id: "cyber-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",             url: `${BASE}/explore/cyber/experience`,    cx: 512, cy: 913, w: 140, color: "#dc2626", badge: "חדש", badgeColor: "#dc2626" },
+  { id: "cyber-day",        label: "יום בחיי SOC",      sub: "Ransomware response",      url: `${BASE}/explore/cyber/learn/day`,     cx: 596, cy: 760, w: 130, color: "#dc2626" },
+  { id: "cyber-mystery",    label: "תעלומת הדלף",       sub: "Data breach forensics",    url: `${BASE}/explore/cyber/learn/mystery`, cx: 596, cy: 855, w: 130, color: "#dc2626" },
+  { id: "cyber-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",             url: `${BASE}/explore/cyber/experience`,    cx: 596, cy: 950, w: 140, color: "#dc2626", badge: "חדש", badgeColor: "#dc2626" },
 
   // ── Learn — Networks ──────────────────────────────────────────────────────
-  { id: "networks-day",        label: "יום בחיי",          sub: "Network Engineer · 5 שלבים",   url: `${BASE}/explore/networks/learn/day`,     cx: 724, cy: 723, w: 148, color: "#2563eb" },
-  { id: "networks-mystery",    label: "תעלומת TechFlow",   sub: "Firewall · DNS · curl",         url: `${BASE}/explore/networks/learn/mystery`, cx: 724, cy: 818, w: 130, color: "#2563eb" },
-  { id: "networks-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",                  url: `${BASE}/explore/networks/experience`,    cx: 724, cy: 913, w: 140, color: "#2563eb", badge: "חדש", badgeColor: "#2563eb" },
+  { id: "networks-day",        label: "יום בחיי",          sub: "Network Engineer · 5 שלבים",   url: `${BASE}/explore/networks/learn/day`,     cx: 840, cy: 760, w: 148, color: "#2563eb" },
+  { id: "networks-mystery",    label: "תעלומת TechFlow",   sub: "Firewall · DNS · curl",         url: `${BASE}/explore/networks/learn/mystery`, cx: 840, cy: 855, w: 130, color: "#2563eb" },
+  { id: "networks-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",                  url: `${BASE}/explore/networks/experience`,    cx: 840, cy: 950, w: 140, color: "#2563eb", badge: "חדש", badgeColor: "#2563eb" },
 
   // דפי הקורסים — המשך אמיתי למי שרוצה ללמוד עוד
-  { id: "data-courses",     label: "קורסי דאטה",  sub: "העשרה חיצונית", url: `${BASE}/explore/data/courses`,     cx: 178,  cy: 1098, w: 100, color: "#0d9488" },
-  { id: "networks-courses", label: "קורסי רשתות", sub: "קמפוס IL · Cisco", url: `${BASE}/explore/networks/courses`, cx: 724, cy: 1008, w: 118, color: "#2563eb" },
+  { id: "data-courses",     label: "קורסי דאטה",  sub: "העשרה חיצונית", url: `${BASE}/explore/data/courses`,     cx: 208,  cy: 1135, w: 100, color: "#0d9488" },
+  { id: "networks-courses", label: "קורסי רשתות", sub: "קמפוס IL · Cisco", url: `${BASE}/explore/networks/courses`, cx: 840, cy: 1045, w: 118, color: "#2563eb" },
 
   // ── Learn — QA ────────────────────────────────────────────────────────────
-  { id: "qa-day",        label: "יום בחיי QA",       sub: "triage · test review",   url: `${BASE}/explore/qa/learn/day`,     cx: 848, cy: 723, w: 130, color: "#d97706" },
-  { id: "qa-mystery",    label: "איך זה עבר QA?",    sub: "coverage · CI history",  url: `${BASE}/explore/qa/learn/mystery`, cx: 848, cy: 818, w: 135, color: "#d97706" },
-  { id: "qa-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",           url: `${BASE}/explore/qa/experience`,    cx: 848, cy: 913, w: 140, color: "#d97706", badge: "חדש", badgeColor: "#d97706" },
+  { id: "qa-day",        label: "יום בחיי QA",       sub: "triage · test review",   url: `${BASE}/explore/qa/learn/day`,     cx: 985, cy: 760, w: 130, color: "#d97706" },
+  { id: "qa-mystery",    label: "איך זה עבר QA?",    sub: "coverage · CI history",  url: `${BASE}/explore/qa/learn/mystery`, cx: 985, cy: 855, w: 135, color: "#d97706" },
+  { id: "qa-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",           url: `${BASE}/explore/qa/experience`,    cx: 985, cy: 950, w: 140, color: "#d97706", badge: "חדש", badgeColor: "#d97706" },
 
   // ── סיכום והכנה לפגישה 2 ─────────────────────────────────────────────────
-  { id: "results", label: "סיכום הטעימות", sub: "הכנה לפגישה עם הרכזת", url: `${BASE}/explore/results`, cx: 510, cy: 1108, w: 165, color: "#fb8500" },
+  { id: "results", label: "סיכום הטעימות", sub: "הכנה לפגישה עם הרכזת", url: `${BASE}/explore/results`, cx: 575, cy: 1150, w: 165, color: "#fb8500" },
 
   // ── פגישה 2 עם הרכזת ─────────────────────────────────────────────────────
-  { id: "booked",  label: "הפגישה נקבעה", sub: "מה להביא — משתנה לפי פגישה", url: `${BASE}/contact/booked`, cx: 560, cy: 308, w: 165, color: "#023e8a" },
+  { id: "booked",  label: "הפגישה נקבעה", sub: "מה להביא — משתנה לפי פגישה", url: `${BASE}/contact/booked`, cx: 660, cy: 358, w: 165, color: "#023e8a" },
 
   // (הפגישות ממוקמות כל אחת בשלב שלה)
   // הדף בוחר לבד לפי מצב המועמד; ?m= הוא לבדיקה ידנית
 
-  { id: "m1", label: "פגישה 1", sub: "היכרות · אין מה להביא", url: `${BASE}/contact?m=1`, cx: 300, cy: 308, w: 150, color: "#0ea5e9", kind: "meeting" },
-  { id: "m2", label: "פגישה 2", sub: "בחירת תחום", url: `${BASE}/contact?m=2`, cx: 510, cy: 1198, w: 140, color: "#0ea5e9", kind: "meeting" },
-  { id: "m3", label: "פגישה 3", sub: "נעילת מסלול", url: `${BASE}/contact?m=3`, cx: 510, cy: 1593, w: 140, color: "#0ea5e9", kind: "meeting" },
+  { id: "m1", label: "פגישה 1", sub: "היכרות · אין מה להביא", url: `${BASE}/contact?m=1`, cx: 330, cy: 358, w: 150, color: "#0ea5e9", kind: "meeting" },
+  { id: "m2", label: "פגישה 2", sub: "בחירת תחום", url: `${BASE}/contact?m=2`, cx: 575, cy: 1245, w: 140, color: "#0ea5e9", kind: "meeting" },
+  { id: "m3", label: "פגישה 3", sub: "נעילת מסלול", url: `${BASE}/contact?m=3`, cx: 575, cy: 1645, w: 140, color: "#0ea5e9", kind: "meeting" },
 
   // ── שלב 4 — מסלול לימודים ────────────────────────────────────────────────
-  { id: "paths", label: "מסלולי לימוד", sub: "9 מסכים — לחצו על כל אחד למטה", url: `${BASE}/paths`, cx: 510, cy: 1313, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
+  { id: "paths", label: "מסלולי לימוד", sub: "9 מסכים — לחצו על כל אחד למטה", url: `${BASE}/paths`, cx: 575, cy: 1365, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
 
   // ── שמונת המסכים של שלב 4 ────────────────────────────────────────────────
   // כל אחד נפתח ישירות עם נתוני דמו, בלי לעבור את כל הזרימה
-  { id: "p-intro",        label: "פתיחה",          sub: "מה נעשה כאן",         url: `${BASE}/paths?reset=1`,                   cx: 110, cy: 1413, w: 110, color: "#8b5cf6" },
-  { id: "p-quiz",         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,         cx: 280, cy: 1413, w: 115, color: "#8b5cf6" },
-  { id: "p-result",       label: "המסלול המומלץ",  sub: "ניקוד משוקלל",        url: `${BASE}/paths?demo=1&phase=result`,       cx: 450, cy: 1413, w: 135, color: "#8b5cf6" },
-  { id: "p-routes",       label: "כל הדרכים מכאן", sub: "3 מסלולים כקווי רכבת", url: `${BASE}/paths?demo=1&phase=routes`,       cx: 640, cy: 1413, w: 145, color: "#8b5cf6", badge: "חדש", badgeColor: "#8b5cf6" },
-  { id: "p-blockers",     label: "מה עומד בדרך",   sub: "חסם ← פתרון + תאריך", url: `${BASE}/paths?demo=1&phase=blockers`,     cx: 840, cy: 1413, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
-  { id: "p-institutions", label: "מוסדות",         sub: "בניית רשימה",         url: `${BASE}/paths?demo=1&phase=institutions`, cx: 840, cy: 1508, w: 120, color: "#8b5cf6" },
-  { id: "p-prep",         label: "שאלות לפגישה",   sub: "נוצרות מהתשובות",     url: `${BASE}/paths?demo=1&phase=prep`,         cx: 640, cy: 1508, w: 135, color: "#8b5cf6" },
-  { id: "p-research",     label: "ערכת חקר",       sub: "אופציונלי",           url: `${BASE}/paths?demo=1&phase=research`,     cx: 430, cy: 1508, w: 115, color: "#8b5cf6" },
-  { id: "p-done",         label: "סיכום",          sub: "לפני/בפגישה + CTA",   url: `${BASE}/paths?demo=1&phase=done`,         cx: 220, cy: 1508, w: 120, color: "#8b5cf6", badge: "סיום", badgeColor: "#8b5cf6" },
+  { id: "p-intro",        label: "פתיחה",          sub: "מה נעשה כאן",         url: `${BASE}/paths?reset=1`,                   cx: 120, cy: 1465, w: 110, color: "#8b5cf6" },
+  { id: "p-quiz",         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,         cx: 300, cy: 1465, w: 115, color: "#8b5cf6" },
+  { id: "p-result",       label: "המסלול המומלץ",  sub: "ניקוד משוקלל",        url: `${BASE}/paths?demo=1&phase=result`,       cx: 490, cy: 1465, w: 135, color: "#8b5cf6" },
+  { id: "p-routes",       label: "כל הדרכים מכאן", sub: "3 מסלולים כקווי רכבת", url: `${BASE}/paths?demo=1&phase=routes`,       cx: 700, cy: 1465, w: 145, color: "#8b5cf6", badge: "חדש", badgeColor: "#8b5cf6" },
+  { id: "p-blockers",     label: "מה עומד בדרך",   sub: "חסם ← פתרון + תאריך", url: `${BASE}/paths?demo=1&phase=blockers`,     cx: 930, cy: 1465, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
+  { id: "p-institutions", label: "מוסדות",         sub: "בניית רשימה",         url: `${BASE}/paths?demo=1&phase=institutions`, cx: 930, cy: 1560, w: 120, color: "#8b5cf6" },
+  { id: "p-prep",         label: "שאלות לפגישה",   sub: "נוצרות מהתשובות",     url: `${BASE}/paths?demo=1&phase=prep`,         cx: 700, cy: 1560, w: 135, color: "#8b5cf6" },
+  { id: "p-research",     label: "ערכת חקר",       sub: "אופציונלי",           url: `${BASE}/paths?demo=1&phase=research`,     cx: 470, cy: 1560, w: 115, color: "#8b5cf6" },
+  { id: "p-done",         label: "סיכום",          sub: "לפני/בפגישה + CTA",   url: `${BASE}/paths?demo=1&phase=done`,         cx: 240, cy: 1560, w: 120, color: "#8b5cf6", badge: "סיום", badgeColor: "#8b5cf6" },
 
   // ── שלב 5 — לוגיסטיקה ומלגות ─────────────────────────────────────────────
-  { id: "plan", label: "התוכנית שלי", sub: "5 מסכים — לחצו על כל אחד למטה", url: `${BASE}/plan`, cx: 510, cy: 1708, w: 215, color: "#059669", badge: "שלב 5", badgeColor: "#059669" },
+  { id: "plan", label: "התוכנית שלי", sub: "5 מסכים — לחצו על כל אחד למטה", url: `${BASE}/plan`, cx: 575, cy: 1755, w: 215, color: "#059669", badge: "שלב 5", badgeColor: "#059669" },
 
-  { id: "pl-intro", label: "פתיחה לשלב",  sub: "מה קורה כאן",          url: `${BASE}/plan?reset=1`,      cx: 130, cy: 1808, w: 125, color: "#10b981" },
-  { id: "pl-plan",  label: "התוכנית",     sub: "עוגן + חודשים",        url: `${BASE}/plan?view=plan`,    cx: 320, cy: 1808, w: 130, color: "#10b981", badge: "הבית", badgeColor: "#10b981" },
-  { id: "pl-money", label: "החשבון",      sub: "מספר במקום הרגעה",     url: `${BASE}/plan?view=money`,   cx: 520, cy: 1808, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
-  { id: "pl-docs",  label: "ארון מסמכים", sub: "סטטוס ומיקום בלבד",    url: `${BASE}/plan?view=docs`,    cx: 730, cy: 1808, w: 140, color: "#10b981" },
-  { id: "pl-coord", label: "עדכון לרכזת", sub: "נבנה מעצמו · וואטסאפ", url: `${BASE}/plan?view=coord`,   cx: 900, cy: 1808, w: 145, color: "#10b981", badge: "סיום", badgeColor: "#10b981" },
+  { id: "pl-intro", label: "פתיחה לשלב",  sub: "מה קורה כאן",          url: `${BASE}/plan?reset=1`,      cx: 145, cy: 1850, w: 125, color: "#10b981" },
+  { id: "pl-plan",  label: "התוכנית",     sub: "עוגן + חודשים",        url: `${BASE}/plan?view=plan`,    cx: 350, cy: 1850, w: 130, color: "#10b981", badge: "הבית", badgeColor: "#10b981" },
+  { id: "pl-money", label: "החשבון",      sub: "מספר במקום הרגעה",     url: `${BASE}/plan?view=money`,   cx: 575, cy: 1850, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
+  { id: "pl-docs",  label: "ארון מסמכים", sub: "סטטוס ומיקום בלבד",    url: `${BASE}/plan?view=docs`,    cx: 800, cy: 1850, w: 140, color: "#10b981" },
+  { id: "pl-coord", label: "עדכון לרכזת", sub: "נבנה מעצמו · וואטסאפ", url: `${BASE}/plan?view=coord`,   cx: 1005, cy: 1850, w: 145, color: "#10b981", badge: "סיום", badgeColor: "#10b981" },
 ];
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
 
 const EDGES: Edge[] = [
   // Auth flow
-  { from: "login",      to: "onboarding", label: "הרשמה" },
+  { from: "login",      to: "onboarding" },
   { from: "login", to: "ob-0", color: "#3b82f6" },
   { from: "ob-0", to: "ob-1", color: "#3b82f6" },
   { from: "ob-1", to: "ob-2", color: "#3b82f6" },
@@ -180,7 +180,7 @@ const EDGES: Edge[] = [
   { from: "dashboard", to: "squad", dashed: true, color: "#6b7280" },
 
   // Dashboard → explore (stage 3)
-  { from: "dashboard", to: "explore", label: "שלב 3 — כנס לחקור" },
+  { from: "dashboard", to: "explore", label: "נפתח אחרי הפגישה" },
 
   // Explore → domains
   { from: "explore", to: "d-code" },
@@ -193,43 +193,43 @@ const EDGES: Edge[] = [
   { from: "explore", to: "d-qa" },
 
   // Domains → sims
-  { from: "d-code",      to: "s-code",      label: "קדימה לסימולציה" },
-  { from: "d-data",      to: "s-data",      label: "קדימה לסימולציה" },
-  { from: "d-marketing", to: "s-marketing", label: "קדימה לסימולציה" },
-  { from: "d-ai",        to: "s-ai",        label: "קדימה לסימולציה" },
-  { from: "d-cyber",     to: "s-cyber",     label: "קדימה לסימולציה" },
-  { from: "d-ux",        to: "s-ux",        label: "קדימה לסימולציה" },
-  { from: "d-networks",  to: "s-networks",  label: "קדימה לסימולציה" },
-  { from: "d-qa",        to: "s-qa",        label: "קדימה לסימולציה" },
+  { from: "d-code",      to: "s-code" },
+  { from: "d-data",      to: "s-data" },
+  { from: "d-marketing", to: "s-marketing" },
+  { from: "d-ai",        to: "s-ai" },
+  { from: "d-cyber",     to: "s-cyber" },
+  { from: "d-ux",        to: "s-ux" },
+  { from: "d-networks",  to: "s-networks" },
+  { from: "d-qa",        to: "s-qa" },
 
   // Code learn flow (sequential)
-  { from: "s-code",         to: "code-day",         label: "מיציתי ←", color: "#3b82f6" },
-  { from: "code-day",       to: "code-mystery",     label: "מיציתי ←", color: "#3b82f6" },
-  { from: "code-mystery",   to: "code-experience",  label: "מיציתי ←", color: "#3b82f6" },
+  { from: "s-code",         to: "code-day", color: "#3b82f6" },
+  { from: "code-day",       to: "code-mystery", color: "#3b82f6" },
+  { from: "code-mystery",   to: "code-experience", color: "#3b82f6" },
 
   // Data domain → learn
   { from: "d-data",    to: "learn",      label: "מרכז למידה",   color: "#0d9488" },
-  { from: "s-data",    to: "learn",      label: "מיציתי ←",     color: "#0d9488", dashed: true },
+  { from: "s-data",    to: "learn",     color: "#0d9488", dashed: true },
 
   // Data learn flow (sequential)
   { from: "learn",     to: "analytics",  label: "אנליטיקה",     color: "#0d9488" },
-  { from: "analytics", to: "mystery",    label: "מיציתי ←",     color: "#0d9488" },
-  { from: "mystery",   to: "experience", label: "מיציתי ←",     color: "#0d9488" },
+  { from: "analytics", to: "mystery",     color: "#0d9488" },
+  { from: "mystery",   to: "experience",     color: "#0d9488" },
 
   // Cyber learn flow (sequential)
-  { from: "s-cyber",         to: "cyber-day",         label: "מיציתי ←",  color: "#dc2626" },
-  { from: "cyber-day",       to: "cyber-mystery",     label: "מיציתי ←",  color: "#dc2626" },
-  { from: "cyber-mystery",   to: "cyber-experience",  label: "מיציתי ←",  color: "#dc2626" },
+  { from: "s-cyber",         to: "cyber-day",  color: "#dc2626" },
+  { from: "cyber-day",       to: "cyber-mystery",  color: "#dc2626" },
+  { from: "cyber-mystery",   to: "cyber-experience",  color: "#dc2626" },
 
   // Networks learn flow (sequential)
-  { from: "s-networks",        to: "networks-day",        label: "מיציתי ←",          color: "#2563eb" },
-  { from: "networks-day",      to: "networks-mystery",    label: "מיציתי ←",          color: "#2563eb" },
-  { from: "networks-mystery",  to: "networks-experience", label: "מיציתי ←",          color: "#2563eb" },
+  { from: "s-networks",        to: "networks-day",          color: "#2563eb" },
+  { from: "networks-day",      to: "networks-mystery",          color: "#2563eb" },
+  { from: "networks-mystery",  to: "networks-experience",          color: "#2563eb" },
 
   // QA learn flow (sequential)
-  { from: "s-qa",        to: "qa-day",         label: "מיציתי ←", color: "#d97706" },
-  { from: "qa-day",      to: "qa-mystery",     label: "מיציתי ←", color: "#d97706" },
-  { from: "qa-mystery",  to: "qa-experience",  label: "מיציתי ←", color: "#d97706" },
+  { from: "s-qa",        to: "qa-day", color: "#d97706" },
+  { from: "qa-day",      to: "qa-mystery", color: "#d97706" },
+  { from: "qa-mystery",  to: "qa-experience", color: "#d97706" },
 
   // כלי עיבוד החוויה → סיכום (נפתח אחרי 2+ תחומים)
   { from: "experience",          to: "results", label: "2+ תחומים ←", color: "#fb8500" },
@@ -494,22 +494,22 @@ type Band = { label: string; top: number; color: string; cross?: boolean };
 
 const BANDS: Band[] = [
   { label: "כלים רוחביים — פנימי, לאורך כל המסע", top: 14, color: "#475569", cross: true },
-  { label: "שלב 1 · טרום אינטייק — פתיחת חשבון", top: 152, color: "#023e8a" },
-  { label: "שלב 2 · אינטייק — היכרות, נסגר בפגישה", top: 252, color: "#0ea5e9" },
-  { label: "שלב 3 · חשיפה — 8 תחומים, נסגר בפגישה", top: 370, color: "#fb8500" },
-  { label: "שלב 4 · מסלול לימודים — נסגר בפגישה", top: 1253, color: "#7c3aed" },
-  { label: "שלב 5 · לוגיסטיקה ומלגות", top: 1645, color: "#059669" },
+  { label: "שלב 1 · טרום אינטייק — פתיחת חשבון", top: 158, color: "#023e8a" },
+  { label: "שלב 2 · אינטייק — היכרות, נסגר בפגישה", top: 272, color: "#0ea5e9" },
+  { label: "שלב 3 · חשיפה — 8 תחומים, נסגר בפגישה", top: 395, color: "#fb8500" },
+  { label: "שלב 4 · מסלול לימודים — נסגר בפגישה", top: 1305, color: "#7c3aed" },
+  { label: "שלב 5 · לוגיסטיקה ומלגות", top: 1695, color: "#059669" },
 ];
 
 // ─── Section Labels ───────────────────────────────────────────────────────────
 // תוויות עמודה בתוך רצועה — לא הפרדה בין רצועות
 
 const LABELS = [
-  { text: "דפי תחום (×8)", x: 8, y: 490, color: "#fb8500" },
-  { text: "סימולציות (×8)", x: 8, y: 585, color: "#d97706" },
-  { text: "מרכזי למידה — עמודה לכל תחום", x: 8, y: 688, color: "#0d9488" },
-  { text: "?demo=1&phase= פותח כל מסך", x: 8, y: 1378, color: "#8b5cf6" },
-  { text: "?view= פותח כל מסך", x: 8, y: 1773, color: "#10b981" },
+  { text: "דפי תחום (×8) — לחיצה על תחום פותחת אותו", x: 8, y: 520, color: "#fb8500" },
+  { text: "סימולציות (×8)", x: 8, y: 622, color: "#d97706" },
+  { text: "מרכזי למידה — יום בחיי ← תעלומה ← עיבוד חוויה", x: 8, y: 726, color: "#0d9488" },
+  { text: "תשעת מסכי שלב 4 — ?demo=1&phase=", x: 8, y: 1430, color: "#8b5cf6" },
+  { text: "חמשת מסכי שלב 5 — ?view=", x: 8, y: 1815, color: "#10b981" },
 ];
 
 // ─── Main ────────────────────────────────────────────────────────────────────
