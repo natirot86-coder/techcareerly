@@ -216,7 +216,7 @@ function AdminDegreesPage() {
 }
 
 
-// ─── תרשים — תחומים ← תארים ──────────────────────────────────────────────────
+// ─── תרשים — תחום נפתח לתארים שלו ────────────────────────────────────────────
 
 const DOMAIN_COLOR: Record<Domain, string> = {
   data: "#0d9488", code: "#3b82f6", cyber: "#dc2626", networks: "#2563eb",
@@ -224,106 +224,100 @@ const DOMAIN_COLOR: Record<Domain, string> = {
 };
 
 /**
- * תרשים דו-צדדי: תחומים בימין (כיוון הקריאה), תארים בשמאל, קשת לכל שיוך.
- *
- * מה שהתרשים חושף והרשימה מסתירה:
- * 1. **רוחב התואר** — תואר שמזין 4 תחומים (מערכות מידע הנדסית) שווה יותר
- *    למי שעוד מתלבט מאשר תואר צר. ברשימה זה בלתי נראה.
- * 2. **תחומים דלים** — UX ושיווק כמעט בלי קשתות: החורים האקדמיים שלנו, בקול.
- * לחיצה על צומת מדגישה רק את הקשתות שלו.
+ * חשיפה הדרגתית במקום ספגטי: כל שבעת התחומים גלויים תמיד, ולחיצה על תחום
+ * פורשת מתחתיו — עם קווי חיבור — רק את התארים שמובילים אליו.
+ * תחום ריק מסומן במסגרת מקווקוות: חור אקדמי, לא באג.
  */
 function DegreeDiagram({ items }: { items: Degree[] }) {
-  const [focus, setFocus] = useState<string | null>(null);
-
+  const [selected, setSelected] = useState<Domain>("data");
   const active = items.filter(d => d.status === "active");
-  const W = 1040, ROW_D = 92, ROW_G = 64, TOP = 46;
-  const H = Math.max(DOMAINS.length * ROW_D, active.length * ROW_G) + TOP + 40;
-  const domY = (i: number) => TOP + i * ROW_D + 20;
-  const degY = (i: number) => TOP + i * ROW_G + 20;
-  const DOM_X = W - 190, DEG_X = 240;
-
-  const isDim = (dom: Domain, degId: string) =>
-    focus !== null && focus !== dom && focus !== degId;
+  const degrees = active.filter(d => d.domains.includes(selected));
+  const color = DOMAIN_COLOR[selected];
 
   return (
     <div style={{ maxWidth: 1080, margin: "0 auto", padding: "16px 24px 60px" }}>
-      <div style={{ background: "#fff", borderRadius: 16, border: "1px solid rgba(0,0,0,0.08)", padding: 16, overflowX: "auto" }}>
-        <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginBottom: 6 }}>
-          עובי הקשת = ✦ מומלץ · לחיצה על תחום או תואר מדגישה את הקשרים שלו · תחום בלי קשתות = חור אקדמי
-        </div>
-        <svg width={W} height={H} style={{ minWidth: W, display: "block" }} direction="ltr">
-          {/* קשתות */}
-          {active.map((d, di) =>
-            d.domains.map(dom => {
-              const domI = DOMAINS.indexOf(dom);
-              if (domI < 0) return null;
-              const y1 = domY(domI), y2 = degY(di);
-              const dim = isDim(dom, d.id);
-              return (
-                <path
-                  key={d.id + dom}
-                  d={`M ${DOM_X} ${y1} C ${DOM_X - 160} ${y1}, ${DEG_X + 160} ${y2}, ${DEG_X} ${y2}`}
-                  fill="none"
-                  stroke={DOMAIN_COLOR[dom]}
-                  strokeWidth={d.recommended ? 3 : 1.5}
-                  opacity={dim ? 0.06 : d.recommended ? 0.75 : 0.4}
-                />
-              );
-            })
-          )}
-
-          {/* תחומים — ימין */}
-          {DOMAINS.map((dom, i) => {
-            const n = active.filter(d => d.domains.includes(dom)).length;
-            const dim = focus !== null && focus !== dom &&
-              !active.some(d => d.id === focus && d.domains.includes(dom));
-            // (תחום מודגש אם הוא בפוקוס, או אם התואר שבפוקוס מזין אותו)
-            return (
-              <g key={dom} opacity={dim ? 0.25 : 1} style={{ cursor: "pointer" }}
-                onClick={() => setFocus(focus === dom ? null : dom)}>
-                <rect x={DOM_X} y={domY(i) - 20} width={168} height={44} rx={12}
-                  fill={n === 0 ? "#fff" : DOMAIN_COLOR[dom]}
-                  stroke={DOMAIN_COLOR[dom]} strokeWidth={1.5}
-                  strokeDasharray={n === 0 ? "5 4" : undefined} />
-                <text x={DOM_X + 84} y={domY(i) - 1} textAnchor="middle" fontSize={13.5} fontWeight={800}
-                  fill={n === 0 ? DOMAIN_COLOR[dom] : "#fff"} fontFamily="'Heebo', sans-serif">
-                  {DOMAIN_LABEL[dom]}
-                </text>
-                <text x={DOM_X + 84} y={domY(i) + 15} textAnchor="middle" fontSize={10}
-                  fill={n === 0 ? "#b91c1c" : "rgba(255,255,255,0.8)"} fontFamily="'Heebo', sans-serif" fontWeight={700}>
-                  {n === 0 ? "אין מסלול אקדמי ממופה!" : `${n} תארים`}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* תארים — שמאל */}
-          {active.map((d, i) => {
-            const focusIsDomain = (DOMAINS as string[]).includes(focus ?? "");
-            const dim = focus !== null && focus !== d.id &&
-              (!focusIsDomain || !d.domains.includes(focus as Domain));
-            const bar = ENTRY_LABEL[d.entryBar];
-            const marked = d.recommendedAt?.length ?? 0;
-            return (
-              <g key={d.id} opacity={dim ? 0.25 : 1} style={{ cursor: "pointer" }}
-                onClick={() => setFocus(focus === d.id ? null : d.id)}>
-                <rect x={10} y={degY(i) - 22} width={DEG_X - 10} height={48} rx={12}
-                  fill="#fff" stroke={d.recommended ? ORANGE : "rgba(0,0,0,0.15)"} strokeWidth={d.recommended ? 2 : 1} />
-                <text x={DEG_X - 12} y={degY(i) - 4} textAnchor="end" fontSize={12.5} fontWeight={800}
-                  fill={NAVY} fontFamily="'Heebo', sans-serif" direction="rtl">
-                  {d.recommended ? "✦ " : ""}{d.name}
-                </text>
-                <text x={DEG_X - 12} y={degY(i) + 14} textAnchor="end" fontSize={9.5}
-                  fill="rgba(0,0,0,0.45)" fontFamily="'Heebo', sans-serif" direction="rtl">
-                  {d.salary ? `${(d.salary / 1000).toFixed(1)}K ₪ · ` : ""}{bar.label}
-                  {marked > 0 ? ` · ${marked} מוסדות סומנו` : " · טרם סומן מוסד"}
-                </text>
-                <circle cx={22} cy={degY(i) + 2} r={5} fill={bar.color} />
-              </g>
-            );
-          })}
-        </svg>
+      {/* שורת התחומים — כולם, תמיד */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+        {DOMAINS.map(dom => {
+          const n = active.filter(d => d.domains.includes(dom)).length;
+          const on = selected === dom;
+          return (
+            <button key={dom} onClick={() => setSelected(dom)}
+              style={{
+                padding: "12px 18px", borderRadius: 14, cursor: "pointer", minWidth: 118,
+                border: n === 0 ? `2px dashed ${DOMAIN_COLOR[dom]}` : "none",
+                background: n === 0 ? "#fff" : on ? DOMAIN_COLOR[dom] : `${DOMAIN_COLOR[dom]}1a`,
+                color: n === 0 ? DOMAIN_COLOR[dom] : on ? "#fff" : DOMAIN_COLOR[dom],
+                boxShadow: on ? `0 6px 18px ${DOMAIN_COLOR[dom]}55` : "none",
+                transform: on ? "translateY(-2px)" : "none",
+                transition: "all .15s",
+              }}>
+              <div style={{ fontSize: 14, fontWeight: 800, fontFamily: "'Heebo', sans-serif" }}>{DOMAIN_LABEL[dom]}</div>
+              <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 2, opacity: 0.85 }}>
+                {n === 0 ? "אין מסלול אקדמי!" : `${n} תארים`}
+              </div>
+            </button>
+          );
+        })}
       </div>
+
+      {/* מניפת התארים של התחום הנבחר */}
+      {degrees.length === 0 ? (
+        <div style={{ marginTop: 30, textAlign: "center", padding: 26, background: "#fff", borderRadius: 16, border: `2px dashed ${color}`, color, fontSize: 14, fontWeight: 700 }}>
+          לתחום {DOMAIN_LABEL[selected]} אין תארים ממופים — זה החור האקדמי שלנו, וזו משימת מחקר.
+        </div>
+      ) : (
+        <div style={{ position: "relative", marginTop: 8 }}>
+          {/* קווי החיבור — גזע ומזלג */}
+          <svg width="100%" height="46" style={{ display: "block" }}>
+            <line x1="50%" y1="0" x2="50%" y2="18" stroke={color} strokeWidth="2.5" />
+            <line x1={degrees.length === 1 ? "50%" : "12%"} y1="18" x2={degrees.length === 1 ? "50%" : "88%"} y2="18" stroke={color} strokeWidth="2" opacity="0.55" />
+            {degrees.map((_, i) => {
+              const n = degrees.length;
+              const x = n === 1 ? 50 : 12 + (i * 76) / (n - 1);
+              return <line key={i} x1={`${x}%`} y1="18" x2={`${x}%`} y2="46" stroke={color} strokeWidth="2" opacity="0.55" />;
+            })}
+          </svg>
+
+          <div style={{
+            display: "grid", gap: 12,
+            gridTemplateColumns: `repeat(${Math.min(degrees.length, 4)}, minmax(0, 1fr))`,
+          }}>
+            {degrees.map(d => {
+              const bar = ENTRY_LABEL[d.entryBar];
+              const marked = d.recommendedAt?.length ?? 0;
+              return (
+                <div key={d.id} style={{
+                  background: "#fff", borderRadius: 14, padding: 14,
+                  border: d.recommended ? `2px solid ${ORANGE}` : "1px solid rgba(0,0,0,0.1)",
+                  borderTop: `3px solid ${color}`,
+                }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 800, color: NAVY, lineHeight: 1.35 }}>
+                    {d.recommended ? "✦ " : ""}{d.name}
+                    <span style={{ fontSize: 10, color: "rgba(0,0,0,0.35)", fontWeight: 400 }}> {d.kind}</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", marginTop: 8, fontSize: 11 }}>
+                    {d.salary && <span><b style={{ fontSize: 13, color: "#1c1a16" }}>{(d.salary / 1000).toFixed(1)}K ₪</b> <span style={{ color: "rgba(0,0,0,0.4)" }}>שכר</span></span>}
+                    {d.inTech && <span><b style={{ fontSize: 13, color: d.inTech >= 60 ? "#047857" : "#1c1a16" }}>{d.inTech}%</b> <span style={{ color: "rgba(0,0,0,0.4)" }}>בטק</span></span>}
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99, background: `${bar.color}14`, color: bar.color }}>{bar.label}</span>
+                  </div>
+                  <div style={{ fontSize: 10.5, marginTop: 8, color: marked ? "#047857" : "#92400e", fontWeight: 700 }}>
+                    {marked ? `✓ ${marked} מוסדות סומנו` : "טרם סומן מוסד"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* תארים רחבים — הבונוס של התצוגה */}
+          <div style={{ marginTop: 14, fontSize: 11.5, color: "rgba(0,0,0,0.5)", lineHeight: 1.7, background: "#fff", borderRadius: 12, padding: "10px 14px", border: "1px solid rgba(0,0,0,0.06)" }}>
+            <b>תארים רחבים</b> (פותחים גם תחומים אחרים — ביטוח למי שמתלבט):{" "}
+            {degrees.filter(d => d.domains.length >= 3).map(d => `${d.name} (${d.domains.length} תחומים)`).join(" · ") || "אין בתחום הזה"}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
