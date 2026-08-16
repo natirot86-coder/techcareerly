@@ -29,7 +29,7 @@ const DOMAINS: Domain[] = ["data", "code", "cyber", "networks", "ai", "ux", "mar
 function AdminDegreesPage() {
   const [items, setItems] = useState<Degree[]>(DEGREES);
   const [activeDomain, setActiveDomain] = useState<Domain>("data");
-  const [view, setView] = useState<"list" | "diagram">("list");
+  const [view, setView] = useState<"map3" | "list">("map3");
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -94,7 +94,7 @@ function AdminDegreesPage() {
       <div style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "10px 24px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", gap: 2, padding: 2, borderRadius: 9, background: "rgba(0,0,0,0.05)", marginLeft: 10 }}>
-            {([["list", "רשימה"], ["diagram", "תרשים"]] as const).map(([v, l]) => (
+            {([["map3", "מיפוי"], ["list", "עריכת תארים"]] as const).map(([v, l]) => (
               <button key={v} onClick={() => setView(v)}
                 style={{
                   fontSize: 12, fontWeight: 700, padding: "5px 13px", borderRadius: 7, border: "none", cursor: "pointer",
@@ -119,7 +119,7 @@ function AdminDegreesPage() {
         </div>
       </div>
 
-      {view === "diagram" && <DegreeDiagram items={items} />}
+      {view === "map3" && <Level3 items={items} onToggle={toggleInst} />}
 
       {view === "list" && (
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "16px 24px 60px", display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
@@ -216,108 +216,304 @@ function AdminDegreesPage() {
 }
 
 
-// ─── תרשים — תחום נפתח לתארים שלו ────────────────────────────────────────────
+// ─── רמה 3 — מוסדות ותוכניות של תואר נבחר (handoff 1a) ──────────────────────
 
 const DOMAIN_COLOR: Record<Domain, string> = {
   data: "#0d9488", code: "#3b82f6", cyber: "#dc2626", networks: "#2563eb",
   ai: "#7c3aed", ux: "#db2777", marketing: "#f97316", qa: "#d97706",
 };
 
+const ENTRY_PILL: Record<string, { bg: string; fg: string }> = {
+  low: { bg: "#e6f4ef", fg: "#059669" },
+  medium: { bg: "#fdf1de", fg: "#b45309" },
+  high: { bg: "#fbeaea", fg: "#dc2626" },
+};
+
 /**
- * חשיפה הדרגתית במקום ספגטי: כל שבעת התחומים גלויים תמיד, ולחיצה על תחום
- * פורשת מתחתיו — עם קווי חיבור — רק את התארים שמובילים אליו.
- * תחום ריק מסומן במסגרת מקווקוות: חור אקדמי, לא באג.
+ * הגישה שנבחרה ב-handoff: פרישה בתוך הדף. תחומים ← רשת תארים ← פאנל שמתמזג
+ * עם כרטיס התואר הנבחר. ארבע קבוצות מוסדות, מהדלת החזקה לחלשה, מוסד מופיע
+ * פעם אחת בלבד והחפיפות הופכות לתגים.
+ *
+ * התאמות מההחלטה המשותפת (16.8):
+ * - ★ רק ל-partner — "דיברנו" לא מקנה כוכב
+ * - קבוצה 4 נשענת על institution.degreeIds (המיפוי הבוליאני החדש); מוסד
+ *   בלי מיפוי אך עם חפיפת תחום מוצג עם "לא מופה" — ריק אינו "לא מלמד"
+ * - "אמת מול המוסד" מוסיף 📞 להערות בטיוטת לוח המלגות — נכנס לרשימת הטלפונים
+ * - שמירה: localStorage + ייצוא JSON, כמו כל הלוחות, עד שיש שרת
  */
-function DegreeDiagram({ items }: { items: Degree[] }) {
-  const [selected, setSelected] = useState<Domain>("data");
-  const active = items.filter(d => d.status === "active");
-  const degrees = active.filter(d => d.domains.includes(selected));
-  const color = DOMAIN_COLOR[selected];
+function Level3({ items, onToggle }: { items: Degree[]; onToggle: (degreeId: string, instId: string) => void }) {
+  const [domain, setDomain] = useState<Domain>("data");
+  const [degreeId, setDegreeId] = useState<string | null>(null);
+
+  const color = DOMAIN_COLOR[domain];
+  const degrees = items.filter(d => d.status === "active" && d.domains.includes(domain));
+  const selected = degrees.find(d => d.id === degreeId) ?? null;
 
   return (
-    <div style={{ maxWidth: 1080, margin: "0 auto", padding: "16px 24px 60px" }}>
-      {/* שורת התחומים — כולם, תמיד */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-        {DOMAINS.map(dom => {
-          const n = active.filter(d => d.domains.includes(dom)).length;
-          const on = selected === dom;
-          return (
-            <button key={dom} onClick={() => setSelected(dom)}
-              style={{
-                padding: "12px 18px", borderRadius: 14, cursor: "pointer", minWidth: 118,
-                border: n === 0 ? `2px dashed ${DOMAIN_COLOR[dom]}` : "none",
-                background: n === 0 ? "#fff" : on ? DOMAIN_COLOR[dom] : `${DOMAIN_COLOR[dom]}1a`,
-                color: n === 0 ? DOMAIN_COLOR[dom] : on ? "#fff" : DOMAIN_COLOR[dom],
-                boxShadow: on ? `0 6px 18px ${DOMAIN_COLOR[dom]}55` : "none",
-                transform: on ? "translateY(-2px)" : "none",
-                transition: "all .15s",
-              }}>
-              <div style={{ fontSize: 14, fontWeight: 800, fontFamily: "'Heebo', sans-serif" }}>{DOMAIN_LABEL[dom]}</div>
-              <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 2, opacity: 0.85 }}>
-                {n === 0 ? "אין מסלול אקדמי!" : `${n} תארים`}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+    <div style={{ maxWidth: 1100, margin: "16px auto 60px", padding: "0 24px" }}>
+      <div style={{ background: "#f5f3ef", border: "1px solid #ddd8cf", borderRadius: 14, padding: 22 }}>
 
-      {/* מניפת התארים של התחום הנבחר */}
-      {degrees.length === 0 ? (
-        <div style={{ marginTop: 30, textAlign: "center", padding: 26, background: "#fff", borderRadius: 16, border: `2px dashed ${color}`, color, fontSize: 14, fontWeight: 700 }}>
-          לתחום {DOMAIN_LABEL[selected]} אין תארים ממופים — זה החור האקדמי שלנו, וזו משימת מחקר.
+        {/* רמה 1 — תחומים */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {DOMAINS.map(dom => {
+            const n = items.filter(x => x.status === "active" && x.domains.includes(dom)).length;
+            const on = domain === dom;
+            return (
+              <button key={dom} onClick={() => { setDomain(dom); setDegreeId(null); }}
+                style={{
+                  padding: "8px 14px", borderRadius: 9, fontSize: 13, border: "none", cursor: "pointer",
+                  fontWeight: on ? 700 : 500, fontFamily: "'Heebo', sans-serif",
+                  background: on ? DOMAIN_COLOR[dom] : `${DOMAIN_COLOR[dom]}1a`,
+                  color: on ? "#fff" : DOMAIN_COLOR[dom],
+                }}>
+                {DOMAIN_LABEL[dom]}{n === 0 ? " · אין תארים ממופים" : ""}
+              </button>
+            );
+          })}
         </div>
-      ) : (
-        <div style={{ position: "relative", marginTop: 8 }}>
-          {/* קווי החיבור — גזע ומזלג */}
-          <svg width="100%" height="46" style={{ display: "block" }}>
-            <line x1="50%" y1="0" x2="50%" y2="18" stroke={color} strokeWidth="2.5" />
-            <line x1={degrees.length === 1 ? "50%" : "12%"} y1="18" x2={degrees.length === 1 ? "50%" : "88%"} y2="18" stroke={color} strokeWidth="2" opacity="0.55" />
-            {degrees.map((_, i) => {
-              const n = degrees.length;
-              const x = n === 1 ? 50 : 12 + (i * 76) / (n - 1);
-              return <line key={i} x1={`${x}%`} y1="18" x2={`${x}%`} y2="46" stroke={color} strokeWidth="2" opacity="0.55" />;
-            })}
-          </svg>
 
-          <div style={{
-            display: "grid", gap: 12,
-            gridTemplateColumns: `repeat(${Math.min(degrees.length, 4)}, minmax(0, 1fr))`,
-          }}>
+        {/* רמה 2 — רשת תארים */}
+        {degrees.length === 0 ? (
+          <div style={{ marginTop: 18, textAlign: "center", padding: 22, borderRadius: 12, border: `2px dashed ${color}`, color, fontSize: 14, fontWeight: 700, background: "#fff" }}>
+            אין תארים ממופים לתחום {DOMAIN_LABEL[domain]} — זה ממצא, לא באג. משימת מחקר.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginTop: 16 }}>
             {degrees.map(d => {
-              const bar = ENTRY_LABEL[d.entryBar];
+              const on = degreeId === d.id;
+              const ep = ENTRY_PILL[d.entryBar];
               const marked = d.recommendedAt?.length ?? 0;
               return (
-                <div key={d.id} style={{
-                  background: "#fff", borderRadius: 14, padding: 14,
-                  border: d.recommended ? `2px solid ${ORANGE}` : "1px solid rgba(0,0,0,0.1)",
-                  borderTop: `3px solid ${color}`,
-                }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 800, color: NAVY, lineHeight: 1.35 }}>
+                <button key={d.id} onClick={() => setDegreeId(on ? null : d.id)}
+                  style={{
+                    textAlign: "right", cursor: "pointer", padding: "14px 16px",
+                    background: "#fff", fontFamily: "'Heebo', sans-serif",
+                    border: on ? `2px solid ${color}` : "1px solid #e4dfd6",
+                    borderBottom: on ? "none" : undefined,
+                    borderRadius: on ? "12px 12px 0 0" : 12,
+                    opacity: degreeId && !on ? 0.6 : 1,
+                    boxShadow: on ? "0 2px 10px rgba(2,62,138,0.08)" : "none",
+                  }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: NAVY }}>
                     {d.recommended ? "✦ " : ""}{d.name}
-                    <span style={{ fontSize: 10, color: "rgba(0,0,0,0.35)", fontWeight: 400 }}> {d.kind}</span>
+                    <span style={{ fontSize: 12, color: "#8a877f", fontWeight: 400 }}> {d.kind}</span>
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", marginTop: 8, fontSize: 11 }}>
-                    {d.salary && <span><b style={{ fontSize: 13, color: "#1c1a16" }}>{(d.salary / 1000).toFixed(1)}K ₪</b> <span style={{ color: "rgba(0,0,0,0.4)" }}>שכר</span></span>}
-                    {d.inTech && <span><b style={{ fontSize: 13, color: d.inTech >= 60 ? "#047857" : "#1c1a16" }}>{d.inTech}%</b> <span style={{ color: "rgba(0,0,0,0.4)" }}>בטק</span></span>}
+                  <div style={{ fontSize: 12.5, color: "#5c5a55", marginTop: 4 }}>
+                    {d.salary ? `${(d.salary / 1000).toFixed(1)}K ₪ שכר · ` : ""}
+                    {d.inTech ? <b style={{ color: "#059669" }}>{d.inTech}% בטק</b> : null}
                   </div>
-                  <div style={{ marginTop: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99, background: `${bar.color}14`, color: bar.color }}>{bar.label}</span>
+                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12, padding: "3px 9px", borderRadius: 999, background: ep.bg, color: ep.fg }}>
+                      {ENTRY_LABEL[d.entryBar].label}
+                    </span>
+                    {marked > 0
+                      ? <span style={{ fontSize: 12, padding: "3px 9px", borderRadius: 999, background: "#e6f4ef", color: "#059669", fontWeight: 700 }}>{marked} מוסדות סומנו</span>
+                      : <span style={{ fontSize: 12, color: "#fb8500", fontWeight: 700 }}>טרם סומן מוסד</span>}
                   </div>
-                  <div style={{ fontSize: 10.5, marginTop: 8, color: marked ? "#047857" : "#92400e", fontWeight: 700 }}>
-                    {marked ? `✓ ${marked} מוסדות סומנו` : "טרם סומן מוסד"}
-                  </div>
-                </div>
+                </button>
               );
             })}
           </div>
+        )}
 
-          {/* תארים רחבים — הבונוס של התצוגה */}
-          <div style={{ marginTop: 14, fontSize: 11.5, color: "rgba(0,0,0,0.5)", lineHeight: 1.7, background: "#fff", borderRadius: 12, padding: "10px 14px", border: "1px solid rgba(0,0,0,0.06)" }}>
-            <b>תארים רחבים</b> (פותחים גם תחומים אחרים — ביטוח למי שמתלבט):{" "}
-            {degrees.filter(d => d.domains.length >= 3).map(d => `${d.name} (${d.domains.length} תחומים)`).join(" · ") || "אין בתחום הזה"}
-          </div>
+        {/* רמה 3 — הפאנל */}
+        {selected && <ExpansionPanel degree={selected} color={color} onToggle={onToggle} />}
+      </div>
+    </div>
+  );
+}
+
+type Row = {
+  inst: (typeof INSTITUTIONS)[number];
+  group: 1 | 2 | 3 | 4;
+  program?: (typeof FUNDING)[number];
+  unmappedOffering?: boolean;
+  mappedElsewhere?: boolean;
+};
+
+function ExpansionPanel({ degree, color, onToggle }: {
+  degree: Degree; color: string; onToggle: (degreeId: string, instId: string) => void;
+}) {
+  /*
+   * שאלת נתי (16.8): "אז כל מוסד לא-ממופה יוצג בכל תואר?"
+   * התשובה: הוא זכאי להופיע (ריק = לא יודעים, לא "לא מלמד") — אבל לא להציף.
+   * מי שאומת שמלמד את התואר מוצג תמיד; הלא-ממופים מאחורי קיפול שנוקב במספרם.
+   * ככל שממפים — הרעש קטן, והקיפול עצמו הוא תזכורת למפות.
+   */
+  const [showUnmapped, setShowUnmapped] = useState(false);
+  /** בניית ארבע הקבוצות — נגזרת, לא state */
+  const rows: Row[] = [];
+  for (const inst of INSTITUTIONS) {
+    if (inst.status === "hidden" || inst.track !== "degree") continue;
+    const offersMapped = (inst.degreeIds?.length ?? 0) > 0;
+    const offersThis = inst.degreeIds?.includes(degree.id) ?? false;
+    const domainOverlap = inst.domains.some(dm => degree.domains.includes(dm));
+    // מוסד רלוונטי: מלמד את התואר, או שאין מיפוי אבל יש חפיפת תחום
+    if (offersMapped && !offersThis) continue;
+    if (!offersMapped && !domainOverlap) continue;
+
+    const program = inst.programId ? FUNDING.find(f => f.id === inst.programId) : undefined;
+    const progOpen = program?.degreeIds?.includes(degree.id) ?? false;
+    const progUnmapped = !!program && (program.degreeIds?.length ?? 0) === 0;
+    const mappedElsewhere = !!program && (program.degreeIds?.length ?? 0) > 0 && !progOpen;
+    const partner = inst.relationship === "partner" || program?.relationship === "partner";
+
+    const group: Row["group"] = progOpen ? 1 : progUnmapped ? 2 : partner ? 3 : 4;
+    rows.push({ inst, group, program, unmappedOffering: !offersMapped, mappedElsewhere });
+  }
+  rows.sort((a, b) => a.group - b.group);
+
+  const marked = new Set(degree.recommendedAt ?? []);
+  const g = (n: Row["group"]) => rows.filter(r => r.group === n);
+
+  const MarkBtn = ({ instId }: { instId: string }) => {
+    const on = marked.has(instId);
+    return (
+      <button onClick={() => onToggle(degree.id, instId)}
+        style={{
+          fontSize: 13, padding: "7px 13px", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap",
+          fontFamily: "'Heebo', sans-serif", alignSelf: "flex-start", flexShrink: 0,
+          background: on ? "#059669" : "#fff",
+          border: on ? "1px solid #059669" : "1px solid #ddd8cf",
+          color: on ? "#fff" : NAVY, fontWeight: on ? 700 : 500,
+        }}>
+        {on ? "✓ מסומן" : "סמן כמומלץ"}
+      </button>
+    );
+  };
+
+  const Tags = ({ r }: { r: Row }) => (
+    <span style={{ display: "inline-flex", gap: 6, marginRight: 8 }}>
+      {(r.inst.relationship === "partner" || r.program?.relationship === "partner") && r.group !== 3 && (
+        <span style={{ background: "#eaf0f8", color: NAVY, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>★ קשר ישיר</span>
+      )}
+      {r.mappedElsewhere && (
+        <span style={{ background: "#f4f1ea", color: "#8a877f", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>התוכנית מופתה לתארים אחרים</span>
+      )}
+      {r.unmappedOffering && (
+        <span style={{ background: "#fff7ed", color: "#b45309", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>לא אומת שמלמד את התואר</span>
+      )}
+    </span>
+  );
+
+  const GroupHead = ({ title, count, muted }: { title: string; count: number; muted?: boolean }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ fontSize: 14, fontWeight: 900, color: muted ? "#8a877f" : NAVY }}>{title}</span>
+      <span style={{ fontSize: 12.5, color: "#8a877f" }}>{count}</span>
+      <div style={{ flex: 1, height: 1, background: "#eae5dc" }} />
+    </div>
+  );
+
+  /** "אמת מול המוסד" — נרשם כ-📞 בטיוטת המלגות ונכנס לרשימת הטלפונים */
+  function requestVerification(programId: string) {
+    try {
+      const KEY = "admin-scholarships-draft";
+      const items = JSON.parse(localStorage.getItem(KEY) ?? "null") ?? FUNDING;
+      const next = items.map((f: { id: string; notes?: string }) => f.id === programId
+        ? { ...f, notes: `${f.notes ?? ""} 📞 לאמת: האם התוכנית פתוחה לתואר ${degree.name}.`.trim() }
+        : f);
+      localStorage.setItem(KEY, JSON.stringify(next));
+      alert("נוסף לרשימת הטלפונים בלוח המלגות 📞");
+    } catch { /* ignore */ }
+  }
+
+  return (
+    <div style={{ background: "#fff", border: `2px solid ${color}`, borderRadius: "0 0 12px 12px", padding: "20px 22px 22px", display: "flex", flexDirection: "column", gap: 20, marginTop: -1 }}>
+      {rows.length === 0 && (
+        <div style={{ textAlign: "center", color: "#fb8500", fontWeight: 700, fontSize: 14, padding: 10 }}>
+          טרם סומן מוסד לתואר הזה
         </div>
       )}
+
+      {g(1).length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <GroupHead title="תוכניות פתוחות לתואר הזה" count={g(1).length} />
+          {g(1).map(r => (
+            <div key={r.inst.id} style={{ border: "1px solid #cfe8e2", background: "#f4fbf9", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, color: NAVY }}>
+                  <b>{r.inst.name.split(" — ")[0]}</b> · {r.program!.name.split(" — ")[0]}
+                  <Tags r={r} />
+                </div>
+                <div style={{ fontSize: 13, color: "#5c5a55", marginTop: 3 }}>
+                  {(r.program!.covers ?? []).slice(0, 3).join(" · ") || r.program!.what} — התוכנית מופתה לתואר הזה
+                </div>
+              </div>
+              <MarkBtn instId={r.inst.id} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {g(2).length > 0 && (
+        <div style={{ border: "1px dashed #fb8500", background: "#fff7ed", borderRadius: 10, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ fontSize: 14, fontWeight: 900, color: "#b45309" }}>⚠️ תוכניות שלא אומתו לתואר הזה — {g(2).length}</div>
+          <div style={{ fontSize: 13, color: "#7c4a11", lineHeight: 1.55 }}>
+            המוסד רלוונטי, אבל לא סומן לאילו תארים התוכנית פתוחה. לא ידוע שהיא פתוחה לתואר הזה, ולא ידוע שהיא סגורה.
+          </div>
+          {g(2).map(r => (
+            <div key={r.inst.id} style={{ background: "#fff", border: "1px solid #f5d8b3", borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14.5, color: NAVY }}><b>{r.inst.name.split(" — ")[0]}</b> · {r.program!.name.split(" — ")[0]}<Tags r={r} /></div>
+                <div style={{ fontSize: 12.5, color: "#b45309", marginTop: 2 }}>לא אומת לתואר הזה</div>
+              </div>
+              <button onClick={() => requestVerification(r.program!.id)}
+                style={{ fontSize: 12.5, padding: "6px 12px", borderRadius: 8, border: "1px solid #fb8500", color: "#b45309", background: "#fff", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'Heebo', sans-serif" }}>
+                אמת מול המוסד
+              </button>
+              <MarkBtn instId={r.inst.id} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {g(3).length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <GroupHead title="★ קשר ישיר לעמותה — ללא תוכנית ייעודית" count={g(3).length} />
+          {g(3).map(r => (
+            <div key={r.inst.id} style={{ border: "1px solid #e4dfd6", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 15, color: NAVY }}>
+                ★ <b>{r.inst.name.split(" — ")[0]}</b>
+                <span style={{ fontSize: 13, color: "#8a877f" }}> · ללא תוכנית ייעודית</span>
+                <Tags r={r} />
+              </div>
+              <MarkBtn instId={r.inst.id} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {g(4).length > 0 && (() => {
+        const verified = g(4).filter(r => !r.unmappedOffering);
+        const unmapped = g(4).filter(r => r.unmappedOffering);
+        const shown4 = showUnmapped ? g(4) : verified;
+        return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <GroupHead title="עוד מוסדות שמלמדים את התואר" count={verified.length} muted />
+          {unmapped.length > 0 && (
+            <button onClick={() => setShowUnmapped(!showUnmapped)}
+              style={{ alignSelf: "flex-start", fontSize: 12.5, fontWeight: 700, padding: "6px 12px", borderRadius: 8, border: "1px dashed #ddd8cf", background: "#fff", color: "#8a877f", cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
+              {showUnmapped ? "להסתיר" : "להציג"} עוד {unmapped.length} מוסדות בתחום שטרם מופו התארים שלהם
+            </button>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+            {shown4.map(r => (
+              <div key={r.inst.id} style={{ border: "1px solid #eae5dc", borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0, fontSize: 14, color: "#3c3a36" }}>
+                  {r.inst.name.split(" — ")[0]}
+                  <Tags r={r} />
+                </div>
+                <MarkBtn instId={r.inst.id} />
+              </div>
+            ))}
+          </div>
+        </div>
+        );
+      })()}
+
+      <div style={{ fontSize: 12, color: "#8a877f", lineHeight: 1.6 }}>
+        בכנות: {degree.caveat}
+      </div>
     </div>
   );
 }

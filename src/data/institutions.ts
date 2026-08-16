@@ -63,6 +63,14 @@ export type Institution = {
   openDays: string;
 
   /**
+   * אילו תארים (מזהים קנוניים מ-degrees.ts) המוסד מלמד.
+   * **ריק = לא מופה, לא "לא מלמד"** — אותה סמנטיקה כמו degreeIds בתוכניות.
+   * זה המיפוי הקל (בוליאני, ביקור אחד בקטלוג) — לא הפרטים הכבדים
+   * (סכם/שכ"ל פר תואר), שנשארים ברמת התואר הלאומי.
+   */
+  degreeIds?: string[];
+
+  /**
    * מזהה מ-scholarships.ts — **התוכנית שהיא הדלת** של המוסד הזה.
    *
    * הכלל: הדלת הספציפית גוברת על השער הכללי. "אוניברסיטת תל אביב" הוא שער
@@ -105,6 +113,7 @@ export const INSTITUTIONS: Institution[] = [
   // ─── תואר אקדמי ─────────────────────────────────────────────────────────────
   {
     id: "bgu",
+    degreeIds: ["cs", "ee", "info-systems-eng", "industrial-eng", "math", "statistics"],
     programId: "sicket",
     name: "אוניברסיטת בן-גוריון",
     track: "degree",
@@ -130,6 +139,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "haifa",
+    degreeIds: ["cs", "info-systems-ba", "statistics", "psych-ux"],
     name: "אוניברסיטת חיפה",
     track: "degree",
     why: "המעטפת המפותחת ביותר שנמצאה, וזה המוסד היחיד שבו צמצום הנשירה נמדד — כמחצית בשנה א׳. יש מסלול קבלה ייעודי לקהילה עם סף פסיכומטרי 400 וראיון אישי, אבל חשוב לדעת שהוא שער לאוניברסיטה ולא הבטחה לחוג — ההחלטה הסופית היא של החוג עצמו.",
@@ -154,6 +164,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "runi-keren-or",
+    degreeIds: ["cs", "business-is", "psych-ux"],
     programId: "runi-keren-or",
     name: "אוניברסיטת רייכמן",
     track: "degree",
@@ -179,6 +190,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "tau-admas",
+    degreeIds: ["cs", "ee", "industrial-eng", "statistics", "psych-ux"],
     programId: "tau-admas",
     name: "אוניברסיטת תל אביב",
     track: "degree",
@@ -252,6 +264,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ono",
+    degreeIds: ["business-is", "info-systems-ba"],
     name: "הקריה האקדמית אונו",
     track: "degree",
     why: "תוכנית ייעודית לשילוב סטודנטים יוצאי אתיופיה עם יותר מ-550 סטודנטים, שכוללת סבסוד שכר לימוד, מלגת מחיה וליווי אישי. יש גם מסלול קבלה ללא פסיכומטרי.",
@@ -277,6 +290,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "colman",
+    degreeIds: ["cs", "info-systems-ba", "business-is"],
     name: "המכללה למנהל",
     track: "degree",
     why: "מסלול קבלה על בגרות 85 עם מבדק פנימי, ומסלול ערב בתשעה סמסטרים למי שעובד. מלגת ״תנופה להצלחה״ ליוצאי אתיופיה בגובה 15,000 ₪ לשנה.",
@@ -350,6 +364,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "openu",
+    degreeIds: ["cs", "info-systems-ba", "business-is"],
     name: "האוניברסיטה הפתוחה",
     track: "degree",
     why: "אין תנאי קבלה כלל, ולומדים בקצב אישי מהבית. מתאימה למי שכבר עובד בתחום, או שכל אפשרות פרונטלית באמת חסומה עבורו.",
@@ -375,6 +390,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ariel",
+    degreeIds: ["cs", "ee", "industrial-eng"],
     name: "אוניברסיטת אריאל",
     track: "degree",
     why: "הנדסת מחשבים ותוכנה, עם מסלולי קבלה מגוונים כולל בגרות בלבד.",
@@ -449,6 +465,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "sce",
+    degreeIds: ["ee", "industrial-eng", "cs"],
     name: "סמי שמעון (SCE) — מכללה אקדמית להנדסה",
     track: "degree",
     why: "מכללה אקדמית להנדסה — תואר מלא, לא הנדסאים — בשני קמפוסים בדרום: באר שבע ואשדוד. מהמוסדות עם ריכוז הסטודנטים יוצאי אתיופיה הגבוה בדרום, וממוסדות התואר של TechLeaders.",
@@ -1030,6 +1047,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "hadassah",
+    degreeIds: ["cs"],
     name: "המכללה האקדמית הדסה",
     track: "degree",
     why: "מכללה מתוקצבת בלב ירושלים — מדעי המחשב, ביואינפורמטיקה ומדעי הנתונים. שכר לימוד אוניברסיטאי רגיל.",
@@ -1050,6 +1068,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "azrieli-eng",
+    degreeIds: ["ee", "industrial-eng"],
     name: "מכללת עזריאלי להנדסה ירושלים",
     track: "degree",
     why: "מכללת הנדסה מתוקצבת בירושלים — תוכנה, חשמל, תעשייה וניהול. תואר הנדסי מלא בשכר לימוד מתוקצב.",
@@ -1090,6 +1109,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "mta",
+    degreeIds: ["cs", "info-systems-ba", "psych-ux"],
     name: "האקדמית תל אביב-יפו",
     track: "degree",
     why: "מכללה מתוקצבת בתל אביב — מדעי המחשב עם מוניטין חזק והשמה טובה במרכז.",
@@ -1500,6 +1520,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "technion",
+    degreeIds: ["cs", "ee", "industrial-eng", "math"],
     name: "הטכניון",
     track: "degree",
     why: "המוסד הטכנולוגי המוביל בישראל, ואחד מארבעת מוסדות המכינה של TechLeaders — כלומר יש דלת ייעודית לקהל שלנו דרך מכינה ממומנת, לא דרך סף הקבלה.",
@@ -1521,6 +1542,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "bar-ilan",
+    degreeIds: ["cs", "math", "psych-ux"],
     name: "אוניברסיטת בר-אילן",
     track: "degree",
     why: "אוניברסיטה מתוקצבת ברמת גן, מוסד מכינה של TechLeaders — ונתי הצביע על תוכנית יואל כדלת ייעודית שדורשת חקירה.",
@@ -1541,6 +1563,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ruppin",
+    degreeIds: ["industrial-eng", "info-systems-ba"],
     name: "המרכז האקדמי רופין",
     track: "degree",
     why: "מכללה מתוקצבת בעמק חפר — הנדסה ומדעי המחשב בשכר לימוד אוניברסיטאי, עם מוניטין של קבלה נגישה יחסית.",
@@ -1561,6 +1584,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ort-braude",
+    degreeIds: ["ee", "industrial-eng", "info-systems-eng"],
     name: "אורט בראודה — מכללה אקדמית להנדסה",
     track: "degree",
     why: "מכללת הנדסה אקדמית מתוקצבת בכרמיאל — האופציה ההנדסית החזקה של הצפון, ותושבי הצפון זכאים שם למלגות הפריפריה.",
@@ -1581,6 +1605,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "huji",
+    degreeIds: ["cs", "statistics", "psych-ux"],
     name: "האוניברסיטה העברית",
     track: "degree",
     why: "מוסד מכינה של TechLeaders בירושלים — הדלת לקהל שלנו היא המכינה הממומנת, לא הרישום הישיר.",
@@ -1602,6 +1627,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "tel-hai",
+    degreeIds: ["cs"],
     name: "המכללה האקדמית תל-חי",
     track: "degree",
     why: "תואר מלא במדעי המחשב (B.Sc) בצפון הרחוק — כולל התמחויות AI, ML ותקשורת — עם מכינה ייעודית למדעי המחשב למי שלא עומד בתנאי הקבלה. תושבי הצפון זכאים שם למלגות הפריפריה.",
@@ -1642,6 +1668,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "iac-ramat-gan",
+    degreeIds: ["cs", "info-systems-ba"],
     name: "האקדמית רמת גן",
     track: "degree",
     why: "מהמסלולים הנגישים ביותר לתואר: מדעי המחשב ומערכות מידע עם קבלה בבגרות 80 בלי פסיכומטרי בכלל, או דרך מכינה ייעודית בציון 80. יש גם מסלול ערב במדעי המחשב, ומערכות מידע שמתחיל מאפס בלי ידע קודם.",
