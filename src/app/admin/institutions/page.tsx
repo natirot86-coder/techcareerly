@@ -61,7 +61,8 @@ function AdminInstitutionsPage() {
    * ואי אפשר לענות עליה כשמולך 19 שדות קלט. עריכה היא מצב נפרד ומכוון.
    */
   const [editId, setEditId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Track | "all" | "pending">("all");
+  const [filter, setFilter] = useState<Track | "all" | "pending" | "calls">("all");
+  const [query, setQuery] = useState("");
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -153,9 +154,13 @@ function AdminInstitutionsPage() {
   }
 
   const pending = items.filter(i => i.approved === undefined);
-  const shown = filter === "pending"
+  /** רשימת הטלפונים: כל מוסד שההערות שלו מסמנות 📞 — חוב מחקר שהפך למשימה */
+  const calls = items.filter(i => i.status !== "hidden" && (i.notes ?? "").includes("📞"));
+  const shown = (filter === "pending"
     ? pending
-    : filter === "all" ? items : items.filter(i => i.track === filter);
+    : filter === "calls" ? calls
+    : filter === "all" ? items : items.filter(i => i.track === filter)
+  ).filter(i => !query || i.name.includes(query) || (i.notes ?? "").includes(query) || (i.why ?? "").includes(query));
   const counts = {
     active: items.filter(i => i.status === "active").length,
     check: items.filter(i => i.status === "needs-check").length,
@@ -213,6 +218,13 @@ function AdminInstitutionsPage() {
               {t === "all" ? `הכל (${items.length})` : `${TRACK_LABEL[t]} (${items.filter(i => i.track === t).length})`}
             </button>
           ))}
+          <button onClick={() => setFilter("calls")}
+            className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
+            style={{ background: filter === "calls" ? "#047857" : "#fff", color: filter === "calls" ? "#fff" : "#047857", border: "1.5px solid #047857" }}>
+            📞 לטלפן ({calls.length})
+          </button>
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="חיפוש…"
+            className="text-[12px] px-3 py-1.5 rounded-lg" style={{ border: "1px solid rgba(0,0,0,0.13)", width: 120 }} />
           <div className="flex-1" />
           <Link href="/admin/courses" className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
             style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>ללוח הקורסים ←</Link>
@@ -270,6 +282,12 @@ function AdminInstitutionsPage() {
                     <span className="text-[11px] shrink-0" style={{ color: "rgba(0,0,0,0.35)" }}>{TRACK_LABEL[inst.track]}</span>
                     {inst.warn && <span className="text-[11px] shrink-0">⚠️</span>}
                   </button>
+                  {filter === "calls" && (
+                    <span className="text-[11px] w-full pr-9 pb-1 block" style={{ color: "#047857" }}>
+                      {(inst.notes ?? "").split("📞")[1]?.split(".")[0]?.trim() ?? ""}
+                      {inst.contactPhone ? ` · ${inst.contactPhone}` : " · אין טלפון רשום"}
+                    </span>
+                  )}
                   <select value={inst.status} onChange={e => setStatus(inst.id, e.target.value as Institution["status"])}
                     className="text-[11.5px] font-bold px-2 py-1 rounded-lg shrink-0"
                     style={{ border: "1px solid rgba(0,0,0,0.12)", background: "#fff" }}>
