@@ -57,66 +57,95 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 src/
 ├── app/
-│   ├── layout.tsx              # root: RTL, Noto Hebrew, viewport mobile
-│   ├── page.tsx                # redirect → /dashboard
-│   └── dashboard/page.tsx      # כל 6 שלבי המסע (mock state כרגע)
-├── components/ui/
-│   ├── MonogramBadge.tsx       # avatar עם אותיות (navy/orange/charcoal)
-│   ├── Button.tsx              # primary / orange / outline
-│   ├── TaskCard.tsx            # כרטיסיית משימה + progress bar
-│   ├── ProgressDots.tsx        # 6 נקודות שלבים
-│   ├── NavyHeader.tsx          # header כחול + ProgressDots
-│   └── BottomNav.tsx           # ניווט תחתון
-└── lib/
-    ├── supabase.ts              # Supabase client (no-op אם אין env vars)
-    └── candidate.ts             # anonymous auth + phone OTP + candidate/tasks/rankings helpers
+│   ├── dashboard/page.tsx      # מרכז המסע — השלב נגזר ממה שקרה, לא מכפתור
+│   ├── onboarding/page.tsx     # 6 מסכים + סיור (שמות שלבים מ-journey.ts)
+│   ├── waiting/page.tsx        # מרחב ההמתנה לפגישה 1: ציר + שתי דקות + הכנה + צ'ק-אין
+│   ├── contact/page.tsx        # קביעת פגישות 1/2/3 (Cal.com, בוחר לבד לפי מצב)
+│   ├── paths/page.tsx          # שלב 4 — 9 מסכים
+│   ├── plan/page.tsx           # שלב 5 — תוכנית, חשבון, ארון מסמכים, עדכון לרכזת
+│   ├── reset/page.tsx          # מחיקת מצב מקומי לבדיקה מההתחלה
+│   ├── map/                    # 3 תצוגות: תרשים · /flows מסע+צילומים · /grid
+│   └── admin/                  # 4 לוחות: institutions · scholarships · courses · analytics
+├── data/
+│   ├── journey.ts              # מקור אמת יחיד לשמות ששת השלבים (שתי שפות)
+│   ├── institutions.ts         # 69 מוסדות — מי שמלמד
+│   ├── scholarships.ts         # 29 מלגות ותוכניות — מי שמממן/עוטף + דירוג שקוף
+│   ├── courses.ts              # 12 קורסים = מוסד × מעטפת, מחזור נגזר מהתאריך
+│   ├── meetings.ts             # שלוש הפגישות + קישורי Cal.com לכל רכז/ת
+│   ├── plan.ts                 # מחולל תוכנית שלב 5 (משימות בגודל ישיבה אחת)
+│   └── routes.ts / tech-professions.ts / map-flows.ts
+├── components/ui/              # JourneyStrip, BottomNav, AllPaths, TrackDetail...
+└── lib/candidate.ts            # Supabase: anonymous auth, tasks, simulations
 
-src/app/login/page.tsx           # מסך טלפון + OTP — לא מקושר עדיין מהניווט הראשי
-
-supabase/
-└── schema.sql                   # כל הטבלאות + RLS — מריצים פעם אחת ב-SQL Editor
-
-design_handoff_tech_career_2026/
-├── README.md                   # מפרט עיצוב מלא + design tokens
-├── App Screens.dc.html         # 14 מסכים אינטראקטיביים
-└── Onboarding + Tech Exploration.dc.html
+supabase/migrations/001_stage4_stage5_analytics.sql  # ⚠️ ממתין להרצה
+public/map-shots/               # צילומי מסך אוטומטיים ל-/map/flows ו-/map/grid
 ```
 
 ---
 
-## מסכים — סטטוס
+## מסכים — סטטוס (13.8.2026)
 
 | מסך | סטטוס | הערות |
 |-----|--------|-------|
-| Dashboard שלבים 1-6 | ✅ מוכן | מחובר ל-Supabase (candidate + current_stage), dev switcher לבדיקה |
-| Bottom Nav | ✅ מוכן | UI מוכן, routes עוד ריקים |
-| Onboarding | ✅ מוכן | כותב ל-Supabase (`candidates`) בסיום |
-| Login / OTP (`/login`) | ✅ קוד מוכן | טלפון → קוד SMS → `/dashboard`. משדרג משתמש Anonymous קיים באותו id (לא מאבד נתוני Onboarding). **ממתין**: הפעלת Phone provider + Test OTP ב-Supabase Dashboard (בתהליך אצל ישראל), ולא מקושר עדיין מהניווט הראשי |
-| Tech Exploration (דירוג תחומים) | ✅ מוכן | כותב ל-Supabase (`domain_rankings`) |
-| סימולציות (Data/Marketing/AI/Cyber/UX) | ✅ מוכן | UI מוכן — התקדמות עדיין לא נשמרת ל-`simulation_progress` |
-| Login / OTP | ⏳ ממתין לישראל | תלוי Supabase Phone Auth — עד אז כל משתמש הוא Anonymous Auth |
-| AI Chat | 🔄 הבא בתור | טבלת `chat_messages` מוכנה בסכימה |
-| Squad | 🔄 הבא בתור | |
-| Contact / רכזת | 🔄 הבא בתור | |
-| Completion | 🔄 הבא בתור | |
+| Onboarding (6 מסכים + סיור) | ✅ | RTL, חזרה בסיור, טקסט כן ("אתה קובע — לא מחכים לשיחה") |
+| **מרחב ההמתנה** (`/waiting`) | ✅ | שתי הדקות נעולות עד קביעה · צ'ק-אין "איך היה?" · at-risk נאסף |
+| קביעת פגישות (`/contact`) | ✅ | 3 פגישות, הדף בוחר לבד; פגישה 1 נוחתת ישר במרחב ההמתנה |
+| שלב 3 — חקר תחומים | ✅ | networks+data מלאים · cyber חלקי · code חסר day/mystery/experience |
+| **שלב 4** (`/paths`) | ✅ | 9 מסכים. מסך הקורסים העטופים למועמד — הבא בתור |
+| **שלב 5** (`/plan`) | ✅ | תוכנית לפי חודשים, חשבון, ארון (בלי קבצים!), עדכון לרכזת |
+| **4 לוחות ניהול** (`/admin/*`) | ✅ | אישור פרטני, תצוגת קריאה, פס "דורש טיפול", ייצוא JSON |
+| **3 תצוגות מפה** (`/map*`) | ✅ | תרשים · מסע עם צילומים והסבר · גריד. נתי בוחר אחת |
+| איפוס (`/reset`) | ✅ | לבדיקת המסע מההתחלה |
+| חיבור שלבים 4–5 לסופאבייס | ⏳ | ממתין למיגרציה — הכל localStorage בינתיים |
+| AI Chat / Squad | 🔄 | `chat_messages` ו-`nudges` קיימות בבסיס, לא מחוברות |
 
 ---
 
 ## מה צריך מישראל (Backend)
 
-- [x] **Supabase project** — נוצר, `.env.local` מוגדר
-- [x] **הרצת schema** — `supabase/schema.sql` רץ בהצלחה (6 טבלאות + RLS), נבדק end-to-end
-- [x] **Anonymous Auth** — מופעל (Authentication → Sign In / Providers)
-- [ ] **Phone Auth** — קוד ה-Login מוכן (`/login`, `src/lib/candidate.ts: sendPhoneOtp/verifyPhoneOtp`). עדיין תקוע: קריאה ל-API מחזירה `phone_provider_disabled` — הטוגל "Enable phone provider" ב-Authentication → Sign In/Providers → Phone לא נשמר בפועל. בינתיים יש bypass זמני בקוד למספר בדיקה קבוע (`545603636` / קוד `12345`) שלא תלוי ב-Supabase
-- [x] **קישור `/login` לניווט** — הוחלט: רק ל"משתמש חוזר" (לא ב-flow הראשי, כי Anonymous Auth כבר נותן זהות שקופה). מקושר מ-Onboarding Step0 ("כבר יש לך חשבון?") ומ-Dashboard (באנר "אבטח את החשבון שלך" למשתמשי Anonymous)
-- [ ] **Webhooks** → Make.com (Nudge Logic לפי `docs/architecture.md`) — טבלאות `nudges` + `chat_messages` מוכנות, אין עדיין חיבור בפועל ל-Make.com/Monday.com
-- [ ] **task-level sync** — Stage1-6 בדשבורד עדיין עם TaskCard סטטיים (הרדקודד); טבלת `tasks` מוכנה בסכימה אבל אף קומפוננטה לא קוראת/כותבת אליה
-- [ ] **simulation_progress** — טבלה מוכנה בסכימה, אבל דפי הסימולציה (Data/Marketing/AI/Cyber/UX) לא כותבים אליה — כרגע ה-state שלהן רק בזיכרון, נעלם ב-refresh
-- [ ] **Monday.com CRM** — אין עדיין חיבור/API key; זה מה שיהפוך נתוני `nudges`/`status` לדבר שרכזת רואה בפועל
+> ✅ **משתני הסביבה תוקנו ב-12.8.2026** — היו שמורים עם BOM ו-`\r\n`, החיבור אומת ועובד.
 
----
+1. **להריץ את `supabase/migrations/001_stage4_stage5_analytics.sql`** — הדבקה אחת
+   ב-SQL Editor. יוצר את טבלאות שלבים 3–5, funnel_events, ו-admin_stats()
+2. **מפתח `service_role`** (לא בוואטסאפ! לא כ-`NEXT_PUBLIC_`) — נחוץ למסך
+   הרכזת ול-webhook של Cal.com
+3. **גישת Owner לנתי** בארגון ה-Supabase
+4. **חצי שעה על `chat_messages` ו-`nudges`** — קיימות בבסיס ולא מחוברות לכלום
 
 ## לוג עדכונים
+
+### 2026-08-11 — שלב 4 נבנה מחדש (מסלולי לימוד)
+
+**מנוע ההמלצה**
+- וטו-OR הוחלף בניקוד משוקלל. התואר מקבל יתרון בסיס וכל תיקו.
+  אומת על כל 729 צירופי התשובות: **תואר עלה מ-5% ל-52%**, מה"ט 10%, הכשרה 38%
+- שאלת הזמן נוסחה מחדש — מ"מתי אתה רוצה לעבוד" (משאלה שכולם עונים עליה אותו דבר)
+  ל**רשת ביטחון כלכלית**, שהיא מגבלה אמיתית
+- "ילדים" ו"מיקום" משפיעים על ההמלצה. קודם הן היו דקורטיביות
+
+**מסכים חדשים** (`/paths`)
+- **מסך החסמים** — כל מגבלה שהמשתמש הודה בה מקבלת מענה עם שם ותאריך שמחושב מול היום
+- **כל הדרכים מכאן** — שלושה מסלולים כקווי רכבת, אורך הקו מייצג משך. רגע ההכנסה
+  הוא הגיבור: הקו הופך ירוק ממנו ומטה. עיצוב 7a מ-Claude Design
+- **מסך עומק לכל מסלול** — איך זה נכנס לשבוע, קבלה, מימון, מה קורה כשקשה, לאן זה מוביל
+- **ערכת חקר** (אופציונלי) — למי לפנות, עם חיסון מראש מפני "אתה לא עומד בתנאים"
+- **סיכום** — מפריד "לפני הפגישה" (מועדים שלא מחכים) מ"בפגישה", CTA מודע-מצב,
+  ויציאה כנה של "אני צריך לחשוב"
+
+**תוכן**
+- רשימת המוסדות נכתבה מחדש ממחקר מאומת. אריאל הוסתרה (אין תשתית תמיכה לקהילה),
+  קמפוס IL הוסתר (כלי העשרה, לא מסלול)
+- האוניברסיטה הפתוחה עם אזהרה אדומה: 33% לא מגיעים לשנה ב׳ מול פחות מ-5% במקומות אחרים
+- הוסרה קרן שלא קיימת. הוחלפה בתוכניות מאומתות
+- מה"ט הועבר למקום האחרון וממוסגר לקריירה ביטחונית/ממשלתית/חומרה
+- שדה `domains` לכל מוסד — UX מקבל את שנקר, לא את בן-גוריון
+
+**תשתית**
+- `src/data/institutions.ts` כמקור אמת יחיד · `/admin/institutions` לעריכה וייצוא
+- `JourneyStrip` — מה הושלם / איפה אני / מה נשאר
+- Vercel Analytics עם אירועי משפך, כולל נטישה ברזולוציית שאלה
+- ניווט עליון לדסקטופ — קודם הניווט כולו היה ב-BottomNav שמוסתר ב-md
+- `?reset=1` ו-`?demo=1&phase=X` לסקירה בלי לעבור את כל הזרימה
 
 ### 2026-07-19 — Supabase foundation
 - ✅ `@supabase/supabase-js` הותקן
@@ -152,7 +181,9 @@ design_handoff_tech_career_2026/
 | CSS | Tailwind v4 — tokens ב-`globals.css` |
 | Backend | ישראל בלבד — Supabase |
 | State כרגע | Supabase (Anonymous Auth) עם fallback ל-mock מקומי כשאין `.env.local` |
-| ניווט | Bottom Nav: Dashboard / Chat / Squad / Contact |
+| ניווט | מובייל: Bottom Nav · דסקטופ: סרגל עליון. טאב "חקר" מודע-הקשר (→ `/paths` אחרי פגישה 2) |
+| עמדה | **כלי עמדה, לא ניטרלי** — ממליצים על תואר במפורש, עם המקרים הכנים שבהם הוא לא נכון |
+| נתוני מוסדות | מה שלא אומת מסומן `needs-check`. לא ממציאים טלפונים או סכומים |
 | שם | techcareerly (זמני) |
 | Demo user | נועה |
 | Mobile | Mobile-first, max-width 390px, RTL (dir="rtl") |

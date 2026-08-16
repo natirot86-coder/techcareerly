@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import { saveSimulationProgress, updateTask, logEvent } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const BLUE = "#3b82f6";
@@ -583,6 +584,9 @@ function ResultScreen({ score, answers }: { score: number; answers: boolean[] })
       const journey = JSON.parse(localStorage.getItem("networks-journey") || "{}");
       localStorage.setItem("networks-journey", JSON.stringify({ ...journey, sim: true }));
     } catch {/* ignore */}
+    // הסימולציות הייעודיות נבנו בנפרד מהדף הגנרי ולכן פספסו את השמירה לבקאנד
+    saveSimulationProgress("networks", STEPS.length, true, score);
+    updateTask("sim-networks", "done", 100);
     window.location.href = href;
   }
 
@@ -787,6 +791,9 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function NetworksSimPage() {
+  // תחילת סימולציה — בלי זה אי אפשר להבדיל נטישה באמצע מאי-פתיחה
+  useEffect(() => { logEvent("sim_start", { domain: "networks" }); }, []);
+
   const [showIntro, setShowIntro] = useState(true);
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);

@@ -360,3 +360,123 @@ export async function saveSimulationProgress(
 
   if (error) console.error("saveSimulationProgress failed", error);
 }
+
+// ─── Stage 3-5 sync + funnel events (14.8.2026, אחרי המיגרציה) ────────────────
+
+/**
+ * אירוע פאנל — fire-and-forget. לעולם לא מפיל את ה-UI: מדידה היא תוצר
+ * לוואי, לא תנאי. זה מה שממלא את funnel_events שדף האנליטיקות קורא.
+ */
+export function logEvent(name: string, props: Record<string, unknown> = {}): void {
+  if (!supabase) return;
+  ensureCandidateId().then(candidateId => {
+    if (!candidateId) return;
+    supabase!.from("funnel_events")
+      .insert({ candidate_id: candidateId, name, props })
+      .then(({ error }) => { if (error) console.error("logEvent failed", error); });
+  });
+}
+
+/** ציוני SCCT מכלי עיבוד החוויה. הסקאלות באפליקציה הן 1–5 */
+export async function saveScctScore(
+  domainId: string,
+  interest: number | null,
+  selfEfficacy: number | null,
+  outcomeExpect: number | null,
+  note?: string
+): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+  const { error } = await supabase.from("scct_scores").upsert({
+    candidate_id: candidateId,
+    domain_id: domainId,
+    interest: interest ?? null,
+    self_efficacy: selfEfficacy ?? null,
+    outcome_expect: outcomeExpect ?? null,
+    note: note ?? null,
+  }, { onConflict: "candidate_id,domain_id" });
+  if (error) console.error("saveScctScore failed", error);
+}
+
+/** שלב 4 — התשובות, ההמלצה והרשימה. upsert על שורת המועמד */
+export async function savePathsAnswers(patch: {
+  answers?: Record<string, string>;
+  recommendation?: "degree" | "mahat" | "bootcamp";
+  scores?: Record<string, number>;
+  shortlist?: unknown[];
+  research?: Record<string, unknown>;
+  completed?: boolean;
+}): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+  const row: Record<string, unknown> = { candidate_id: candidateId, updated_at: new Date().toISOString() };
+  if (patch.answers) row.answers = patch.answers;
+  if (patch.recommendation) row.recommendation = patch.recommendation;
+  if (patch.scores) row.scores = patch.scores;
+  if (patch.shortlist) row.shortlist = patch.shortlist;
+  if (patch.research) row.research = patch.research;
+  if (patch.completed) row.completed_at = new Date().toISOString();
+  const { error } = await supabase.from("paths_answers").upsert(row, { onConflict: "candidate_id" });
+  if (error) console.error("savePathsAnswers failed", error);
+}
+
+/**
+ * שלב 5 — סנכרון מלא של המשימות. מוחק-ומכניס במקום דיפים: הרשימה קטנה
+ * (עשרות), והפשטות שווה יותר מהאופטימיזציה. localStorage נשאר מקור האמת
+ * המקומי; זה השיקוף שהרכזת (בעתיד) והאנליטיקות רואים.
+ */
+export async function syncPlanTasks(tasks: Array<{
+  id: string; title: string; note?: string; area: string;
+  due: string | null; source: string; status: string;
+}>): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+  await supabase.from("plan_tasks").delete().eq("candidate_id", candidateId);
+  if (!tasks.length) return;
+  const { error } = await supabase.from("plan_tasks").insert(tasks.map(t => ({
+    candidate_id: candidateId,
+    id: t.id,
+    title: t.title,
+    note: t.note ?? null,
+    area: t.area,
+    due_date: t.due ? t.due.slice(0, 10) : null,
+    source: t.source,
+    status: t.status,
+    done_at: t.status === "done" ? new Date().toISOString() : null,
+  })));
+  if (error) console.error("syncPlanTasks failed", error);
+}
+
+export async function syncPlanDocuments(docs: Array<{
+  id: string; name: string; have: boolean; locations: string[];
+}>): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+  await supabase.from("plan_documents").delete().eq("candidate_id", candidateId);
+  if (!docs.length) return;
+  const { error } = await supabase.from("plan_documents").insert(
+    docs.map(d => ({ candidate_id: candidateId, id: d.id, name: d.name, have: d.have, locations: d.locations }))
+  );
+  if (error) console.error("syncPlanDocuments failed", error);
+}
+
+export async function syncPlanApplications(apps: Record<string, string>): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+  const rows = Object.entries(apps).map(([fundingId, status]) => ({
+    candidate_id: candidateId,
+    funding_id: fundingId,
+    status,
+    decided_at: status === "accepted" || status === "rejected" ? new Date().toISOString() : null,
+    updated_at: new Date().toISOString(),
+  }));
+  if (!rows.length) return;
+  const { error } = await supabase.from("plan_applications")
+    .upsert(rows, { onConflict: "candidate_id,funding_id" });
+  if (error) console.error("syncPlanApplications failed", error);
+}

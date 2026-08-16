@@ -21,6 +21,8 @@ type Node = {
   color: string;
   badge?: string;
   badgeColor?: string;
+  /** "meeting" = נקודת מפגש אנושית ולא מסך. מצויר כגלולה מלאה ולא כמלבן */
+  kind?: "meeting";
 };
 
 type Edge = {
@@ -43,13 +45,29 @@ const BASE = process.env.NODE_ENV === "development" ? "http://localhost:3000" : 
 
 const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────
-  { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 110,  cy: 60,  w: 90,  color: "#023e8a" },
-  { id: "onboarding", label: "אונבורדינג", sub: "שאלון אישי",           url: `${BASE}/onboarding`, cx: 300,  cy: 60,  w: 110, color: "#023e8a" },
-  { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 510,  cy: 60,  w: 110, color: "#023e8a" },
+  { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 60,  cy: 190,  w: 82,  color: "#023e8a" },
+  { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 830,  cy: 190,  w: 92, color: "#023e8a" },
+  { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + טעימה + הכנה", url: `${BASE}/waiting`, cx: 250, cy: 308, w: 100, color: "#0ea5e9", badge: "חדש", badgeColor: "#0ea5e9" },
+
+
+  // ששת מסכי האונבורדינג (Step 0–5 בקוד). לא נפתחים ישירות — הזרימה רציפה
+  { id: "ob-0", label: "פתיחה",       sub: "מה האפליקציה עושה", url: `${BASE}/onboarding`, cx: 165,  cy: 190, w: 92, color: "#3b82f6" },
+  { id: "ob-1", label: "פרטים", sub: "שם · גיל · אזור", url: `${BASE}/onboarding`, cx: 268, cy: 190, w: 92, color: "#3b82f6" },
+  { id: "ob-2", label: "עניין בטק",   sub: "סולם עצמי",     url: `${BASE}/onboarding`, cx: 371, cy: 190, w: 92, color: "#3b82f6" },
+  { id: "ob-3", label: "חסמים",        sub: "מה עוצר אותך",    url: `${BASE}/onboarding`, cx: 474, cy: 190, w: 92, color: "#3b82f6" },
+  { id: "ob-4", label: "סיום השאלון",  sub: "מה קורה עכשיו",   url: `${BASE}/onboarding`, cx: 577, cy: 190, w: 92, color: "#3b82f6" },
+  { id: "ob-5", label: "סיור", sub: "שקופיות",       url: `${BASE}/onboarding`, cx: 683, cy: 190, w: 98, color: "#3b82f6" },
 
   // ── Bottom nav (soon) ─────────────────────────────────────────────────────
-  { id: "chat",  label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,  cx: 770, cy: 40,  w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
-  { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 770, cy: 110, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "chat",  label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,  cx: 625, cy: 62,  w: 105, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 750, cy: 62, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "admin", label: "ניהול מוסדות", sub: "29 מוסדות · פנימי", url: `${BASE}/admin/institutions`, cx: 110, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-funding", label: "ניהול מלגות", sub: "17 מלגות ותוכניות · פנימי", url: `${BASE}/admin/scholarships`, cx: 285, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "reset", label: "בדיקה מההתחלה", sub: "מוחק הכל · פנימי", url: `${BASE}/reset`, cx: 900, cy: 62, w: 130, color: "#dc2626", badge: "ניקוי", badgeColor: "#dc2626" },
+  { id: "admin-degrees", label: "תחומים ותארים", sub: "מיפוי תואר×מוסד · פנימי", url: `${BASE}/admin/degrees`, cx: 858, cy: 118, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-coordinator", label: "מסך הרכזת", sub: "מי צריך אותי היום · פנימי", url: `${BASE}/admin/coordinator`, cx: 700, cy: 118, w: 135, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-courses", label: "ניהול קורסים", sub: "מוסד × מעטפת · פנימי", url: `${BASE}/admin/courses`, cx: 540, cy: 118, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-analytics", label: "אנליטיקות", sub: "מה קורה באפליקציה · פנימי", url: `${BASE}/admin/analytics`, cx: 460, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
   // ── Explore ───────────────────────────────────────────────────────────────
   { id: "explore", label: "חקר תחומים", sub: "דירוג 8 תחומים", url: `${BASE}/explore`, cx: 510, cy: 190, w: 140, color: "#fb8500" },
@@ -80,20 +98,24 @@ const NODES: Node[] = [
   { id: "code-experience", label: "עיבוד חוויה",     sub: "6 שאלות SCCT",        url: `${BASE}/explore/code/experience`,    cx: 60, cy: 780, w: 115, color: "#3b82f6", badge: "חדש", badgeColor: "#3b82f6" },
 
   // ── Learn — Data ──────────────────────────────────────────────────────────
-  { id: "learn",      label: "מרכז למידה",     sub: "7 מודולים",        url: `${BASE}/explore/data/learn`,             cx: 185, cy: 560, w: 120, color: "#0d9488" },
-  { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 185, cy: 670, w: 120, color: "#0d9488" },
-  { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 185, cy: 780, w: 130, color: "#0d9488" },
-  { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 185, cy: 890, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
+  { id: "learn",      label: "מרכז למידה",     sub: "7 מודולים",        url: `${BASE}/explore/data/learn`,             cx: 185, cy: 723, w: 120, color: "#0d9488" },
+  { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 185, cy: 818, w: 120, color: "#0d9488" },
+  { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 185, cy: 913, w: 130, color: "#0d9488" },
+  { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 185, cy: 1008, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
 
   // ── Learn — Cyber ─────────────────────────────────────────────────────────
-  { id: "cyber-day",        label: "יום בחיי SOC",      sub: "Ransomware response",      url: `${BASE}/explore/cyber/learn/day`,     cx: 560, cy: 560, w: 130, color: "#dc2626" },
-  { id: "cyber-mystery",    label: "תעלומת הדלף",       sub: "Data breach forensics",    url: `${BASE}/explore/cyber/learn/mystery`, cx: 560, cy: 670, w: 130, color: "#dc2626" },
-  { id: "cyber-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",             url: `${BASE}/explore/cyber/experience`,    cx: 560, cy: 780, w: 140, color: "#dc2626", badge: "חדש", badgeColor: "#dc2626" },
+  { id: "cyber-day",        label: "יום בחיי SOC",      sub: "Ransomware response",      url: `${BASE}/explore/cyber/learn/day`,     cx: 560, cy: 723, w: 130, color: "#dc2626" },
+  { id: "cyber-mystery",    label: "תעלומת הדלף",       sub: "Data breach forensics",    url: `${BASE}/explore/cyber/learn/mystery`, cx: 560, cy: 818, w: 130, color: "#dc2626" },
+  { id: "cyber-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",             url: `${BASE}/explore/cyber/experience`,    cx: 560, cy: 913, w: 140, color: "#dc2626", badge: "חדש", badgeColor: "#dc2626" },
 
   // ── Learn — Networks ──────────────────────────────────────────────────────
-  { id: "networks-day",        label: "יום בחיי",          sub: "Network Engineer · 5 שלבים",   url: `${BASE}/explore/networks/learn/day`,     cx: 790, cy: 560, w: 148, color: "#2563eb" },
-  { id: "networks-mystery",    label: "תעלומת TechFlow",   sub: "Firewall · DNS · curl",         url: `${BASE}/explore/networks/learn/mystery`, cx: 790, cy: 670, w: 130, color: "#2563eb" },
-  { id: "networks-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",                  url: `${BASE}/explore/networks/experience`,    cx: 790, cy: 780, w: 140, color: "#2563eb", badge: "חדש", badgeColor: "#2563eb" },
+  { id: "networks-day",        label: "יום בחיי",          sub: "Network Engineer · 5 שלבים",   url: `${BASE}/explore/networks/learn/day`,     cx: 790, cy: 723, w: 148, color: "#2563eb" },
+  { id: "networks-mystery",    label: "תעלומת TechFlow",   sub: "Firewall · DNS · curl",         url: `${BASE}/explore/networks/learn/mystery`, cx: 790, cy: 818, w: 130, color: "#2563eb" },
+  { id: "networks-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",                  url: `${BASE}/explore/networks/experience`,    cx: 790, cy: 913, w: 140, color: "#2563eb", badge: "חדש", badgeColor: "#2563eb" },
+
+  // דפי הקורסים — המשך אמיתי למי שרוצה ללמוד עוד
+  { id: "data-courses",     label: "קורסי דאטה",  sub: "העשרה חיצונית", url: `${BASE}/explore/data/courses`,     cx: 55,  cy: 1008, w: 100, color: "#0d9488" },
+  { id: "networks-courses", label: "קורסי רשתות", sub: "קמפוס IL · Cisco", url: `${BASE}/explore/networks/courses`, cx: 790, cy: 1008, w: 118, color: "#2563eb" },
 
   // ── Learn — QA ────────────────────────────────────────────────────────────
   { id: "qa-day",        label: "יום בחיי QA",       sub: "triage · test review",   url: `${BASE}/explore/qa/learn/day`,     cx: 910, cy: 560, w: 130, color: "#d97706" },
@@ -101,14 +123,41 @@ const NODES: Node[] = [
   { id: "qa-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",           url: `${BASE}/explore/qa/experience`,    cx: 910, cy: 780, w: 140, color: "#d97706", badge: "חדש", badgeColor: "#d97706" },
 
   // ── סיכום והכנה לפגישה 2 ─────────────────────────────────────────────────
-  { id: "results", label: "סיכום הטעימות", sub: "הכנה לפגישה עם הרכזת", url: `${BASE}/explore/results`, cx: 510, cy: 980, w: 165, color: "#fb8500" },
+  { id: "results", label: "סיכום הטעימות", sub: "הכנה לפגישה עם הרכזת", url: `${BASE}/explore/results`, cx: 510, cy: 1093, w: 165, color: "#fb8500" },
 
   // ── פגישה 2 עם הרכזת ─────────────────────────────────────────────────────
-  { id: "contact", label: "קביעת פגישה 2", sub: "Cal.com · יומן",        url: `${BASE}/contact`,        cx: 350, cy: 1080, w: 140, color: "#023e8a" },
-  { id: "booked",  label: "הפגישה נקבעה",  sub: "מה להביא לפגישה",       url: `${BASE}/contact/booked`, cx: 660, cy: 1080, w: 145, color: "#023e8a", badge: "חדש", badgeColor: "#023e8a" },
+  { id: "booked",  label: "הפגישה נקבעה", sub: "מה להביא — משתנה לפי פגישה", url: `${BASE}/contact/booked`, cx: 810, cy: 308, w: 165, color: "#023e8a" },
+
+  // (הפגישות ממוקמות כל אחת בשלב שלה)
+  // הדף בוחר לבד לפי מצב המועמד; ?m= הוא לבדיקה ידנית
+
+  { id: "m1", label: "פגישה 1", sub: "היכרות · אין מה להביא", url: `${BASE}/contact?m=1`, cx: 600, cy: 308, w: 150, color: "#0ea5e9", kind: "meeting" },
+  { id: "m2", label: "פגישה 2", sub: "בחירת תחום", url: `${BASE}/contact?m=2`, cx: 510, cy: 1183, w: 140, color: "#0ea5e9", kind: "meeting" },
+  { id: "m3", label: "פגישה 3", sub: "נעילת מסלול", url: `${BASE}/contact?m=3`, cx: 510, cy: 1578, w: 140, color: "#0ea5e9", kind: "meeting" },
 
   // ── שלב 4 — מסלול לימודים ────────────────────────────────────────────────
-  { id: "paths", label: "מסלולי לימוד", sub: "הסבר · שאלון · השוואה · מוסדות · שאלות", url: `${BASE}/paths`, cx: 510, cy: 1180, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
+  { id: "paths", label: "מסלולי לימוד", sub: "9 מסכים — לחצו על כל אחד למטה", url: `${BASE}/paths`, cx: 510, cy: 1298, w: 215, color: "#7c3aed", badge: "שלב 4", badgeColor: "#7c3aed" },
+
+  // ── שמונת המסכים של שלב 4 ────────────────────────────────────────────────
+  // כל אחד נפתח ישירות עם נתוני דמו, בלי לעבור את כל הזרימה
+  { id: "p-intro",        label: "פתיחה",          sub: "מה נעשה כאן",         url: `${BASE}/paths?reset=1`,                   cx: 110, cy: 1398, w: 110, color: "#8b5cf6" },
+  { id: "p-quiz",         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,         cx: 280, cy: 1398, w: 115, color: "#8b5cf6" },
+  { id: "p-result",       label: "המסלול המומלץ",  sub: "ניקוד משוקלל",        url: `${BASE}/paths?demo=1&phase=result`,       cx: 450, cy: 1398, w: 135, color: "#8b5cf6" },
+  { id: "p-routes",       label: "כל הדרכים מכאן", sub: "3 מסלולים כקווי רכבת", url: `${BASE}/paths?demo=1&phase=routes`,       cx: 640, cy: 1398, w: 145, color: "#8b5cf6", badge: "חדש", badgeColor: "#8b5cf6" },
+  { id: "p-blockers",     label: "מה עומד בדרך",   sub: "חסם ← פתרון + תאריך", url: `${BASE}/paths?demo=1&phase=blockers`,     cx: 840, cy: 1398, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
+  { id: "p-institutions", label: "מוסדות",         sub: "בניית רשימה",         url: `${BASE}/paths?demo=1&phase=institutions`, cx: 840, cy: 1493, w: 120, color: "#8b5cf6" },
+  { id: "p-prep",         label: "שאלות לפגישה",   sub: "נוצרות מהתשובות",     url: `${BASE}/paths?demo=1&phase=prep`,         cx: 640, cy: 1493, w: 135, color: "#8b5cf6" },
+  { id: "p-research",     label: "ערכת חקר",       sub: "אופציונלי",           url: `${BASE}/paths?demo=1&phase=research`,     cx: 430, cy: 1493, w: 115, color: "#8b5cf6" },
+  { id: "p-done",         label: "סיכום",          sub: "לפני/בפגישה + CTA",   url: `${BASE}/paths?demo=1&phase=done`,         cx: 220, cy: 1493, w: 120, color: "#8b5cf6", badge: "סיום", badgeColor: "#8b5cf6" },
+
+  // ── שלב 5 — לוגיסטיקה ומלגות ─────────────────────────────────────────────
+  { id: "plan", label: "התוכנית שלי", sub: "5 מסכים — לחצו על כל אחד למטה", url: `${BASE}/plan`, cx: 510, cy: 1693, w: 215, color: "#059669", badge: "שלב 5", badgeColor: "#059669" },
+
+  { id: "pl-intro", label: "פתיחה לשלב",  sub: "מה קורה כאן",          url: `${BASE}/plan?reset=1`,      cx: 130, cy: 1793, w: 125, color: "#10b981" },
+  { id: "pl-plan",  label: "התוכנית",     sub: "עוגן + חודשים",        url: `${BASE}/plan?view=plan`,    cx: 320, cy: 1793, w: 130, color: "#10b981", badge: "הבית", badgeColor: "#10b981" },
+  { id: "pl-money", label: "החשבון",      sub: "מספר במקום הרגעה",     url: `${BASE}/plan?view=money`,   cx: 520, cy: 1793, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
+  { id: "pl-docs",  label: "ארון מסמכים", sub: "סטטוס ומיקום בלבד",    url: `${BASE}/plan?view=docs`,    cx: 730, cy: 1793, w: 140, color: "#10b981" },
+  { id: "pl-coord", label: "עדכון לרכזת", sub: "נבנה מעצמו · וואטסאפ", url: `${BASE}/plan?view=coord`,   cx: 900, cy: 1793, w: 145, color: "#10b981", badge: "סיום", badgeColor: "#10b981" },
 ];
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
@@ -116,7 +165,15 @@ const NODES: Node[] = [
 const EDGES: Edge[] = [
   // Auth flow
   { from: "login",      to: "onboarding", label: "הרשמה" },
-  { from: "onboarding", to: "dashboard",  label: "סיום שאלון" },
+  { from: "login", to: "ob-0", color: "#3b82f6" },
+  { from: "ob-0", to: "ob-1", color: "#3b82f6" },
+  { from: "ob-1", to: "ob-2", color: "#3b82f6" },
+  { from: "ob-2", to: "ob-3", color: "#3b82f6" },
+  { from: "ob-3", to: "ob-4", color: "#3b82f6" },
+  { from: "ob-4", to: "ob-5", color: "#3b82f6" },
+  { from: "ob-5", to: "dashboard", color: "#3b82f6" },
+  { from: "dashboard", to: "waiting", color: "#3b82f6" },
+  { from: "waiting",   to: "m1",      label: "לקבוע", color: "#0ea5e9" },
 
   // Dashboard → bottom nav
   { from: "dashboard", to: "chat",  dashed: true, color: "#6b7280" },
@@ -182,11 +239,35 @@ const EDGES: Edge[] = [
   { from: "qa-experience",       to: "results", color: "#fb8500", dashed: true },
 
   // סיכום → פגישה 2 → אישור
-  { from: "results", to: "contact", label: "לקביעת פגישה", color: "#023e8a" },
-  { from: "contact", to: "booked",  label: "אישור Cal.com", color: "#023e8a" },
+  { from: "experience", to: "data-courses", label: "ללמוד עוד", dashed: true, color: "#0d9488" },
+  { from: "networks-experience", to: "networks-courses", label: "ללמוד עוד", dashed: true, color: "#2563eb" },
+  { from: "results", to: "m2", label: "לקביעת פגישה", color: "#0ea5e9" },
+  { from: "m1", to: "booked",  label: "אישור Cal.com", color: "#023e8a" },
 
   // אישור → שלב 4 (דרך הדשבורד או כפתור "חקר" בניווט)
-  { from: "booked", to: "paths", label: "לחקר מסלולים", color: "#7c3aed" },
+  { from: "m2", to: "paths", label: "לחקר מסלולים", color: "#7c3aed" },
+
+  // שמונת המסכים של שלב 4, לפי הסדר
+  { from: "paths",          to: "p-intro",        color: "#8b5cf6" },
+  { from: "p-intro",        to: "p-quiz",         color: "#8b5cf6" },
+  { from: "p-quiz",         to: "p-result",       color: "#8b5cf6" },
+  { from: "p-result",       to: "p-routes",       color: "#8b5cf6" },
+  { from: "p-routes",       to: "p-blockers",     color: "#8b5cf6" },
+  { from: "p-blockers",     to: "p-institutions", color: "#fb8500" },
+  { from: "p-institutions", to: "p-prep",         color: "#8b5cf6" },
+  { from: "p-prep",         to: "p-research",     label: "אופציונלי", dashed: true, color: "#8b5cf6" },
+  { from: "p-research",     to: "p-done",         color: "#8b5cf6" },
+  { from: "p-done",         to: "m3",        label: "קביעת פגישה 3", color: "#0ea5e9" },
+
+  // פגישה 3 נועלת מסלול → שלב 5
+  { from: "m3", to: "plan", label: "אחרי שהמסלול ננעל", color: "#059669" },
+
+  // חמשת המסכים של שלב 5
+  { from: "plan",     to: "pl-intro", color: "#10b981" },
+  { from: "pl-intro", to: "pl-plan",  color: "#10b981" },
+  { from: "pl-plan",  to: "pl-money", label: "הכסף", color: "#fb8500" },
+  { from: "pl-plan",  to: "pl-docs",  color: "#10b981" },
+  { from: "pl-docs",  to: "pl-coord", color: "#10b981" },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -201,36 +282,61 @@ function nodeRect(n: Node) {
 }
 
 // SVG path between two nodes — straight lines, smart entry/exit points
-function edgePath(from: Node, to: Node): string {
+type EdgeGeom = { d: string; lx: number; ly: number };
+
+/**
+ * מסלול הקשת + נקודת התווית.
+ *
+ * קשתות קדימה מצוירות כ**מרפק מעוגל** — ירידה אנכית, קטע אופקי באמצע הדרך,
+ * וירידה לתוך היעד — במקום קו אלכסוני שחוצה מלבנים וטקסט. התווית יושבת על
+ * הקטע האופקי, ששם אין תוכן מתחתיה.
+ */
+function edgeGeom(from: Node, to: Node): EdgeGeom {
   const fh = from.h ?? NH;
   const th = to.h ?? NH;
   const dx = to.cx - from.cx;
   const dy = to.cy - from.cy;
 
-  // Horizontal connections: same row OR side-panel (large dx, small dy)
+  // אותה שורה — צד אל צד
   const isHorizontal = Math.abs(dy) <= 30 || (Math.abs(dx) > 150 && Math.abs(dy) < 100);
   if (isHorizontal) {
     const x1 = dx > 0 ? from.cx + from.w / 2 + 2 : from.cx - from.w / 2 - 2;
     const x2 = dx > 0 ? to.cx - to.w / 2 - 2 : to.cx + to.w / 2 + 2;
-    return `M ${x1} ${from.cy} L ${x2} ${to.cy}`;
+    return { d: `M ${x1} ${from.cy} L ${x2} ${to.cy}`, lx: (x1 + x2) / 2, ly: (from.cy + to.cy) / 2 - 9 };
   }
 
-  // Back-edge (going upward) — curve around left side
+  // קשת חוזרת (מעלה) — עוקפת משמאל
   if (dy < 0) {
     const x1 = from.cx - from.w / 2 - 2;
     const y1 = from.cy;
     const x2 = to.cx - to.w / 2 - 2;
     const y2 = to.cy + th / 2;
     const midX = Math.min(x1, x2) - 40;
-    return `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+    return { d: `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`, lx: midX + 12, ly: (y1 + y2) / 2 };
   }
 
-  // Forward vertical/diagonal: bottom-center → top-center, straight line
+  // קדימה — מרפק מעוגל דרך אמצע הגובה
   const x1 = from.cx;
   const y1 = from.cy + fh / 2 + 2;
   const x2 = to.cx;
   const y2 = to.cy - th / 2 - 2;
-  return `M ${x1} ${y1} L ${x2} ${y2}`;
+  const midY = (y1 + y2) / 2;
+
+  if (Math.abs(dx) < 8) {
+    return { d: `M ${x1} ${y1} L ${x2} ${y2}`, lx: x1, ly: midY };
+  }
+
+  const sx = Math.sign(x2 - x1);
+  const r = Math.max(4, Math.min(14, Math.abs(x2 - x1) / 2 - 2, (y2 - y1) / 2 - 2));
+  const d = [
+    `M ${x1} ${y1}`,
+    `L ${x1} ${midY - r}`,
+    `Q ${x1} ${midY} ${x1 + sx * r} ${midY}`,
+    `L ${x2 - sx * r} ${midY}`,
+    `Q ${x2} ${midY} ${x2} ${midY + r}`,
+    `L ${x2} ${y2}`,
+  ].join(" ");
+  return { d, lx: (x1 + x2) / 2, ly: midY };
 }
 
 // ─── Node Component ───────────────────────────────────────────────────────────
@@ -256,9 +362,9 @@ function FlowNode({ node }: { node: Node }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 10,
-        background: "#fff",
-        border: `2px solid ${node.color}`,
+        borderRadius: node.kind === "meeting" ? 999 : 10,
+        background: node.kind === "meeting" ? `${node.color}1a` : "#fff",
+        border: node.kind === "meeting" ? `2.5px solid ${node.color}` : `2px solid ${node.color}`,
         boxShadow: `0 2px 8px ${node.color}22`,
         textDecoration: "none",
         cursor: "pointer",
@@ -330,15 +436,7 @@ function Arrows() {
 
         const color = edge.color || from.color;
         const markerId = `arrow-${color.replace("#", "")}`;
-        const d = edgePath(from, to);
-
-        // Mid point for label
-        const fh = from.h ?? NH;
-        const th = to.h ?? NH;
-        const x1 = from.cx, y1 = from.cy + fh / 2;
-        const x2 = to.cx,   y2 = to.cy - th / 2;
-        const mx = (x1 + x2) / 2;
-        const my = (y1 + y2) / 2;
+        const { d, lx, ly } = edgeGeom(from, to);
 
         return (
           <g key={i}>
@@ -352,19 +450,32 @@ function Arrows() {
               markerEnd={`url(#${markerId})`}
             />
             {edge.label && (
-              <text
-                x={mx}
-                y={my}
-                textAnchor="middle"
-                fontSize={8}
-                fill={color}
-                opacity={0.8}
-                fontFamily="'Heebo', sans-serif"
-                fontWeight="bold"
-              >
-                <rect x={mx - 28} y={my - 8} width={56} height={11} fill="white" rx={3} opacity={0.85} />
-                {edge.label}
-              </text>
+              <>
+                {/* עד עכשיו ה-rect ישב בתוך <text> — SVG לא חוקי, ולכן מעולם
+                    לא צויר והכתב שכב ישירות על הקווים. אחים, לא מקוננים. */}
+                <rect
+                  x={lx - edge.label.length * 3.2 - 5}
+                  y={ly - 7.5}
+                  width={edge.label.length * 6.4 + 10}
+                  height={15}
+                  rx={7.5}
+                  fill="#fff"
+                  stroke={color}
+                  strokeOpacity={0.25}
+                  strokeWidth={1}
+                />
+                <text
+                  x={lx}
+                  y={ly + 3}
+                  textAnchor="middle"
+                  fontSize={8}
+                  fill={color}
+                  fontFamily="'Heebo', sans-serif"
+                  fontWeight="bold"
+                >
+                  {edge.label}
+                </text>
+              </>
             )}
           </g>
         );
@@ -373,7 +484,25 @@ function Arrows() {
   );
 }
 
+// ─── Bands ────────────────────────────────────────────────────────────────────
+//
+// הקנבס מחולק לרצועות אופקיות. **הרצועה הראשונה היא לא חלק ממסע המועמד** —
+// היא הכלים הרוחביים (ניהול פנימי, ומסכים שרלוונטיים לאורך כל המסע). הפרדה
+// ויזואלית ברורה, כי בלעדיה מסכי הניהול נראים כמו תחנה במסע והם לא.
+
+type Band = { label: string; top: number; color: string; cross?: boolean };
+
+const BANDS: Band[] = [
+  { label: "כלים רוחביים — פנימי, לאורך כל המסע", top: 14, color: "#475569", cross: true },
+  { label: "שלב 1 · טרום אינטייק — פתיחת חשבון", top: 116, color: "#023e8a" },
+  { label: "שלב 2 · אינטייק — היכרות, נסגר בפגישה", top: 250, color: "#0ea5e9" },
+  { label: "שלב 3 · חשיפה — טעימות, נסגר בפגישה", top: 370, color: "#fb8500" },
+  { label: "שלב 4 · מסלול לימודים — נסגר בפגישה", top: 1236, color: "#7c3aed" },
+  { label: "שלב 5 · לוגיסטיקה ומלגות", top: 1630, color: "#059669" },
+];
+
 // ─── Section Labels ───────────────────────────────────────────────────────────
+// תוויות עמודה בתוך רצועה — לא הפרדה בין רצועות
 
 const LABELS = [
   { text: "כניסה והרשמה",        x: 10,  y: 10,  color: "#023e8a" },
@@ -414,6 +543,14 @@ export default function MapPage() {
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div style={{ fontSize: 10, opacity: 0.5, letterSpacing: 3, marginBottom: 6 }}>TECHCAREERLY</div>
           <div style={{ fontSize: 26, fontWeight: 900, fontFamily: "'Heebo', sans-serif" }}>מפת האפליקציה</div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10, marginBottom: 2 }}>
+            <a href="/map/flows" style={{ fontSize: 12, fontWeight: 700, padding: "5px 11px", borderRadius: 8, background: "rgba(255,255,255,0.14)", color: "#fff" }}>
+              מסע עם צילומים והסבר ←
+            </a>
+            <a href="/map/grid" style={{ fontSize: 12, fontWeight: 700, padding: "5px 11px", borderRadius: 8, background: "rgba(255,255,255,0.14)", color: "#fff" }}>
+              גריד כל המסכים ←
+            </a>
+          </div>
           <div style={{ fontSize: 12, marginTop: 4, opacity: 0.65 }}>
             {totalScreens} מסכים · לחיצה = פתיחת המסך · חצים = מעבר ניווט אמיתי
           </div>
@@ -433,6 +570,8 @@ export default function MapPage() {
             { color: "#dc2626", label: "מרכז למידה — סייבר" },
             { color: "#d97706", label: "מרכז למידה — QA" },
             { color: "#7c3aed", label: "שלב 4 — מסלול לימודים" },
+            { color: "#059669", label: "שלב 5 — לוגיסטיקה ומלגות" },
+            { color: "#475569", label: "ניהול פנימי" },
             { color: "#6b7280", label: "בקרוב" },
           ].map(({ color, label }) => (
             <div key={color} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(0,0,0,0.55)" }}>
@@ -456,17 +595,38 @@ export default function MapPage() {
               height={H}
               style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none", zIndex: 0 }}
             >
-              {/* Section separators */}
-              <line x1={0} y1={110} x2={650} y2={110} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={275} x2={W}  y2={275} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={385} x2={980} y2={385} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={505} x2={990} y2={505} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={615} x2={990} y2={615} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={725} x2={990} y2={725} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={835}  x2={990} y2={835}  stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={925}  x2={W}   y2={925}  stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={1025} x2={W}   y2={1025} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
-              <line x1={0} y1={1125} x2={W}   y2={1125} stroke="rgba(0,0,0,0.07)" strokeWidth={1} strokeDasharray="4 3" />
+              {/* רצועות. הרוחבית מקבלת רקע וקו מלא — כדי שיהיה ברור שהיא לא
+                  תחנה במסע אלא משהו שיושב מעליו */}
+              {BANDS.map((b, i) => {
+                const next = BANDS[i + 1]?.top ?? H;
+                return (
+                  <g key={b.label}>
+                    {b.cross && (
+                      <rect x={0} y={b.top} width={W} height={next - b.top - 8} fill={b.color} opacity={0.035} rx={10} />
+                    )}
+                    <line
+                      x1={0} y1={b.top} x2={W} y2={b.top}
+                      stroke={b.color}
+                      strokeWidth={b.cross ? 1.5 : 1}
+                      strokeDasharray={b.cross ? undefined : "5 4"}
+                      opacity={b.cross ? 0.35 : 0.28}
+                    />
+                    <rect
+                      x={W - 22 - b.label.length * 5.6} y={b.top - 9}
+                      width={b.label.length * 5.6 + 24} height={18}
+                      rx={9} fill="#f5f3ef"
+                    />
+                    <text
+                      x={W - 16} y={b.top + 4}
+                      textAnchor="start" direction="rtl"
+                      fontSize={10} fill={b.color} fontWeight={800}
+                      fontFamily="'Heebo', sans-serif" opacity={0.75}
+                    >
+                      {b.label}
+                    </text>
+                  </g>
+                );
+              })}
 
               {LABELS.map(l => (
                 <text key={l.text} x={l.x} y={l.y + 10} fontSize={9} fill={l.color} fontWeight={700}
