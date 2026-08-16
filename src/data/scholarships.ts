@@ -86,6 +86,11 @@ export type Funding = {
   /** מזהי מסמכים מ-DOC_CATALOG */
   docs: string[];
 
+  /** הקשר שלנו — ראה ההסבר ב-institutions.ts. partner = מכירים אותנו ומצפים להפניות */
+  relationship?: "none" | "contacted" | "partner";
+  relationshipNote?: string;
+  relationshipAt?: string;
+
   /** אושר על ידי נתי. נפרד מ-status בכוונה */
   approved?: boolean;
   status: FundingStatus;
@@ -609,6 +614,14 @@ export function scoreFunding(f: Funding): Score {
   if (f.access) {
     total += Math.min(3, f.access);
     reasons.push("נגיש — בלי חסמי כניסה גבוהים");
+  }
+  // הקשר שלנו: +2 לשותף פעיל, +1 אחרי שיחה. בכוונה קטן ממשקל המעטפת (4) —
+  // אחרת נמליץ על מי שענה לטלפונים שלנו במקום על מי שטוב למועמד
+  if (f.relationship === "partner") {
+    total += 2;
+    reasons.push("מכירים אותנו — יש כתובת ישירה שתלווה אותך פנימה");
+  } else if (f.relationship === "contacted") {
+    total += 1;
   }
 
   const capped = f.status === "needs-check" && total > UNVERIFIED_CAP;

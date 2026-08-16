@@ -347,6 +347,40 @@ function AdminInstitutionsPage() {
                       </div>
                     )}
 
+                    {/* הקשר שלנו — הגורם היחיד שאנחנו שולטים בו. שובר שוויון, לא תחליף למעטפת */}
+                    <div className="rounded-xl p-3 mt-3 flex flex-wrap items-center gap-2"
+                      style={{ background: inst.relationship === "partner" ? "rgba(5,150,105,0.07)" : "rgba(0,0,0,0.03)" }}>
+                      <span className="text-[11px] font-black" style={{ color: "rgba(0,0,0,0.5)" }}>הקשר שלנו:</span>
+                      {([["none", "אין"], ["contacted", "דיברנו"], ["partner", "שותפות פעילה ★"]] as const).map(([v, l]) => (
+                        <button key={v}
+                          onClick={() => persist(items.map(i => i.id === inst.id
+                            ? { ...i, relationship: v, relationshipAt: new Date().toISOString().slice(0, 10) } : i))}
+                          className="text-[11.5px] font-bold px-3 py-1 rounded-lg"
+                          style={{
+                            background: (inst.relationship ?? "none") === v ? "#047857" : "#fff",
+                            color: (inst.relationship ?? "none") === v ? "#fff" : "rgba(0,0,0,0.55)",
+                            border: "1px solid rgba(0,0,0,0.12)",
+                          }}>
+                          {l}
+                        </button>
+                      ))}
+                      {inst.relationshipAt && (
+                        <span className="text-[10.5px]" style={{
+                          color: (Date.now() - new Date(inst.relationshipAt).getTime()) > 180 * 86400000 ? "#b91c1c" : "rgba(0,0,0,0.4)",
+                        }}>
+                          עודכן {inst.relationshipAt}
+                          {(Date.now() - new Date(inst.relationshipAt).getTime()) > 180 * 86400000 && " · לרענן — עברה חצי שנה"}
+                        </span>
+                      )}
+                      <input
+                        value={inst.relationshipNote ?? ""}
+                        onChange={e => update(inst.id, "relationshipNote", e.target.value)}
+                        placeholder="מי מכיר אותנו שם ומה סוכם"
+                        className="flex-1 min-w-[180px] text-[11.5px] px-2.5 py-1.5 rounded-lg"
+                        style={{ border: "1px solid rgba(0,0,0,0.12)" }}
+                      />
+                    </div>
+
                     <div className="flex items-center gap-3 mt-3.5">
                       <button onClick={() => setEditId(inst.id)} className="text-[12.5px] font-black px-4 py-2 rounded-lg"
                         style={{ background: ORANGE, color: "#fff" }}>עריכה</button>

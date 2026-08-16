@@ -9,6 +9,9 @@ import AllPaths from "@/components/ui/AllPaths";
 import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 import { savePathsAnswers, logEvent } from "@/lib/candidate";
+import { visibleCourses, type Course } from "@/data/courses";
+import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
+import { FUNDING } from "@/data/scholarships";
 
 /** שם התת-שלב שמוצג בפס ההתקדמות */
 const PHASE_LABEL: Record<string, string> = {
@@ -666,6 +669,11 @@ export default function PathsPage() {
 
   /** התחום המוצג — הנבחר, או המעניין ביותר כברירת מחדל */
   const shown = topDomains.find(d => d.id === activeDomain) ?? topDomains[0] ?? null;
+
+  /** התחומים שמנחים את שכבת ההצעות: הנבחר אם יש, אחרת המובילים מהחקר */
+  const chosenDomains: Domain[] = chosenDomain
+    ? [chosenDomain]
+    : topDomains.slice(0, 3).map(d => d.id);
 
   const Header = (
     <div className="text-white px-[22px] pt-[26px] pb-[30px] shrink-0" style={{ background: NAVY }}>
@@ -1339,9 +1347,20 @@ export default function PathsPage() {
             </div>
           </RevealCard>
 
-          {/* Institution cards */}
+          {/*
+            שכבת ההצעות — לפני הקטלוג. הכלל: מה שלמעלה אנחנו יודעים להגיד
+            למה; מה שבקיפול קיים ולא נבדק לעומק. בהכשרה ההצעה היא קורס
+            עטוף (מוסד × מעטפת); בתואר — התואר עצמו, כי פער של 12,000 ₪
+            בחודש עובר בין שני תארים שנשמעים אותו דבר.
+          */}
+          {activeTrack === "bootcamp" && <WrappedCourses domains={chosenDomains} />}
+          {activeTrack === "degree" && <DegreePicker domains={chosenDomains} />}
+
+          {/* Institution cards — הקטלוג */}
           <div className="text-[13px] font-black mb-3" style={{ color: NAVY }}>
-            מוסדות — {TRACK_META[activeTrack].label}
+            {activeTrack === "bootcamp" ? "עוד מוסדות והכשרות — בלי מעטפת שמיפינו" :
+             activeTrack === "degree" ? "המוסדות — איפה לומדים את זה" :
+             `מוסדות — ${TRACK_META[activeTrack].label}`}
           </div>
           <div className="flex flex-col gap-3 mb-5">
             {list.map(inst => {
@@ -1898,5 +1917,156 @@ export default function PathsPage() {
       </div>
       <BottomNav />
     </div>
+  );
+}
+
+// ─── שכבת ההצעות ─────────────────────────────────────────────────────────────
+
+/**
+ * קורסים עטופים — ההצעה של מסלול ההכשרה.
+ * כל קורס = מוסד × מעטפת, עם הסיבות במילים. מה שאין לו מעטפת נשאר בקטלוג
+ * שמתחת — קיים, ומוסבר למה הוא שם.
+ */
+function WrappedCourses({ domains }: { domains: Domain[] }) {
+  const courses = visibleCourses().filter(c =>
+    domains.length === 0 || c.domains.some(d => domains.includes(d)));
+  if (courses.length === 0) return null;
+
+  const progName = (id?: string) => (id ? FUNDING.find(f => f.id === id)?.name : null);
+  const progRel = (id?: string) => (id ? FUNDING.find(f => f.id === id)?.relationship : undefined);
+
+  return (
+    <div className="mb-6">
+      <div className="text-[13px] font-black mb-1" style={{ color: NAVY }}>
+        קורסים עם מעטפת — ההמלצות שלנו
+      </div>
+      <div className="text-[11.5px] mb-3" style={{ color: "rgba(0,0,0,0.45)" }}>
+        לכל אחד מהם יש גוף שמממן, מלווה או מתחייב להשמה — וכתוב בדיוק מה.
+      </div>
+      <div className="flex flex-col gap-3">
+        {courses.map((c: Course) => (
+          <a key={c.id} href={c.link} target="_blank" rel="noopener noreferrer"
+            className="block rounded-2xl p-4 active:scale-[0.99] transition-transform"
+            style={{ background: "#fff", border: "1.5px solid rgba(251,133,0,0.35)", boxShadow: "0 2px 10px rgba(251,133,0,0.08)" }}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="text-[14px] font-black" style={{ color: NAVY }}>{c.name}</div>
+              {progRel(c.programId) === "partner" && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                  style={{ background: "rgba(5,150,105,0.1)", color: "#047857" }}>
+                  ★ מכירים אותנו
+                </span>
+              )}
+            </div>
+            {progName(c.programId) && (
+              <div className="text-[11.5px] font-bold mt-0.5" style={{ color: "#b45309" }}>
+                המעטפת: {progName(c.programId)}
+              </div>
+            )}
+            <div className="text-[12px] leading-[1.65] mt-1.5" style={{ color: "rgba(0,0,0,0.6)" }}>{c.what}</div>
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              {c.cost && <Chip13 text={c.cost.split("—")[0].split("·")[0].trim()} color="#047857" />}
+              {c.format && <Chip13 text={c.format.split("·")[0].trim()} color="#0369a1" />}
+              {c.who && <Chip13 text={c.who.split("·")[0].trim()} color="#6b7280" />}
+            </div>
+            {c.catch && (
+              <div className="text-[11px] leading-[1.6] mt-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(251,133,0,0.07)", color: "#92400e" }}>
+                לדעת לפני: {c.catch}
+              </div>
+            )}
+            <div className="text-[11.5px] font-bold mt-2.5" style={{ color: ORANGE }}>לדף הקורס ←</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * בוחר התארים — ההצעה של מסלול האקדמיה.
+ * ההחלטה האמיתית היא התואר, לא המוסד: פער של 12,000 ₪ בחודש עובר בין
+ * תארים שנשמעים אותו דבר. הנתונים לאומיים (עבודאטה / משרד העבודה),
+ * וההסתייגות הכנה מוצגת תמיד. המוסדות שמתחת הם הכתובת — לא ההחלטה.
+ */
+function DegreePicker({ domains }: { domains: Domain[] }) {
+  const degrees = domains.length
+    ? [...new Map(domains.flatMap(d => degreesFor(d)).map(d => [d.id, d])).values()]
+    : [];
+  if (degrees.length === 0) return null;
+
+  return (
+    <div className="mb-6">
+      <div className="text-[13px] font-black mb-1" style={{ color: NAVY }}>
+        קודם בוחרים תואר — אחר כך מוסד
+      </div>
+      <div className="text-[11.5px] mb-3 leading-[1.6]" style={{ color: "rgba(0,0,0,0.45)" }}>
+        שני תארים שנשמעים אותו דבר יכולים להוביל לשכר שונה ב-12,000 ₪ בחודש.
+        אלה התארים שמובילים לתחום שלך, עם המספרים האמיתיים.
+      </div>
+      <div className="flex flex-col gap-3">
+        {degrees.slice(0, 4).map((d: Degree) => {
+          const bar = ENTRY_LABEL[d.entryBar];
+          return (
+            <div key={d.id} className="rounded-2xl p-4"
+              style={{
+                background: "#fff",
+                border: d.recommended ? "1.5px solid rgba(251,133,0,0.4)" : "1px solid rgba(2,62,138,0.09)",
+                boxShadow: "0 2px 10px rgba(2,62,138,0.05)",
+              }}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="text-[14px] font-black" style={{ color: NAVY }}>{d.name}</span>
+                  <span className="text-[10.5px] mr-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{d.kind}</span>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                  style={{ background: `${bar.color}14`, color: bar.color }}>
+                  {bar.label}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                {d.salary && <Stat13 label="שכר אחרי 5-6 שנים" value={`${d.salary.toLocaleString("he-IL")} ₪`} />}
+                {d.employment && <Stat13 label="מועסקים" value={`${d.employment}%`} />}
+                {d.inTech && <Stat13 label="מגיעים לטק" value={`${d.inTech}%`} strong={d.inTech >= 60} />}
+              </div>
+
+              <div className="text-[12px] leading-[1.65] mt-2" style={{ color: "rgba(0,0,0,0.6)" }}>
+                <b>פותח:</b> {d.leadsTo}
+              </div>
+              {d.recommended && (
+                <div className="text-[11.5px] leading-[1.65] mt-2 px-2.5 py-2 rounded-lg" style={{ background: "rgba(251,133,0,0.08)", color: "#92400e" }}>
+                  ✦ {d.recommended}
+                </div>
+              )}
+              <div className="text-[11px] leading-[1.6] mt-2" style={{ color: "rgba(0,0,0,0.45)" }}>
+                בכנות: {d.caveat}
+              </div>
+              <div className="text-[11px] leading-[1.6] mt-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+                <b>הכניסה:</b> {d.entryNote}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="text-[11px] leading-[1.7] mt-3 px-3 py-2 rounded-xl" style={{ background: "rgba(2,62,138,0.04)", color: "rgba(0,0,0,0.5)" }}>
+        הבחירה הסופית נעשית יחד עם הרכזת בפגישה — כאן המפה, לא ההחלטה.
+        המוסדות שלמטה הם איפה לומדים את התארים האלה.
+      </div>
+    </div>
+  );
+}
+
+function Chip13({ text, color }: { text: string; color: string }) {
+  return (
+    <span className="text-[10.5px] font-bold px-2 py-1 rounded-lg" style={{ background: `${color}12`, color }}>
+      {text}
+    </span>
+  );
+}
+
+function Stat13({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.45)" }}>
+      {label}: <b style={{ color: strong ? "#047857" : "#1c1a16", fontSize: 12.5 }}>{value}</b>
+    </span>
   );
 }
