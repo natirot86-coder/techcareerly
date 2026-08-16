@@ -43,6 +43,12 @@ export type Degree = {
   recommended?: string;
   status: "active" | "hidden";
   notes?: string;
+  /**
+   * המוסדות המומלצים ללמוד בהם את התואר הזה — **סימון של נתי, לא שלנו**.
+   * אנחנו לא יודעים לאמת איזה מוסד "הכי טוב" לתואר; מי שכן יודע זה מי
+   * שמדבר עם המוסדות. ריק = עוד לא סומן, והמועמד לא רואה המלצת מוסד.
+   */
+  recommendedAt?: string[];
 };
 
 export const DEGREES: Degree[] = [

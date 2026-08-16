@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
-import { visibleByTrack } from "@/data/institutions";
+import { visibleByTrack, INSTITUTIONS } from "@/data/institutions";
 import { track as trackEvent } from "@vercel/analytics";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import AllPaths from "@/components/ui/AllPaths";
@@ -2043,6 +2043,23 @@ function DegreePicker({ domains }: { domains: Domain[] }) {
               <div className="text-[11px] leading-[1.6] mt-1" style={{ color: "rgba(0,0,0,0.45)" }}>
                 <b>הכניסה:</b> {d.entryNote}
               </div>
+              {/* המוסדות שסומנו בלוח המטה — עם הדלת של כל אחד */}
+              {(d.recommendedAt?.length ?? 0) > 0 && (
+                <div className="mt-2.5 pt-2 flex flex-wrap items-center gap-1.5" style={{ borderTop: "1px dashed rgba(0,0,0,0.08)" }}>
+                  <span className="text-[10.5px] font-bold" style={{ color: "rgba(0,0,0,0.5)" }}>איפה ללמוד את זה:</span>
+                  {d.recommendedAt!.map(id => {
+                    const inst = INSTITUTIONS.find(i => i.id === id);
+                    if (!inst || inst.status === "hidden") return null;
+                    const door = inst.programId ? FUNDING.find(f => f.id === inst.programId)?.name?.split(" — ")[0] : null;
+                    return (
+                      <span key={id} className="text-[10.5px] font-bold px-2 py-1 rounded-lg"
+                        style={{ background: "rgba(2,62,138,0.06)", color: NAVY }}>
+                        {inst.name.split(" — ")[0]}{door ? ` · דרך ${door}` : ""}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
