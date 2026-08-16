@@ -15,7 +15,7 @@ const DOMAINS = [
   { id: "ai",        badge: "AI", label: "AI ובינה מלאכותית", desc: "מלמדים מחשבים לחשוב ולהחליט",             color: "#7c3aed", img: "/domains/domain-ai.jpeg" },
   { id: "ux",        badge: "UX", label: "עיצוב UX/UI",       desc: "יוצרים חוויות שמרגישות נכון",             color: "#db2777", img: "/domains/domain-ux.jpeg" },
   { id: "marketing", badge: "ש",  label: "שיווק דיגיטלי",    desc: "מחברים מוצרים לאנשים הנכונים",            color: "#f97316", img: "/domains/domain-marketing.jpeg" },
-  { id: "qa",        badge: "QA", label: "בדיקות תוכנה",     desc: "תופסים באגים לפני שהלקוחות מוצאים אותם", color: "#d97706", img: "/domains/domain-code.jpeg" },
+  { id: "qa",        badge: "QA", label: "בדיקות תוכנה",     desc: "תופסים באגים לפני שהלקוחות מוצאים אותם", color: "#d97706", img: "/domains/domain-qa.jpeg" },
 ];
 
 function MeetingCard({ doneCount }: { doneCount: number }) {

@@ -337,7 +337,7 @@ export default function QADay() {
           <div className="text-[13px] mb-4" style={{ color: "rgba(0,0,0,0.42)" }}>לפני שנצלול לתקרית אמיתית — בואי נבין את התפקיד</div>
 
           <div className="rounded-2xl overflow-hidden mb-5" style={{ boxShadow: "0 2px 14px rgba(0,0,0,0.12)" }}>
-            <img src="/domains/domain-code.jpeg" alt="" className="w-full object-cover" style={{ height: "200px" }} />
+            <img src="/domains/domain-qa.jpeg" alt="" className="w-full object-cover" style={{ height: "200px" }} />
           </div>
 
           {/* Typical day timeline */}

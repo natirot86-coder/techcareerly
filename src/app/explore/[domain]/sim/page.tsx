@@ -111,8 +111,11 @@ const PLAYFUL_THEME: SimTheme = {
   progressTrack: "#ffe3cc",
 };
 
+// תחומים שמציגים את הטעימה בעיצוב ה-Playful (מיקום/מבנה זהה) — תוכן הצעדים עצמו נשאר ספציפי לכל תחום
+const PLAYFUL_DOMAINS = new Set(["code", "qa"]);
+
 function getTheme(domain: string): SimTheme {
-  return domain === "code" ? PLAYFUL_THEME : NAVY_THEME;
+  return PLAYFUL_DOMAINS.has(domain) ? PLAYFUL_THEME : NAVY_THEME;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1135,18 +1138,11 @@ const S9: ChoiceStep = {
         </div>
       </div>
 
-      <DeepDive title="פייתון לפעמים לא בכלל טורחת לבדוק את הצד השני — למה?">
-        <p className="mb-3">
-          זה נקרא <span className="font-bold">short-circuit evaluation</span> ("הערכת מעגל קצר"): פייתון בודקת
-          תנאים מ<span className="font-bold">שמאל לימין</span>, ועוצרת ברגע שהיא כבר יודעת את התשובה הסופית. אם
-          {" "}<span className="font-mono">email_check(email)</span> מחזירה <span className="font-mono">False</span>,
-          פייתון כבר יודעת ש-<span className="font-mono">and</span> חייב להיות False — ולכן היא{" "}
-          <span className="font-bold">אפילו לא מריצה</span> את <span className="font-mono">password_check(password)</span>!
-        </p>
+      <DeepDive title="טיפ קטן: פייתון לפעמים חוסכת לעצמה עבודה">
         <p>
-          זה לא רק אופטימיזציה — לפעמים זה קריטי. תארי לך פונקציה שבודקת קודם "האם המשתמש קיים" ורק אז "האם הסיסמה
-          שלו נכונה". אם לא היה short-circuit, הקוד היה יכול לנסות לבדוק סיסמה למשתמש שלא קיים בכלל ולקרוס. הטבלה
-          המלאה של <span className="font-mono font-bold">and</span>: True and True → True. כל שילוב אחר → False.
+          אם <span className="font-mono">email_check(email)</span> כבר יצא <span className="font-mono">False</span>,
+          פייתון כבר יודעת שהתשובה הסופית תהיה "לא תקין" — אז היא אפילו לא טורחת לבדוק את הסיסמה. חכם, נכון?
+          זה כמו שאת לא ממשיכה לבדוק אם המפתח השני מתאים, אם כבר ראית שהדלת הראשונה נעולה.
         </p>
       </DeepDive>
 
@@ -1310,7 +1306,7 @@ const S_TYPE2: TypeStep = {
 
 const S10: ChoiceStep = {
   kind: "choice",
-  tag: "בונוס למתקדמים",
+  tag: "עוד צעד קדימה",
   concept: "if/elif — הודעה מדויקת במקום הודעה כללית",
   context: (
     <div>
@@ -1338,18 +1334,10 @@ const S10: ChoiceStep = {
         כרגע יש רק בדיקה אחת משולבת עם <span className="font-mono font-bold">and</span> — אין דרך לדעת איזה חלק נכשל.
       </p>
 
-      <DeepDive title="רגע — האם לדייק את ההודעה זה תמיד רעיון טוב?">
-        <p className="mb-3">
-          דווקא לא, ולא סתם: אתרים אמיתיים (בנקים, ג'ימייל, פייסבוק) <span className="font-bold">מתכוונים</span>{" "}
-          לכתוב הודעה מעורפלת כמו "Check your credentials!" בכל מסך התחברות, ולא "האימייל לא קיים במערכת" או
-          "הסיסמה שגויה". הסיבה: אם תוקף מנסה לנחש כתובות מייל של משתמשים אמיתיים, הודעה מדויקת "האימייל לא קיים"
-          הייתה נותנת לו בדיוק את המידע שהוא צריך — אילו כתובות מייל <span className="font-bold">כן</span> רשומות
-          במערכת. זה נקרא <span className="font-bold">user enumeration</span>, ונחשב פרצת אבטחה אמיתית.
-        </p>
+      <DeepDive title="עוד רעיון קטן: איפה זה שימושי בחיים האמיתיים?">
         <p>
-          אז למה בכל זאת לומדים את זה? כי אותו רעיון בדיוק (if/elif עם הודעה שונה לכל מקרה) חשוב ומועיל מאוד
-          {" "}<span className="font-bold">בטופסי הרשמה</span> (איפה שאין בעיה לומר "המייל כבר תפוס" או "הסיסמה
-          קצרה מדי") — פשוט לא במסך התחברות. זו דוגמה טובה לכך שבתכנות הפתרון הטכני הנכון תלוי בהקשר, לא רק בקוד עצמו.
+          בטופס הרשמה, למשל — שם אין שום בעיה לומר בדיוק "האימייל הזה כבר תפוס" או "הסיסמה קצרה מדי", כדי לעזור
+          למשתמשת לתקן בדיוק את מה שצריך. אותו רעיון (if/elif עם הודעה שונה לכל מקרה) — פשוט בהקשר אחר.
         </p>
       </DeepDive>
 
@@ -1407,12 +1395,10 @@ const S_MATCH3: MatchStep = {
         </div>
       </div>
 
-      <DeepDive title="למה זו בדיוק המיומנות שבודקים בראיונות עבודה?">
+      <DeepDive title="למה זה שימושי?">
         <p>
-          לקרוא קוד ולדעת לחזות מה יקרה בלי להריץ אותו נקרא <span className="font-bold">"tracing" (מעקב קוד)</span>,
-          וזו אחת המיומנויות הכי נבדקות בראיונות למפתחי תוכנה — הרבה יותר מ"לשנן syntax". כשמראיינת נותנת לך קוד
-          ושואלת "מה ידפיס?", היא בעצם בודקת בדיוק את מה שעשית עכשיו: לעקוב אחרי if, לדעת מתי elif "מדלג", ולחזות
-          תוצאה נכונה. ככל שתתרגלי יותר תרגילים כאלה — כך יהיה לך קל יותר גם לדבג קוד אמיתי שכתבת בעצמך.
+          זה בדיוק מה שקורה בראש של כל מפתחת כשמשהו לא עובד כמו שציפתה: לעקוב אחרי הקוד שורה-שורה ולהבין לאן
+          הוא "הלך". ככל שתתרגלי יותר — זה יהפוך לטבעי יותר ויותר.
         </p>
       </DeepDive>
 
@@ -3154,6 +3140,7 @@ const QA0: ChoiceStep = {
   okMsg: "בדיוק! QA חושבת כמו 'עורכת דין של השטן' — היא מנסה להוכיח שהמוצר לא עובד, לפני שהוא מגיע ללקוחות. זו לא בדיקה שטחית, זו חשיבה שיטתית על כל מה שיכול להשתבש.",
   errMsg: "לא בדיוק. QA לא כותבת את הפיצ'ר ולא מעצבת אותו — היא זו שמנסה 'לשבור' אותו בכל דרך אפשרית, כדי לתפוס בעיות לפני שהלקוחות יתפסו אותן.",
   learned: "QA = Quality Assurance | תפקידה: למצוא בעיות לפני שהלקוח מוצא אותן",
+  level: 1,
 };
 
 const QA1: ChoiceStep = {
@@ -3190,6 +3177,7 @@ const QA1: ChoiceStep = {
   okMsg: "נכון! מקרה בדיקה טוב = קלט מדויק + פעולה + תוצאה צפויה ברורה. כך כל אחת שקוראת אותו יודעת בדיוק מה לבדוק ומה אמור לקרות — בלי ניחושים.",
   errMsg: "לא. 'בדקתי שזה עובד' לא אומר כלום למי שקורא אחריך. מקרה בדיקה טוב כולל: קלט מדויק, צעדים לביצוע, ותוצאה צפויה ברורה — כדי שאפשר יהיה לחזור עליו בדיוק.",
   learned: "מקרה בדיקה טוב = קלט מדויק + צעדים + תוצאה צפויה",
+  level: 1,
 };
 
 const QA2: SequenceStep = {
@@ -3215,6 +3203,7 @@ const QA2: SequenceStep = {
   okMsg: "מדויק! Report → Triage → Fix → Verify. בלי הסדר הזה, באגים נעלמים בתוך התהליך — או מתוקנים בלי שאף אחת בדקה שהתיקון באמת עבד.",
   errMsg: "הסדר הנכון: קודם מדווחים על הבאג (Report), אז ממיינים כמה הוא דחוף (Triage), אז מתקנים בקוד (Fix), ולבסוף מוודאים (Verify) שהתיקון עבד.",
   learned: "Bug lifecycle: Report → Triage → Fix → Verify",
+  level: 2,
 };
 
 const QA3: ChoiceStep = {
@@ -3250,6 +3239,7 @@ const QA3: ChoiceStep = {
   okMsg: "נכון! Severity גבוהה (זה קורס לגמרי) אבל Priority יכולה להיות נמוכה יחסית — כי כמעט אף אחד לא נתקל בזה. ההחלטה מה לתקן קודם משלבת את שני הצירים.",
   errMsg: "לא. האפשרות הראשונה היא Severity וגם Priority גבוהות (קריסה + כולם נפגעים). השלישית — שתיהן נמוכות. התשובה: קריסה קשה בפיצ'ר נדיר — טכנית חמור, אבל לא דחוף כי מעט אנשים נתקלים בו.",
   learned: "Severity = כמה חמור טכנית | Priority = כמה דחוף לתקן",
+  level: 2,
 };
 
 const QA4: ChoiceStep = {
@@ -3279,6 +3269,7 @@ const QA4: ChoiceStep = {
   okMsg: "בדיוק! בלי צעדים לשחזור (Steps to Reproduce), מפתח לא יכול לדעת מה קרה, איפה, ובאילו תנאים. \"לא עובד\" לא ניתן לתיקון — \"לחצתי X, ואז Y קרה במקום Z\" כן.",
   errMsg: "לא. הדבר הקריטי ביותר שחסר הוא צעדים מדויקים לשחזור הבעיה — בלי זה, אין למפתח שום דרך לדעת מה בכלל השתבש.",
   learned: "דיווח באג טוב = Steps to Reproduce + Expected vs Actual + סביבה",
+  level: 2,
 };
 
 const QA5: ChoiceStep = {
@@ -3302,6 +3293,7 @@ const QA5: ChoiceStep = {
   okMsg: "נכון! זו בדיוק ה'רגרסיה' — שינוי במקום אחד בקוד שובר משהו שעבד במקום אחר. בדיקות רגרסיה מוודאות שהחדש לא הרס את הישן.",
   errMsg: "לא. הסיבה האמיתית: כל שינוי בקוד עלול לשבור בטעות משהו שכבר עבד — זו 'רגרסיה'. לכן בודקים מחדש גם את מה שכבר היה תקין.",
   learned: "Regression testing = לוודא ששינוי חדש לא שבר משהו ישן",
+  level: 3,
 };
 
 const QA6: ChoiceStep = {
@@ -3332,6 +3324,7 @@ const QA6: ChoiceStep = {
   okMsg: "בדיוק! אוטומציה משתלמת על בדיקות חוזרות ויציבות — כמו login. פיצ'רים שמשתנים כל הזמן ושיפוטים סובייקטיביים (UX) עדיין דורשים עין אנושית.",
   errMsg: "לא. אוטומציה הכי משתלמת על בדיקות שחוזרות בלי שינוי בכל גרסה (כמו login). פיצ'רים שעדיין משתנים, ושאלות טעם/UX — דורשים בודקת אנושית.",
   learned: "אוטומציה = לבדיקות חוזרות ויציבות | ידני = לפיצ'רים חדשים ולשיפוט אנושי",
+  level: 3,
 };
 
 const STEPS_QA: Step[] = [QA0, QA1, QA2, QA3, QA4, QA5, QA6];
@@ -3776,6 +3769,7 @@ const DOMAIN_META: Record<string, {
   heroTexts: [string, string, string];
   skills: { label: string; val: number }[];
   careerText: string;
+  missionTitle?: string; // עוטפת את השלבים במשימה אחת רציפה (עמודת המשימה בסיידבר + הודעת פתיחה)
 }> = {
   code: {
     simTitle: "טעימה — פיתוח",
@@ -3788,6 +3782,7 @@ const DOMAIN_META: Record<string, {
       { label: "ציד באגים", val: 55 },
     ],
     careerText: "כל הקוד שעברת היום — מפתחות ב-Wix, Monday.com, Fiverr ו-IDF Tech כותבות גרסאות מתקדמות שלו כל יום. מירב התחילה בדיוק מפה — ואחרי 14 חודשים קיבלה עבודה.",
+    missionTitle: "ללקוח יש אתר שקורס והוא מחכה לך. כל שלב שאת פותרת — עוד צעד לקראת שחרור האתר שלו.",
   },
   data: {
     simTitle: "טעימה — דאטה",
@@ -3860,6 +3855,7 @@ const DOMAIN_META: Record<string, {
       { label: "בדיקות רגרסיה", val: 62 },
     ],
     careerText: "כל מה שבדקת היום — QA Engineers ב-Wix, Monday.com, Fiverr ו-Riskified עושות גרסאות מתקדמות שלו כל יום. הדס עברה מהוראה ל-QA אחרי קורס בן 4 חודשים — ואחרי חצי שנה קיבלה עבודה.",
+    missionTitle: "ה-release יוצא הערב. כל שלב שאת עוברת — עוד פריט ברשימת הבדיקה שמאושר לפני שהוא יוצא.",
   },
 };
 
@@ -3883,7 +3879,7 @@ function getDomainMeta(domain: string) {
 
 function ResultScreen({ score, answers, nextDomain, domain }: { score: number; answers: boolean[]; nextDomain: string | null; domain: string }) {
   const theme = getTheme(domain);
-  const playful = domain === "code";
+  const playful = PLAYFUL_DOMAINS.has(domain);
   const steps = getSteps(domain);
   const meta = getDomainMeta(domain);
   const pct = Math.round((score / steps.length) * 100);
@@ -4034,6 +4030,45 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MISSION CHECKLIST — עוטפת את השלבים כמשימה רציפה אחת (לא רק "שאלה X מתוך Y")
+// ─────────────────────────────────────────────────────────────────────────────
+
+function MissionChecklist({ steps, currentIndex, accent, dark }: { steps: Step[]; currentIndex: number; accent: string; dark: boolean }) {
+  return (
+    <div className="flex flex-col gap-[7px]">
+      {steps.map((s, i) => {
+        const done = i < currentIndex;
+        const active = i === currentIndex;
+        return (
+          <div key={i} className="flex items-center gap-[9px]" style={{ opacity: done ? 0.7 : active ? 1 : 0.45 }}>
+            <span
+              className="w-[17px] h-[17px] rounded-[5px] flex items-center justify-center text-[9.5px] font-black shrink-0"
+              style={{
+                background: done ? accent : "transparent",
+                border: done ? "none" : `1.5px solid ${dark ? "rgba(255,255,255,.5)" : "rgba(0,0,0,.2)"}`,
+                color: "#fff",
+              }}
+            >
+              {done ? "✓" : ""}
+            </span>
+            <span
+              className="text-[11px] leading-tight"
+              style={{
+                color: dark ? "#fff" : "#1c1c1c",
+                fontWeight: active ? 800 : 500,
+                textDecoration: done ? "line-through" : "none",
+              }}
+            >
+              {s.concept}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SIM FLOW
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -4054,10 +4089,12 @@ function SimFlow({
   onStepIndexChange?: (i: number) => void;
 }) {
   const theme = getTheme(domain);
-  const playful = domain === "code";
+  const playful = PLAYFUL_DOMAINS.has(domain);
   const steps = getSteps(domain);
+  const meta = getDomainMeta(domain);
   const [stepIndex, setStepIndex] = useState(0);
   const [responses, setResponses] = useState<Record<number, StepResponse>>({});
+  const [showMission, setShowMission] = useState(false);
   const feedbackRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -4096,6 +4133,17 @@ function SimFlow({
     <div className="pb-4" style={{ fontFamily: theme.fontUI }}>
       {playful ? (
         <div className="px-[22px] pt-3 mb-2">
+          {stepIndex === 0 && meta.missionTitle && (
+            <div
+              className="rounded-2xl px-4 py-3 mb-4 flex gap-[10px] items-start md:hidden"
+              style={{ background: theme.accentSoft, border: `1.5px solid ${theme.accent}33` }}
+            >
+              <span className="text-[16px] shrink-0">🎯</span>
+              <div className="text-[12px] leading-[1.6] font-bold" style={{ color: theme.textDark }}>
+                {meta.missionTitle}
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-[10px]">
             <span className="text-[12px] font-bold whitespace-nowrap" style={{ color: theme.accent }}>
               {stepIndex + 1} / {steps.length}
@@ -4107,11 +4155,41 @@ function SimFlow({
               {score} נכון עד כה
             </span>
           </div>
+          <div className="flex items-center gap-3 mt-3 md:hidden">
+            {stepIndex > 0 && (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="text-[11.5px] font-bold"
+                style={{ color: theme.accent }}
+              >
+                → חזרה לשלב הקודם
+              </button>
+            )}
+            {meta.missionTitle && (
+              <button
+                type="button"
+                onClick={() => setShowMission((v) => !v)}
+                className="text-[11.5px] font-bold mr-auto"
+                style={{ color: theme.accent }}
+              >
+                📋 המשימה שלי ({stepIndex}/{steps.length}) {showMission ? "▲" : "▼"}
+              </button>
+            )}
+          </div>
+          {showMission && meta.missionTitle && (
+            <div
+              className="rounded-2xl px-4 py-3.5 mt-2 md:hidden"
+              style={{ background: theme.cardBg, border: `1.5px solid ${theme.cardBorder}` }}
+            >
+              <MissionChecklist steps={steps} currentIndex={stepIndex} accent={theme.accent} dark={false} />
+            </div>
+          )}
           {stepIndex > 0 && (
             <button
               type="button"
               onClick={handleBack}
-              className="text-[11.5px] font-bold mt-3"
+              className="text-[11.5px] font-bold mt-3 hidden md:inline-block"
               style={{ color: theme.accent }}
             >
               → חזרה לשלב הקודם
@@ -4277,7 +4355,7 @@ export default function SimPage() {
   const { domain } = useParams();
   const domainStr = domain as string;
   const theme = getTheme(domainStr);
-  const playful = domainStr === "code";
+  const playful = PLAYFUL_DOMAINS.has(domainStr);
   const [done, setDone] = useState(false);
   const [score, setScore] = useState(0);
   const [answers, setAnswers] = useState<boolean[]>([]);
@@ -4347,6 +4425,17 @@ export default function SimPage() {
           );
         })}
       </div>
+      {meta.missionTitle && (
+        <div className="flex flex-col gap-[10px] pt-[18px]" style={{ borderTop: "1px solid rgba(255,255,255,.2)" }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,.7)" }}>
+            📋 המשימה שלך
+          </div>
+          <div className="text-[11px] leading-[1.6] mb-1" style={{ color: "rgba(255,255,255,.85)" }}>
+            {meta.missionTitle}
+          </div>
+          <MissionChecklist steps={steps} currentIndex={currentStepIndex} accent={theme.accent} dark />
+        </div>
+      )}
       <div className="mt-auto mb-[15%] p-[14px] rounded-xl" style={{ background: "rgba(255,255,255,.18)" }}>
         <div className="text-[11px] font-bold mb-[6px]" style={{ color: "#fff" }}>🎯 ההתקדמות שלך</div>
         <div className="h-[8px] rounded-[5px] overflow-hidden" style={{ background: "rgba(255,255,255,.35)" }}>

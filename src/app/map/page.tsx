@@ -39,7 +39,7 @@ const NH = 44;   // node height default
 
 // ─── Nodes ────────────────────────────────────────────────────────────────────
 
-const BASE = "https://hasifaapp.vercel.app";
+const BASE = process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://hasifaapp.vercel.app";
 
 const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────

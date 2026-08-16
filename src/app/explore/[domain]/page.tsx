@@ -224,6 +224,63 @@ function CodeContent() {
         ai="כלי AI (GitHub Copilot, Claude) מכפילים פרודוקטיביות. הדגש עובר מ'לכתוב קוד' ל'לנהל ולאמת קוד שAI כתב'. מפתח שמשלב AI — שווה יותר, לא פחות."
       />
 
+      {/* News article cards */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על פיתוח תוכנה בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/code-calcalist.jpg",
+              summary: "מחפשים עבודה ראשונה בהייטק? כך תרכבו על גל ה-AI — ותתקבלו",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/rjuxvcrgzl",
+            },
+            {
+              img: "/articles/code-globes.jpg",
+              summary: "האוניברסיטה של החיים: ההייטק נאלץ לחפש עובדים כבר באקדמיה",
+              source: "גלובס",
+              href: "https://www.globes.co.il/news/article.aspx?did=1001215490",
+            },
+            {
+              img: "/articles/code-geektime.jpg",
+              summary: "יצאנו לבדוק: מה באמת המעסיקים מחפשים אצל סטודנטים?",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/tech-students-career-ai-cyber-2025/",
+            },
+          ].map((a) => (
+            <a
+              key={a.href}
+              href={a.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(59,130,246,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
+            >
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(59,130,246,0.06)" }}>
+                {a.img ? (
+                  <img
+                    src={a.img}
+                    alt={a.summary}
+                    className="w-full h-full object-cover object-top"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : (
+                  <span className="text-[28px]">📰</span>
+                )}
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] mb-3 flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+                <div className="flex justify-end">
+                  <span className="text-[11px] font-bold" style={{ color: BLUE }}>קריאה ←</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <SimTeaser
         emoji="🐛"
         challenge="בטעימה: האפליקציה של הלקוח קורסת. יש לך 3 ניסיונות לאתר את הבאג ולתקן — לפני שהוא מתקשר למנהל שלך."
@@ -1735,6 +1792,59 @@ function QAContent() {
         nonHitech="פינטק · e-commerce · בריאות דיגיטלית · ממשלה"
         ai="כלי AI מייצרים מקרי בדיקה ומזהים אנומליות אוטומטית — אבל שיפוט על מה 'חשוב לבדוק' ואילו מקרי קצה מסוכנים עדיין דורש בודקת אנושית. QA שמשלבת AI בתהליך העבודה — עובדת מהר יותר, לא מיותרת."
       />
+
+      {/* News article cards */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על בדיקות תוכנה בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/qa-calcalist.jpg",
+              summary: "בדיקות תוכנה נשארות מהתפקידים המבוקשים בהייטק — בחלק מהמקומות אין דרישה לתואר או ניסיון קודם",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/s1ceulqgf",
+            },
+            {
+              img: "/articles/qa-geektime.jpg",
+              summary: "כשכולם בצוות אחראים על איכות — תפקיד ה-QA עובר ממבצעת בדיקות למתכננת אסטרטגיית איכות ואוטומציה",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/the-future-of-qa/",
+            },
+            {
+              img: "/articles/qa-israelit.jpg",
+              summary: "העתיד של בדיקות תוכנה: איך AI ו-TestOps משנים את הדרך שבה בודקים איכות מוצר",
+              source: "Israel IT",
+              href: "https://www.israel-it.org/single-post/%D7%9E%D7%94%D7%A4%D7%9B%D7%AA-%D7%94%D7%91%D7%99%D7%A0%D7%94-%D7%94%D7%9E%D7%9C%D7%90%D7%9B%D7%95%D7%AA%D7%99%D7%AA-%D7%91%D7%9E%D7%92%D7%96%D7%A8-%D7%94%D7%A6%D7%99%D7%91%D7%95%D7%A8%D7%99%D7%94%D7%99%D7%AA%D7%A8%D7%95%D7%A0%D7%95%D7%AA-%D7%94%D7%90%D7%A1%D7%98%D7%A8%D7%98%D7%92%D7%99%D7%99%D7%9D-%D7%A9%D7%9C-%D7%94%D7%98%D7%9E%D7%A2%D7%AA-%D7%9E%D7%95%D7%93%D7%9C%D7%99-gpt-%D7%A4%D7%A8%D7%98%D7%99%D7%99%D7%9D-1-1-2",
+            },
+          ].map((a) => (
+            <a
+              key={a.href}
+              href={a.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(217,119,6,0.15)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
+            >
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(217,119,6,0.06)" }}>
+                <img
+                  src={a.img}
+                  alt={a.summary}
+                  className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] mb-3 flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+                <div className="flex justify-end">
+                  <span className="text-[11px] font-bold" style={{ color: AMBER }}>קריאה ←</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
 
       <SimTeaser
         emoji="🐞"
