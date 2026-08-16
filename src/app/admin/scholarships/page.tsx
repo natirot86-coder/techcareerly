@@ -11,7 +11,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FUNDING, KIND_LABEL, type Funding, type FundingKind } from "@/data/scholarships";
+import { FUNDING, KIND_LABEL, scoreFunding, type Funding, type FundingKind } from "@/data/scholarships";
 import { INSTITUTIONS } from "@/data/institutions";
 import AdminGate from "@/components/AdminGate";
 
@@ -41,6 +41,15 @@ const FIELDS: { key: keyof Funding; label: string; long?: boolean }[] = [
 
 const MONTHS = ["", "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
 
+/** ימים עד הסגירה הקרובה — למיון ולדגל האדום. null = אין דדליין */
+function daysToClose(f: Funding): number | null {
+  if (!f.closesAt) return null;
+  const now = new Date();
+  let d = new Date(now.getFullYear(), f.closesAt.m - 1, f.closesAt.d, 23, 59);
+  if (d < now) d = new Date(now.getFullYear() + 1, f.closesAt.m - 1, f.closesAt.d, 23, 59);
+  return Math.round((d.getTime() - now.getTime()) / 86400000);
+}
+
 function windowText(f: Funding): string {
   if (f.windowNote) return f.windowNote;
   const o = f.opensAt ? `${f.opensAt.d} ב${MONTHS[f.opensAt.m]}` : null;
@@ -57,6 +66,7 @@ function AdminScholarshipsPage() {
   /** קריאה קודם, עריכה רק בבקשה מפורשת — ראה ההערה ב-/admin/institutions */
   const [editId, setEditId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FundingKind | "all" | "pending">("all");
+  const [query, setQuery] = useState("");
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -109,10 +119,15 @@ function AdminScholarshipsPage() {
   }
 
   const pending = items.filter(i => i.approved === undefined);
-  const shown =
+  const closingSoon = items.filter(i => i.status !== "hidden" && (daysToClose(i) ?? 999) <= 30)
+    .sort((a, b) => (daysToClose(a) ?? 999) - (daysToClose(b) ?? 999));
+  const shown = (
     filter === "pending" ? pending
       : filter === "all" ? items
-        : items.filter(i => i.kind === filter);
+        : items.filter(i => i.kind === filter)
+  ).filter(i => !query || i.name.includes(query) || (i.notes ?? "").includes(query))
+   // דדליין קרוב צף למעלה — זה לוח תפעולי, לא ארכיון
+   .slice().sort((a, b) => (daysToClose(a) ?? 999) - (daysToClose(b) ?? 999));
 
   return (
     <div dir="rtl" style={{ minHeight: "100vh", background: "#f5f3ef" }}>
@@ -157,6 +172,8 @@ function AdminScholarshipsPage() {
               {label}
             </button>
           ))}
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="חיפוש…"
+            style={{ fontSize: 12.5, padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.13)", width: 130 }} />
           <div style={{ marginRight: "auto", display: "flex", gap: 8 }}>
             <Link
               href="/admin/courses"
@@ -181,6 +198,20 @@ function AdminScholarshipsPage() {
           </div>
         </div>
       </div>
+
+      {/* רדאר דדליינים — הסיבה שהלוח הזה קיים */}
+      {closingSoon.length > 0 && (
+        <div style={{ maxWidth: 900, margin: "12px auto 0", padding: "0 24px" }}>
+          <div style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 12, padding: "10px 14px", display: "flex", flexWrap: "wrap", gap: "4px 18px", alignItems: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#b91c1c" }}>נסגרות תוך 30 יום:</span>
+            {closingSoon.map(f => (
+              <span key={f.id} style={{ fontSize: 12, color: "#b91c1c" }}>
+                <b>{f.name}</b> — עוד {daysToClose(f)} ימים
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* List */}
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 24px 60px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -243,6 +274,15 @@ function AdminScholarshipsPage() {
                       <b>מה נשאר לאמת · </b>{f.notes}
                     </div>
                   )}
+                  {f.kind === "program" && (() => {
+                    const sc = scoreFunding(f);
+                    return (
+                      <div style={{ background: "rgba(2,62,138,0.05)", borderRadius: 10, padding: "9px 12px", marginBottom: 10 }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: NAVY }}>ניקוד: {sc.total}</span>
+                        <span style={{ fontSize: 11.5, color: "rgba(0,0,0,0.55)" }}> · {sc.reasons.join(" · ") || "אין רכיבי ניקוד — למלא מעטפת/כסף/השמה"}</span>
+                      </div>
+                    );
+                  })()}
                   <div style={{ fontSize: 13.5, lineHeight: 1.8, color: "rgba(0,0,0,0.78)" }}>{f.what}</div>
                   {f.catch && (
                     <div style={{ background: "#fff7ec", color: "#8a4d00", borderRadius: 10, padding: 13, marginTop: 10, fontSize: 12.5, lineHeight: 1.75 }}>
