@@ -113,7 +113,7 @@ function AdminInstitutionsPage() {
   function addNew() {
     const id = `new-${Date.now()}`;
     persist([{
-      id, name: "מוסד חדש", track: (filter === "all" || filter === "pending") ? "degree" : filter,
+      id, name: "מוסד חדש", track: (filter === "all" || filter === "pending" || filter === "calls") ? "degree" : filter,
       why: "", tag: "חדש", tagColor: NAVY, link: "",
       location: "", tuition: "", admission: "", noPsychometric: "",
       support: "", industry: "", schedule: "",
