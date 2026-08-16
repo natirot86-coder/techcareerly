@@ -84,7 +84,7 @@ export const DEGREES: Degree[] = [
     name: "מערכות מידע (מכללות)",
     kind: "B.A",
     salary: 26500, employment: 94, inTech: 62,
-    domains: ["data", "networks"],
+    domains: ["data", "networks", "qa"],
     leadsTo: "ניתוח מערכות · BI · יישום ERP · QA ידני · IT ו-NOC",
     caveat: "94% מוצאים עבודה — אבל בתפקידים זולים יותר. מיישם מתחיל: ~15,000 ₪. פיתוח כמעט סגור.",
     entryBar: "low",

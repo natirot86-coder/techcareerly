@@ -24,7 +24,7 @@ const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 const STORE_KEY = "admin-degrees-draft";
 
-const DOMAINS: Domain[] = ["data", "code", "cyber", "networks", "ai", "ux", "marketing"];
+const DOMAINS: Domain[] = ["data", "code", "cyber", "networks", "ai", "ux", "marketing", "qa"];
 
 function AdminDegreesPage() {
   const [items, setItems] = useState<Degree[]>(DEGREES);
@@ -220,7 +220,7 @@ function AdminDegreesPage() {
 
 const DOMAIN_COLOR: Record<Domain, string> = {
   data: "#0d9488", code: "#3b82f6", cyber: "#dc2626", networks: "#2563eb",
-  ai: "#7c3aed", ux: "#db2777", marketing: "#f97316",
+  ai: "#7c3aed", ux: "#db2777", marketing: "#f97316", qa: "#d97706",
 };
 
 /**

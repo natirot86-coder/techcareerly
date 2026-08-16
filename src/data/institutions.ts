@@ -11,9 +11,10 @@
 export type Track = "bootcamp" | "mahat" | "degree";
 
 /** תחומי הטעימה בשלב 3 — מוסד מוצג רק אם הוא רלוונטי לתחום שהמשתמש טעם */
-export type Domain = "code" | "data" | "cyber" | "networks" | "ai" | "ux" | "marketing";
+export type Domain = "code" | "data" | "cyber" | "networks" | "ai" | "ux" | "marketing" | "qa";
 
 export const DOMAIN_LABEL: Record<Domain, string> = {
+  qa: "בדיקות תוכנה",
   code: "פיתוח תוכנה",
   data: "דאטה ואנליטיקס",
   cyber: "סייבר",
@@ -912,7 +913,7 @@ export const INSTITUTIONS: Institution[] = [
     contactPhone: "",
     contactEmail: "",
     openDays: "",
-    domains: ["code", "data"],
+    domains: ["code", "data", "qa"],
     status: "needs-check",
     notes: "המוסד המבטיח ביותר שנמצא בסבב הזה — שילוב של השמה גבוהה, נוכחות בפריפריה, ואין דרישת תואר. 📞 לאמת עלות, תנאי קבלה, ומתי המחזור הבא בכל אתר. נתוני ההשמה הגיעו מכתבה ולא מהחברה עצמה.",
     verified: "12.8.2026 — מקורות משניים",
@@ -1183,7 +1184,7 @@ export const INSTITUTIONS: Institution[] = [
     industry: "QA · סייבר · גיימינג · שיווק דיגיטלי · AI",
     schedule: "לא אומת",
     contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
-    domains: ["cyber", "code", "marketing", "ai"],
+    domains: ["cyber", "code", "marketing", "ai", "qa"],
     status: "needs-check",
     notes: "📞 לאמת עלות, תנאי קבלה ומחזורים — המחיר לא מפורסם.",
     verified: "13.8.2026 — מקורות משניים",
@@ -1266,7 +1267,7 @@ export const INSTITUTIONS: Institution[] = [
     industry: "QA (הכנה ל-ISTQB) · סייבר · דאטה ו-BI · פיתוח · UX · שיווק דיגיטלי · ארכיטקטורת AI",
     schedule: "היברידי · דאטה אנליסט — 3 חודשים אונליין",
     contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
-    domains: ["data", "code", "cyber", "ux", "marketing"],
+    domains: ["data", "code", "cyber", "ux", "marketing", "qa"],
     status: "needs-check",
     notes: "הועמק 13.8.2026 — רישיון ההשמה 3142 מצוטט מהאתר. 📞 לאמת מחירים ומימון משוחררים (לא מוזכר באתר).",
     verified: "13.8.2026 — ipc.co.il",
@@ -1286,7 +1287,7 @@ export const INSTITUTIONS: Institution[] = [
     industry: "אוטומציית בדיקות + AI",
     schedule: "כ-4.5 חודשים · מחזור 5.10.2026",
     contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
-    domains: ["code"],
+    domains: ["code", "qa"],
     status: "needs-check",
     notes: "📞 לאמת עלות, תנאי קבלה ומחזורים — המחיר לא מפורסם. ⚠️ תחום ה-QA צפוף אצלנו — קווליטסט עדיפה (מכשירה לעצמה).",
     verified: "13.8.2026 — מקורות משניים",
@@ -1306,7 +1307,7 @@ export const INSTITUTIONS: Institution[] = [
     industry: "QA · אוטומציה בפייתון ו-C#",
     schedule: "לא אומת",
     contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
-    domains: ["code"],
+    domains: ["code", "qa"],
     status: "needs-check",
     notes: "📞 לאמת עלות, תנאי קבלה ומחזורים — המחיר לא מפורסם. ⚠️ נתון 1,712 הבוגרים שיווקי. תחום צפוף — קווליטסט עדיפה.",
     verified: "13.8.2026 — מקורות משניים",
@@ -1388,7 +1389,7 @@ export const INSTITUTIONS: Institution[] = [
     industry: "תכנות · AI · QA · סייבר · IT — סגל שעובד בתעשייה",
     schedule: "לא אומת",
     contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
-    domains: ["code", "cyber", "ai"],
+    domains: ["code", "cyber", "ai", "qa"],
     status: "needs-check",
     notes: "ביקורות סטודנטים חיוביות (סייבר, QA) — אך ממקורות שיווקיים. 📞 לאמת מחיר, משך ומחזורים.",
     verified: "13.8.2026 — מקורות משניים",

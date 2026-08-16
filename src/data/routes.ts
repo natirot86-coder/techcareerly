@@ -145,6 +145,26 @@ export const ROUTES: Record<Domain, Route[]> = {
     },
   ],
 
+  qa: [
+    {
+      track: "bootcamp", span: "3–5 חודשים", destination: "בודק/ת תוכנה",
+      note: "המסלול המהיר לטק: קווליטסט מכשירה לעצמה (~3 חודשים), ויש קורסי QA רבים. לב העניין: הכשרה עם השמה, לא קורס בלבד",
+      stations: [
+        { label: "הכשרת QA", gap: 0 },
+        { label: "פרויקט מעשי", gap: 90 },
+        { label: "משרה ראשונה", gap: 90, income: true },
+      ],
+    },
+    {
+      track: "degree", span: "3 שנים", destination: "QA ואוטומציה",
+      note: "מערכות מידע פותחת QA ידני; לאוטומציה — תואר טכנולוגי מלא עדיף. משרת סטודנט מסוף שנה א׳",
+      stations: [
+        { label: "שנה א׳", gap: 0 },
+        { label: "משרת סטודנט", gap: 100, income: true, optional: true },
+        { label: "תואר + משרה", gap: 160 },
+      ],
+    },
+  ],
   marketing: [
     {
       track: "bootcamp", span: "3-9 חודשים", destination: "שיווק דיגיטלי ג׳וניור",
