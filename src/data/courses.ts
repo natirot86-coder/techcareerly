@@ -53,6 +53,12 @@ export type Course = {
   format?: string;
   /** מה שצריך לדעת לפני */
   catch?: string;
+  /**
+   * מעסיקים בקצה הקורס — בשמם. הקדימות העליונה בתצוגת המועמד (הכרעת נתי
+   * 17.8): קורס שנגמר אצל מעסיק ששמו ידוע שווה יותר מכל ליווי-השמה כללי.
+   * ממולא רק כשהמעסיק נקוב במקור — לא "ליווי השמה" גנרי.
+   */
+  employerAtEnd?: string;
   domains: Domain[];
 
   approved?: boolean;
@@ -120,6 +126,7 @@ export const COURSES: Course[] = [
   {
     id: "hackeru-miluim-it",
     name: "נבחרת המילואים — ניהול רשתות IT",
+    employerAtEnd: "נס טכנולוגיות · OMC · מלם תים",
     institutionId: "elevation",
     programId: "hackeru-miluim",
     link: "https://bit.ly/4q3EJWT",

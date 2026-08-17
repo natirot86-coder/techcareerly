@@ -1929,11 +1929,15 @@ export default function PathsPage() {
  */
 function WrappedCourses({ domains }: { domains: Domain[] }) {
   const courses = visibleCourses().filter(c =>
-    domains.length === 0 || c.domains.some(d => domains.includes(d)));
+    domains.length === 0 || c.domains.some(d => domains.includes(d)))
+    // מעסיק בקצה = הקדימות העליונה (הכרעת נתי 17.8): קורס שנגמר אצל מעסיק
+    // ששמו ידוע שווה יותר מכל ליווי-השמה כללי
+    .sort((a, b) => (b.employerAtEnd ? 1 : 0) - (a.employerAtEnd ? 1 : 0));
   if (courses.length === 0) return null;
 
   const progName = (id?: string) => (id ? FUNDING.find(f => f.id === id)?.name : null);
   const progRel = (id?: string) => (id ? FUNDING.find(f => f.id === id)?.relationship : undefined);
+  const instName = (id: string) => INSTITUTIONS.find(i => i.id === id)?.name?.split(" — ")[0];
 
   return (
     <div className="mb-6">
@@ -1957,9 +1961,15 @@ function WrappedCourses({ domains }: { domains: Domain[] }) {
                 </span>
               )}
             </div>
-            {progName(c.programId) && (
-              <div className="text-[11.5px] font-bold mt-0.5" style={{ color: "#b45309" }}>
-                המעטפת: {progName(c.programId)}
+            {/* מי מלמד + מי עוטף — בשורה אחת, כמו שמועמד היה מסביר לחבר */}
+            <div className="text-[11.5px] font-bold mt-0.5" style={{ color: "#b45309" }}>
+              {instName(c.institutionId)}
+              {progName(c.programId) ? ` · בשיתוף ${progName(c.programId)?.split(" — ")[0]}` : ""}
+            </div>
+            {c.employerAtEnd && (
+              <div className="text-[11.5px] font-black mt-1 px-2.5 py-1 rounded-lg inline-block"
+                style={{ background: "rgba(5,150,105,0.1)", color: "#047857" }}>
+                💼 מעסיק בקצה: {c.employerAtEnd}
               </div>
             )}
             <div className="text-[12px] leading-[1.65] mt-1.5" style={{ color: "rgba(0,0,0,0.6)" }}>{c.what}</div>
