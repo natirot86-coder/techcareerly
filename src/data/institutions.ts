@@ -264,7 +264,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ono",
-    degreeIds: ["business-is", "info-systems-ba"],
+    degreeIds: ["business-is"],
     name: "הקריה האקדמית אונו",
     track: "degree",
     why: "תוכנית ייעודית לשילוב סטודנטים יוצאי אתיופיה עם יותר מ-550 סטודנטים, שכוללת סבסוד שכר לימוד, מלגת מחיה וליווי אישי. יש גם מסלול קבלה ללא פסיכומטרי.",
@@ -465,7 +465,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "sce",
-    degreeIds: ["ee", "industrial-eng", "cs"],
+    degreeIds: ["ee", "industrial-eng", "software-eng"],
     name: "סמי שמעון (SCE) — מכללה אקדמית להנדסה",
     track: "degree",
     why: "מכללה אקדמית להנדסה — תואר מלא, לא הנדסאים — בשני קמפוסים בדרום: באר שבע ואשדוד. מהמוסדות עם ריכוז הסטודנטים יוצאי אתיופיה הגבוה בדרום, וממוסדות התואר של TechLeaders.",
@@ -1563,7 +1563,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ruppin",
-    degreeIds: ["industrial-eng", "info-systems-ba"],
+    degreeIds: ["industrial-eng"],
     name: "המרכז האקדמי רופין",
     track: "degree",
     why: "מכללה מתוקצבת בעמק חפר — הנדסה ומדעי המחשב בשכר לימוד אוניברסיטאי, עם מוניטין של קבלה נגישה יחסית.",
@@ -1584,7 +1584,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ort-braude",
-    degreeIds: ["ee", "industrial-eng", "info-systems-eng"],
+    degreeIds: ["ee", "industrial-eng", "software-eng", "info-systems-eng"],
     name: "אורט בראודה — מכללה אקדמית להנדסה",
     track: "degree",
     why: "מכללת הנדסה אקדמית מתוקצבת בכרמיאל — האופציה ההנדסית החזקה של הצפון, ותושבי הצפון זכאים שם למלגות הפריפריה.",

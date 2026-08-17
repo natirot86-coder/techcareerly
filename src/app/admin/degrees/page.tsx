@@ -29,7 +29,7 @@ const DOMAINS: Domain[] = ["data", "code", "cyber", "networks", "ai", "ux", "mar
 function AdminDegreesPage() {
   const [items, setItems] = useState<Degree[]>(DEGREES);
   const [activeDomain, setActiveDomain] = useState<Domain>("data");
-  const [view, setView] = useState<"map3" | "list">("map3");
+  const [view, setView] = useState<"map3" | "matrix" | "list">("map3");
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -94,7 +94,7 @@ function AdminDegreesPage() {
       <div style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "10px 24px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ display: "flex", gap: 2, padding: 2, borderRadius: 9, background: "rgba(0,0,0,0.05)", marginLeft: 10 }}>
-            {([["map3", "מיפוי"], ["list", "עריכת תארים"]] as const).map(([v, l]) => (
+            {([["map3", "מיפוי"], ["matrix", "מטריצת כיסוי"], ["list", "עריכת תארים"]] as const).map(([v, l]) => (
               <button key={v} onClick={() => setView(v)}
                 style={{
                   fontSize: 12, fontWeight: 700, padding: "5px 13px", borderRadius: 7, border: "none", cursor: "pointer",
@@ -120,6 +120,8 @@ function AdminDegreesPage() {
       </div>
 
       {view === "map3" && <Level3 items={items} onToggle={toggleInst} />}
+
+      {view === "matrix" && <CoverageMatrix degrees={items} />}
 
       {view === "list" && (
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "16px 24px 60px", display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
@@ -513,6 +515,106 @@ function ExpansionPanel({ degree, color, onToggle }: {
 
       <div style={{ fontSize: 12, color: "#8a877f", lineHeight: 1.6 }}>
         בכנות: {degree.caveat}
+      </div>
+    </div>
+  );
+}
+
+
+// ─── מטריצת הכיסוי — מה מופה ומה לא, במבט אחד ────────────────────────────────
+
+/**
+ * שורת מוסד × עמודת תואר. לחיצה על תא הופכת "מלמד"/"לא מופה" — ונשמרת
+ * לטיוטת לוח המוסדות (admin-institutions-draft), כך שהייצוא זורם מאותו
+ * מקום כמו כל עריכה אחרת.
+ *
+ * זה מסך העבודה של המיפוי הבוליאני: יושבים מול קטלוג המוסד, ומדליקים תאים.
+ * שורה בלי אף תא = מוסד שלא מופה, והוא זה שמנפח את הקיפול ברמה 3.
+ */
+function CoverageMatrix({ degrees }: { degrees: Degree[] }) {
+  const [insts, setInsts] = useState(() => INSTITUTIONS.filter(i => i.track === "degree" && i.status !== "hidden"));
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("admin-institutions-draft");
+      if (saved) {
+        const draft = JSON.parse(saved) as typeof INSTITUTIONS;
+        setInsts(draft.filter(i => i.track === "degree" && i.status !== "hidden"));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  function toggleCell(instId: string, degId: string) {
+    setInsts(prev => {
+      const next = prev.map(i => {
+        if (i.id !== instId) return i;
+        const cur = i.degreeIds ?? [];
+        return { ...i, degreeIds: cur.includes(degId) ? cur.filter(x => x !== degId) : [...cur, degId] };
+      });
+      // שמירה לטיוטה המלאה — כולל מוסדות שאינם בתצוגה
+      try {
+        const saved = localStorage.getItem("admin-institutions-draft");
+        const full = saved ? (JSON.parse(saved) as typeof INSTITUTIONS) : INSTITUTIONS;
+        const merged = full.map(f => next.find(n => n.id === f.id) ?? f);
+        localStorage.setItem("admin-institutions-draft", JSON.stringify(merged));
+      } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  const degs = degrees.filter(d => d.status === "active");
+  const unmapped = insts.filter(i => (i.degreeIds?.length ?? 0) === 0).length;
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "16px auto 60px", padding: "0 24px" }}>
+      <div style={{ background: "#fff", border: "1px solid #ddd8cf", borderRadius: 14, padding: 18, overflowX: "auto" }}>
+        <div style={{ fontSize: 12.5, color: "#5c5a55", marginBottom: 12, lineHeight: 1.6 }}>
+          לחיצה על תא = המוסד מלמד את התואר · נשמר לטיוטת לוח המוסדות (ייצוא משם) ·
+          <b style={{ color: unmapped ? "#b45309" : "#059669" }}> {unmapped} מוסדות עדיין בלי אף מיפוי</b>
+        </div>
+        <table style={{ borderCollapse: "collapse", minWidth: 900, width: "100%" }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: "right", padding: "6px 8px", fontSize: 12, color: "#8a877f", fontWeight: 700 }}>מוסד</th>
+              {degs.map(d => (
+                <th key={d.id} style={{ padding: "6px 4px", fontSize: 10.5, color: NAVY, fontWeight: 700, maxWidth: 76 }}>
+                  {d.recommended ? "✦ " : ""}{d.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {insts.map(inst => {
+              const empty = (inst.degreeIds?.length ?? 0) === 0;
+              return (
+                <tr key={inst.id} style={{ background: empty ? "#fff7ed" : undefined }}>
+                  <td style={{ padding: "5px 8px", fontSize: 12.5, fontWeight: 700, color: empty ? "#b45309" : "#3c3a36", whiteSpace: "nowrap", borderTop: "1px solid #eae5dc" }}>
+                    {inst.name.split(" — ")[0]}
+                    {inst.relationship === "partner" ? " ★" : ""}
+                    {empty ? " · לא מופה" : ""}
+                  </td>
+                  {degs.map(d => {
+                    const on = inst.degreeIds?.includes(d.id) ?? false;
+                    return (
+                      <td key={d.id} style={{ borderTop: "1px solid #eae5dc", textAlign: "center", padding: 2 }}>
+                        <button onClick={() => toggleCell(inst.id, d.id)}
+                          aria-label={`${inst.name} — ${d.name}`}
+                          style={{
+                            width: 30, height: 26, borderRadius: 7, cursor: "pointer",
+                            border: on ? "1px solid #059669" : "1px solid #e4dfd6",
+                            background: on ? "#059669" : "#fff",
+                            color: "#fff", fontSize: 13, fontWeight: 800,
+                          }}>
+                          {on ? "✓" : ""}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
