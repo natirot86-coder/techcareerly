@@ -62,7 +62,24 @@ export async function GET(req: NextRequest) {
   const now = Date.now();
   const DAY = 86400000;
 
-  const queue = (candidates.data ?? []).map(c => {
+  /**
+   * תאריך בטוח.
+   *
+   * `new Date("משהו לא תקין").toISOString()` **זורק RangeError**, ובמסלול
+   * הזה שגיאה אחת מפילה את כל התשובה — כלומר שורה פגומה אחת מחשיכה את
+   * המסך לכל הרכזות. מחזיר 0 במקום להתפוצץ.
+   */
+  const ms = (v: unknown): number => {
+    const t = v ? new Date(v as string).getTime() : NaN;
+    return Number.isFinite(t) ? t : 0;
+  };
+  const iso = (t: number): string | null =>
+    Number.isFinite(t) && t > 0 ? new Date(t).toISOString() : null;
+
+  let skipped = 0;
+
+  const queue = (candidates.data ?? []).flatMap(c => {
+   try {
     const signals: Signal[] = [];
     const myEvents = (events.data ?? []).filter(e => e.candidate_id === c.id);
     const myTasks = (tasks.data ?? []).filter(t => t.candidate_id === c.id);
@@ -72,13 +89,13 @@ export async function GET(req: NextRequest) {
     // 1 — פספוס פגישה: הסיגנל החזק ביותר בפאנל
     const missed = myEvents.find(e => e.name === "meeting1_checkin" && (e.props as { result?: string })?.result === "missed");
     if (missed) {
-      const days = Math.floor((now - new Date(missed.created_at).getTime()) / DAY);
+      const days = Math.floor((now - ms(missed.created_at)) / DAY);
       signals.push({ severity: 1, reason: `סימן/ה "לא הצלחתי להגיע" לפגישת ההיכרות${days > 0 ? ` — לפני ${days} ימים` : " — היום"}`, action: "call" });
     }
 
     // 1 — דדליין מלגה שעבר עם משימה פתוחה: כסף שלא יחזור
     for (const t of myTasks) {
-      if (t.status === "open" && t.due_date && new Date(t.due_date).getTime() < now) {
+      if (t.status === "open" && t.due_date && ms(t.due_date) < now) {
         signals.push({ severity: 1, reason: `דדליין עבר והמשימה פתוחה: ${t.title}`, action: "call" });
       }
     }
@@ -94,19 +111,19 @@ export async function GET(req: NextRequest) {
      * מי שנכנס שוב ושוב ולא מצליח להתקדם הוא מי שנתקע ולא יבקש עזרה
      * מעצמו. זה הכי קרוב שנגיע לראות חיכוך דרך המסך.
      */
-    const lastEventAt = myEvents.length ? new Date(myEvents[0].created_at).getTime() : 0;
-    const seenAt = Math.max(new Date(c.last_active_at).getTime(), lastEventAt);
+    const lastEventAt = myEvents.length ? ms(myEvents[0].created_at) : 0;
+    const seenAt = Math.max(ms(c.last_active_at), lastEventAt);
     const idleDays = (now - seenAt) / DAY;
 
     const doing = myEvents.find(e => e.name !== "app_open");
-    const actionDays = doing ? (now - new Date(doing.created_at).getTime()) / DAY : Infinity;
+    const actionDays = doing ? (now - ms(doing.created_at)) / DAY : Infinity;
 
     if (idleDays >= 3 && c.current_stage >= 2) {
       signals.push({ severity: 2, reason: `לא נכנס/ה ${Math.floor(idleDays)} ימים`, action: "whatsapp" });
     } else if (idleDays < 2 && c.current_stage >= 2) {
       // נכנס, אבל לא זז — הסיגנל של "תקוע", לא של "נעלם"
       if (!doing) {
-        const since = Math.floor((now - new Date(c.created_at).getTime()) / DAY);
+        const since = Math.floor((now - ms(c.created_at)) / DAY);
         signals.push({
           severity: 2,
           reason: `נכנס/ה אבל עוד לא התחיל/ה כלום${since > 0 ? ` — ${since} ימים מאז ההרשמה` : ""}`,
@@ -136,7 +153,7 @@ export async function GET(req: NextRequest) {
     }
 
     const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "מועמד/ת ללא שם";
-    return {
+    return [{
       id: c.id,
       name,
       anonymous: !c.first_name,
@@ -144,21 +161,28 @@ export async function GET(req: NextRequest) {
       stage: c.current_stage,
       domain: c.chosen_domain,
       ranked: myRanks,
-      lastActive: new Date(seenAt).toISOString(),
+      lastActive: iso(seenAt),
       lastAction: doing?.created_at ?? null,
       signals: signals.sort((a, b) => a.severity - b.severity),
       topSeverity: signals.length ? Math.min(...signals.map(s => s.severity)) : 9,
       // ציר הזמן — למסך הפרט: מה קרה, בסדר הפוך
       timeline: myEvents.slice(0, 40).map(e => ({ name: e.name, props: e.props, at: e.created_at })),
-    };
+    }];
+   } catch (e) {
+    // שורה פגומה לא מפילה את המסך — היא מדולגת ונספרת, כדי שלא תיעלם בשקט
+    console.error("coordinator: skipping candidate", c.id, e);
+    skipped++;
+    return [];
+   }
   });
 
-  queue.sort((a, b) => a.topSeverity - b.topSeverity || +new Date(b.lastActive) - +new Date(a.lastActive));
+  queue.sort((a, b) => a.topSeverity - b.topSeverity || ms(b.lastActive) - ms(a.lastActive));
 
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
     total: queue.length,
+    skipped, // שורות שלא ניתן היה לחשב — 0 במצב תקין
   });
 }

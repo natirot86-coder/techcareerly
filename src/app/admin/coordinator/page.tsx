@@ -177,7 +177,7 @@ function ago(iso: string | null): string {
 
 type Person = {
   id: string; name: string; anonymous: boolean; region: string | null;
-  stage: number; domain: string | null; ranked: string[]; lastActive: string; lastAction: string | null;
+  stage: number; domain: string | null; ranked: string[]; lastActive: string | null; lastAction: string | null;
   signals: { severity: 1 | 2 | 3; reason: string; action: string }[];
   timeline: Ev[];
 };
@@ -198,7 +198,11 @@ export default function CoordinatorPage() {
       const r = await fetch("/api/coordinator", { headers: { "x-coordinator-code": c } });
       if (r.status === 401) { setError("קוד שגוי"); localStorage.removeItem("coordinator-code"); setCode(null); return; }
       if (r.status === 503) { setError((await r.json()).error); return; }
-      if (!r.ok) { setError(`שגיאה ${r.status}`); return; }
+      if (!r.ok) {
+        const body = await r.json().catch(() => null);
+        setError(body?.error ? `שגיאה ${r.status} — ${body.error}` : `שגיאה ${r.status}. אם זה קרה בזמן עדכון של האתר, רענון אמור לפתור`);
+        return;
+      }
       setData(await r.json());
     } catch { setError("שגיאת רשת"); }
     finally { setLoading(false); }
