@@ -645,6 +645,20 @@ export default function PathsPage() {
     localStorage.setItem("paths-phase", p);
     // מודדים את המשפך כדי לדעת איפה באמת נוטשים, לא לנחש
     trackEvent("paths_phase", { phase: p });
+
+    /*
+     * שכיחות החסמים — הנתון היקר ביותר באפליקציה.
+     *
+     * מסך החסמים מציג את כולם פתוחים, ולכן אין בו "פתיחה" למדוד. במקום
+     * זה נרשם חסם אחד לכל חסם ש**הוצג** לאדם, וזה בעצם המדד הנכון יותר:
+     * לא כמה לחצו, אלא **אילו חסמים באמת יש לקהל שלנו**. אין שום דרך
+     * אחרת להשיג את זה. השם נשאר paths_blocker_open כי admin_stats()
+     * כבר מצטבר לפיו, ושינוי שם היה מחייב מיגרציה נוספת בשביל מילה.
+     */
+    if (p === "blockers") {
+      BLOCKERS.filter(b => b.applies(answers))
+        .forEach(b => logEvent("paths_blocker_open", { blocker: b.id }));
+    }
   }
 
   const PHASE_ORDER: Phase[] = ["intro", "quiz", "result", "routes", "blockers", "institutions", "prep", "research", "done"];
@@ -1234,6 +1248,8 @@ export default function PathsPage() {
                         href={s.link}
                         target="_blank"
                         rel="noopener noreferrer"
+                        // מעורבות: לא רק אילו חסמים יש להם, אלא אילו מהמענים שלנו באמת מעניינים
+                        onClick={() => logEvent("paths_solution_click", { blocker: b.id, solution: s.name })}
                         className="inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-lg"
                         style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}
                       >

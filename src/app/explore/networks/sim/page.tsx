@@ -803,6 +803,20 @@ export default function NetworksSimPage() {
   const step = STEPS[stepIndex];
   const pct = Math.round(((stepIndex + 1) / STEPS.length) * 100);
 
+  // איפה נוטשים בתוך הסימולציה — נטישה מוסקת מ"הגיע ל-N ולא ל-N+1"
+  useEffect(() => {
+    if (showIntro) return;
+    const s = STEPS[stepIndex];
+    if (s) logEvent("sim_step", {
+      domain: "networks",
+      i: String(stepIndex + 1),
+      of: String(STEPS.length),
+      concept: s.tag,
+      kind: s.kind,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepIndex, showIntro]);
+
   function handleAnswer(correct: boolean) {
     setStepAnswered(true);
     setAnswers((prev) => {

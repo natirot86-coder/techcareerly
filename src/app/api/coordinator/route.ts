@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const db = createClient(url, secret, { auth: { persistSession: false } });
 
-  const [candidates, events, tasks, scct] = await Promise.all([
+  const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
       .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain")
       .order("last_active_at", { ascending: false }),
@@ -50,9 +50,13 @@ export async function GET(req: NextRequest) {
       .select("candidate_id, title, due_date, status, open_count"),
     db.from("scct_scores")
       .select("candidate_id, domain_id, interest, self_efficacy"),
+    // לאן הוא הלך: הדירוג מהחשיפה. מוצג לצד התחום שנבחר בסוף
+    db.from("domain_rankings")
+      .select("candidate_id, domain_id, rank")
+      .order("rank", { ascending: true }),
   ]);
 
-  const err = candidates.error ?? events.error ?? tasks.error ?? scct.error;
+  const err = candidates.error ?? events.error ?? tasks.error ?? scct.error ?? ranks.error;
   if (err) return NextResponse.json({ error: err.message }, { status: 500 });
 
   const now = Date.now();
@@ -63,6 +67,7 @@ export async function GET(req: NextRequest) {
     const myEvents = (events.data ?? []).filter(e => e.candidate_id === c.id);
     const myTasks = (tasks.data ?? []).filter(t => t.candidate_id === c.id);
     const myScct = (scct.data ?? []).filter(s => s.candidate_id === c.id);
+    const myRanks = (ranks.data ?? []).filter(r => r.candidate_id === c.id).map(r => r.domain_id as string);
 
     // 1 — פספוס פגישה: הסיגנל החזק ביותר בפאנל
     const missed = myEvents.find(e => e.name === "meeting1_checkin" && (e.props as { result?: string })?.result === "missed");
@@ -78,10 +83,42 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 2 — שקט של 72 שעות אצל מי שכבר התחיל (הסף מ-CLAUDE.md)
-    const idleDays = (now - new Date(c.last_active_at).getTime()) / DAY;
+    /*
+     * שתי שתיקות שונות — וזו החשובה מבין השתיים היא השנייה.
+     *
+     * "נכנס" = last_active_at, שנוגעים בו בכל ניווט. אבל השדה נכתב מהשעון
+     * של המכשיר, ואצל חלק מהאנשים הוא שגוי — ולכן לוקחים את המקסימום מול
+     * האירוע האחרון, שמקבל חותמת מהשרת ואי אפשר לטעות בו.
+     *
+     * "עשה משהו" = האירוע המשמעותי האחרון. מי שנעלם לגמרי אולי סתם עסוק;
+     * מי שנכנס שוב ושוב ולא מצליח להתקדם הוא מי שנתקע ולא יבקש עזרה
+     * מעצמו. זה הכי קרוב שנגיע לראות חיכוך דרך המסך.
+     */
+    const lastEventAt = myEvents.length ? new Date(myEvents[0].created_at).getTime() : 0;
+    const seenAt = Math.max(new Date(c.last_active_at).getTime(), lastEventAt);
+    const idleDays = (now - seenAt) / DAY;
+
+    const doing = myEvents.find(e => e.name !== "app_open");
+    const actionDays = doing ? (now - new Date(doing.created_at).getTime()) / DAY : Infinity;
+
     if (idleDays >= 3 && c.current_stage >= 2) {
       signals.push({ severity: 2, reason: `לא נכנס/ה ${Math.floor(idleDays)} ימים`, action: "whatsapp" });
+    } else if (idleDays < 2 && c.current_stage >= 2) {
+      // נכנס, אבל לא זז — הסיגנל של "תקוע", לא של "נעלם"
+      if (!doing) {
+        const since = Math.floor((now - new Date(c.created_at).getTime()) / DAY);
+        signals.push({
+          severity: 2,
+          reason: `נכנס/ה אבל עוד לא התחיל/ה כלום${since > 0 ? ` — ${since} ימים מאז ההרשמה` : ""}`,
+          action: "call",
+        });
+      } else if (actionDays >= 5) {
+        signals.push({
+          severity: 2,
+          reason: `נכנס/ה לאחרונה אבל לא התקדם/ה ${Math.floor(actionDays)} ימים — כנראה תקוע/ה`,
+          action: "call",
+        });
+      }
     }
 
     // 2 — משימה שנפתחה 3 פעמים בלי להיסגר: משהו תקוע
@@ -106,7 +143,9 @@ export async function GET(req: NextRequest) {
       region: c.region,
       stage: c.current_stage,
       domain: c.chosen_domain,
-      lastActive: c.last_active_at,
+      ranked: myRanks,
+      lastActive: new Date(seenAt).toISOString(),
+      lastAction: doing?.created_at ?? null,
       signals: signals.sort((a, b) => a.severity - b.severity),
       topSeverity: signals.length ? Math.min(...signals.map(s => s.severity)) : 9,
       // ציר הזמן — למסך הפרט: מה קרה, בסדר הפוך

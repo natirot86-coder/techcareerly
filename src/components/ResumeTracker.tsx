@@ -15,6 +15,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { touchActivity } from "@/lib/candidate";
 
 const SKIP = ["/admin", "/map", "/reset", "/login", "/api"];
 export const LAST_LOCATION_KEY = "last-location";
@@ -24,11 +25,20 @@ export default function ResumeTracker() {
   const search = useSearchParams();
 
   useEffect(() => {
-    if (!pathname || pathname === "/") return;
+    if (!pathname) return;
     if (SKIP.some(p => pathname.startsWith(p))) return;
-    // ?reset ו-?demo הם מצבי בדיקה — לא שומרים אותם כמיקום אמיתי
+    // ?reset ו-?demo הם מצבי בדיקה — לא מיקום אמיתי ולא פעילות אמיתית
     const qs = search.toString();
     if (/(^|&)(reset|demo)=/.test(qs)) return;
+
+    /*
+     * "מתי הוא היה כאן לאחרונה" — מרוסן לפעם בשעה בתוך touchActivity.
+     * יושב כאן כי זה הרכיב היחיד שרואה כל ניווט, כולל הטעינה הראשונה:
+     * מי שפתח את האפליקציה והסתכל דקה נספר, גם אם לא לחץ על כלום.
+     */
+    touchActivity();
+
+    if (pathname === "/") return; // נקודת מעבר, לא מיקום לחזור אליו
     localStorage.setItem(LAST_LOCATION_KEY, qs ? `${pathname}?${qs}` : pathname);
   }, [pathname, search]);
 

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import { ExperienceCTAs } from "@/components/ui/ExperienceCTAs";
@@ -371,6 +371,19 @@ export default function CyberExperiencePage() {
   const [gender, setGender]   = useState<Gender | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
   const [tapped, setTapped]   = useState<number | null>(null);
+
+  /*
+   * איפה עוצרים בתוך הכלי.
+   *
+   * עד היום נרשם רק scct_done, כלומר מי שענה על ארבע שאלות מתוך שש ונעלם
+   * פשוט לא היה קיים בנתונים. ההשערה שכדאי לבדוק ראשונה: שאלות המסוגלות
+   * ("כמה את מאמינה שאת מסוגלת") הן אלה שקשה לענות עליהן בכנות.
+   */
+  useEffect(() => {
+    if (phase === "gender" || phase === "done") return;
+    logEvent("scct_step", { domain: "cyber", q: phase });
+  }, [phase]);
+
 
   function getCurrentConstruct() {
     if (phase.startsWith("interest")) return CONSTRUCTS[0];

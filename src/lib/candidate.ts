@@ -377,6 +377,41 @@ export function logEvent(name: string, props: Record<string, unknown> = {}): voi
   });
 }
 
+/**
+ * נגיעה — "מתי האדם היה כאן בפעם האחרונה".
+ *
+ * נקרא מ-ResumeTracker בכל ניווט, כלומר גם עצם פתיחת האפליקציה נספרת.
+ * **מרוסן לפעם בשעה** דרך חותמת ב-localStorage: אנחנו סופרים ימים, לא
+ * לחיצות, ואין שום סיבה לכתוב לבסיס הנתונים על כל מסך.
+ *
+ * למה זה קיים בכלל: עד היום last_active_at התעדכן רק בהרשמה ובמעבר שלב,
+ * כך שמי שנכנס כל יום ולא עבר שלב נראה לרכזת כאילו נעלם מיום ההרשמה.
+ * הסיגנל שנראה הכי אמין במסך היה בעצם השקרי ביותר.
+ *
+ * הערה על השעון: הזמן נכתב מהמכשיר, ואצל חלק מהאנשים הוא שגוי. לכן
+ * /api/coordinator לוקח את המקסימום בין השדה הזה לבין האירוע האחרון
+ * ב-funnel_events, שמקבל חותמת מהשרת.
+ */
+const TOUCH_KEY = "last-touch-at";
+const TOUCH_EVERY_MS = 60 * 60 * 1000;
+
+export function touchActivity(): void {
+  if (!supabase || typeof window === "undefined") return;
+  try {
+    const prev = Number(localStorage.getItem(TOUCH_KEY) ?? 0);
+    if (Date.now() - prev < TOUCH_EVERY_MS) return;
+    localStorage.setItem(TOUCH_KEY, String(Date.now()));
+  } catch { /* מצב פרטי — ממשיכים בלי ריסון */ }
+
+  ensureCandidateId().then(candidateId => {
+    if (!candidateId) return;
+    supabase!.from("candidates")
+      .update({ last_active_at: new Date().toISOString() })
+      .eq("id", candidateId)
+      .then(({ error }) => { if (error) console.error("touchActivity failed", error); });
+  });
+}
+
 /** ציוני SCCT מכלי עיבוד החוויה. הסקאלות באפליקציה הן 1–5 */
 export async function saveScctScore(
   domainId: string,
@@ -423,31 +458,49 @@ export async function savePathsAnswers(patch: {
 }
 
 /**
- * שלב 5 — סנכרון מלא של המשימות. מוחק-ומכניס במקום דיפים: הרשימה קטנה
- * (עשרות), והפשטות שווה יותר מהאופטימיזציה. localStorage נשאר מקור האמת
- * המקומי; זה השיקוף שהרכזת (בעתיד) והאנליטיקות רואים.
+ * שלב 5 — סנכרון המשימות. localStorage נשאר מקור האמת המקומי; זה השיקוף
+ * שהרכזת והאנליטיקות רואים.
+ *
+ * **עודכן 17.8: upsert במקום מחיקה-והכנסה.** הגרסה הקודמת מחקה את כל
+ * השורות בכל שמירה, ולכן open_count התאפס בכל פעם — כלומר הסיגנל
+ * "נפתחה שלוש פעמים ולא נסגרה" לא יכול היה לירות גם אם מישהו היה סופר.
+ * שורות שנמחקו מקומית עדיין נמחקות, אבל לפי הפרש ולא בגריפה.
  */
 export async function syncPlanTasks(tasks: Array<{
   id: string; title: string; note?: string; area: string;
   due: string | null; source: string; status: string;
+  openCount?: number; doneAt?: string | null;
 }>): Promise<void> {
   if (!supabase) return;
   const candidateId = await ensureCandidateId();
   if (!candidateId) return;
-  await supabase.from("plan_tasks").delete().eq("candidate_id", candidateId);
-  if (!tasks.length) return;
-  const { error } = await supabase.from("plan_tasks").insert(tasks.map(t => ({
-    candidate_id: candidateId,
-    id: t.id,
-    title: t.title,
-    note: t.note ?? null,
-    area: t.area,
-    due_date: t.due ? t.due.slice(0, 10) : null,
-    source: t.source,
-    status: t.status,
-    done_at: t.status === "done" ? new Date().toISOString() : null,
-  })));
-  if (error) console.error("syncPlanTasks failed", error);
+
+  if (tasks.length) {
+    const { error } = await supabase.from("plan_tasks").upsert(tasks.map(t => ({
+      candidate_id: candidateId,
+      id: t.id,
+      title: t.title,
+      note: t.note ?? null,
+      area: t.area,
+      due_date: t.due ? t.due.slice(0, 10) : null,
+      source: t.source,
+      status: t.status,
+      open_count: t.openCount ?? 0,
+      // מתי נסגרה בפועל — לא מתי סונכרנה
+      done_at: t.status === "done" ? (t.doneAt ?? new Date().toISOString()) : null,
+      updated_at: new Date().toISOString(),
+    })), { onConflict: "candidate_id,id" });
+    if (error) console.error("syncPlanTasks upsert failed", error);
+  }
+
+  // מה שנמחק מקומית — נמחק גם כאן, אבל רק הוא
+  const { data: existing } = await supabase
+    .from("plan_tasks").select("id").eq("candidate_id", candidateId);
+  const local = new Set(tasks.map(t => t.id));
+  const stale = (existing ?? []).map(r => r.id as string).filter(id => !local.has(id));
+  if (stale.length) {
+    await supabase.from("plan_tasks").delete().eq("candidate_id", candidateId).in("id", stale);
+  }
 }
 
 export async function syncPlanDocuments(docs: Array<{

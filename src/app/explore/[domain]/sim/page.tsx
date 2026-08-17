@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
-import { saveSimulationProgress, updateTask } from "@/lib/candidate";
+import { saveSimulationProgress, updateTask, logEvent } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -4099,6 +4099,22 @@ function SimFlow({
 
   React.useEffect(() => {
     onStepIndexChange?.(stepIndex);
+    /*
+     * איפה בדיוק נוטשים בתוך הסימולציה.
+     *
+     * עד היום נשמר רק הסיום, ולכן מי שעצר באמצע פשוט לא היה קיים בנתונים.
+     * נטישה לא נרשמת אף פעם (אין אירוע "עזב" בנייד) — היא מוסקת: הגיע
+     * לצעד 4 ולא הגיע ל-5. לכן נרשם **גם מה הצעד ולא רק המספר שלו**:
+     * "צעד 4" לא אומר כלום, "תרגיל SQL" אומר מה לתקן.
+     */
+    const s = steps[stepIndex];
+    if (s) logEvent("sim_step", {
+      domain,
+      i: String(stepIndex + 1),
+      of: String(steps.length),
+      concept: s.concept,
+      kind: s.kind,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex]);
 

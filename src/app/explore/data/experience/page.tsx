@@ -367,6 +367,19 @@ export default function ExperiencePage() {
   const [answers, setAnswers]     = useState<Answers>({});
   const [tapped, setTapped]       = useState<number | null>(null); // scale visual feedback
 
+  /*
+   * איפה עוצרים בתוך הכלי.
+   *
+   * עד היום נרשם רק scct_done, כלומר מי שענה על ארבע שאלות מתוך שש ונעלם
+   * פשוט לא היה קיים בנתונים. ההשערה שכדאי לבדוק ראשונה: שאלות המסוגלות
+   * ("כמה את מאמינה שאת מסוגלת") הן אלה שקשה לענות עליהן בכנות.
+   */
+  useEffect(() => {
+    if (phase === "gender" || phase === "done") return;
+    logEvent("scct_step", { domain: "data", q: phase });
+  }, [phase]);
+
+
 
   // ── helpers ────────────────────────────────────────────────────────────────
 

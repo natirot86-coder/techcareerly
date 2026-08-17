@@ -651,6 +651,20 @@ export default function CyberSim() {
   const [alertIdx, setAlertIdx] = useState(0);
   const [answers, setAnswers]   = useState<Record<number, { verdict: Verdict; correct: boolean }>>({});
 
+  // איפה נוטשים בתוך הסימולציה — נטישה מוסקת מ"הגיע להתראה N ולא ל-N+1"
+  useEffect(() => {
+    if (phase === "intro") return;
+    const a = ALERTS[alertIdx];
+    if (a) logEvent("sim_step", {
+      domain: "cyber",
+      i: String(alertIdx + 1),
+      of: String(ALERTS.length),
+      concept: a.header,
+      kind: "alert",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alertIdx, phase]);
+
   function handleVerdict(verdict: Verdict) {
     const alert = ALERTS[alertIdx];
     const isCorrect = verdict === alert.correct;

@@ -51,8 +51,23 @@ export default function ContactPage() {
   useEffect(() => {
     if (!meeting) return;
     (async () => {
+      /*
+       * מדידת מסך התיאום — עד היום נרשמה רק ההצלחה.
+       *
+       * מי שהגיע ליומן, הסתכל ויצא פשוט לא היה קיים בנתונים, ולכן לא הייתה
+       * שום דרך לדעת אם מסך הפגישה מפיל אנשים. היומן עצמו הוא חלון מוטמע
+       * ואנחנו לא רואים לתוכו — אבל ההפרש בין "הגיע" ל"קבע" הוא בדיוק
+       * המספר החשוב, ו-linkReady מפריד בין "לא רצה" ל"היומן לא נטען אצלו",
+       * שקורה בחיבור איטי ונראה למועמד כמו מסך שבור.
+       */
+      logEvent("meeting_open", { n: String(meeting) });
+
       const cal = await getCalApi({ namespace: "contact" });
       cal("ui", { hideEventTypeDetails: false, layout: "month_view", theme: "light" });
+      cal("on", {
+        action: "linkReady",
+        callback: () => logEvent("meeting_calendar_ready", { n: String(meeting) }),
+      });
       cal("on", {
         action: "bookingSuccessful",
         callback: (e: unknown) => {

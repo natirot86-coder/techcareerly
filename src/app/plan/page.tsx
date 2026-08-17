@@ -19,7 +19,7 @@
  * הוא מקטעים בראש התוכן, לא סרגל תחתון שני.
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
@@ -134,7 +134,47 @@ export default function PlanPage() {
   }, [open]);
 
   const toggle = (id: string) =>
-    saveTasks(tasks.map(t => (t.id === id ? { ...t, status: t.status === "done" ? "open" : "done" } : t)));
+    saveTasks(tasks.map(t => {
+      if (t.id !== id) return t;
+      const nowDone = t.status !== "done";
+      return { ...t, status: nowDone ? "done" : "open", doneAt: nowDone ? new Date().toISOString() : null };
+    }));
+
+  /**
+   * פתיחת משימה — האות ההתנהגותי של שלב 5.
+   *
+   * הסכמנו לא לשאול אנשים על פחדים אלא למדוד אותם בהתנהגות, וזו המדידה:
+   * מי שפותח את אותה משימה שוב ושוב בלי לסגור אותה תקוע במשהו, ולא יבקש
+   * עזרה מעצמו. שלוש פתיחות מעבירות אותו לתור החילוץ של הרכזת.
+   */
+  const noteOpen = (id: string) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t || t.status === "done") return;
+    const count = (t.openCount ?? 0) + 1;
+    saveTasks(tasks.map(x => (x.id === id ? { ...x, openCount: count } : x)));
+    logEvent("plan_task_open", { task: id, area: t.area, count: String(count) });
+  };
+
+  /*
+   * חזרה למשימה העוגן — הסיגנל החזק יותר.
+   *
+   * המשימה הדחופה מוצגת פתוחה בראש המסך, אז אין עליה "לחיצת פתיחה".
+   * מה שכן אומר משהו הוא לחזור אליה בהזדמנות אחרת ולמצוא אותה עדיין
+   * פתוחה. מרוסן לפעם בשעה לכל משימה, כדי שמעבר בין טאבים לא ייחשב.
+   */
+  const counted = useRef(false);
+  useEffect(() => {
+    if (!ready || !anchor || counted.current) return;
+    counted.current = true;
+    try {
+      const key = `plan-seen-${anchor.id}`;
+      const prev = Number(localStorage.getItem(key) ?? 0);
+      if (Date.now() - prev < 60 * 60 * 1000) return;
+      localStorage.setItem(key, String(Date.now()));
+    } catch { return; }
+    noteOpen(anchor.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, anchor]);
 
   const remove = (id: string) => saveTasks(tasks.filter(t => t.id !== id));
 
@@ -195,6 +235,7 @@ export default function PlanPage() {
             showDone={showDone}
             setShowDone={setShowDone}
             onToggle={toggle}
+            onOpen={noteOpen}
             onRemove={remove}
             onSnooze={snooze}
             onMoney={() => setView("money")}
@@ -346,7 +387,7 @@ function Intro({ onStart }: { onStart: () => void }) {
 
 function PlanView({
   anchor, open, done, openMonths, setOpenMonths, showDone, setShowDone,
-  onToggle, onRemove, onSnooze, onMoney, onAdd, onIntro,
+  onToggle, onOpen, onRemove, onSnooze, onMoney, onAdd, onIntro,
 }: {
   anchor: PlanTask | null;
   open: PlanTask[];
@@ -357,6 +398,7 @@ function PlanView({
   setShowDone: (v: boolean) => void;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
+  onOpen: (id: string) => void;
   onSnooze: (id: string) => void;
   onMoney: () => void;
   onAdd: (title: string, area: TaskArea) => void;
@@ -482,7 +524,7 @@ function PlanView({
                   }}
                 >
                   {items.map(t => (
-                    <TaskRow key={t.id} task={t} compact={!isNow && !isNone} onToggle={onToggle} onRemove={onRemove} />
+                    <TaskRow key={t.id} task={t} compact={!isNow && !isNone} onToggle={onToggle} onOpen={onOpen} onRemove={onRemove} />
                   ))}
                 </div>
               )}
@@ -570,20 +612,27 @@ function PlanView({
 }
 
 function TaskRow({
-  task, compact, onToggle, onRemove,
+  task, compact, onToggle, onOpen, onRemove,
 }: {
   task: PlanTask;
   compact: boolean;
   onToggle: (id: string) => void;
+  onOpen: (id: string) => void;
   onRemove: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const urgent = task.due ? daysUntil(new Date(task.due)) <= 7 : false;
 
+  // פתיחה נספרת, סגירה לא — מה שמעניין הוא כמה פעמים חזר אליה
+  const handleExpand = () => {
+    if (!expanded) onOpen(task.id);
+    setExpanded(!expanded);
+  };
+
   if (compact)
     return (
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={handleExpand}
         className="w-full p-3.5 rounded-[14px] text-right"
         style={{ background: "#fff", border: `1px solid ${BORDER}` }}
       >

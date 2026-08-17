@@ -147,7 +147,7 @@ function AdminAnalyticsPage() {
           why="לא זמן שהייה ולא עמודים לצפייה. חזרה. אפליקציה שנפתחת פעם אחת היא כישלון גם אם המסך הראשון מושלם."
           threshold="none"
           thresholdText="אין בנצ׳מרק. אבל אם פחות ממחצית חוזרים — הבעיה היא לא בתוכן, היא בסיבה לחזור."
-          needs="candidates.last_active_at"
+          needs="candidates.last_active_at — מתעדכן בכל ניווט מ-17.8 (עד אז רק בהרשמה ובמעבר שלב)"
           live={live}
         >
           <Row>
@@ -180,7 +180,7 @@ function AdminAnalyticsPage() {
           why="זה לא מדד פאנל — זה מדד שליחות. הרביע הכתום הוא בדיוק האדם שבשבילו הארגון קיים, ולדור ראשון להשכלה גבוהה תחושת המסוגלות נמוכה באופן שיטתי."
           threshold="hard"
           thresholdText="כל מי שברביע הכתום הוא הפניה לרכזת. הסף הוא אדם אחד, לא אחוז."
-          needs="scct_scores — כלי עיבוד החוויה שומר היום ל-localStorage בלבד"
+          needs="scct_scores · scct_step — מסונכרן. scct_step מראה באיזו מהשש עצרו"
           live={live}
         >
           <Quadrant grid={s?.scct_grid ?? []} live={live} />
@@ -195,7 +195,7 @@ function AdminAnalyticsPage() {
           why="מי שפתח סימולציה ונטש באמצע אומר לך משהו על הסימולציה. מי שלא פתח בכלל אומר לך על המסגור. שתי בעיות שונות לגמרי שנראות זהות בדוח רגיל."
           threshold="none"
           thresholdText="אין סף. הפער בין נפתחו לבין הושלמו הוא הסיפור."
-          needs="funnel_events · sim_step — כרגע נשמר רק סיום, ולכן נטישה באמצע אינה נמדדת"
+          needs="funnel_events · sim_step — נשלח מ-17.8 עם הצעד והמושג הנלמד, כך שאפשר לראות באיזה תרגיל נוטשים"
           live={live}
         >
           <Row>
@@ -216,7 +216,7 @@ function AdminAnalyticsPage() {
           why="הקו האפור הוא מה שהסימולציה על כל 729 הצירופים חזתה. פער גדול אומר שהשקלול לא מייצג את הקהל שבא בפועל — ואם התואר יוצא נמוך, זה נוגד את העמדה שלנו במפורש."
           threshold="hard"
           thresholdText="מבוסס: תואר 52% · מה״ט 10% · הכשרה 38%. סטייה מעל 10 נקודות אחוז דורשת בדיקת השקלול."
-          needs="paths_answers — שלב 4 לא כותב היום ל-Supabase בכלל"
+          needs="paths_answers — מסונכרן מאז המיגרציה"
           live={live}
         >
           <Bars
@@ -229,12 +229,12 @@ function AdminAnalyticsPage() {
         </Card>
 
         <Card
-          title="חסמים שנפתחו"
+          title="החסמים של הקהל"
           q="מה באמת עוצר אנשים?"
           why="הנתון היקר ביותר באפליקציה. הוא אומר לרכזות מה החסם האמיתי ולא המשוער, ואין שום דרך אחרת להשיג אותו — לא בשאלון ולא בשיחה."
           threshold="none"
-          thresholdText="אין סף — הדירוג עצמו הוא התוצר. שלושת הראשונים הם מה שצריך לפתור."
-          needs="funnel_events · paths_blocker_open"
+          thresholdText="אין סף — הדירוג עצמו הוא התוצר. שלושת הראשונים הם מה שצריך לפתור. המדד הוא שכיחות: אילו חסמים יש לקהל, לא כמה לחצו."
+          needs="funnel_events · paths_blocker_open — נרשם חסם לכל אחד שהוצג, כי מסך החסמים מציג את כולם פתוחים ואין בו פתיחה למדוד"
           live={live}
         >
           <Bars live={live} skeletonRows={5} data={Object.entries(s?.blockers_opened ?? {})
@@ -264,7 +264,7 @@ function AdminAnalyticsPage() {
           why="זה אות הפחד, נמדד בהתנהגות ובלי שאלה אחת. משימה שעברה את התאריך ונשארה פתוחה היא לא עצלות — היא משהו שנתקע, ולמלגה יש תאריך שלא חוזר."
           threshold="hard"
           thresholdText="מבוסס: הסף הוא אפס. כל דדליין שעבר עם משימה פתוחה הוא כסף שלא הגיע. ושלוש פתיחות בלי סגירה ← משימה דחופה לרכזת (CLAUDE.md)."
-          needs="plan_tasks — שלב 5 לא כותב היום ל-Supabase בכלל"
+          needs="plan_tasks — מסונכרן. open_count נספר מ-17.8"
           live={live}
         >
           <Row>

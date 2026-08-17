@@ -23,27 +23,163 @@ const SEV_META: Record<number, { label: string; color: string; bg: string }> = {
   3: { label: "שיחה מחזקת", color: "#0369a1", bg: "rgba(14,165,233,0.08)" },
 };
 
-const EVENT_LABEL: Record<string, string> = {
-  meeting_booked: "קבע/ה פגישה",
-  meeting1_checkin: "צ'ק-אין אחרי פגישה 1",
-  paths_question: "ענה/תה על שאלה בשאלון המסלולים",
-  paths_quiz_done: "סיים/ה את שאלון המסלולים",
-  plan_money_opened: "פתח/ה את מסך החשבון",
-  scct_done: "סיים/ה כלי עיבוד חוויה",
-  sim_start: "נכנס/ה לסימולציה",
-  waiting_taste_done: "סיים/ה את שתי הדקות",
-  waiting_taste_start: "התחיל/ה את שתי הדקות",
-  waiting_prep_open: "קרא/ה את ההכנה לפגישה",
-  waiting_booked_self_declared: "סימן/ה 'כבר קבעתי'",
-  plan_update_sent: "שלח/ה עדכון לרכזת",
-  plan_intro_done: "נכנס/ה לשלב התוכנית",
+
+const DOMAIN_HE: Record<string, string> = {
+  data: "דאטה", cyber: "סייבר", networks: "רשתות", code: "קוד",
+  qa: "בדיקות תוכנה", ai: "AI", ux: "UX", marketing: "שיווק דיגיטלי",
 };
+
+/** שש שאלות כלי עיבוד החוויה — כדי שנדע *באיזו* מהן נעצרו */
+const SCCT_HE: Record<string, string> = {
+  interest_scale: "שאלת העניין",
+  interest_open: "העניין — בכתיבה חופשית",
+  efficacy_scale: "שאלת המסוגלות",
+  efficacy_open: "המסוגלות — בכתיבה חופשית",
+  outcome_scale: "שאלת הציפיות",
+  outcome_open: "הציפיות — בכתיבה חופשית",
+};
+
+type Ev = { name: string; props: Record<string, unknown>; at: string };
+
+const s = (v: unknown) => (v === undefined || v === null ? "" : String(v));
+const dom = (v: unknown) => DOMAIN_HE[s(v)] ?? s(v);
+
+/**
+ * אירוע → משפט בעברית.
+ *
+ * הרכזת קוראת את זה חמש דקות לפני שיחה, אז אין כאן שמות אירועים ואין
+ * JSON — רק מה קרה. מה שאין לו ניסוח מוצג כמו שהוא, כדי שאירוע חדש
+ * לא ייעלם מהמסך בשקט.
+ */
+function describe(e: Ev): string {
+  const p = e.props ?? {};
+  switch (e.name) {
+    case "meeting_booked":         return `קבע/ה את פגישה ${s(p.n)}`;
+    case "meeting_open":           return `נכנס/ה למסך תיאום פגישה ${s(p.n)}`;
+    case "meeting_calendar_ready": return `היומן נטען`;
+    case "meeting1_checkin":       return s(p.result) === "missed" ? "סימן/ה שלא הצליח/ה להגיע לפגישה" : "סימן/ה שהפגישה הייתה טובה";
+    case "sim_start":              return `נכנס/ה לסימולציית ${dom(p.domain)}`;
+    case "sim_step":               return `סימולציית ${dom(p.domain)} — צעד ${s(p.i)} מתוך ${s(p.of)}${p.concept ? ` · ${s(p.concept)}` : ""}`;
+    case "scct_done":              return `סיים/ה את כלי עיבוד החוויה ב${dom(p.domain)}`;
+    case "scct_step":              return `כלי עיבוד החוויה ב${dom(p.domain)} — ${SCCT_HE[s(p.q)] ?? s(p.q)}`;
+    case "paths_question":         return `ענה/תה על שאלה ${s(p.answered)} בשאלון המסלולים`;
+    case "paths_quiz_done":        return `סיים/ה את השאלון — ההמלצה שיצאה: ${s(p.recommendation)}`;
+    case "paths_blocker_open":     return `הוצג לו/ה החסם: ${s(p.blocker)}`;
+    case "paths_solution_click":   return `פתח/ה פתרון: ${s(p.solution)}`;
+    case "plan_money_opened":      return "פתח/ה את מסך החשבון";
+    case "plan_task_open":         return `חזר/ה למשימה "${s(p.task)}" — פעם ${s(p.count)}`;
+    case "plan_update_sent":       return "שלח/ה עדכון לרכזת";
+    case "plan_intro_done":        return "נכנס/ה לשלב התוכנית";
+    case "waiting_taste_start":    return "התחיל/ה את שתי הדקות";
+    case "waiting_taste_done":     return "סיים/ה את שתי הדקות";
+    case "waiting_prep_open":      return "קרא/ה את ההכנה לפגישה";
+    case "waiting_booked_self_declared": return "סימן/ה 'כבר קבעתי'";
+    default: {
+      const extra = Object.values(p).map(s).filter(Boolean).join(" · ");
+      return extra ? `${e.name} · ${extra}` : e.name;
+    }
+  }
+}
+
+/**
+ * כיווץ רצפים.
+ *
+ * מי שעבר 12 צעדים בסימולציה ייצר 12 שורות שמציפות את הציר. האירועים
+ * מגיעים מהחדש לישן, ולכן הראשון ברצף הוא **הרחוק ביותר שהגיע אליו** —
+ * בדיוק מה שמעניין: איפה עצר.
+ */
+function compact(events: Ev[]): Ev[] {
+  const out: Ev[] = [];
+  for (const e of events) {
+    const prev = out[out.length - 1];
+    const sameRun =
+      prev && prev.name === e.name &&
+      (e.name === "sim_step" || e.name === "scct_step" || e.name === "paths_blocker_open") &&
+      s(prev.props?.domain) === s(e.props?.domain);
+    if (!sameRun) out.push(e);
+  }
+  return out;
+}
+
+/**
+ * חלוקה לביקורים.
+ *
+ * פער של יותר מחצי שעה בין אירועים = יצא וחזר. זה מה שמאפשר להגיד
+ * "היה כאן ארבע פעמים" ו"הביקור הזה ארך 12 דקות" — ובעיקר לזהות מי
+ * שחוזר שוב ושוב לאותה נקודה בלי לעבור אותה.
+ *
+ * מה שהמדידה הזו **לא** יודעת: כמה זמן הוא ישב וקרא אחרי האירוע האחרון
+ * בביקור. אין בנייד אירוע "יצא", ולכן משך ביקור הוא תמיד הערכת חסר.
+ */
+const SESSION_GAP = 30 * 60 * 1000;
+
+function sessions(events: Ev[]): Ev[][] {
+  const out: Ev[][] = [];
+  let run: Ev[] = [];
+  for (const e of events) { // מגיעים מהחדש לישן
+    const prev = run[run.length - 1];
+    if (prev && +new Date(prev.at) - +new Date(e.at) > SESSION_GAP) { out.push(run); run = []; }
+    run.push(e);
+  }
+  if (run.length) out.push(run);
+  return out;
+}
+
+/** מיקום בתוך המסע — הצעד/השאלה, בלי התחום. משמש לזיהוי "חזר לאותו מקום" */
+function spot(e: Ev): string | null {
+  if (e.name === "sim_step") return `sim:${s(e.props?.domain)}:${s(e.props?.i)}`;
+  if (e.name === "scct_step") return `scct:${s(e.props?.domain)}:${s(e.props?.q)}`;
+  if (e.name === "paths_question") return `quiz:${s(e.props?.answered)}`;
+  return null;
+}
+
+function minutes(ms: number): string {
+  const m = Math.round(ms / 60000);
+  return m < 1 ? "פחות מדקה" : `${m} דקות`;
+}
+
+/**
+ * "בקצרה" — המשפט שהרכזת קוראת אם היא קוראת רק דבר אחד.
+ *
+ * חמש דקות לפני שיחה אין זמן לקרוא ציר זמן. הציר הוא הגיבוי; זה הכותרת.
+ */
+function summarize(p: Person): string[] {
+  const out: string[] = [];
+  const visits = sessions(p.timeline);
+  if (visits.length) {
+    const total = visits.reduce((sum, v) => sum + (+new Date(v[0].at) - +new Date(v[v.length - 1].at)), 0);
+    out.push(`${visits.length} כניסות · ${minutes(total)} בסך הכל`);
+  }
+
+  // איפה עצר — הצעד הרחוק ביותר בכל סימולציה/כלי, מהאירוע החדש ביותר
+  const furthest = p.timeline.find(e => e.name === "sim_step" || e.name === "scct_step");
+  if (furthest) out.push(`עצר/ה ב: ${describe(furthest)}`);
+
+  // חזר לאותה נקודה בשתי כניסות נפרדות — סימן לחיכוך, לא לשכחה
+  const seen = new Map<string, number>();
+  visits.forEach((v, i) => v.forEach(e => {
+    const k = spot(e);
+    if (k && seen.get(k) !== i) seen.set(k, seen.has(k) ? -1 : i);
+  }));
+  if ([...seen.values()].some(v => v === -1)) out.push("חזר/ה לאותה נקודה ביותר מכניסה אחת");
+
+  return out;
+}
+
+/** "לפני 3 ימים" / "היום" — כמה זמן עבר, במילים */
+function ago(iso: string | null): string {
+  if (!iso) return "עוד לא";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days <= 0) return "היום";
+  if (days === 1) return "אתמול";
+  return `לפני ${days} ימים`;
+}
 
 type Person = {
   id: string; name: string; anonymous: boolean; region: string | null;
-  stage: number; domain: string | null; lastActive: string;
+  stage: number; domain: string | null; ranked: string[]; lastActive: string; lastAction: string | null;
   signals: { severity: 1 | 2 | 3; reason: string; action: string }[];
-  timeline: { name: string; props: Record<string, unknown>; at: string }[];
+  timeline: Ev[];
 };
 
 export default function CoordinatorPage() {
@@ -155,20 +291,63 @@ export default function CoordinatorPage() {
 
               {isOpen && (
                 <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", padding: "12px 16px", background: "#fcfbf9" }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>
-                    ציר הזמן — מה שקרה, מהחדש לישן. חמש דקות לפני שיחה, זה מה שקוראים
+                  <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginBottom: 12, fontSize: 12 }}>
+                    <span style={{ color: "rgba(0,0,0,0.5)" }}>
+                      נכנס/ה: <b style={{ color: "#1c1a16" }}>{ago(p.lastActive)}</b>
+                    </span>
+                    <span style={{ color: "rgba(0,0,0,0.5)" }}>
+                      התקדם/ה: <b style={{ color: "#1c1a16" }}>{ago(p.lastAction)}</b>
+                    </span>
+                  </div>
+
+                  {/* בקצרה — מה שקוראים אם קוראים רק שורה אחת */}
+                  {summarize(p).map((line, i) => (
+                    <div key={i} style={{ fontSize: 13, fontWeight: 700, color: "#1c1a16", lineHeight: 1.7 }}>· {line}</div>
+                  ))}
+
+                  {p.ranked.length > 0 && (
+                    <div style={{ fontSize: 12.5, color: "rgba(0,0,0,0.6)", marginTop: 6, lineHeight: 1.7 }}>
+                      דירג/ה: {p.ranked.map(dom).join(" › ")}
+                      {p.domain ? ` · בחר/ה בסוף: ${dom(p.domain)}` : ""}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(0,0,0,0.4)", margin: "14px 0 8px" }}>
+                    הביקורים — מהאחרון לראשון, ובתוך כל ביקור לפי הסדר שקרה
                   </div>
                   {p.timeline.length === 0 && <div style={{ fontSize: 12.5, color: "rgba(0,0,0,0.4)" }}>אין עדיין אירועים</div>}
-                  {p.timeline.map((e, i) => (
-                    <div key={i} style={{ display: "flex", gap: 10, padding: "4px 0", fontSize: 12.5, color: "rgba(0,0,0,0.65)" }}>
-                      <span style={{ color: "rgba(0,0,0,0.35)", flexShrink: 0, direction: "ltr" }}>
-                        {new Date(e.at).toLocaleDateString("he-IL")} {new Date(e.at).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      <span>{EVENT_LABEL[e.name] ?? e.name}{e.props && Object.keys(e.props).length ? ` · ${Object.values(e.props).join(", ")}` : ""}</span>
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 10, fontSize: 11.5, color: "rgba(0,0,0,0.4)", lineHeight: 1.6 }}>
-                    טלפון יופיע כאן כשיחובר Phone OTP — עד אז הזיהוי דרך השם והשלב.
+
+                  {sessions(p.timeline).map((visit, vi) => {
+                    const end = new Date(visit[0].at);
+                    const start = new Date(visit[visit.length - 1].at);
+                    const took = +end - +start;
+                    return (
+                      <div key={vi} style={{ marginTop: vi ? 12 : 0, borderRight: `2px solid ${vi === 0 ? ORANGE : "rgba(0,0,0,0.08)"}`, paddingRight: 10 }}>
+                        <div style={{ fontSize: 11.5, fontWeight: 800, color: NAVY, opacity: 0.7 }}>
+                          {start.toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "numeric" })}
+                          {" · "}
+                          <span style={{ direction: "ltr", display: "inline-block" }}>
+                            {start.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          {took > 60000 ? ` · ${minutes(took)}` : ""}
+                        </div>
+                        {compact(visit).reverse().map((e, i) => (
+                          <div key={i} style={{ display: "flex", gap: 10, padding: "3px 0", fontSize: 12.5, color: "rgba(0,0,0,0.72)", lineHeight: 1.6 }}>
+                            <span style={{ color: "rgba(0,0,0,0.28)", flexShrink: 0, direction: "ltr", minWidth: 36 }}>
+                              {new Date(e.at).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                            <span>{describe(e)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+
+                  <div style={{ marginTop: 12, fontSize: 11.5, color: "rgba(0,0,0,0.4)", lineHeight: 1.6 }}>
+                    רצף צעדים באותה סימולציה מכווץ לשורה אחת. משך ביקור הוא הערכת חסר —
+                    אין דרך לדעת כמה זמן הוא קרא אחרי הפעולה האחרונה.
+                    <br />
+                    טלפון יופיע כאן כשיהיה שדה טלפון — עד אז הזיהוי דרך השם והשלב.
                   </div>
                 </div>
               )}
