@@ -57,7 +57,34 @@ const EXPECTED_MIX: Record<string, number> = { degree: 52, mahat: 10, bootcamp: 
 
 const QUIZ_LABELS = ["שעות", "כסף", "השכלה", "ילדים", "יציבות", "מיקום"];
 
+/**
+ * הצבירה של האירועים החדשים.
+ *
+ * לא ב-admin_stats() כי היא נכתבה לפני שהאירועים האלה היו קיימים, והוספה
+ * שם דורשת מיגרציה. נצברת ב-/api/funnel בצד שרת, מאותו לוג בדיוק.
+ */
+type Funnels = {
+  sampled: number;
+  simSteps: Record<string, { i: number; of: number; concept: string; n: number }[]>;
+  scctSteps: Record<string, number>;
+  blockers: Record<string, number>;
+  solutions: Record<string, number>;
+  meeting: { open: number; ready: number; failed: number; booked: number };
+  tasksReopened: Record<string, number>;
+};
+
+const SCCT_Q: Record<string, string> = {
+  interest_scale: "עניין",
+  interest_open: "עניין — כתיבה",
+  efficacy_scale: "מסוגלות",
+  efficacy_open: "מסוגלות — כתיבה",
+  outcome_scale: "ציפיות",
+  outcome_open: "ציפיות — כתיבה",
+};
+const SCCT_ORDER = ["interest_scale", "interest_open", "efficacy_scale", "efficacy_open", "outcome_scale", "outcome_open"];
+
 function AdminAnalyticsPage() {
+  const [f, setF] = useState<Funnels | null>(null);
   const [s, setS] = useState<Stats | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +95,13 @@ function AdminAnalyticsPage() {
       const { data, error } = await supabase.rpc("admin_stats");
       if (error) setErr(error.message); else setS(data as Stats);
       setLoading(false);
+
+      // הצבירה של האירועים החדשים — אותו קוד גישה של שאר לוחות הניהול
+      const code = localStorage.getItem("coordinator-code");
+      if (code) {
+        const r = await fetch("/api/funnel", { headers: { "x-coordinator-code": code } });
+        if (r.ok) setF(await r.json());
+      }
     })();
   }, []);
 
@@ -207,6 +241,78 @@ function AdminAnalyticsPage() {
           }))} />
         </Card>
 
+        <Card
+          title="באיזה צעד נוטשים — בתוך הסימולציה"
+          q="איזה תרגיל מאבד אנשים?"
+          why="נטישה אף פעם לא נרשמת: אין בנייד אירוע 'יצא'. היא מוסקת — הגיע לצעד N ולא ל-N+1. לכל צעד רשום גם המושג שנלמד בו, כי 'צעד 4' לא אומר לך מה לתקן ו'מהו JOIN' כן."
+          threshold="none"
+          thresholdText="אין סף. חפש/י את המדרגה — הצעד שאחריו המספר צונח."
+          needs="funnel_events · sim_step"
+          live={!!f}
+        >
+          {!f || Object.keys(f.simSteps).length === 0 ? (
+            <Empty>עוד לא נרשמו צעדים. הנתון מתחיל להיאסף ממי שייכנס לסימולציה מ-17.8.</Empty>
+          ) : (
+            Object.entries(f.simSteps).map(([d, steps]) => (
+              <div key={d} style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 800, color: NAVY, marginBottom: 6 }}>
+                  {DOMAIN_LABEL[d as Domain] ?? d}
+                </div>
+                <Funnel live steps={steps.map(st => ({ label: `${st.i}. ${st.concept || "צעד"}`, n: st.n }))} />
+              </div>
+            ))
+          )}
+        </Card>
+
+        <Card
+          title="באיזו שאלה עוצרים — כלי עיבוד החוויה"
+          q="איזו מהשש קשה לענות עליה?"
+          why="ההשערה שכדאי לבדוק ראשונה: שאלות המסוגלות. לשאול מישהו 'כמה את מאמינה שאת מסוגלת' זו שאלה קשה לדור ראשון, ואם שם נעצרים — זה ממצא על הקהל, לא על הכלי."
+          threshold="none"
+          thresholdText="אין סף. הירידה בין שאלה לשאלה היא הסיפור."
+          needs="funnel_events · scct_step"
+          live={!!f}
+        >
+          {!f || Object.keys(f.scctSteps).length === 0 ? (
+            <Empty>עוד לא נרשמו תשובות. עד 17.8 נשמר רק הסיום, אז מי שעצר באמצע לא היה קיים.</Empty>
+          ) : (
+            <Funnel
+              live
+              steps={SCCT_ORDER.map(q => ({
+                label: SCCT_Q[q],
+                n: Object.entries(f.scctSteps)
+                  .filter(([k]) => k.endsWith(`|${q}`))
+                  .reduce((a, [, n]) => a + n, 0),
+              }))}
+            />
+          )}
+        </Card>
+
+        <Card
+          title="משפך תיאום הפגישה"
+          q="כמה מהמגיעים ליומן באמת קובעים?"
+          why="עד 17.8 נרשמה רק ההצלחה, ולכן מי שהגיע ליומן ויצא פשוט לא היה קיים. 'היומן נפל' מופרד בכוונה: בחיבור איטי המסך נראה שבור, המועמד לא ידווח על זה לאף אחד, והוא נספר כמי שלא רצה."
+          threshold="none"
+          thresholdText="אין סף מבוסס. כל נפילה שאיננה אפס דורשת בדיקה — זה כשל טכני, לא היסוס."
+          needs="funnel_events · meeting_open · meeting_calendar_ready · meeting_booked"
+          live={!!f}
+        >
+          {!f ? <Empty>ממתין לנתונים.</Empty> : (
+            <>
+              <Funnel live steps={[
+                { label: "הגיעו למסך", n: f.meeting.open },
+                { label: "היומן נטען", n: f.meeting.ready },
+                { label: "קבעו פגישה", n: f.meeting.booked },
+              ]} />
+              {f.meeting.failed > 0 && (
+                <div style={{ marginTop: 10, fontSize: 12.5, fontWeight: 700, color: "#b91c1c" }}>
+                  ⚠ אצל {f.meeting.failed} אנשים היומן לא נטען בכלל — כשל טכני, לא היסוס.
+                </div>
+              )}
+            </>
+          )}
+        </Card>
+
         {/* ── שלב 4 ──────────────────────────────────────────────────── */}
         <Divider>שלב 4 · מסלול לימודים</Divider>
 
@@ -239,6 +345,23 @@ function AdminAnalyticsPage() {
         >
           <Bars live={live} skeletonRows={5} data={Object.entries(s?.blockers_opened ?? {})
             .sort((a, b) => b[1] - a[1]).map(([label, n]) => ({ label, n }))} />
+        </Card>
+
+        <Card
+          title="אילו מענים באמת נפתחו"
+          q="המענים שכתבנו לחסמים — מישהו טורח לפתוח אותם?"
+          why="החסמים אומרים מה עוצר אנשים. זה אומר אם התשובות שלנו רלוונטיות. מענה שאף אחד לא פותח הוא או לא מעניין או לא ברור — ובשני המקרים צריך לכתוב אותו מחדש."
+          threshold="none"
+          thresholdText="אין סף. מענה עם אפס פתיחות לאורך זמן הוא מועמד לשכתוב."
+          needs="funnel_events · paths_solution_click"
+          live={!!f}
+        >
+          {!f || Object.keys(f.solutions).length === 0 ? (
+            <Empty>עוד לא נפתח אף מענה. נמדד מ-17.8.</Empty>
+          ) : (
+            <Bars live skeletonRows={5} data={Object.entries(f.solutions)
+              .sort((a, b) => b[1] - a[1]).map(([label, n]) => ({ label, n }))} />
+          )}
         </Card>
 
         <Card
@@ -347,6 +470,15 @@ function Card({
           מקור: <code>{needs}</code>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** אין נתונים — ומסבירים למה, כדי שאפס לא ייקרא כממצא */
+function Empty({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: 12.5, color: "rgba(0,0,0,0.42)", lineHeight: 1.7, padding: "6px 0" }}>
+      {children}
     </div>
   );
 }

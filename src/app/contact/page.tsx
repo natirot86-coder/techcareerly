@@ -62,11 +62,38 @@ export default function ContactPage() {
        */
       logEvent("meeting_open", { n: String(meeting) });
 
+      // המקור המדויק למועד, אם Cal שלח אותו. משמש כברירה ראשונה על פני החיטוט
+      let startFromV2: string | null = null;
+
       const cal = await getCalApi({ namespace: "contact" });
       cal("ui", { hideEventTypeDetails: false, layout: "month_view", theme: "light" });
       cal("on", {
         action: "linkReady",
         callback: () => logEvent("meeting_calendar_ready", { n: String(meeting) }),
+      });
+      /*
+       * היומן לא נטען — כישלון שנראה למועמד כמו מסך ריק ושבור, והוא לעולם
+       * לא ידווח עליו. בלי האירוע הזה הוא נספר כמי ש"לא רצה לקבוע".
+       */
+      cal("on", {
+        action: "linkFailed",
+        callback: (e: unknown) => {
+          const d = (e as { detail?: { data?: { code?: string; msg?: string } } })?.detail?.data;
+          logEvent("meeting_calendar_failed", { n: String(meeting), code: d?.code ?? "", msg: d?.msg ?? "" });
+        },
+      });
+      /*
+       * מועד הפגישה מהמקור המתועד. הגרסה הישנה (bookingSuccessful) עוטפת
+       * את המטען במבנה שמשתנה בין גרסאות, ולכן extractStart מחטט בו — כאן
+       * startTime הוא שדה מוצהר. לא רושם meeting_booked כדי לא לספור פעמיים;
+       * רק משפר את התאריך, שממנו נגזר "איך היה?" אחרי הפגישה.
+       */
+      cal("on", {
+        action: "bookingSuccessfulV2",
+        callback: (e: unknown) => {
+          const start = (e as { detail?: { data?: { startTime?: string } } })?.detail?.data?.startTime;
+          if (start) startFromV2 = start;
+        },
       });
       cal("on", {
         action: "bookingSuccessful",
@@ -87,7 +114,7 @@ export default function ContactPage() {
            * מקומות ולא מניחים אף אחד. אם לא נמצא מועד — לא ממציאים אחד;
            * מרחב ההמתנה יציע במקום זה קישור יזום ("הפגישה כבר הייתה?").
            */
-          const at = extractStart(e);
+          const at = startFromV2 ?? extractStart(e);
           if (at) localStorage.setItem(`meeting-${meeting}-at`, at);
 
           // פגישה 1 נוחתת ישירות במרחב ההמתנה: הציר שם כבר מציג את האישור
