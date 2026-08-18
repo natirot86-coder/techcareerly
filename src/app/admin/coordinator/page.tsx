@@ -55,6 +55,7 @@ function describe(e: Ev): string {
   const p = e.props ?? {};
   switch (e.name) {
     case "meeting_booked":         return `קבע/ה את פגישה ${s(p.n)}`;
+    case "meeting_self_declared":  return `הצהיר/ה שכבר קבע/ה את פגישה ${s(p.n)} — אין לזה אישור ביומן`;
     case "meeting_open":           return `נכנס/ה למסך תיאום פגישה ${s(p.n)}`;
     case "meeting_calendar_ready": return `היומן נטען`;
     case "meeting1_checkin":       return s(p.result) === "missed" ? "סימן/ה שלא הצליח/ה להגיע לפגישה" : "סימן/ה שהפגישה הייתה טובה";

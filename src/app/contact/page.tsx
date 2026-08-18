@@ -126,6 +126,28 @@ export default function ContactPage() {
     })();
   }, [router, meeting]);
 
+  /**
+   * "כבר קבעתי" — מעבר בלי לתפוס תור ביומן.
+   *
+   * נועד בעיקר להדגמת האפליקציה, אבל יש לו גם שימוש אמיתי: לפי המודל
+   * הרכזת יכולה לקבוע את הפגישה בעצמה בטלפון, ואז אין לאדם מה לקבוע כאן.
+   *
+   * **לא רושם meeting_booked בכוונה.** זה המדד שכל המערכת נמדדת בו, וכפתור
+   * שנלחץ בכל הדגמה היה מנפח אותו. האירוע הנפרד גם אומר לרכזת משהו נכון:
+   * הוא הצהיר שקבע, ואין לזה אישור ביומן.
+   *
+   * מועד הפגישה לא נשמר — אנחנו לא יודעים אותו, ולא ממציאים. מרחב ההמתנה
+   * כבר יודע לטפל במצב הזה ומציע במקום זה "הפגישה כבר הייתה?".
+   */
+  function selfDeclare() {
+    if (!meeting) return;
+    localStorage.setItem("meeting-booked", "true");
+    localStorage.setItem(`meeting-${meeting}-booked`, "true");
+    localStorage.setItem(`meeting-${meeting}-booked-at`, new Date().toISOString());
+    logEvent("meeting_self_declared", { n: String(meeting) });
+    router.push(meeting === 1 ? "/waiting" : `/contact/booked?m=${meeting}`);
+  }
+
   const meta = meeting ? MEETING_META[meeting] : null;
 
   return (
@@ -171,6 +193,22 @@ export default function ContactPage() {
             style={{ width: "100%", minHeight: "600px", borderRadius: "16px", overflow: "hidden" }}
             config={{ layout: "month_view", theme: "light" }}
           />
+        )}
+
+        {/* מעבר בלי לקבוע. מושתק בכוונה — היומן למעלה הוא הפעולה הראשית */}
+        {meeting && (
+          <div className="mt-5 pt-5" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+            <button
+              onClick={selfDeclare}
+              className="w-full py-3 rounded-xl text-[14px] font-bold"
+              style={{ background: "rgba(2,62,138,0.06)", color: "#023e8a" }}
+            >
+              כבר קבעתי פגישה — להמשיך ←
+            </button>
+            <div className="text-[11.5px] leading-[1.7] mt-2 text-center" style={{ color: "rgba(0,0,0,0.4)" }}>
+              לא נשריין לך תור ביומן. אם עוד לא קבעת — בחר/י תאריך למעלה.
+            </div>
+          </div>
         )}
       </div>
 

@@ -280,8 +280,21 @@ function Level3({ items, onToggle }: { items: Degree[]; onToggle: (degreeId: str
             אין תארים ממופים לתחום {DOMAIN_LABEL[domain]} — זה ממצא, לא באג. משימת מחקר.
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginTop: 16 }}>
-            {degrees.map(d => {
+          <>
+            {/*
+              הפאנל נפתח מתחת ל**שורה** של הכרטיס הנבחר, לא מתחת לכל הרשת.
+
+              זה הלב של גישה 1a: הכרטיס הנבחר מתמזג ויזואלית עם הפאנל —
+              פינות עליונות מעוגלות ובלי גבול תחתון. במוקאפ היו בדיוק ארבעה
+              תארים, כלומר שורה אחת, ולכן זה עבד מעצמו. בנתונים האמיתיים יש
+              7–10 תארים לתחום, והפאנל נפל מתחת לשורה השנייה — כך שהכרטיס
+              הנבחר והפאנל היו מנותקים והחיבור החזותי, שהוא כל הרעיון, אבד.
+            */}
+            {Array.from({ length: Math.ceil(degrees.length / 4) },
+              (_, ri) => degrees.slice(ri * 4, ri * 4 + 4)).map((row, ri) => (
+              <div key={ri}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginTop: ri === 0 ? 16 : 12 }}>
+                  {row.map(d => {
               const on = degreeId === d.id;
               const ep = ENTRY_PILL[d.entryBar];
               const marked = d.recommendedAt?.length ?? 0;
@@ -314,12 +327,16 @@ function Level3({ items, onToggle }: { items: Degree[]; onToggle: (degreeId: str
                   </div>
                 </button>
               );
-            })}
-          </div>
+                  })}
+                </div>
+                {selected && row.some(d => d.id === selected.id) && (
+                  <ExpansionPanel degree={selected} color={color} onToggle={onToggle} />
+                )}
+              </div>
+            ))}
+          </>
         )}
 
-        {/* רמה 3 — הפאנל */}
-        {selected && <ExpansionPanel degree={selected} color={color} onToggle={onToggle} />}
       </div>
     </div>
   );
