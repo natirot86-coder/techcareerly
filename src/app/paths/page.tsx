@@ -504,6 +504,12 @@ export default function PathsPage() {
   const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", kids: "", timeline: "", location: "" });
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track>("bootcamp");
+  /*
+   * במסלול האקדמי הקטלוג המלא מקופל כברירת מחדל: קודם בוחרים תואר, והמוסדות
+   * נפתחים בתוך התואר. רשימה שטוחה של כל המוסדות לצד רשימת התארים הייתה שתי
+   * רשימות מוערמות בלי קשר ביניהן — וזה מה שהיה כאן קודם.
+   */
+  const [showAllInst, setShowAllInst] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
   const [research, setResearch] = useState<Record<string, ResearchEntry>>({});
   const [meetingBooked, setMeetingBooked] = useState(false);
@@ -1373,6 +1379,16 @@ export default function PathsPage() {
           {activeTrack === "degree" && <DegreePicker domains={chosenDomains} />}
 
           {/* Institution cards — הקטלוג */}
+          {activeTrack === "degree" && !showAllInst ? (
+            <button
+              onClick={() => setShowAllInst(true)}
+              className="w-full mb-5 px-3 py-2.5 rounded-xl text-[12px] font-bold"
+              style={{ background: "rgba(0,0,0,0.03)", color: "rgba(0,0,0,0.45)" }}
+            >
+              להציג את כל {list.length} המוסדות במסלול האקדמי — בלי קשר לתואר
+            </button>
+          ) : (
+          <>
           <div className="text-[13px] font-black mb-3" style={{ color: NAVY }}>
             {activeTrack === "bootcamp" ? "עוד מוסדות והכשרות — בלי מעטפת שמיפינו" :
              activeTrack === "degree" ? "המוסדות — איפה לומדים את זה" :
@@ -1423,6 +1439,8 @@ export default function PathsPage() {
               );
             })}
           </div>
+          </>
+          )}
 
           {/* Shortlist summary */}
           {shortlist.length > 0 && (
@@ -2013,11 +2031,29 @@ function WrappedCourses({ domains }: { domains: Domain[] }) {
  * תארים שנשמעים אותו דבר. הנתונים לאומיים (עבודאטה / משרד העבודה),
  * וההסתייגות הכנה מוצגת תמיד. המוסדות שמתחת הם הכתובת — לא ההחלטה.
  */
+/**
+ * בוחר התארים — רשת מצומצמת להשוואה, ולחיצה פותחת את המוסדות של אותו תואר.
+ *
+ * קודם היו כאן כרטיסים פתוחים ברוחב מלא, ומתחתיהם קטלוג מוסדות שלא היה לו
+ * שום קשר לתואר שנבחר. כלומר שתי רשימות מוערמות, ולחיצה על תואר לא עשתה כלום.
+ *
+ * הכרטיס המצומצם נושא **שלושה מספרים בלבד** — שכר, אחוז שמגיעים לטק, וחסם
+ * הכניסה. זה מה שהופך רשת להשוואה ולא לתפריט: פער של 12,000 ₪ בחודש עובר
+ * בין שני תארים שנשמעים כמעט אותו דבר, והוא חייב להיראות בלי ללחוץ.
+ *
+ * הפאנל נפתח מתחת ל**שורה** של הכרטיס הנבחר כדי שהחיבור החזותי יישמר —
+ * אותו לקח בדיוק ממסך המטה, שם הפאנל נפל מתחת לכל הרשת ואיבד את הקשר.
+ */
 function DegreePicker({ domains }: { domains: Domain[] }) {
   const degrees = domains.length
     ? [...new Map(domains.flatMap(d => degreesFor(d)).map(d => [d.id, d])).values()]
     : [];
+  const [openId, setOpenId] = useState<string | null>(null);
   if (degrees.length === 0) return null;
+
+  const shown = degrees.slice(0, 6);
+  const selected = shown.find(d => d.id === openId) ?? null;
+  const rows = Array.from({ length: Math.ceil(shown.length / 2) }, (_, i) => shown.slice(i * 2, i * 2 + 2));
 
   return (
     <div className="mb-6">
@@ -2026,77 +2062,157 @@ function DegreePicker({ domains }: { domains: Domain[] }) {
       </div>
       <div className="text-[11.5px] mb-3 leading-[1.6]" style={{ color: "rgba(0,0,0,0.45)" }}>
         שני תארים שנשמעים אותו דבר יכולים להוביל לשכר שונה ב-12,000 ₪ בחודש.
-        אלה התארים שמובילים לתחום שלך, עם המספרים האמיתיים.
+        לחיצה על תואר פותחת את המוסדות שמלמדים אותו.
       </div>
-      <div className="flex flex-col gap-3">
-        {degrees.slice(0, 4).map((d: Degree) => {
-          const bar = ENTRY_LABEL[d.entryBar];
-          return (
-            <div key={d.id} className="rounded-2xl p-4"
-              style={{
-                background: "#fff",
-                border: d.recommended ? "1.5px solid rgba(251,133,0,0.4)" : "1px solid rgba(2,62,138,0.09)",
-                boxShadow: "0 2px 10px rgba(2,62,138,0.05)",
-              }}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <span className="text-[14px] font-black" style={{ color: NAVY }}>{d.name}</span>
-                  <span className="text-[10.5px] mr-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{d.kind}</span>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
-                  style={{ background: `${bar.color}14`, color: bar.color }}>
-                  {bar.label}
-                </span>
-              </div>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                {d.salary && <Stat13 label="שכר אחרי 5-6 שנים" value={`${d.salary.toLocaleString("he-IL")} ₪`} />}
-                {d.employment && <Stat13 label="מועסקים" value={`${d.employment}%`} />}
-                {d.inTech && <Stat13 label="מגיעים לטק" value={`${d.inTech}%`} strong={d.inTech >= 60} />}
-              </div>
+      {rows.map((row, ri) => (
+        <div key={ri}>
+          <div className="grid grid-cols-2 gap-2.5" style={{ marginTop: ri ? 10 : 0 }}>
+            {row.map(d => {
+              const bar = ENTRY_LABEL[d.entryBar];
+              const on = selected?.id === d.id;
+              return (
+                <button
+                  key={d.id}
+                  onClick={() => setOpenId(on ? null : d.id)}
+                  className="text-right p-3"
+                  style={{
+                    background: "#fff",
+                    border: on ? `1.5px solid ${ORANGE}` : "1px solid rgba(2,62,138,0.1)",
+                    borderBottom: on ? "none" : undefined,
+                    borderRadius: on ? "14px 14px 0 0" : 14,
+                    opacity: selected && !on ? 0.55 : 1,
+                    boxShadow: on ? "none" : "0 2px 10px rgba(2,62,138,0.05)",
+                  }}
+                >
+                  <div className="text-[13px] font-black leading-tight" style={{ color: NAVY }}>
+                    {d.recommended ? "✦ " : ""}{d.name}
+                  </div>
+                  <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.35)" }}>{d.kind}</div>
+                  <div className="text-[11.5px] mt-1.5" style={{ color: "rgba(0,0,0,0.55)" }}>
+                    {d.salary ? `${(d.salary / 1000).toFixed(1)}K ₪` : ""}
+                    {d.salary && d.inTech ? " · " : ""}
+                    {d.inTech ? <b style={{ color: "#047857" }}>{d.inTech}% בטק</b> : null}
+                  </div>
+                  <span
+                    className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1.5"
+                    style={{ background: `${bar.color}14`, color: bar.color }}
+                  >
+                    {bar.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-              <div className="text-[12px] leading-[1.65] mt-2" style={{ color: "rgba(0,0,0,0.6)" }}>
-                <b>פותח:</b> {d.leadsTo}
-              </div>
-              {d.recommended && (
-                <div className="text-[11.5px] leading-[1.65] mt-2 px-2.5 py-2 rounded-lg" style={{ background: "rgba(251,133,0,0.08)", color: "#92400e" }}>
-                  ✦ {d.recommended}
-                </div>
-              )}
-              <div className="text-[11px] leading-[1.6] mt-2" style={{ color: "rgba(0,0,0,0.45)" }}>
-                בכנות: {d.caveat}
-              </div>
-              <div className="text-[11px] leading-[1.6] mt-1" style={{ color: "rgba(0,0,0,0.45)" }}>
-                <b>הכניסה:</b> {d.entryNote}
-              </div>
-              {/* המוסדות שסומנו בלוח המטה — עם הדלת של כל אחד */}
-              {(d.recommendedAt?.length ?? 0) > 0 && (
-                <div className="mt-2.5 pt-2 flex flex-wrap items-center gap-1.5" style={{ borderTop: "1px dashed rgba(0,0,0,0.08)" }}>
-                  <span className="text-[10.5px] font-bold" style={{ color: "rgba(0,0,0,0.5)" }}>איפה ללמוד את זה:</span>
-                  {d.recommendedAt!.map(id => {
-                    const inst = INSTITUTIONS.find(i => i.id === id);
-                    if (!inst || inst.status === "hidden") return null;
-                    const door = inst.programId ? FUNDING.find(f => f.id === inst.programId)?.name?.split(" — ")[0] : null;
-                    return (
-                      <span key={id} className="text-[10.5px] font-bold px-2 py-1 rounded-lg"
-                        style={{ background: "rgba(2,62,138,0.06)", color: NAVY }}>
-                        {inst.name.split(" — ")[0]}{door ? ` · דרך ${door}` : ""}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+          {selected && row.some(d => d.id === selected.id) && (
+            <DegreeDetail degree={selected} />
+          )}
+        </div>
+      ))}
+
       <div className="text-[11px] leading-[1.7] mt-3 px-3 py-2 rounded-xl" style={{ background: "rgba(2,62,138,0.04)", color: "rgba(0,0,0,0.5)" }}>
         הבחירה הסופית נעשית יחד עם הרכזת בפגישה — כאן המפה, לא ההחלטה.
-        המוסדות שלמטה הם איפה לומדים את התארים האלה.
       </div>
     </div>
   );
 }
+
+/** הפאנל של תואר נבחר: מה הוא פותח, ההסתייגות, ואיפה לומדים אותו */
+function DegreeDetail({ degree: d }: { degree: Degree }) {
+  const [showRest, setShowRest] = useState(false);
+
+  const recommended = (d.recommendedAt ?? [])
+    .map(id => INSTITUTIONS.find(i => i.id === id))
+    .filter((i): i is NonNullable<typeof i> => !!i && i.status !== "hidden");
+
+  /*
+   * שאר המוסדות שמלמדים את התואר. **ריק = לא מופה, לא "לא מלמד"** — ולכן
+   * מוסד בלי מיפוי לא מוצג כאן כאילו הוא לא רלוונטי, אלא בקיפול נפרד.
+   */
+  const teaches = INSTITUTIONS.filter(
+    i => i.track === "degree" && i.status !== "hidden" &&
+         (i.degreeIds ?? []).includes(d.id) && !recommended.some(r => r.id === i.id)
+  );
+  const unmapped = INSTITUTIONS.filter(
+    i => i.track === "degree" && i.status !== "hidden" && (i.degreeIds?.length ?? 0) === 0
+  );
+
+  const Row = ({ inst, star }: { inst: (typeof INSTITUTIONS)[number]; star?: boolean }) => {
+    const door = inst.programId ? FUNDING.find(f => f.id === inst.programId) : null;
+    return (
+      <div className="rounded-xl px-3 py-2.5" style={{ background: star ? "rgba(251,133,0,0.06)" : "rgba(2,62,138,0.03)", border: `1px solid ${star ? "rgba(251,133,0,0.2)" : "rgba(2,62,138,0.07)"}` }}>
+        <div className="text-[12.5px] font-bold" style={{ color: NAVY }}>
+          {star ? "✦ " : ""}{inst.name.split(" — ")[0]}
+          {door && <span style={{ color: "#92400e" }}> · דרך {door.name.split(" — ")[0]}</span>}
+        </div>
+        <div className="text-[11px] mt-0.5 leading-[1.6]" style={{ color: "rgba(0,0,0,0.5)" }}>
+          {inst.location}{inst.tuition ? ` · ${inst.tuition.split(".")[0]}` : ""}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className="p-4 flex flex-col gap-2.5"
+      style={{ background: "#fff", border: `1.5px solid ${ORANGE}`, borderRadius: "0 0 14px 14px", marginTop: -1 }}
+    >
+      <div className="text-[12px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.6)" }}>
+        <b>פותח:</b> {d.leadsTo}
+      </div>
+      {d.recommended && (
+        <div className="text-[11.5px] leading-[1.65] px-2.5 py-2 rounded-lg" style={{ background: "rgba(251,133,0,0.08)", color: "#92400e" }}>
+          ✦ {d.recommended}
+        </div>
+      )}
+      <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.45)" }}>
+        בכנות: {d.caveat}
+      </div>
+      <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.45)" }}>
+        <b>הכניסה:</b> {d.entryNote}
+      </div>
+
+      <div className="pt-2 mt-0.5" style={{ borderTop: "1px dashed rgba(0,0,0,0.1)" }}>
+        <div className="text-[12px] font-black mb-2" style={{ color: NAVY }}>איפה לומדים את זה</div>
+
+        {recommended.length === 0 && teaches.length === 0 ? (
+          <div className="text-[11.5px] leading-[1.7]" style={{ color: "#92400e" }}>
+            עוד לא מיפינו מוסדות לתואר הזה. זה לא אומר שאין — זה אומר שעוד לא בדקנו,
+            והרכזת תשלים את זה בפגישה.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {recommended.map(i => <Row key={i.id} inst={i} star />)}
+            {teaches.map(i => <Row key={i.id} inst={i} />)}
+          </div>
+        )}
+
+        {unmapped.length > 0 && (
+          <div className="mt-2">
+            <button
+              onClick={() => setShowRest(!showRest)}
+              className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg w-full"
+              style={{ background: "rgba(0,0,0,0.03)", color: "rgba(0,0,0,0.45)" }}
+            >
+              {showRest ? "לסגור" : `עוד ${unmapped.length} מוסדות שטרם בדקנו אם מלמדים את התואר הזה`}
+            </button>
+            {showRest && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {unmapped.map(i => (
+                  <span key={i.id} className="text-[10.5px] px-2 py-1 rounded-lg" style={{ background: "rgba(0,0,0,0.03)", color: "rgba(0,0,0,0.45)" }}>
+                    {i.name.split(" — ")[0]}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 function Chip13({ text, color }: { text: string; color: string }) {
   return (
