@@ -50,7 +50,7 @@ const ANSWER_META: Record<Answer, { label: string; color: string; bg: string }> 
 };
 type Track = "bootcamp" | "mahat" | "degree";
 type QuizAnswers = {
-  time: string; budget: string; education: string; when: string; timeline: string; location: string;
+  time: string; budget: string; education: string; kids: string; when: string; timeline: string; location: string;
   /**
    * מה יש לאדם ביד — רשימה מופרדת בפסיקים.
    *
@@ -132,6 +132,15 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     note: "אפשר לסמן כמה. לא סימנת כלום? גם זה בסדר גמור — יש מסלולים שמתחילים בדיוק מכאן, ונראה לך אותם.",
     multi: true,
     opts: [],
+  },
+  {
+    key: "kids" as keyof QuizAnswers,
+    q: "יש לך ילדים קטנים (מתחת לגיל 6)?",
+    opts: [
+      { val: "A", label: "כן — מגביל מאוד", sub: "ההתחייבות היומית שלי גדולה" },
+      { val: "B", label: "יש ילדים אבל מסתדר/ת", sub: "יש עזרה / גן / מסגרת" },
+      { val: "C", label: "אין — אני גמיש/ה", sub: "יכול/ה להקדיש זמן כרצוני" },
+    ],
   },
   {
     key: "when" as keyof QuizAnswers,
@@ -354,7 +363,7 @@ const BLOCKERS: Blocker[] = [
   },
   {
     id: "hours",
-    applies: q => q.time === "A" || q.when === "B",
+    applies: q => q.time === "A" || q.kids === "A" || q.when === "B",
     said: "הזמן שלי מוגבל מאוד",
     heading: "יש מסגרות שנבנו בדיוק סביב זה",
     lead: "לא כל תואר דורש חמישה ימים בקמפוס. יש תוכניות פרונטליות שמכוונות למי שעובד או מגדל ילדים.",
@@ -378,7 +387,16 @@ const BLOCKERS: Blocker[] = [
   },
   {
     id: "psychometric",
-    applies: q => q.education !== "A",
+    /*
+     * קודם הוא נורה לכל מי שיש לו בגרות — גם למי שיש לו פסיכומטרי
+     * מצוין. עכשיו הוא נורה בדיוק למי שאין לו, או שאמר שאינו מרוצה מהציון.
+     * "מרוצה" הוא הערכה עצמית ולא מספר, וזה הנכון כאן: מי שמרגיש
+     * שהציון שלו לא מספיק צריך לראות מסלולים חלופיים בלי קשר למספר.
+     */
+    applies: q => {
+      const h = (q.has ?? "").split(",").filter(Boolean);
+      return q.education !== "A" && (!h.includes("psycho") || h.includes("psycho-low"));
+    },
     said: "הפסיכומטרי",
     heading: "יש היום יותר דרכים לעקוף אותו מאי פעם",
     lead: "הפסיכומטרי כבר לא השער היחיד. אלה מסלולים אמיתיים שקיימים היום — רובם לא מוכרים מספיק.",
@@ -438,6 +456,10 @@ const WEIGHTS: Partial<Record<keyof QuizAnswers, Record<string, Partial<Record<T
     B: { degree: 1, mahat: 1 },
     C: { degree: 2 },
   },
+  kids: {
+    A: { degree: -2, mahat: 1, bootcamp: 2 },
+    C: { degree: 1 },
+  },
   // מתי פנוי — לא כמה. "רק בערב" סוגר מוסדות שלומדים בהם ביום
   when: {
     B: { degree: -2, mahat: 1, bootcamp: 2 },
@@ -483,7 +505,7 @@ function buildReason(q: QuizAnswers, track: Track): string {
   }
 
   if (track === "mahat") {
-    if (q.time === "A" || q.when === "B") reasons.push("הזמן שלך מוגבל");
+    if (q.time === "A" || q.kids === "A" || q.when === "B") reasons.push("הזמן שלך מוגבל");
     if (q.timeline === "B") reasons.push("את/ה צריך/ה הכנסה בתוך שנתיים");
     const why = reasons.length ? `בגלל ש${reasons.join(", ")} — ` : "";
     return `${why}מה״ט יכול להתאים לך — אבל חשוב שתדע/י שהוא מתאים לסוג קריירה מסוים. הוא חזק במיוחד בגופים ביטחוניים וממשלתיים, שבהם לתעודת הנדסאי יש דירוג שכר רשמי, ובחומרה ואלקטרוניקה שאין אליהן קיצור דרך. אם היעד שלך הוא חברת תוכנה או סטארטאפ — שווה מאוד לבחון קודם תואר, כי מה״ט דורש כמעט אותם תנאים ולוקח כמעט אותו זמן.`;
@@ -508,7 +530,7 @@ function generateQuestions(q: QuizAnswers, shortlist: ShortlistItem[], track: Tr
   if (q.budget === "A") {
     qs.push("אילו מלגות קיימות עבורי ספציפית, כמה הן מכסות ומה תאריכי ההגשה?");
   }
-  if (q.timeline === "A" || q.when === "B") {
+  if (q.timeline === "A" || q.kids === "A") {
     qs.push("איך מחזיקים כלכלית בשנתיים הראשונות? יש שילוב של מלגה ועבודה חלקית שבאמת עובד?");
   }
   if (q.location === "B") {
@@ -550,7 +572,7 @@ function RevealCard({ emoji, title, children }: { emoji: string; title: string; 
 export default function PathsPage() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [qIndex, setQIndex] = useState(0);
-  const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", when: "", timeline: "", location: "" });
+  const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", kids: "", when: "", timeline: "", location: "" });
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [chips, setChips] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track>("bootcamp");
@@ -597,7 +619,7 @@ export default function PathsPage() {
       // ?demo=1&phase=done — קפיצה ישירה למסך מסוים עם נתונים לדוגמה, לצורך סקירה.
       // לא נשמר ל-localStorage כדי לא ללכלך התקדמות אמיתית.
       if (params.has("demo")) {
-        const demo: QuizAnswers = { time: "B", budget: "A", education: "B", when: "C", timeline: "B", location: "B" };
+        const demo: QuizAnswers = { time: "B", budget: "A", education: "B", kids: "B", when: "C", timeline: "B", location: "B" };
         setAnswers(demo);
         setQuizStarted(true);
         setQIndex(QUIZ_QUESTIONS.length - 1);
