@@ -142,7 +142,7 @@ export type QuizLike = {
   budget?: string;
   location?: string;
   education?: string;
-  kids?: string;
+  when?: string;
 };
 
 /**

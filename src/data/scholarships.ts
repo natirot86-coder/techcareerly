@@ -449,7 +449,7 @@ export const FUNDING: Funding[] = [
      * מדעי הנתונים. **רק מדעי המחשב ממופה כאן**; שני האחרים אינם תואמים
      * לאף תואר קנוני ברשימה שלנו, ולא ממציאים התאמה.
      */
-    degreeIds: ["cs"],
+    degreeIds: ["cs", "business-accountech", "econ-data-science"],
   },
   {
     id: "sicket",

@@ -165,7 +165,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "runi",
-    degreeIds: ["cs", "business-is", "psych-ux"],
+    degreeIds: ["cs", "business-is", "psych-ux", "business-accountech", "econ-data-science"],
     programIds: ["runi-keren-or"],
     name: "אוניברסיטת רייכמן",
     track: "degree",

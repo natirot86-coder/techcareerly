@@ -50,7 +50,7 @@ const ANSWER_META: Record<Answer, { label: string; color: string; bg: string }> 
 };
 type Track = "bootcamp" | "mahat" | "degree";
 type QuizAnswers = {
-  time: string; budget: string; education: string; kids: string; timeline: string; location: string;
+  time: string; budget: string; education: string; when: string; timeline: string; location: string;
   /**
    * מה יש לאדם ביד — רשימה מופרדת בפסיקים.
    *
@@ -74,8 +74,8 @@ const HAVE_CHIPS: { id: string; label: string }[] = [
   { id: "math5",   label: "מתמטיקה 5 יח׳" },
   { id: "science", label: "פיזיקה או ביולוגיה מורחב" },
   { id: "english", label: "אנגלית 4–5 יח׳" },
-  { id: "psycho",  label: "יש לי פסיכומטרי" },
-  { id: "psycho-low", label: "עשיתי ולא מרוצה מהציון" },
+  { id: "psycho",  label: "יש לי פסיכומטרי ואני מרוצה מהציון" },
+  { id: "psycho-low", label: "יש לי פסיכומטרי ואני לא מרוצה מהציון" },
   { id: "degree",  label: "כבר יש לי תואר ראשון" },
 ];
 
@@ -118,11 +118,12 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     key: "budget" as keyof QuizAnswers,
-    q: "מה האפשרות הכלכלית שלך ללימודים?",
+    q: "כמה תוכל/י לשלם מהכיס, לשנה?",
+    note: "רק על שכר לימוד. כמה זמן אפשר להחזיק בלי הכנסה — זו שאלה נפרדת בהמשך.",
     opts: [
-      { val: "A", label: "זקוק/ה למלגה", sub: "בלי מלגה זה לא מציאותי עבורי" },
-      { val: "B", label: "עד 30,000 ₪", sub: "יכול/ה להשתתף בחלק מהעלות" },
-      { val: "C", label: "הכסף לא המגבלה", sub: "אני בוחר/ת לפי איכות" },
+      { val: "A", label: "כמעט כלום", sub: "גם כמה מאות שקלים זה מאמץ אמיתי" },
+      { val: "B", label: "עד כמה אלפי שקלים", sub: "מספיק לקורס מסובסד, או לסגור את הפער שמלגה משאירה" },
+      { val: "C", label: "עד שכר לימוד מלא — כ-12,000 ₪ לשנה", sub: "אפשר לממן תואר מתוקצב גם בלי מלגה" },
     ],
   },
   {
@@ -133,12 +134,13 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     opts: [],
   },
   {
-    key: "kids" as keyof QuizAnswers,
-    q: "יש לך ילדים קטנים (מתחת לגיל 6)?",
+    key: "when" as keyof QuizAnswers,
+    q: "מתי את/ה פנוי/ה ללמוד?",
+    note: "זו לא שאלה על כמות שעות אלא על מתי הן. מוסד עם מסלול ערב ומוסד שלומדים בו בבוקר הם שתי אפשרויות שונות לגמרי, וזה גם מה שקובע אם אפשר להמשיך לעבוד.",
     opts: [
-      { val: "A", label: "כן — מגביל מאוד", sub: "ההתחייבות היומית שלי גדולה" },
-      { val: "B", label: "יש ילדים אבל מסתדר/ת", sub: "יש עזרה / גן / מסגרת" },
-      { val: "C", label: "אין — אני גמיש/ה", sub: "יכול/ה להקדיש זמן כרצוני" },
+      { val: "A", label: "בעיקר בבוקר", sub: "אני פנוי/ה ביום — ואפשר ללמוד במסלול רגיל" },
+      { val: "B", label: "רק בערב", sub: "אני עובד/ת ביום ולא יכול/ה להפסיק" },
+      { val: "C", label: "גמיש/ה", sub: "אפשר לסדר את זה כך או כך" },
     ],
   },
   {
@@ -169,7 +171,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
     emoji: "⚡",
     label: "הכשרה טכנולוגית",
     duration: "6–12 חודשים",
-    cost: "מחינם ועד 45,000 ₪ — תלוי לגמרי איפה",
+    cost: "מ-980 ₪ ועד כ-6,000 — וחלק חינם",
     entry: "מבחן מיון וראיון. בחלק מהמסלולים אפשר בלי בגרות מלאה",
     pros: [
       "טק-קריירה: כ-4,000 ₪ בלבד, עם מלגת קיום ומגורים — ו-88–90 אחוזי השמה, בוגרים בצ׳ק פוינט, Wix, אינטל ובזק",
@@ -189,7 +191,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
     emoji: "🏫",
     label: "מה\"ט / הנדסאי",
     duration: "2–3 שנים, לרוב בערב",
-    cost: "25,000–65,000 ₪",
+    cost: "כ-9,300–11,100 ₪ לשנה",
     entry: "בגרות מלאה עם מתמטיקה — כמעט מה שתואר דורש",
     pros: [
       "אם שירתת — האגף לחיילים משוחררים מממן 90 אחוז משכר הלימוד בלימודי הנדסאי במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים. זו ההטבה הגדולה ביותר במסלול הזה",
@@ -210,7 +212,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
     emoji: "🎓",
     label: "תואר אקדמי",
     duration: "3–4 שנים · משרת סטודנט משנה ב׳",
-    cost: "40,000–130,000 ₪ (לפני מלגות)",
+    cost: "12,017 ₪ לשנה — מחיר מפוקח",
     entry: "בגרות + פסיכומטרי — בחלק מהמכללות יש קבלה ללא פסיכומטרי",
     pros: [
       "משרת סטודנט נפתחת כבר בסוף שנה א׳ — לא צריך לחכות לסיום התואר כדי להתחיל להרוויח ולצבור ניסיון",
@@ -352,7 +354,7 @@ const BLOCKERS: Blocker[] = [
   },
   {
     id: "hours",
-    applies: q => q.time === "A" || q.kids === "A",
+    applies: q => q.time === "A" || q.when === "B",
     said: "הזמן שלי מוגבל מאוד",
     heading: "יש מסגרות שנבנו בדיוק סביב זה",
     lead: "לא כל תואר דורש חמישה ימים בקמפוס. יש תוכניות פרונטליות שמכוונות למי שעובד או מגדל ילדים.",
@@ -436,9 +438,9 @@ const WEIGHTS: Partial<Record<keyof QuizAnswers, Record<string, Partial<Record<T
     B: { degree: 1, mahat: 1 },
     C: { degree: 2 },
   },
-  kids: {
-    A: { degree: -2, mahat: 1, bootcamp: 2 },
-    B: { mahat: 1 },
+  // מתי פנוי — לא כמה. "רק בערב" סוגר מוסדות שלומדים בהם ביום
+  when: {
+    B: { degree: -2, mahat: 1, bootcamp: 2 },
     C: { degree: 1 },
   },
   location: {
@@ -481,7 +483,7 @@ function buildReason(q: QuizAnswers, track: Track): string {
   }
 
   if (track === "mahat") {
-    if (q.time === "A" || q.kids === "A") reasons.push("הזמן שלך מוגבל");
+    if (q.time === "A" || q.when === "B") reasons.push("הזמן שלך מוגבל");
     if (q.timeline === "B") reasons.push("את/ה צריך/ה הכנסה בתוך שנתיים");
     const why = reasons.length ? `בגלל ש${reasons.join(", ")} — ` : "";
     return `${why}מה״ט יכול להתאים לך — אבל חשוב שתדע/י שהוא מתאים לסוג קריירה מסוים. הוא חזק במיוחד בגופים ביטחוניים וממשלתיים, שבהם לתעודת הנדסאי יש דירוג שכר רשמי, ובחומרה ואלקטרוניקה שאין אליהן קיצור דרך. אם היעד שלך הוא חברת תוכנה או סטארטאפ — שווה מאוד לבחון קודם תואר, כי מה״ט דורש כמעט אותם תנאים ולוקח כמעט אותו זמן.`;
@@ -506,7 +508,7 @@ function generateQuestions(q: QuizAnswers, shortlist: ShortlistItem[], track: Tr
   if (q.budget === "A") {
     qs.push("אילו מלגות קיימות עבורי ספציפית, כמה הן מכסות ומה תאריכי ההגשה?");
   }
-  if (q.timeline === "A" || q.kids === "A") {
+  if (q.timeline === "A" || q.when === "B") {
     qs.push("איך מחזיקים כלכלית בשנתיים הראשונות? יש שילוב של מלגה ועבודה חלקית שבאמת עובד?");
   }
   if (q.location === "B") {
@@ -548,7 +550,7 @@ function RevealCard({ emoji, title, children }: { emoji: string; title: string; 
 export default function PathsPage() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [qIndex, setQIndex] = useState(0);
-  const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", kids: "", timeline: "", location: "" });
+  const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", when: "", timeline: "", location: "" });
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [chips, setChips] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track>("bootcamp");
@@ -595,7 +597,7 @@ export default function PathsPage() {
       // ?demo=1&phase=done — קפיצה ישירה למסך מסוים עם נתונים לדוגמה, לצורך סקירה.
       // לא נשמר ל-localStorage כדי לא ללכלך התקדמות אמיתית.
       if (params.has("demo")) {
-        const demo: QuizAnswers = { time: "B", budget: "A", education: "B", kids: "B", timeline: "B", location: "B" };
+        const demo: QuizAnswers = { time: "B", budget: "A", education: "B", when: "C", timeline: "B", location: "B" };
         setAnswers(demo);
         setQuizStarted(true);
         setQIndex(QUIZ_QUESTIONS.length - 1);
@@ -927,7 +929,14 @@ export default function PathsPage() {
                   return (
                     <button
                       key={c.id}
-                      onClick={() => setChips(on ? chips.filter(x => x !== c.id) : [...chips, c.id])}
+                      onClick={() => {
+                        // זוג הפסיכומטרי הדדית בלעדי — סימון אחד מבטל את השני
+                        const PAIR: Record<string, string> = { psycho: "psycho-low", "psycho-low": "psycho" };
+                        const drop = PAIR[c.id];
+                        setChips(on
+                          ? chips.filter(x => x !== c.id)
+                          : [...chips.filter(x => x !== drop), c.id]);
+                      }}
                       className="px-3.5 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-[0.97]"
                       style={{
                         background: on ? NAVY : "#fff",
