@@ -693,6 +693,62 @@ function MoneyOnce() {
 }
 
 
+/**
+ * חשבון השעות — התאום של חשבון הכסף.
+ *
+ * כמעט לכל מלגה יש מחיר בזמן: רוטשילד עשר שעות שבועיות, ISEF שעתיים,
+ * פר״ח מאה שעות בשנה. אף אחד לא סופר אותן יחד, ולכן מי שצובר שלוש
+ * מלגות מגלה באמצע השנה שהתחייב ליותר ממה שיש לו — ואז הוא לא נושר
+ * ממלגה אחת, הוא נושר מהלימודים.
+ *
+ * ההשוואה נעשית מול מה שהוא **עצמו** אמר בשאלון שלב 4 על שעות פנויות,
+ * כי סף כללי היה שרירותי. אותו עיקרון של מסך הכסף: מספר, לא הרגעה.
+ */
+function HoursAccount() {
+  const [apps, setApps] = useState<Record<string, string>>({});
+  const [freeHours, setFreeHours] = useState<number | null>(null);
+
+  useEffect(() => {
+    try {
+      setApps(JSON.parse(localStorage.getItem("plan-apps") ?? "{}"));
+      const quiz = JSON.parse(localStorage.getItem("paths-quiz") ?? "{}");
+      const map: Record<string, number> = { A: 10, B: 20, C: 30 };
+      if (quiz.time) setFreeHours(map[quiz.time as string] ?? null);
+    } catch { /* ignore */ }
+  }, []);
+
+  const active = Object.entries(apps)
+    .filter(([, st]) => st !== "rejected")
+    .map(([id]) => SCHOLARSHIPS.find(s => s.id === id))
+    .filter((f): f is NonNullable<typeof f> => !!f && !!f.annualHours);
+
+  if (active.length === 0) return null;
+
+  const annual = active.reduce((sum, f) => sum + (f.annualHours ?? 0), 0);
+  const weekly = Math.round((annual / 40) * 10) / 10;
+  const tight = freeHours !== null && weekly > freeHours * 0.4;
+
+  return (
+    <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${tight ? "#f0c9c9" : BORDER}` }}>
+      <div className="text-[16px] font-extrabold mb-1" style={{ color: NAVY }}>ומה זה עולה בזמן</div>
+      <p className="text-[13px] mb-3" style={{ color: "#5c574e", lineHeight: 1.6 }}>
+        לרוב המלגות יש מחיר בשעות — התנדבות, חונכות או מפגשים. זה הסכום שלהן יחד.
+      </p>
+      {active.map(f => (
+        <Row key={f.id} label={f.name.split(" — ")[0]} value={`${f.annualHours} שעות בשנה`} />
+      ))}
+      <Row label="סה״כ" value={`${annual} שעות — כ-${weekly} שעות בשבוע`} bold />
+      {tight && (
+        <div className="mt-3 p-3 rounded-xl text-[12.5px]" style={{ background: "rgba(220,38,38,0.05)", color: "#991b1b", lineHeight: 1.7 }}>
+          <b>שים/י לב:</b> אמרת שיש לך כ-{freeHours} שעות בשבוע ללימודים, וההתחייבויות
+          האלה לוקחות כ-{weekly}. זה אפשרי — אבל כדאי לדבר על זה עם הרכזת לפני שמגישים,
+          ולא באמצע השנה.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MoneyView() {
   const perach = SCHOLARSHIPS.find(s => s.id === "perach")!;
   const gap = BUDGETED_TUITION - (perach.amount ?? 0);
@@ -705,6 +761,8 @@ function MoneyView() {
           המספרים כאן הם מה שאומת מול הגופים עצמם. מה שלא פורסם — כתוב שלא פורסם.
         </p>
       </div>
+
+      <HoursAccount />
 
       <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${BORDER}` }}>
         <Row label="שכר לימוד לשנה, במוסד מתוקצב" value={`${BUDGETED_TUITION.toLocaleString("he-IL")} ₪`} />
