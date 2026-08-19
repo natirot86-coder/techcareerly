@@ -12,7 +12,12 @@ import { savePathsAnswers, logEvent } from "@/lib/candidate";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
+import dynamic from "next/dynamic";
 import GeoView from "@/components/ui/GeoView";
+const PinMap = dynamic(() => import("@/components/ui/PinMap"), {
+  ssr: false,
+  loading: () => <div style={{ height: 420, borderRadius: 16, background: "rgba(2,62,138,0.04)" }} />,
+});
 import { regionsForAnswer } from "@/data/regions";
 
 /** שם התת-שלב שמוצג בפס ההתקדמות */
@@ -623,7 +628,7 @@ export default function PathsPage() {
    * רשימות מוערמות בלי קשר ביניהן — וזה מה שהיה כאן קודם.
    */
   const [showAllInst, setShowAllInst] = useState(false);
-  const [geoView, setGeoView] = useState(false);
+  const [view2, setView2] = useState<"list" | "geo" | "map">("list");
   const [quizStarted, setQuizStarted] = useState(false);
   const [research, setResearch] = useState<Record<string, ResearchEntry>>({});
   const [meetingBooked, setMeetingBooked] = useState(false);
@@ -1554,20 +1559,22 @@ export default function PathsPage() {
             עד היום, למרות ששאלנו אותה בשאלון ולא עשינו עם התשובה כלום.
           */}
           <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "rgba(2,62,138,0.06)" }}>
-            {([["list", "רשימה"], ["geo", "לפי אזור"]] as const).map(([v, label]) => (
-              <button key={v} onClick={() => setGeoView(v === "geo")}
+            {([["list", "רשימה"], ["geo", "לפי אזור"], ["map", "מפה"]] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setView2(v)}
                 className="flex-1 py-2 rounded-lg text-[12.5px] font-bold"
                 style={{
-                  background: (v === "geo") === geoView ? "#fff" : "transparent",
-                  color: (v === "geo") === geoView ? NAVY : "rgba(0,0,0,0.45)",
-                  boxShadow: (v === "geo") === geoView ? "0 1px 3px rgba(2,62,138,0.12)" : "none",
+                  background: view2 === v ? "#fff" : "transparent",
+                  color: view2 === v ? NAVY : "rgba(0,0,0,0.45)",
+                  boxShadow: view2 === v ? "0 1px 3px rgba(2,62,138,0.12)" : "none",
                 }}>
                 {label}
               </button>
             ))}
           </div>
 
-          {geoView ? (
+          {view2 === "map" ? (
+            <PinMap track={activeTrack} myRegions={regionsForAnswer(answers.location)} />
+          ) : view2 === "geo" ? (
             <GeoView track={activeTrack} myRegions={regionsForAnswer(answers.location)} />
           ) : (
           <>
