@@ -327,7 +327,7 @@ function isUrgent(a: AnnualDate): boolean {
 // ─── Blockers ─────────────────────────────────────────────────────────────────
 // כל חסם שהמשתמש הודה בו מקבל כאן פתרון קונקרטי עם שם ותאריך — לא רשימה גנרית.
 
-type Solution = { name: string; detail: string; link?: string; date?: AnnualDate };
+type Solution = { name: string; detail: string; link?: string; date?: AnnualDate; group?: string };
 type Blocker = {
   id: string;
   applies: (q: QuizAnswers) => boolean;
@@ -362,13 +362,13 @@ const BLOCKERS: Blocker[] = [
     applies: q => q.budget === "A" || q.budget === "B",
     said: "בלי מלגה זה לא מציאותי עבורי",
     heading: "כמעט אף אחד לא משלם את המחיר המלא",
-    lead: "יש הרבה יותר כסף לתארים מאשר לקורסים. הרבה יותר. וחלק מהמלגות אפשר לצבור יחד — מרום ופר״ח למשל תוכננו במפורש להשתלב. אלה התוכניות שרלוונטיות לך, עם התאריכים.",
+    lead: "יש הרבה יותר כסף לתארים מאשר לקורסים. הרבה יותר. וחלק מהמלגות אפשר לצבור יחד — מרום ופר״ח למשל תוכננו במפורש להשתלב. חילקנו לפי מסלול — כדי שתראה/י ישר את מה שרלוונטי לכיוון שלך.",
     solutions: [
-      { name: "מלגת מרום", detail: "ליוצאי אתיופיה שבארץ 15+ שנים או ילידי הארץ. מדעי המחשב נמצאים בקבוצת העדיפות העליונה שלה. מתשפ״ז בוטלה חובת ההתנדבות — אפשר לצבור אותה יחד עם מלגות אחרות.", link: "https://che.org.il/scholarships/marom/", date: { m: 9, d: 9, label: "ההרשמה נפתחת", closeM: 11, closeD: 10 } },
-      { name: "עתידים לתעשייה והייטק", detail: "מלגת קיום חודשית, מחשב נייד, סיוע בשכר לימוד — והשמה בתעשייה כבר מהסמסטר השלישי. עדיפות לפריפריה ולקהילות מיוצגות-חסר. ההרשמה פתוחה.", link: "https://www.atidimtaasya.com/" },
-      { name: "המינהל לסטודנטים עולים", detail: "למי שבארץ פחות מ-15 שנה: מימון שכר לימוד, שיעורי עזר, חונך אישי ומלגת קיום חודשית. זה המסלול המשלים למרום — לא מקבלים את שניהם.", date: { m: 11, d: 1, label: "מועד לסמסטר א׳" } },
-      { name: "שוברים להכשרה מקצועית", detail: "יוצאי אתיופיה נמצאים בקבוצת הזכאות הגבוהה ביותר — סבסוד של עד 90% מעלות הקורס ועוד מענק השמה. נדרשת הפניה ממרכז הכוון או שירות התעסוקה." },
-      { name: "האגף לחיילים משוחררים", detail: "אם שירתת ואת/ה שוקל/ת מסלול הנדסאי — האגף מממן 90% משכר הלימוד במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים.", link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx" },
+      { group: "לתואר", name: "מלגת מרום", detail: "ליוצאי אתיופיה שבארץ 15+ שנים או ילידי הארץ. מדעי המחשב נמצאים בקבוצת העדיפות העליונה שלה. מתשפ״ז בוטלה חובת ההתנדבות — אפשר לצבור אותה יחד עם מלגות אחרות.", link: "https://che.org.il/scholarships/marom/", date: { m: 9, d: 9, label: "ההרשמה נפתחת", closeM: 11, closeD: 10 } },
+      { group: "לתואר", name: "עתידים לתעשייה והייטק", detail: "מלגת קיום חודשית, מחשב נייד, סיוע בשכר לימוד — והשמה בתעשייה כבר מהסמסטר השלישי. עדיפות לפריפריה ולקהילות מיוצגות-חסר. ההרשמה פתוחה.", link: "https://www.atidimtaasya.com/" },
+      { group: "לתואר", name: "המינהל לסטודנטים עולים", detail: "למי שבארץ פחות מ-15 שנה: מימון שכר לימוד, שיעורי עזר, חונך אישי ומלגת קיום חודשית. זה המסלול המשלים למרום — לא מקבלים את שניהם.", date: { m: 11, d: 1, label: "מועד לסמסטר א׳" } },
+      { group: "להכשרה מקצועית", name: "שוברים להכשרה מקצועית", detail: "יוצאי אתיופיה נמצאים בקבוצת הזכאות הגבוהה ביותר — סבסוד של עד 90% מעלות הקורס ועוד מענק השמה. נדרשת הפניה ממרכז הכוון או שירות התעסוקה." },
+      { group: "להנדסאים (מה״ט)", name: "האגף לחיילים משוחררים", detail: "אם שירתת ואת/ה שוקל/ת מסלול הנדסאי — האגף מממן 90% משכר הלימוד במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים.", link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx" },
     ],
   },
   {
@@ -596,6 +596,84 @@ function generateQuestions(q: QuizAnswers, shortlist: ShortlistItem[], track: Tr
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+/** שומר את סדר ההופעה — הסדר בדאטה הוא הסדר למשתמש */
+function groupSolutions(solutions: Solution[]): [string, Solution[]][] {
+  const out: [string, Solution[]][] = [];
+  for (const sol of solutions) {
+    const g = sol.group ?? "";
+    const found = out.find(([k]) => k === g);
+    if (found) found[1].push(sol);
+    else out.push([g, [sol]]);
+  }
+  return out;
+}
+
+/**
+ * אריח פתרון מכווץ — שם ותאריך בלבד, והפירוט נפתח בלחיצה.
+ *
+ * המסך הכיל עד עשרה פתרונות פתוחים ברצף והפך לגלילה אינסופית;
+ * שניים בשורה מקצרים אותו בלי לוותר על מילה מהפירוט.
+ * בונוס מדידה: הפתיחה עצמה היא סיגנל עניין שקודם לא היה קיים.
+ */
+function SolutionTile({ s, blockerId }: { s: Solution; blockerId: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => {
+        if (!open) logEvent("paths_solution_open", { blocker: blockerId, solution: s.name });
+        setOpen(o => !o);
+      }}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(o => !o); } }}
+      className="rounded-xl px-3 py-2.5 cursor-pointer select-none"
+      style={{
+        gridColumn: open ? "1 / -1" : undefined,
+        background: open ? "rgba(251,133,0,0.09)" : "rgba(251,133,0,0.05)",
+        border: "1px solid rgba(251,133,0,0.15)",
+      }}
+    >
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="text-[11.5px] font-black leading-[1.45]" style={{ color: "#92400e" }}>{s.name}</div>
+        <span className="text-[13px] font-black shrink-0" style={{ color: "#92400e", opacity: 0.55 }}>
+          {open ? "−" : "+"}
+        </span>
+      </div>
+      {s.date && (
+        <span
+          className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+          style={{
+            background: isUrgent(s.date) ? ORANGE : "rgba(0,0,0,0.08)",
+            color: isUrgent(s.date) ? "#fff" : "rgba(0,0,0,0.5)",
+          }}
+        >
+          {whenText(s.date)}
+        </span>
+      )}
+      {open && (
+        <>
+          <div className="text-[11.5px] leading-[1.65] mt-2" style={{ color: "rgba(0,0,0,0.62)" }}>{s.detail}</div>
+          {s.link && (
+            <a
+              href={s.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => {
+                e.stopPropagation();
+                logEvent("paths_solution_click", { blocker: blockerId, solution: s.name });
+              }}
+              className="inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-lg"
+              style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}
+            >
+              לפרטים ↗
+            </a>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 function RevealCard({ emoji, title, children }: { emoji: string; title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -1413,38 +1491,22 @@ export default function PathsPage() {
                 {b.lead}
               </div>
 
-              {/* Concrete solutions */}
+              {/*
+                אריחים מכווצים במקום כרטיסים פתוחים — המסך התארך מדי.
+                וכשחסם חוצה מסלולים (כסף), הפתרונות מקובצים לפי מסלול —
+                מי שמכוון להכשרה לא צריך לצלול בין מלגות אקדמיה.
+              */}
               <div className="flex flex-col gap-3">
-                {b.solutions.map(s => (
-                  <div key={s.name} className="rounded-xl px-4 py-3" style={{ background: "rgba(251,133,0,0.05)", border: "1px solid rgba(251,133,0,0.15)" }}>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="text-[12.5px] font-black" style={{ color: "#92400e" }}>{s.name}</div>
-                      {s.date && (
-                        <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"
-                          style={{
-                            background: isUrgent(s.date) ? ORANGE : "rgba(0,0,0,0.08)",
-                            color: isUrgent(s.date) ? "#fff" : "rgba(0,0,0,0.5)",
-                          }}
-                        >
-                          {whenText(s.date)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11.5px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.6)" }}>{s.detail}</div>
-                    {s.link && (
-                      <a
-                        href={s.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        // מעורבות: לא רק אילו חסמים יש להם, אלא אילו מהמענים שלנו באמת מעניינים
-                        onClick={() => logEvent("paths_solution_click", { blocker: b.id, solution: s.name })}
-                        className="inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-lg"
-                        style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}
-                      >
-                        לפרטים ↗
-                      </a>
+                {groupSolutions(b.solutions).map(([group, items]) => (
+                  <div key={group || "all"}>
+                    {group && (
+                      <div className="text-[11px] font-black mb-1.5" style={{ color: NAVY, opacity: 0.7 }}>
+                        {group}
+                      </div>
                     )}
+                    <div className="grid gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                      {items.map(sol => <SolutionTile key={sol.name} s={sol} blockerId={b.id} />)}
+                    </div>
                   </div>
                 ))}
               </div>

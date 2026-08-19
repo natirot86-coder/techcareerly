@@ -22,6 +22,7 @@ import { INSTITUTIONS, type Track } from "@/data/institutions";
 import { visibleCourses } from "@/data/courses";
 import { latLngOf, ISRAEL_CENTER, regionOf, type Region } from "@/data/regions";
 import InstitutionCard from "./InstitutionCard";
+import { qualityOf, QUALITY_META, QUALITY_RANK, type Quality } from "@/data/quality";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -29,14 +30,16 @@ const ORANGE = "#fb8500";
 type Spot = {
   city: string;
   pos: [number, number];
+  /** הטוב ביותר שיושב כאן — הסיכה מייצגת אותו */
+  best: Quality;
   mine: boolean;
   items: { id: string; name: string; where?: string; sub?: string; link?: string }[];
 };
 
 /** סיכה עגולה עם מונה — נבנית כ-HTML כדי לא לשאת קובצי תמונה */
-function pinIcon(count: number, mine: boolean) {
+function pinIcon(count: number, quality: Quality) {
   const size = count > 1 ? 34 : 28;
-  const bg = mine ? ORANGE : NAVY;
+  const bg = QUALITY_META[quality].color;
   return L.divIcon({
     className: "",
     html: `<div style="
@@ -79,7 +82,8 @@ export default function PinMap({ track, myRegions = [], inList, onToggleList }: 
       const cur = byCity.get(city);
       if (cur) cur.items.push(item);
       else byCity.set(city, {
-        city, pos, mine: myRegions.includes(regionOf(city)), items: [item],
+        city, pos, best: "unverified",
+        mine: myRegions.includes(regionOf(city)), items: [item],
       });
     };
 
@@ -101,6 +105,13 @@ export default function PinMap({ track, myRegions = [], inList, onToggleList }: 
         id: i.id, name: i.name.split(" — ")[0],
         where: i.address ?? i.city, sub: i.tag, link: i.link,
       });
+    }
+    // הסיכה מייצגת את הטוב ביותר שיושב בעיר — אחרת מוסד מומלץ נעלם
+    // מאחורי שכן לא מאומת שנוסף לפניו
+    for (const spot of byCity.values()) {
+      spot.best = pickedInsts(spot.city, track)
+        .map(qualityOf)
+        .sort((a, b) => QUALITY_RANK[a] - QUALITY_RANK[b])[0] ?? "unverified";
     }
     return { spots: [...byCity.values()], unplaced };
   }, [track, myRegions]);
@@ -132,7 +143,7 @@ export default function PinMap({ track, myRegions = [], inList, onToggleList }: 
           />
           <FitToSpots spots={spots} />
           {spots.map(s => (
-            <Marker key={s.city} position={s.pos} icon={pinIcon(s.items.length, s.mine)}>
+            <Marker key={s.city} position={s.pos} icon={pinIcon(s.items.length, s.best)}>
               <Popup>
                 <div dir="rtl" style={{ minWidth: 170, fontFamily: "'Heebo', sans-serif" }}>
                   <div style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>
@@ -162,21 +173,59 @@ export default function PinMap({ track, myRegions = [], inList, onToggleList }: 
         </MapContainer>
       </div>
 
+      {/*
+        מגירה ולא קופסה מתחת למפה: המפה תופסת 420 פיקסלים בטלפון, וכרטיס
+        שנפתח מתחתיה נמצא מחוץ למסך — כלומר לוחצים על סיכה ונדמה שכלום
+        לא קרה. המגירה מבטיחה שהתוצאה תיראה, ומשאירה את המפה גלויה מעליה
+        כדי שאפשר יהיה ללחוץ על סיכה אחרת בלי לאבד הקשר.
+      */}
       {picked && (
-        <div className="flex flex-col gap-2 p-3 rounded-2xl"
-          style={{ background: "rgba(2,62,138,0.03)", border: "1px solid rgba(2,62,138,0.1)" }}>
-          <div className="flex items-center justify-between">
-            <span className="text-[13px] font-black" style={{ color: NAVY }}>{picked}</span>
-            <button onClick={() => setPicked(null)} className="text-[11px] font-bold"
-              style={{ color: "rgba(0,0,0,0.4)" }}>לסגור ✕</button>
+        <>
+          <div onClick={() => setPicked(null)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 1000 }} />
+          <div
+            dir="rtl"
+            style={{
+              position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 1001,
+              maxHeight: "72vh", display: "flex", flexDirection: "column",
+              background: "#fbf9f5", borderRadius: "20px 20px 0 0",
+              boxShadow: "0 -8px 30px rgba(0,0,0,0.22)",
+            }}
+          >
+            <div style={{ padding: "10px 16px 8px", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+              <div style={{ width: 44, height: 5, borderRadius: 999, background: "#ddd6c8", margin: "0 auto 10px" }} />
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[15px] font-black" style={{ color: NAVY }}>{picked}</div>
+                  <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.45)" }}>
+                    {pickedInsts(picked, track).length} מסלולים · המומלצים למעלה
+                  </div>
+                </div>
+                <button onClick={() => setPicked(null)} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
+                  style={{ background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.5)" }}>סגירה</button>
+              </div>
+            </div>
+            <div style={{ overflowY: "auto", padding: "10px 12px 22px", display: "flex", flexDirection: "column", gap: 8 }}>
+              {pickedInsts(picked, track)
+                .sort((a, b) => QUALITY_RANK[qualityOf(a)] - QUALITY_RANK[qualityOf(b)])
+                .map((i, idx) => (
+                  <InstitutionCard key={i.id} inst={i} defaultOpen={idx === 0}
+                    inList={inList?.(i.name)}
+                    onToggleList={onToggleList ? () => onToggleList(i.name) : undefined} />
+                ))}
+            </div>
           </div>
-          {pickedInsts(picked, track).map(i => (
-            <InstitutionCard key={i.id} inst={i} defaultOpen
-              inList={inList?.(i.name)}
-              onToggleList={onToggleList ? () => onToggleList(i.name) : undefined} />
-          ))}
-        </div>
+        </>
       )}
+
+      <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1">
+        {(["recommended", "ok", "warn", "unverified"] as const).map(q => (
+          <span key={q} className="flex items-center gap-1.5 text-[10.5px]" style={{ color: "rgba(0,0,0,0.55)" }}>
+            <span style={{ width: 10, height: 10, borderRadius: 999, background: QUALITY_META[q].color, display: "inline-block" }} />
+            {QUALITY_META[q].label}
+          </span>
+        ))}
+      </div>
 
       <div className="text-[11px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.45)" }}>
         <b>הסיכה מציינת עיר, לא בניין.</b> כתובת מדויקת יש לנו רק לחלק מהמוסדות,

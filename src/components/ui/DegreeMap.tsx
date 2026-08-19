@@ -16,15 +16,17 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { INSTITUTIONS } from "@/data/institutions";
 import { latLngOf, ISRAEL_CENTER } from "@/data/regions";
+import { qualityOf, QUALITY_META } from "@/data/quality";
 
 const NAVY = "#023e8a";
 
 type Inst = (typeof INSTITUTIONS)[number];
 
-const dot = L.divIcon({
+/** אותו קוד צבע כמו במפה הגדולה — ירוק מומלץ, אדום יש מה לדעת, אפור לא אומת */
+const dot = (color: string) => L.divIcon({
   className: "",
   html: `<div style="width:22px;height:22px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);
-    background:${NAVY};border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3)"></div>`,
+    background:${color};border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3)"></div>`,
   iconSize: [22, 22],
   iconAnchor: [11, 22],
   popupAnchor: [0, -22],
@@ -56,7 +58,7 @@ export default function DegreeMap({ insts }: { insts: Inst[] }) {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {placed.map(({ inst, pos }) => (
-            <Marker key={inst.id} position={pos} icon={dot}>
+            <Marker key={inst.id} position={pos} icon={dot(QUALITY_META[qualityOf(inst)].color)}>
               <Popup>
                 <div dir="rtl" style={{ minWidth: 150, fontFamily: "'Heebo', sans-serif" }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: NAVY }}>
