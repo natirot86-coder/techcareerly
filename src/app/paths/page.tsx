@@ -462,7 +462,9 @@ const WEIGHTS: Partial<Record<keyof QuizAnswers, Record<string, Partial<Record<T
   },
   // תקציב — חסם רך יותר ממה שהוא נראה: תשתית המלגות לתארים היא הרחבה ביותר
   budget: {
-    A: { mahat: 1, bootcamp: 1 },
+    // "כמעט כלום" היה דוחף להכשרה — וזה הפוך מהמציאות:
+    // שכר הלימוד המפוקח הוא 12,017 ₪, וכל מערך המלגות בנוי סביב התואר
+    A: { degree: 1 },
     B: { degree: 1, mahat: 1 },
     C: { degree: 2 },
   },
@@ -472,7 +474,8 @@ const WEIGHTS: Partial<Record<keyof QuizAnswers, Record<string, Partial<Record<T
   },
   // מתי פנוי — לא כמה. "רק בערב" סוגר מוסדות שלומדים בהם ביום
   when: {
-    B: { degree: -2, mahat: 1, bootcamp: 2 },
+    // העונש הוקל — מסלולי ערב לתואר קיימים (אחווה, הפתוחה ועוד)
+    B: { degree: -1, mahat: 1, bootcamp: 1 },
     C: { degree: 1 },
   },
   /*
