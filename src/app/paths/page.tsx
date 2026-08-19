@@ -50,7 +50,7 @@ const ANSWER_META: Record<Answer, { label: string; color: string; bg: string }> 
 };
 type Track = "bootcamp" | "mahat" | "degree";
 type QuizAnswers = {
-  time: string; budget: string; education: string; kids: string; when: string; timeline: string; location: string;
+  time: string; budget: string; education: string; kids: string; when: string; timeline: string; location: string; aim: string;
   /**
    * מה יש לאדם ביד — רשימה מופרדת בפסיקים.
    *
@@ -160,6 +160,16 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
       { val: "A", label: "אני חייב/ת הכנסה תוך שנה", sub: "אין לי רשת ביטחון כלכלית" },
       { val: "B", label: "שנה וחצי–שנתיים", sub: "אפשרי אם אני עובד/ת במקביל" },
       { val: "C", label: "יש לי יציבות", sub: "אני יכול/ה להשקיע לטווח ארוך" },
+    ],
+  },
+  {
+    key: "aim" as keyof QuizAnswers,
+    q: "מה חשוב לך יותר?",
+    note: "אין כאן תשובה נכונה. שתי הדרכים לגיטימיות, והן פשוט מובילות למקומות שונים.",
+    opts: [
+      { val: "A", label: "להתחיל לעבוד מוקדם ככל האפשר", sub: "גם אם קשת התפקידים בהתחלה צרה יותר" },
+      { val: "B", label: "לפתוח את מגוון התפקידים והשכר", sub: "גם אם זה לוקח יותר זמן" },
+      { val: "C", label: "עוד לא יודע/ת", sub: "וזה בסדר — נחזור לזה עם הרכזת" },
     ],
   },
   {
@@ -465,6 +475,18 @@ const WEIGHTS: Partial<Record<keyof QuizAnswers, Record<string, Partial<Record<T
     B: { degree: -2, mahat: 1, bootcamp: 2 },
     C: { degree: 1 },
   },
+  /*
+   * שאיפה, לא מגבלה — והשאלה היחידה שהתואר יכול לזכות בה.
+   *
+   * כל שאר השאלות מודדות מה עוצר את האדם, ולכן הן יכולות רק להוריד
+   * מהתואר. הפער בין המסלולים מגובה: שכירים בני 25–35 בהייטק, מקצועות
+   * STEM בביקוש גבוה, 2019 — בוגרי תואר 22–27.7 אלף ₪, בוגרי הנדסאות
+   * 13.5–20.7. מקור: כהן קובץ׳, זרוע העבודה, עיבוד לנתוני הלמ״ס.
+   */
+  aim: {
+    A: { bootcamp: 3, mahat: 1 },
+    B: { degree: 3 },
+  },
   location: {
     A: { degree: 1 },
     B: { mahat: 1, bootcamp: 1 },
@@ -572,7 +594,7 @@ function RevealCard({ emoji, title, children }: { emoji: string; title: string; 
 export default function PathsPage() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [qIndex, setQIndex] = useState(0);
-  const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", kids: "", when: "", timeline: "", location: "" });
+  const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", kids: "", when: "", timeline: "", location: "", aim: "" });
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [chips, setChips] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track>("bootcamp");
@@ -619,7 +641,7 @@ export default function PathsPage() {
       // ?demo=1&phase=done — קפיצה ישירה למסך מסוים עם נתונים לדוגמה, לצורך סקירה.
       // לא נשמר ל-localStorage כדי לא ללכלך התקדמות אמיתית.
       if (params.has("demo")) {
-        const demo: QuizAnswers = { time: "B", budget: "A", education: "B", kids: "B", when: "C", timeline: "B", location: "B" };
+        const demo: QuizAnswers = { time: "B", budget: "A", education: "B", kids: "B", when: "C", timeline: "B", location: "B", aim: "B" };
         setAnswers(demo);
         setQuizStarted(true);
         setQIndex(QUIZ_QUESTIONS.length - 1);
