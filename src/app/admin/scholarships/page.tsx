@@ -221,7 +221,31 @@ function AdminScholarshipsPage() {
           </div>
         )}
 
-        {shown.map(f => {
+        {/*
+          מקובץ לפי מסלול, כי הדירוג הוא בתוך מסלול בלבד — עתידאים (מה״ט)
+          לא מתחרה בעתידים (תואר), ולכן גם לא צריכה לשבת איתה באותה רשימה.
+          מה שפתוח לכמה מסלולים מופיע בכל אחד מהם; מה שלא סומן כלל יושב
+          בקבוצה משלו, כי "לא סומן" הוא ממצא ולא ברירת מחדל.
+        */}
+        {([
+          ["degree", "מסלול תואר"],
+          ["mahat", "מסלול מה״ט"],
+          ["bootcamp", "מסלול הכשרה"],
+          ["none", "ללא סימון מסלול — לא נבדק"],
+        ] as const).map(([tk, label]) => {
+          const group = shown.filter(f =>
+            tk === "none" ? !f.tracks?.length : f.tracks?.includes(tk as never));
+          if (group.length === 0) return null;
+          return (
+            <div key={tk} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
+                <span style={{ fontSize: 13.5, fontWeight: 900, color: tk === "none" ? "#b45309" : NAVY }}>
+                  {label}
+                </span>
+                <span style={{ fontSize: 12, color: "rgba(0,0,0,0.35)" }}>{group.length}</span>
+                <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.08)" }} />
+              </div>
+              {group.map(f => {
           const st = STATUS_META[f.status];
           const isOpen = openId === f.id;
           const linked = (f.institutions ?? [])
@@ -393,6 +417,9 @@ function AdminScholarshipsPage() {
                   </div>
                 </div>
               )}
+            </div>
+          );
+              })}
             </div>
           );
         })}
