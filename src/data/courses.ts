@@ -44,6 +44,21 @@ export type Course = {
 
   /** ISO. ריק = אין מחזור מפורסם */
   startsAt?: string;
+
+  /**
+   * איפה המחזור הזה באמת נפגש.
+   *
+   * **על הקורס ולא על המוסד, וזה לא קפדנות.** בנתיבי אודי, קווליטסט
+   * וטק-קריירה מפעילים מחזורים בערים שונות בלי קשר לכתובת המשרד —
+   * "יש סניף אורט באשקלון" אינו "קורס הסייבר רץ באשקלון". מיקום הוא
+   * מאפיין של המחזור בדיוק כמו התאריך, והוא נקרא מאותו דף נחיתה.
+   *
+   * `online: true` אינו היעדר מיקום — הוא **התשובה**. למי שיש ילדים
+   * או עבודה, "אפשר מהבית" יכול להיות כל ההבדל בין אפשרי ללא אפשרי.
+   */
+  city?: string;
+  address?: string;
+  online?: boolean;
   /** כשאין תאריך: איך נרשמים בכל זאת */
   cycleNote?: string;
 
@@ -150,10 +165,11 @@ export const COURSES: Course[] = [
   {
     id: "mod-mission-ai",
     name: "Mission AI — בניית מערכות AI ואוטומציה",
-    institutionId: "kinneret", // שני מכשירים: האקדמית כנרת ו-Elevation
+    institutionId: "elevation", // המכשירים: Elevation והאקדמית כנרת
     programId: "mod-hitech",
     link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/ai-course1.aspx",
     startsAt: "2026-10-25",
+    online: true,
     what: "בונים וצוותים סוכני AI וכלי אוטומציה. אונליין ובערב — אחד הבודדים שמתאים למי שעובד ביום.",
     who: "משוחררים עד 5 שנים · בודדים ומילואימניקים פעילים עד 10 שנים. אין צורך בידע מוקדם בתכנות",
     cost: "980 ₪ השתתפות עצמית — ניתן לממן מהפיקדון",
@@ -218,6 +234,8 @@ export const COURSES: Course[] = [
     programId: "mod-hitech",
     link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/netiveiudi.aspx",
     startsAt: "2026-11-01",
+    city: "באר שבע",
+    address: "דרך המשחררים 7, באר שבע", // אומת 19.8 מדף הנחיתה
     what: "הכשרת DevOps מלאה, בהפעלת עמותה.",
     who: "משוחררים עד 5 שנים · בודדים ומילואימניקים פעילים עד 10 שנים",
     cost: "2,000 ₪ השתתפות עצמית · ללוחמים ולבודדים 1,000 ₪ — ניתן לממן מהפיקדון",
@@ -233,6 +251,8 @@ export const COURSES: Course[] = [
     programId: "mod-hitech",
     link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/ai-course.aspx",
     startsAt: "2026-10-25",
+    city: "ראשון לציון",
+    address: "יוסף לישנסקי 27, ראשון לציון", // אומת 19.8 מדף הנחיתה
     what: "הטמעת מערכות בינה מלאכותית בארגונים.",
     who: "משוחררים עד 5 שנים · בודדים ומילואימניקים פעילים עד 10 שנים",
     cost: "1,500 ₪ השתתפות עצמית, ופחות ללוחמים ולבודדים — ניתן לממן מהפיקדון",
