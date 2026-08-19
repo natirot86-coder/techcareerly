@@ -419,7 +419,7 @@ export const FUNDING: Funding[] = [
       "תמיכה רגשית",
     ],
     // ארבעה מוסדות במכינה; בתואר נוספים עוד ארבעה
-    institutions: ["bgu", "huji", "technion", "bar-ilan", "haifa", "ariel", "sce"],
+    institutions: ["bgu", "huji", "technion", "bar-ilan", "haifa", "ariel", "sce-beersheva", "sce-ashdod"],
     tracks: ["degree"],
     link: "https://www.techleaders.org.il/",
     status: "needs-check",

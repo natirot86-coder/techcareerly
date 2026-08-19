@@ -43,7 +43,7 @@ export default function InstitutionCard({
   const rows: [string, string | undefined][] = [
     ["למה דווקא כאן", inst.why],
     ["תנאי קבלה", inst.admission],
-    ["בלי פסיכומטרי", inst.noPsychometric],
+    ["מסלול בלי פסיכומטרי?", inst.noPsychometric],
     ["מעטפת ותמיכה", inst.support],
     ["קשרי תעשייה", inst.industry],
     ["מבנה הלימודים", inst.schedule],
