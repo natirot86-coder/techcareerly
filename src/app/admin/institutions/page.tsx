@@ -187,7 +187,7 @@ function AdminInstitutionsPage() {
           style={{ background: "rgba(251,133,0,0.1)", border: "1.5px solid rgba(251,133,0,0.3)" }}>
           <span className="text-[18px] shrink-0">⚠️</span>
           <div className="text-[12.5px] leading-[1.7]" style={{ color: "#92400e" }}>
-            <span className="font-black">אין עדיין בקאנד, אז מה שנערך כאן נשמר רק בדפדפן הזה.</span>{" "}
+            <span className="font-black">הקטלוג יושב בקוד, לא בבסיס הנתונים — לכן עריכה כאן נשמרת רק בדפדפן הזה.</span>{" "}
             המשתמשים באפליקציה עדיין רואים את הגרסה המקורית. כדי להעלות שינויים באמת —
             ערוך כאן, לחץ <span className="font-bold">״העתק JSON״</span>, ושלח לקלוד. זה ייכנס לקוד ויעלה לאוויר.
             {dirty && <span className="block mt-1.5 font-black">יש לך שינויים שעוד לא ייצאת.</span>}
