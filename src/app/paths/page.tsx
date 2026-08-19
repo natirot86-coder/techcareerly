@@ -2166,6 +2166,8 @@ function WrappedCourses({ domains }: { domains: Domain[] }) {
             <div className="text-[12px] leading-[1.65] mt-1.5" style={{ color: "rgba(0,0,0,0.6)" }}>{c.what}</div>
             <div className="flex flex-wrap gap-1.5 mt-2.5">
               {c.cost && <Chip13 text={c.cost.split("—")[0].split("·")[0].trim()} color="#047857" />}
+              {/* איפה זה בפועל — שיקול מרכזי, ובמיוחד למי שלא גר במרכז */}
+              {courseWhere(c) && <Chip13 text={`📍 ${courseWhere(c)}`} color={NAVY} />}
               {c.format && <Chip13 text={c.format.split("·")[0].trim()} color="#0369a1" />}
               {c.who && <Chip13 text={c.who.split("·")[0].trim()} color="#6b7280" />}
             </div>
@@ -2364,7 +2366,7 @@ function DegreeDetail({ degree: d, have }: { degree: Degree; have: string[] }) {
           </div>
         )}
         <div className="text-[11px] mt-1 leading-[1.6]" style={{ color: "rgba(0,0,0,0.5)" }}>
-          {inst.location}{inst.tuition ? ` · ${inst.tuition.split(".")[0]}` : ""}
+          {inst.address ?? inst.location}{inst.tuition ? ` · ${inst.tuition.split(".")[0]}` : ""}
         </div>
       </div>
     );
@@ -2473,6 +2475,19 @@ function DegreeDetail({ degree: d, have }: { degree: Degree; have: string[] }) {
   );
 }
 
+
+/**
+ * איפה הקורס באמת מתקיים.
+ *
+ * נגזר מהמוסד כברירת מחדל, אבל **זה זמני**: גופים כמו בנתיבי אודי,
+ * קווליטסט וטק-קריירה מפעילים מחזורים בערים שונות בלי קשר לכתובת
+ * המשרד שלהם. הכתובת הנכונה שייכת למחזור, כמו התאריך — ותעבור
+ * לשדה על הקורס עצמו.
+ */
+function courseWhere(c: Course): string | null {
+  const inst = INSTITUTIONS.find(i => i.id === c.institutionId);
+  return inst?.address ?? inst?.city ?? null;
+}
 
 function Chip13({ text, color }: { text: string; color: string }) {
   return (

@@ -344,7 +344,7 @@ function AdminInstitutionsPage() {
 
                     <div className="grid gap-x-6 gap-y-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))" }}>
                       {([
-                        ["מיקום", inst.location], ["שכר לימוד", inst.tuition],
+                        ["מיקום", inst.location], ["עיר", inst.city ?? ""], ["כתובת", inst.address ?? ""], ["שכר לימוד", inst.tuition],
                         ["מבנה הלימודים", inst.schedule], ["תנאי קבלה", inst.admission],
                         ["ללא פסיכומטרי", inst.noPsychometric], ["תמיכה ומעטפת", inst.support],
                         ["קשרי תעשייה", inst.industry], ["ימים פתוחים", inst.openDays],

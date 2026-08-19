@@ -1097,8 +1097,8 @@ export const INSTITUTIONS: Institution[] = [
     schedule: "כ-4 חודשים · ראשון ורביעי 17:00–20:00 · מחזור שני נפתח 25.10.2026",
     contactName: "", contactRole: "האגף לחיילים משוחררים", contactPhone: "*5266", contactEmail: "", openDays: "",
     domains: ["ai", "code"],
-    status: "active",
-    notes: "פתיחת הקורס מותנית במספר מינימלי של נרשמים. הרשמה עד יום הפתיחה על בסיס מקום פנוי.",
+    status: "hidden",
+    notes: "נסגר 19.8.2026 — **אין מוסד בשם הזה.** Mission AI הוא שם הקורס, לא שם המכללה. המכשירים בפועל: האקדמית כנרת ו-Elevation.",
     verified: "13.8.2026 — hachvana.mod.gov.il",
   },
   {
@@ -1281,6 +1281,8 @@ export const INSTITUTIONS: Institution[] = [
     tag: "ערב", tagColor: "#2563eb",
     link: "https://netcraftacademy.co.il/",
     location: "לא אומת",
+    city: "בני ברק",
+    address: "הירקון 23, בני ברק", // האתר חוסם (403); הכתובת מרישום Waze — לאמת
     tuition: "לא אומת",
     admission: "לא אומת",
     noPsychometric: "כן",
@@ -1409,6 +1411,8 @@ export const INSTITUTIONS: Institution[] = [
     tag: "לאקדמאים", tagColor: "#6b7280",
     link: "https://www.sqlabs.co.il/",
     location: "לא אומת",
+    city: "רמת גן",
+    address: "מגדל רוגובין-תדהר, דרך מנחם בגין 11, רמת גן", // אומת 19.8 · היברידי: זום + כיתות
     tuition: "לא אומת",
     admission: "מיועד במפורש לבוגרי תארים",
     noPsychometric: "לא — דורש תואר",
@@ -1514,6 +1518,8 @@ export const INSTITUTIONS: Institution[] = [
     tagColor: "#059669",
     link: "https://www.tafnit1.co.il/",
     location: "לא אומת",
+    city: "חולון",
+    address: "הכישור 30, חולון 5886711", // אומת 19.8 מהאתר
     tuition: "מפרסמים מימון מדינה של עד 90% במסלולים מסוימים — לאמת אילו",
     admission: "לא אומת",
     noPsychometric: "כן",

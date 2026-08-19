@@ -150,7 +150,7 @@ export const COURSES: Course[] = [
   {
     id: "mod-mission-ai",
     name: "Mission AI — בניית מערכות AI ואוטומציה",
-    institutionId: "mission-ai",
+    institutionId: "kinneret", // שני מכשירים: האקדמית כנרת ו-Elevation
     programId: "mod-hitech",
     link: "https://www.hachvana.mod.gov.il/MainEducation/HighTech/Pages/ai-course1.aspx",
     startsAt: "2026-10-25",
