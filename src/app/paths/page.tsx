@@ -12,6 +12,8 @@ import { savePathsAnswers, logEvent } from "@/lib/candidate";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
+import GeoView from "@/components/ui/GeoView";
+import { regionsForAnswer } from "@/data/regions";
 
 /** שם התת-שלב שמוצג בפס ההתקדמות */
 const PHASE_LABEL: Record<string, string> = {
@@ -621,6 +623,7 @@ export default function PathsPage() {
    * רשימות מוערמות בלי קשר ביניהן — וזה מה שהיה כאן קודם.
    */
   const [showAllInst, setShowAllInst] = useState(false);
+  const [geoView, setGeoView] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
   const [research, setResearch] = useState<Record<string, ResearchEntry>>({});
   const [meetingBooked, setMeetingBooked] = useState(false);
@@ -1546,6 +1549,28 @@ export default function PathsPage() {
             עטוף (מוסד × מעטפת); בתואר — התואר עצמו, כי פער של 12,000 ₪
             בחודש עובר בין שני תארים שנשמעים אותו דבר.
           */}
+          {/*
+            תצוגת אזור — "יש משהו קרוב אליי" היא השאלה שהמסך הזה לא ענה עליה
+            עד היום, למרות ששאלנו אותה בשאלון ולא עשינו עם התשובה כלום.
+          */}
+          <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "rgba(2,62,138,0.06)" }}>
+            {([["list", "רשימה"], ["geo", "לפי אזור"]] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setGeoView(v === "geo")}
+                className="flex-1 py-2 rounded-lg text-[12.5px] font-bold"
+                style={{
+                  background: (v === "geo") === geoView ? "#fff" : "transparent",
+                  color: (v === "geo") === geoView ? NAVY : "rgba(0,0,0,0.45)",
+                  boxShadow: (v === "geo") === geoView ? "0 1px 3px rgba(2,62,138,0.12)" : "none",
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {geoView ? (
+            <GeoView track={activeTrack} myRegions={regionsForAnswer(answers.location)} />
+          ) : (
+          <>
           {activeTrack === "bootcamp" && <WrappedCourses domains={chosenDomains} />}
           {activeTrack === "degree" && <DegreePicker domains={chosenDomains} have={hasOf(answers)}
             list={shortlist.map(s => s.name)}
@@ -1614,6 +1639,9 @@ export default function PathsPage() {
               );
             })}
           </div>
+          </>
+          )}
+
           </>
           )}
 
