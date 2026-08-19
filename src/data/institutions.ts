@@ -164,7 +164,7 @@ export const INSTITUTIONS: Institution[] = [
     verified: "8.2026 — דיקנט הסטודנטים",
   },
   {
-    id: "runi-keren-or",
+    id: "runi",
     degreeIds: ["cs", "business-is", "psych-ux"],
     programIds: ["runi-keren-or"],
     name: "אוניברסיטת רייכמן",
@@ -190,7 +190,7 @@ export const INSTITUTIONS: Institution[] = [
     verified: "8.2026 — אתר רייכמן",
   },
   {
-    id: "tau-admas",
+    id: "tau",
     degreeIds: ["cs", "ee", "industrial-eng", "statistics", "psych-ux"],
     programIds: ["tau-admas", "atudim"],
     name: "אוניברסיטת תל אביב",
