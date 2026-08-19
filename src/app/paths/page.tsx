@@ -2089,10 +2089,30 @@ function DegreePicker({ domains }: { domains: Domain[] }) {
                     {d.recommended ? "✦ " : ""}{d.name}
                   </div>
                   <div className="text-[10px] mt-0.5" style={{ color: "rgba(0,0,0,0.35)" }}>{d.kind}</div>
-                  <div className="text-[11.5px] mt-1.5" style={{ color: "rgba(0,0,0,0.55)" }}>
-                    {d.salary ? `${(d.salary / 1000).toFixed(1)}K ₪` : ""}
-                    {d.salary && d.inTech ? " · " : ""}
-                    {d.inTech ? <b style={{ color: "#047857" }}>{d.inTech}% בטק</b> : null}
+                  {/*
+                    מספר בלי כיתוב מלא הוא מספר שמטעה. "75% בטק" נקרא כמו
+                    "סיכוי למצוא עבודה", ושכר בלי אופק נקרא כמשכורת התחלתית —
+                    וזו בדיוק האכזבה שתגיע בשנה הראשונה. המקור: עבודאטה, משרד העבודה.
+                  */}
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    {d.salary && (
+                      <div className="leading-[1.25]">
+                        <span className="text-[13px] font-black" style={{ color: "#1c1a16" }}>
+                          {(d.salary / 1000).toFixed(1)}K ₪
+                        </span>
+                        <span className="block text-[9.5px]" style={{ color: "rgba(0,0,0,0.42)" }}>
+                          שכר חודשי, 5–6 שנים אחרי התואר
+                        </span>
+                      </div>
+                    )}
+                    {d.inTech && (
+                      <div className="leading-[1.25]">
+                        <span className="text-[13px] font-black" style={{ color: "#047857" }}>{d.inTech}%</span>
+                        <span className="block text-[9.5px]" style={{ color: "rgba(0,0,0,0.42)" }}>
+                          ממסיימי התואר עובדים בהייטק
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <span
                     className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1.5"
@@ -2118,13 +2138,28 @@ function DegreePicker({ domains }: { domains: Domain[] }) {
   );
 }
 
+/**
+ * הדלתות שפתוחות **לתואר הזה** במוסד הזה.
+ *
+ * תוכנית ליווי ברמת המוסד (אדמאס, סיקט) פתוחה לכל תואר. תוכנית עם רשימת
+ * תארים נחשבת רק אם התואר ברשימה. **תוכנית שלא נבדקה אינה נספרת כדלת** —
+ * ריק אומר "לא בדקנו", ואסור להציג למועמד הזדמנות שאיננו יודעים שקיימת.
+ */
+function openDoors(inst: (typeof INSTITUTIONS)[number], degreeId: string) {
+  return (inst.programIds ?? [])
+    .map(id => FUNDING.find(f => f.id === id))
+    .filter((f): f is (typeof FUNDING)[number] => !!f && f.status !== "hidden")
+    .filter(f => f.openToAllDegrees || (f.degreeIds ?? []).includes(degreeId));
+}
+
 /** הפאנל של תואר נבחר: מה הוא פותח, ההסתייגות, ואיפה לומדים אותו */
 function DegreeDetail({ degree: d }: { degree: Degree }) {
   const [showRest, setShowRest] = useState(false);
 
   const recommended = (d.recommendedAt ?? [])
     .map(id => INSTITUTIONS.find(i => i.id === id))
-    .filter((i): i is NonNullable<typeof i> => !!i && i.status !== "hidden");
+    .filter((i): i is NonNullable<typeof i> => !!i && i.status !== "hidden")
+    .sort((a, b) => openDoors(b, d.id).length - openDoors(a, d.id).length);
 
   /*
    * שאר המוסדות שמלמדים את התואר. **ריק = לא מופה, לא "לא מלמד"** — ולכן
@@ -2133,20 +2168,45 @@ function DegreeDetail({ degree: d }: { degree: Degree }) {
   const teaches = INSTITUTIONS.filter(
     i => i.track === "degree" && i.status !== "hidden" &&
          (i.degreeIds ?? []).includes(d.id) && !recommended.some(r => r.id === i.id)
-  );
+  ).sort((a, b) => openDoors(b, d.id).length - openDoors(a, d.id).length);
   const unmapped = INSTITUTIONS.filter(
     i => i.track === "degree" && i.status !== "hidden" && (i.degreeIds?.length ?? 0) === 0
   );
 
   const Row = ({ inst, star }: { inst: (typeof INSTITUTIONS)[number]; star?: boolean }) => {
-    const door = inst.programId ? FUNDING.find(f => f.id === inst.programId) : null;
+    const doors = openDoors(inst, d.id);
+    /*
+     * שתי דלתות ומעלה = ההזדמנות הטובה ביותר שיש לנו להציע לאדם הזה.
+     * בבן-גוריון נכנסים גם דרך סיקט וגם דרך עתידים — ואם אחת לא מסתדרת,
+     * השנייה עדיין פתוחה. לכן זה מודגש ועולה לראש הרשימה.
+     */
+    const many = doors.length >= 2;
     return (
-      <div className="rounded-xl px-3 py-2.5" style={{ background: star ? "rgba(251,133,0,0.06)" : "rgba(2,62,138,0.03)", border: `1px solid ${star ? "rgba(251,133,0,0.2)" : "rgba(2,62,138,0.07)"}` }}>
+      <div
+        className="rounded-xl px-3 py-2.5"
+        style={{
+          background: many ? "rgba(5,150,105,0.06)" : star ? "rgba(251,133,0,0.06)" : "rgba(2,62,138,0.03)",
+          border: `1px solid ${many ? "rgba(5,150,105,0.35)" : star ? "rgba(251,133,0,0.2)" : "rgba(2,62,138,0.07)"}`,
+        }}
+      >
         <div className="text-[12.5px] font-bold" style={{ color: NAVY }}>
           {star ? "✦ " : ""}{inst.name.split(" — ")[0]}
-          {door && <span style={{ color: "#92400e" }}> · דרך {door.name.split(" — ")[0]}</span>}
         </div>
-        <div className="text-[11px] mt-0.5 leading-[1.6]" style={{ color: "rgba(0,0,0,0.5)" }}>
+        {doors.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            {many && (
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: "#059669", color: "#fff" }}>
+                שתי דרכים להיכנס
+              </span>
+            )}
+            {doors.map(f => (
+              <span key={f.id} className="text-[10.5px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(251,133,0,0.1)", color: "#92400e" }}>
+                דרך {f.name.split(" — ")[0]}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="text-[11px] mt-1 leading-[1.6]" style={{ color: "rgba(0,0,0,0.5)" }}>
           {inst.location}{inst.tuition ? ` · ${inst.tuition.split(".")[0]}` : ""}
         </div>
       </div>
@@ -2172,6 +2232,13 @@ function DegreeDetail({ degree: d }: { degree: Degree }) {
       <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.45)" }}>
         <b>הכניסה:</b> {d.entryNote}
       </div>
+      {d.salary && (
+        <div className="text-[11px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.45)" }}>
+          <b>על השכר:</b> {d.salary.toLocaleString("he-IL")} ₪ הוא הממוצע חמש-שש שנים אחרי התואר,
+          לפי נתוני עבודאטה של משרד העבודה. המשרה הראשונה משלמת פחות, ומשרת
+          סטודנט עוד פחות — זה לאן מגיעים, לא מאיפה מתחילים.
+        </div>
+      )}
 
       <div className="pt-2 mt-0.5" style={{ borderTop: "1px dashed rgba(0,0,0,0.1)" }}>
         <div className="text-[12px] font-black mb-2" style={{ color: NAVY }}>איפה לומדים את זה</div>

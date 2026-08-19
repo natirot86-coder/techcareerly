@@ -157,7 +157,7 @@ function AdminDegreesPage() {
                       const on = d.recommendedAt?.includes(inst.id);
                       return (
                         <button key={inst.id} onClick={() => toggleInst(d.id, inst.id)}
-                          title={inst.programId ? `דלת: ${progName(inst.programId)}` : undefined}
+                          title={inst.programIds?.length ? `דלתות: ${inst.programIds.map(progName).filter(Boolean).join(" · ")}` : undefined}
                           style={{
                             fontSize: 11.5, fontWeight: 700, padding: "5px 11px", borderRadius: 99, cursor: "pointer",
                             border: on ? "none" : "1px solid rgba(0,0,0,0.13)",
@@ -196,7 +196,7 @@ function AdminDegreesPage() {
                   </div>
                   <div style={{ fontSize: 10.5, color: "rgba(0,0,0,0.45)", marginTop: 2, lineHeight: 1.5 }}>
                     {inst.location}
-                    {inst.programId && <> · דלת: <b style={{ color: "#b45309" }}>{progName(inst.programId)}</b></>}
+                    {inst.programIds?.length ? <> · {inst.programIds.length > 1 ? "דלתות" : "דלת"}: <b style={{ color: "#b45309" }}>{inst.programIds.map(progName).filter(Boolean).join(" · ")}</b></> : null}
                     {inst.status === "needs-check" && " · ⚠️ לא אומת"}
                   </div>
                 </div>
@@ -371,7 +371,7 @@ function ExpansionPanel({ degree, color, onToggle }: {
     if (offersMapped && !offersThis) continue;
     if (!offersMapped && !domainOverlap) continue;
 
-    const program = inst.programId ? FUNDING.find(f => f.id === inst.programId) : undefined;
+    const program = (inst.programIds ?? []).map(id => FUNDING.find(f => f.id === id)).find(Boolean);
     const progOpen = program?.degreeIds?.includes(degree.id) ?? false;
     const progUnmapped = !!program && (program.degreeIds?.length ?? 0) === 0;
     const mappedElsewhere = !!program && (program.degreeIds?.length ?? 0) > 0 && !progOpen;

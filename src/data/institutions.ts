@@ -71,14 +71,15 @@ export type Institution = {
   degreeIds?: string[];
 
   /**
-   * מזהה מ-scholarships.ts — **התוכנית שהיא הדלת** של המוסד הזה.
+   * הדלתות של המוסד — התוכניות שדרכן נכנסים אליו. **רשימה ולא ערך יחיד**:
+   * לבן-גוריון נכנסים גם דרך סיקט וגם דרך עתידים, ואלה שתי אפשרויות שונות
+   * לאותו אדם. הראשונה ברשימה היא זו שמובילה בתצוגה ("סיקט · בן-גוריון").
    *
-   * הכלל: הדלת הספציפית גוברת על השער הכללי. "אוניברסיטת תל אביב" הוא שער
-   * כללי שמדור הרישום שלו יגיד "אינך עומד בתנאים"; "תוכנית אדמאס" היא דלת
-   * שנבנתה עבור הקהל שלנו, עם מסלול קבלה חלופי, רכזת בשם ומלגה. אותו מוסד,
-   * סיכוי אחר לגמרי — ולכן התוכנית מובילה בתצוגה, והמוסד הוא ההקשר.
+   * כלל הדלת נשאר: הדלת הספציפית גוברת על השער הכללי. מה שהשתנה הוא
+   * שיכולות להיות כמה — ומוסד עם יותר מדלת אחת פתוחה לתואר מסוים הוא
+   * ההזדמנות הטובה ביותר שיש לנו להציע, ולכן הוא מודגש ומקבל עדיפות.
    */
-  programId?: string;
+  programIds?: string[];
 
   /**
    * הקשר שלנו עם הגוף — הגורם היחיד שאנחנו שולטים בו במלואו.
@@ -114,7 +115,7 @@ export const INSTITUTIONS: Institution[] = [
   {
     id: "bgu",
     degreeIds: ["cs", "ee", "info-systems-eng", "industrial-eng", "math", "statistics"],
-    programId: "sicket",
+    programIds: ["sicket", "atudim"],
     name: "אוניברסיטת בן-גוריון",
     track: "degree",
     why: "המסלול הייעודי הקונקרטי ביותר בארץ: פסיכומטרי עד 100 נקודות מתחת לסף עדיין נשקל, רכז ייעודי לאורך כל התואר, קרן דוד עד 12,000 ₪, סבסוד מעונות והחזרי נסיעות. פארק ההייטק גב-ים צמוד לקמפוס עם צינור התמחויות אמיתי.",
@@ -165,7 +166,7 @@ export const INSTITUTIONS: Institution[] = [
   {
     id: "runi-keren-or",
     degreeIds: ["cs", "business-is", "psych-ux"],
-    programId: "runi-keren-or",
+    programIds: ["runi-keren-or"],
     name: "אוניברסיטת רייכמן",
     track: "degree",
     why: "מדעי המחשב ללא פסיכומטרי וללא צורך בציוני בגרות גבוהים. מימון כמעט מלא — משלמים בערך כמו במוסד מתוקצב. כולל קורס הכנה במתמטיקה, תוכנית שפורסת את העומס, וליווי אישי. הקריטריון הוא כלכלי-חברתי.",
@@ -191,7 +192,7 @@ export const INSTITUTIONS: Institution[] = [
   {
     id: "tau-admas",
     degreeIds: ["cs", "ee", "industrial-eng", "statistics", "psych-ux"],
-    programId: "tau-admas",
+    programIds: ["tau-admas", "atudim"],
     name: "אוניברסיטת תל אביב",
     track: "degree",
     why: "תוכנית ייעודית לסטודנטים יוצאי אתיופיה באוניברסיטה מובילה: מלגות שכר לימוד ומחיה, צוות יועצות אישי, ליווי אקדמי, סדנאות למידה וסיוע כספי לשירותים במהלך הלימודים. והכי חשוב — יש מסלול קבלה חלופי למי שלא עומד בתנאי הקבלה הרגילים, ונציג קבלה מיוחדת יוצר קשר.",
@@ -390,6 +391,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ariel",
+    // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
+    programIds: ["atudim"],
     degreeIds: ["cs", "ee", "industrial-eng"],
     name: "אוניברסיטת אריאל",
     track: "degree",
@@ -441,6 +444,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "hit",
+    // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
+    programIds: ["atudim"],
     name: "מכון טכנולוגי חולון (HIT)",
     track: "mahat",
     why: "לימודי אחר הצהריים וערב למי שעובד. קבלה אפשרית בממוצע בגרות 102 ללא פסיכומטרי. שימו לב: מעל גיל 30 נדרשת מכינה.",
@@ -1520,6 +1525,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "technion",
+    // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
+    programIds: ["atudim"],
     degreeIds: ["cs", "ee", "industrial-eng", "math"],
     name: "הטכניון",
     track: "degree",
@@ -1542,6 +1549,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "bar-ilan",
+    // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
+    programIds: ["atudim"],
     degreeIds: ["cs", "math", "psych-ux"],
     name: "אוניברסיטת בר-אילן",
     track: "degree",
@@ -1584,6 +1593,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "ort-braude",
+    // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
+    programIds: ["atudim"],
     degreeIds: ["ee", "industrial-eng", "software-eng", "info-systems-eng"],
     name: "אורט בראודה — מכללה אקדמית להנדסה",
     track: "degree",
@@ -1605,6 +1616,8 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "huji",
+    // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
+    programIds: ["atudim"],
     degreeIds: ["cs", "statistics", "psych-ux"],
     name: "האוניברסיטה העברית",
     track: "degree",

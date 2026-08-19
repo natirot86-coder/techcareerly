@@ -107,7 +107,7 @@ export const DEGREES: Degree[] = [
   {
     id: "industrial-eng",
     name: "הנדסת תעשייה וניהול",
-    kind: "B.Sc",
+    kind: "B.Sc · 4 שנים",
     salary: 27000, employment: 92, inTech: 50,
     domains: ["data", "marketing"],
     leadsTo: "BI ואנליטיקה · ניהול מוצר · תפעול. היחיד ש-GotFriends נוקבת בשמו כרקע ל-Data Analyst",
@@ -119,7 +119,7 @@ export const DEGREES: Degree[] = [
   {
     id: "ee",
     name: "הנדסת חשמל / מחשבים",
-    kind: "B.Sc",
+    kind: "B.Sc · 4 שנים",
     salary: 33300, employment: 84, inTech: 18,
     domains: ["networks", "cyber"],
     leadsTo: "חומרה · Embedded · VLSI · סייבר OT. הגרסה המשולבת (מחשבים-חשמל): 45,300 ₪ — השיא בטבלה",
@@ -132,7 +132,7 @@ export const DEGREES: Degree[] = [
   {
     id: "statistics",
     name: "סטטיסטיקה ומדעי הנתונים",
-    kind: "B.Sc",
+    kind: "B.Sc · 3 שנים",
     salary: 25400, inTech: 55,
     domains: ["data", "ai"],
     leadsTo: "Data Analyst · BI",
@@ -144,7 +144,7 @@ export const DEGREES: Degree[] = [
   {
     id: "math",
     name: "מתמטיקה",
-    kind: "B.Sc",
+    kind: "B.Sc · 3 שנים",
     salary: 30500, employment: 63, inTech: 41,
     domains: ["ai", "data"],
     leadsTo: "אלגוריתמיקה · ML — אבל רק בדו-חוגי עם מדעי המחשב",
@@ -156,7 +156,7 @@ export const DEGREES: Degree[] = [
   {
     id: "business-is",
     name: "מנהל עסקים עם התמחות במערכות מידע",
-    kind: "B.A",
+    kind: "B.A · 3 שנים",
     salary: 19200, employment: 90, inTech: 15,
     domains: ["marketing", "data"],
     leadsTo: "ניהול מוצר · שיווק · יישום. ⚠️ רק עם ההתמחות — מודעות Log-On דורשות אותה כשורה מפורשת",
@@ -168,7 +168,7 @@ export const DEGREES: Degree[] = [
   {
     id: "psych-ux",
     name: "פסיכולוגיה / קוגניציה",
-    kind: "B.A",
+    kind: "B.A · 3 שנים",
     salary: 14600, employment: 89, inTech: 18,
     domains: ["ux"],
     leadsTo: "UX Research · Product — בתוספת קורס UX ותיק עבודות",
@@ -190,8 +190,16 @@ export function degreesFor(domain: Domain): Degree[] {
       (b.salary ?? 0) - (a.salary ?? 0));
 }
 
+/**
+ * תנאי הכניסה — **הדרישה עצמה, לא תווית**.
+ *
+ * קודם היה כתוב "כניסה נגישה / בינונית / תחרותית". שלוש מילים שנראות כמו
+ * נתון ואינן: הקריטריון שהפיק אותן מעולם לא נרשם בשום מקום. לקהל שלנו
+ * דרישה קונקרטית שווה יותר מתווית — אפשר לבדוק מולה אם עומדים בה, ואפשר
+ * לדעת מה חסר. הצבע נשאר כרמז מהיר; המילים הן העובדה.
+ */
 export const ENTRY_LABEL: Record<Degree["entryBar"], { label: string; color: string }> = {
-  low: { label: "כניסה נגישה", color: "#059669" },
-  medium: { label: "כניסה בינונית", color: "#b45309" },
-  high: { label: "כניסה תחרותית", color: "#b91c1c" },
+  low: { label: "בגרות מלאה · יש מסלול בלי פסיכומטרי", color: "#059669" },
+  medium: { label: "בגרות מלאה · מתמטיקה 4 יח׳", color: "#b45309" },
+  high: { label: "מתמטיקה 4–5 יח׳ · פסיכומטרי · סכם גבוה", color: "#b91c1c" },
 };
