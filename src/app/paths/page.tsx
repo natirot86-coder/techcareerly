@@ -49,7 +49,50 @@ const ANSWER_META: Record<Answer, { label: string; color: string; bg: string }> 
   unknown: { label: "לא ידעו", color: "#92400e", bg: "rgba(251,133,0,0.14)" },
 };
 type Track = "bootcamp" | "mahat" | "degree";
-type QuizAnswers = { time: string; budget: string; education: string; kids: string; timeline: string; location: string };
+type QuizAnswers = {
+  time: string; budget: string; education: string; kids: string; timeline: string; location: string;
+  /**
+   * מה יש לאדם ביד — רשימה מופרדת בפסיקים.
+   *
+   * החליפה שאלה של תשובה אחת ("בגרות מלאה?"), שהייתה גסה מדי: מי שיש לו
+   * 5 יחידות מתמטיקה ופסיכומטרי ומי שיש לו בגרות עם 3 יחידות קיבלו בדיוק
+   * אותה המלצה. תנאי הקבלה האמיתיים גרנולריים — 4 יח׳ בציון 80 או 5 יח׳
+   * בציון 70 — ובלי זה המסך אומר "בגרות מלאה ✓" למי שאינו עומד בתנאים.
+   *
+   * **הציון בפסיכומטרי לא נשאל בכוונה.** מספר על מסך מזמין שיפוט עצמי,
+   * ואצל מי שתחושת המסוגלות שלו כבר נמוכה זו נקודת הנטישה — וזה בדיוק
+   * הפער שהארגון קיים בשבילו. מי שיש לו ציון יודע אותו, והרכזת תשאל.
+   */
+  has?: string;
+};
+
+/** מה שאפשר לסמן. הכל בניסוח חיובי — "מה יש לך", לא "מה חסר לך" */
+const HAVE_CHIPS: { id: string; label: string }[] = [
+  { id: "bagrut",  label: "בגרות מלאה" },
+  { id: "math3",   label: "מתמטיקה 3 יח׳" },
+  { id: "math4",   label: "מתמטיקה 4 יח׳" },
+  { id: "math5",   label: "מתמטיקה 5 יח׳" },
+  { id: "science", label: "פיזיקה או ביולוגיה מורחב" },
+  { id: "english", label: "אנגלית 4–5 יח׳" },
+  { id: "psycho",  label: "יש לי פסיכומטרי" },
+  { id: "psycho-low", label: "עשיתי ולא מרוצה מהציון" },
+  { id: "degree",  label: "כבר יש לי תואר ראשון" },
+];
+
+const hasOf = (a: QuizAnswers) => (a.has ?? "").split(",").filter(Boolean);
+
+/**
+ * האם עומדים בתנאי הכניסה לתואר — נגזר מרמת החסם, בלי להמציא נתון חדש.
+ * מחזיר את מה שחסר, כדי שאפשר יהיה לומר לו מה להשלים ולא רק "לא עומד".
+ */
+function missingFor(bar: "low" | "medium" | "high", have: string[]): string[] {
+  const miss: string[] = [];
+  if (!have.includes("bagrut") && !have.includes("degree")) miss.push("בגרות מלאה");
+  const math = have.includes("math4") || have.includes("math5");
+  if ((bar === "medium" || bar === "high") && !math) miss.push("מתמטיקה 4 יח׳ ומעלה");
+  if (bar === "high" && !have.includes("psycho")) miss.push("פסיכומטרי");
+  return miss;
+}
 type ShortlistItem = { name: string; track: Track };
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -58,6 +101,8 @@ type QuizQuestion = {
   key: keyof QuizAnswers;
   q: string;
   note?: string;
+  /** בחירה מרובה — צ׳יפים במקום תשובה אחת */
+  multi?: true;
   opts: { val: string; label: string; sub: string }[];
 };
 
@@ -81,13 +126,11 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
   },
   {
-    key: "education" as keyof QuizAnswers,
-    q: "מה ההשכלה הנוכחית שלך?",
-    opts: [
-      { val: "A", label: "תיכון / בגרות חלקית", sub: "בלי בגרות מלאה" },
-      { val: "B", label: "בגרות מלאה", sub: "יש לי תעודת בגרות" },
-      { val: "C", label: "תואר ראשון ומעלה", sub: "כבר סיימתי לימודים אקדמיים" },
-    ],
+    key: "has" as keyof QuizAnswers,
+    q: "מה יש לך ביד?",
+    note: "אפשר לסמן כמה. לא סימנת כלום? גם זה בסדר גמור — יש מסלולים שמתחילים בדיוק מכאן, ונראה לך אותם.",
+    multi: true,
+    opts: [],
   },
   {
     key: "kids" as keyof QuizAnswers,
@@ -367,7 +410,8 @@ const BLOCKERS: Blocker[] = [
  * graduation. Only real constraints move the recommendation away from it, and
  * every tie goes to the degree.
  */
-const WEIGHTS: Record<keyof QuizAnswers, Record<string, Partial<Record<Track, number>>>> = {
+// has אינו משקלל ישירות — education נגזר ממנו, והוא זה שמניע את הניקוד
+const WEIGHTS: Partial<Record<keyof QuizAnswers, Record<string, Partial<Record<Track, number>>>>> = {
   // ההשכלה הנוכחית — השער האמיתי
   education: {
     A: { degree: -6, mahat: -2, bootcamp: 4 },
@@ -407,7 +451,10 @@ const WEIGHTS: Record<keyof QuizAnswers, Record<string, Partial<Record<Track, nu
 function scoreTracks(q: QuizAnswers): Record<Track, number> {
   const score: Record<Track, number> = { degree: 5, mahat: 0, bootcamp: 0 };
   (Object.keys(WEIGHTS) as (keyof QuizAnswers)[]).forEach(key => {
-    const delta = WEIGHTS[key][q[key]];
+    const table = WEIGHTS[key];
+    const val = q[key];
+    if (!table || val === undefined) return;
+    const delta = table[val];
     if (!delta) return;
     (Object.keys(delta) as Track[]).forEach(t => { score[t] += delta[t] ?? 0; });
   });
@@ -503,6 +550,7 @@ export default function PathsPage() {
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswers>({ time: "", budget: "", education: "", kids: "", timeline: "", location: "" });
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
+  const [chips, setChips] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track>("bootcamp");
   /*
    * במסלול האקדמי הקטלוג המלא מקופל כברירת מחדל: קודם בוחרים תואר, והמוסדות
@@ -609,6 +657,28 @@ export default function PathsPage() {
   const recommended = recommendTrack(answers);
   const reason = buildReason(answers, recommended);
   const allAnswered = QUIZ_QUESTIONS.every(q => answers[q.key]);
+
+  /**
+   * שמירת הצ׳יפים, וגזירת education ממנה.
+   *
+   * education נשאר כי מנוע הניקוד ומסך החסמים בנויים עליו — עדיף לגזור
+   * ערך אחד מהרשימה מאשר לפזר את אותה שאלה בשני מקומות שייפרדו בזמן.
+   */
+  function answerHave(picked: string[]) {
+    const education = picked.includes("degree") ? "C" : picked.includes("bagrut") ? "B" : "A";
+    const next = { ...answers, has: picked.join(","), education };
+    setAnswers(next);
+    localStorage.setItem("paths-quiz", JSON.stringify(next));
+    if (qIndex < QUIZ_QUESTIONS.length - 1) {
+      setQIndex(qIndex + 1);
+      trackEvent("paths_question", { answered: qIndex + 1 });
+      logEvent("paths_question", { answered: String(qIndex + 1) });
+    } else {
+      const rec = recommendTrack(next);
+      setActiveTrack(rec);
+      goToPhase("result");
+    }
+  }
 
   function answer(key: keyof QuizAnswers, val: string) {
     const next = { ...answers, [key]: val };
@@ -849,6 +919,36 @@ export default function PathsPage() {
               <div className="text-[12px] leading-[1.7]" style={{ color: "#92400e" }}>{current.note}</div>
             </div>
           )}
+          {current.multi ? (
+            <>
+              <div className="flex flex-wrap gap-2">
+                {HAVE_CHIPS.map(c => {
+                  const on = chips.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setChips(on ? chips.filter(x => x !== c.id) : [...chips, c.id])}
+                      className="px-3.5 py-2.5 rounded-xl text-[13px] font-bold transition-all active:scale-[0.97]"
+                      style={{
+                        background: on ? NAVY : "#fff",
+                        color: on ? "#fff" : NAVY,
+                        border: `1.5px solid ${on ? NAVY : "rgba(2,62,138,0.14)"}`,
+                      }}
+                    >
+                      {on ? "✓ " : ""}{c.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => answerHave(chips)}
+                className="w-full mt-5 rounded-2xl py-4 text-[15px] font-black"
+                style={{ background: ORANGE, color: "#fff" }}
+              >
+                המשך ←
+              </button>
+            </>
+          ) : (
           <div className="flex flex-col gap-3">
             {current.opts.map(opt => (
               <button
@@ -862,6 +962,7 @@ export default function PathsPage() {
               </button>
             ))}
           </div>
+          )}
           <button
             onClick={() => (qIndex > 0 ? setQIndex(qIndex - 1) : goToPhase("intro"))}
             className="mt-6 text-[12px] font-bold"
@@ -1376,7 +1477,7 @@ export default function PathsPage() {
             בחודש עובר בין שני תארים שנשמעים אותו דבר.
           */}
           {activeTrack === "bootcamp" && <WrappedCourses domains={chosenDomains} />}
-          {activeTrack === "degree" && <DegreePicker domains={chosenDomains} />}
+          {activeTrack === "degree" && <DegreePicker domains={chosenDomains} have={hasOf(answers)} />}
 
           {/* Institution cards — הקטלוג */}
           {activeTrack === "degree" && !showAllInst ? (
@@ -2044,7 +2145,7 @@ function WrappedCourses({ domains }: { domains: Domain[] }) {
  * הפאנל נפתח מתחת ל**שורה** של הכרטיס הנבחר כדי שהחיבור החזותי יישמר —
  * אותו לקח בדיוק ממסך המטה, שם הפאנל נפל מתחת לכל הרשת ואיבד את הקשר.
  */
-function DegreePicker({ domains }: { domains: Domain[] }) {
+function DegreePicker({ domains, have }: { domains: Domain[]; have: string[] }) {
   const degrees = domains.length
     ? [...new Map(domains.flatMap(d => degreesFor(d)).map(d => [d.id, d])).values()]
     : [];
@@ -2126,7 +2227,7 @@ function DegreePicker({ domains }: { domains: Domain[] }) {
           </div>
 
           {selected && row.some(d => d.id === selected.id) && (
-            <DegreeDetail degree={selected} />
+            <DegreeDetail degree={selected} have={have} />
           )}
         </div>
       ))}
@@ -2153,7 +2254,7 @@ function openDoors(inst: (typeof INSTITUTIONS)[number], degreeId: string) {
 }
 
 /** הפאנל של תואר נבחר: מה הוא פותח, ההסתייגות, ואיפה לומדים אותו */
-function DegreeDetail({ degree: d }: { degree: Degree }) {
+function DegreeDetail({ degree: d, have }: { degree: Degree; have: string[] }) {
   const [showRest, setShowRest] = useState(false);
 
   const recommended = (d.recommendedAt ?? [])
@@ -2232,6 +2333,24 @@ function DegreeDetail({ degree: d }: { degree: Degree }) {
       <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.45)" }}>
         <b>הכניסה:</b> {d.entryNote}
       </div>
+
+      {/* עומד בתנאים? נגזר ממה שסימן, ואומר מה חסר ולא רק "לא" */}
+      {have.length > 0 && (() => {
+        const miss = missingFor(d.entryBar, have);
+        return miss.length === 0 ? (
+          <div className="rounded-xl px-3 py-2.5 text-[11.5px] font-bold leading-[1.7]"
+            style={{ background: "rgba(5,150,105,0.07)", border: "1px solid rgba(5,150,105,0.25)", color: "#047857" }}>
+            ✓ לפי מה שסימנת, את/ה עומד/ת בתנאי הכניסה לתואר הזה
+          </div>
+        ) : (
+          <div className="rounded-xl px-3 py-2.5 text-[11.5px] leading-[1.7]"
+            style={{ background: "rgba(251,133,0,0.07)", border: "1px solid rgba(251,133,0,0.25)", color: "#92400e" }}>
+            <b>חסר לך: {miss.join(" · ")}</b>
+            <br />
+            זה לא סוף הדרך — יש קורסי קדם ומכינות שסוגרים בדיוק את זה, והם מופיעים במסך החסמים.
+          </div>
+        );
+      })()}
 
       {/*
         האתגר — רק כאן, בפאנל שנפתח, ולעולם לא על הכרטיס המצומצם.
