@@ -14,13 +14,14 @@
  * נטען דינמית בלי SSR — Leaflet ניגש ל-window בזמן הייבוא.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { INSTITUTIONS, type Track } from "@/data/institutions";
 import { visibleCourses } from "@/data/courses";
 import { latLngOf, ISRAEL_CENTER, regionOf, type Region } from "@/data/regions";
+import InstitutionCard from "./InstitutionCard";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -61,10 +62,13 @@ function FitToSpots({ spots }: { spots: Spot[] }) {
   return null;
 }
 
-export default function PinMap({ track, myRegions = [] }: {
+export default function PinMap({ track, myRegions = [], inList, onToggleList }: {
   track?: Track;
   myRegions?: Region[];
+  inList?: (name: string) => boolean;
+  onToggleList?: (name: string) => void;
 }) {
+  const [picked, setPicked] = useState<string | null>(null);
   const { spots, unplaced } = useMemo(() => {
     const byCity = new Map<string, Spot>();
     let unplaced = 0;
@@ -101,6 +105,18 @@ export default function PinMap({ track, myRegions = [] }: {
     return { spots: [...byCity.values()], unplaced };
   }, [track, myRegions]);
 
+  /** מה שלא ניתן למקם — ושתי הסיבות שונות לגמרי */
+  const offMap = useMemo(() => {
+    const covered = new Set(
+      visibleCourses().filter(c => c.city || c.online).map(c => c.institutionId));
+    const rest = INSTITUTIONS.filter(i =>
+      i.status !== "hidden" && (!track || i.track === track) && !i.city && !covered.has(i.id));
+    return {
+      online: rest.filter(i => /אונליין|מרחוק/.test(i.location ?? "")),
+      nationwide: rest.filter(i => /ברחבי הארץ|קמפוסים|מרכזים/.test(i.location ?? "")),
+    };
+  }, [track]);
+
   return (
     <div className="flex flex-col gap-2">
       <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(2,62,138,0.12)" }}>
@@ -118,25 +134,27 @@ export default function PinMap({ track, myRegions = [] }: {
           {spots.map(s => (
             <Marker key={s.city} position={s.pos} icon={pinIcon(s.items.length, s.mine)}>
               <Popup>
-                <div dir="rtl" style={{ minWidth: 190, fontFamily: "'Heebo', sans-serif" }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 6 }}>
+                <div dir="rtl" style={{ minWidth: 170, fontFamily: "'Heebo', sans-serif" }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>
                     {s.city}{s.mine ? " · האזור שלך" : ""}
                   </div>
-                  {s.items.map(it => (
-                    <div key={it.id} style={{ marginBottom: 7 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700 }}>{it.name}</div>
-                      <div style={{ fontSize: 11, color: "#5c574e", lineHeight: 1.5 }}>
-                        {[it.where, it.sub].filter(Boolean).join(" · ")}
-                      </div>
-                      {it.link && (
-                        <a href={it.link.startsWith("http") ? it.link : `https://${it.link}`}
-                          target="_blank" rel="noopener noreferrer"
-                          style={{ fontSize: 11, fontWeight: 700, color: NAVY }}>
-                          לאתר ↗
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                  <div style={{ fontSize: 11.5, color: "#5c574e", margin: "3px 0 7px" }}>
+                    {s.items.length === 1 ? s.items[0].name : `${s.items.length} מסלולים כאן`}
+                  </div>
+                  {/*
+                    לא פותחים כאן את כל המידע — פופאפ קטן מדי, והמידע שלנו
+                    (מסלול בלי פסיכומטרי, הדלת, למי לפנות) לא נכנס בו.
+                    הלחיצה מביאה את הכרטיס המלא מתחת למפה.
+                  */}
+                  <button
+                    onClick={() => setPicked(s.city)}
+                    style={{
+                      width: "100%", fontSize: 12, fontWeight: 700, padding: "6px 10px",
+                      borderRadius: 8, border: "none", background: NAVY, color: "#fff", cursor: "pointer",
+                    }}
+                  >
+                    לראות מה יש לנו עליהם ←
+                  </button>
                 </div>
               </Popup>
             </Marker>
@@ -144,14 +162,86 @@ export default function PinMap({ track, myRegions = [] }: {
         </MapContainer>
       </div>
 
+      {picked && (
+        <div className="flex flex-col gap-2 p-3 rounded-2xl"
+          style={{ background: "rgba(2,62,138,0.03)", border: "1px solid rgba(2,62,138,0.1)" }}>
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-black" style={{ color: NAVY }}>{picked}</span>
+            <button onClick={() => setPicked(null)} className="text-[11px] font-bold"
+              style={{ color: "rgba(0,0,0,0.4)" }}>לסגור ✕</button>
+          </div>
+          {pickedInsts(picked, track).map(i => (
+            <InstitutionCard key={i.id} inst={i} defaultOpen
+              inList={inList?.(i.name)}
+              onToggleList={onToggleList ? () => onToggleList(i.name) : undefined} />
+          ))}
+        </div>
+      )}
+
       <div className="text-[11px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.45)" }}>
         <b>הסיכה מציינת עיר, לא בניין.</b> כתובת מדויקת יש לנו רק לחלק מהמוסדות,
         ובכל סיכה מופיע המספר שיושב באותה עיר.
-        {unplaced > 0 && (
-          <> {unplaced} מסלולים אינם על המפה — אונליין, פועלים בכל הארץ, או שטרם מיפינו להם מיקום.
-          הם מופיעים בתצוגת <b>״לפי אזור״</b>.</>
-        )}
       </div>
+
+      {/*
+        מה שלעולם לא יהיה על מפה — וזו לא הסתייגות אלא חלק מהתשובה.
+        מפה שלא אומרת מה חסר ממנה היא מפה שמשקרת.
+      */}
+      {offMap.online.length > 0 && (
+        <OffMap title="🌐 אפשר מהבית" tone="#047857"
+          note="אלה לא על המפה כי אין להם מקום — לומדים אונליין. למי שעובד או שיש לו ילדים, זו לפעמים כל התשובה."
+          items={offMap.online} inList={inList} onToggleList={onToggleList} />
+      )}
+      {offMap.nationwide.length > 0 && (
+        <OffMap title="🇮🇱 פועלים בכל הארץ" tone={NAVY}
+          note="יש להם סניפים או מרכזים בכל הארץ. לא בחרנו לך אחד — בדוק/י באתר איזה הכי קרוב אליך."
+          items={offMap.nationwide} inList={inList} onToggleList={onToggleList} />
+      )}
     </div>
   );
+}
+
+/** רשימה מקופלת של מה שלא ניתן למקם — עם אותו כרטיס מלא */
+function OffMap({ title, note, tone, items, inList, onToggleList }: {
+  title: string; note: string; tone: string;
+  items: (typeof INSTITUTIONS)[number][];
+  inList?: (name: string) => boolean;
+  onToggleList?: (name: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: `1px solid ${tone}33` }}>
+      <button onClick={() => setOpen(!open)} className="w-full text-right px-4 py-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[13.5px] font-black" style={{ color: tone }}>{title}</span>
+          <span className="text-[11.5px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+            {items.length} · {open ? "▲" : "▼"}
+          </span>
+        </div>
+        <div className="text-[11px] leading-[1.65] mt-1" style={{ color: "rgba(0,0,0,0.45)" }}>{note}</div>
+      </button>
+      {open && (
+        <div className="px-3 pb-3 flex flex-col gap-1.5">
+          {items.map(i => (
+            <InstitutionCard key={i.id} inst={i}
+              inList={inList?.(i.name)}
+              onToggleList={onToggleList ? () => onToggleList(i.name) : undefined} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** המוסדות שיושבים בעיר שנבחרה — כולל מי שהגיע דרך קורס */
+function pickedInsts(city: string, track?: Track) {
+  const ids = new Set<string>();
+  for (const c of visibleCourses()) if (c.city === city) ids.add(c.institutionId);
+  for (const i of INSTITUTIONS) {
+    if (i.status === "hidden" || (track && i.track !== track)) continue;
+    if (i.city === city) ids.add(i.id);
+  }
+  return [...ids]
+    .map(id => INSTITUTIONS.find(i => i.id === id))
+    .filter((i): i is (typeof INSTITUTIONS)[number] => !!i);
 }

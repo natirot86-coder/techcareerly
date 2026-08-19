@@ -13,7 +13,11 @@ import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
 import dynamic from "next/dynamic";
-import GeoView from "@/components/ui/GeoView";
+import InstitutionCard from "@/components/ui/InstitutionCard";
+const DegreeMap = dynamic(() => import("@/components/ui/DegreeMap"), {
+  ssr: false,
+  loading: () => <div style={{ height: 260, borderRadius: 12, background: "rgba(2,62,138,0.04)" }} />,
+});
 const PinMap = dynamic(() => import("@/components/ui/PinMap"), {
   ssr: false,
   loading: () => <div style={{ height: 420, borderRadius: 16, background: "rgba(2,62,138,0.04)" }} />,
@@ -628,7 +632,7 @@ export default function PathsPage() {
    * רשימות מוערמות בלי קשר ביניהן — וזה מה שהיה כאן קודם.
    */
   const [showAllInst, setShowAllInst] = useState(false);
-  const [view2, setView2] = useState<"list" | "geo" | "map">("list");
+  const [view2, setView2] = useState<"list" | "map">("list");
   const [quizStarted, setQuizStarted] = useState(false);
   const [research, setResearch] = useState<Record<string, ResearchEntry>>({});
   const [meetingBooked, setMeetingBooked] = useState(false);
@@ -1558,8 +1562,9 @@ export default function PathsPage() {
             תצוגת אזור — "יש משהו קרוב אליי" היא השאלה שהמסך הזה לא ענה עליה
             עד היום, למרות ששאלנו אותה בשאלון ולא עשינו עם התשובה כלום.
           */}
+          {activeTrack !== "degree" && (
           <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "rgba(2,62,138,0.06)" }}>
-            {([["list", "רשימה"], ["geo", "לפי אזור"], ["map", "מפה"]] as const).map(([v, label]) => (
+            {([["list", "רשימה"], ["map", "מפה"]] as const).map(([v, label]) => (
               <button key={v} onClick={() => setView2(v)}
                 className="flex-1 py-2 rounded-lg text-[12.5px] font-bold"
                 style={{
@@ -1571,11 +1576,14 @@ export default function PathsPage() {
               </button>
             ))}
           </div>
+          )}
 
-          {view2 === "map" ? (
-            <PinMap track={activeTrack} myRegions={regionsForAnswer(answers.location)} />
-          ) : view2 === "geo" ? (
-            <GeoView track={activeTrack} myRegions={regionsForAnswer(answers.location)} />
+          {view2 === "map" && activeTrack !== "degree" ? (
+            <PinMap track={activeTrack} myRegions={regionsForAnswer(answers.location)}
+              inList={n => shortlist.some(s => s.name === n)}
+              onToggleList={(name) => shortlist.find(s => s.name === name)
+                ? removeFromShortlist(name)
+                : addToShortlist({ name, track: activeTrack })} />
           ) : (
           <>
           {activeTrack === "bootcamp" && <WrappedCourses domains={chosenDomains} />}
@@ -2366,122 +2374,13 @@ function openDoors(inst: (typeof INSTITUTIONS)[number], degreeId: string) {
     .filter(f => f.openToAllDegrees || (f.degreeIds ?? []).includes(degreeId));
 }
 
-/**
- * שורת מוסד בתוך פאנל התואר — ונפתחת.
- *
- * החזקנו על כל מוסד עשרה שדות והצגנו שם ומחיר. כל השאר — למה דווקא הוא,
- * המעטפת, מסלול הקבלה בלי פסיכומטרי, איש הקשר — היה קבור בקטלוג המקופל,
- * כלומר במקום שבו האדם כבר לא מחליט. עכשיו זה נפתח במקום.
- *
- * **איש הקשר הוא יחידת התמיכה ולא מדור הרישום** — שם עונים "אינך עומד
- * בתנאים" ולא מכירים מסלולי קבלה חלופיים, ושיחה כזו יכולה לסיים מסע.
- */
-function InstRow({ inst, star, doors, inList, onToggleList }: {
-  inst: (typeof INSTITUTIONS)[number];
-  star?: boolean;
-  doors: (typeof FUNDING)[number][];
-  inList?: boolean;
-  onToggleList?: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const many = doors.length >= 2;
-  const rows: [string, string | undefined][] = [
-    ["למה דווקא כאן", inst.why],
-    ["תנאי קבלה", inst.admission],
-    ["בלי פסיכומטרי", inst.noPsychometric],
-    ["מעטפת ותמיכה", inst.support],
-    ["קשרי תעשייה", inst.industry],
-    ["מבנה הלימודים", inst.schedule],
-    ["ימים פתוחים", inst.openDays],
-  ];
-  const contact = [inst.contactName, inst.contactRole, inst.contactPhone, inst.contactEmail]
-    .filter(Boolean).join(" · ");
-
-  return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{
-        background: many ? "rgba(5,150,105,0.06)" : star ? "rgba(251,133,0,0.06)" : "rgba(2,62,138,0.03)",
-        border: `1px solid ${many ? "rgba(5,150,105,0.35)" : star ? "rgba(251,133,0,0.2)" : "rgba(2,62,138,0.07)"}`,
-      }}
-    >
-      <button onClick={() => setOpen(!open)} className="w-full text-right px-3 py-2.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[12.5px] font-bold" style={{ color: NAVY }}>
-            {star ? "✦ " : ""}{inst.name.split(" — ")[0]}
-          </span>
-          <span className="text-[10.5px] shrink-0" style={{ color: "rgba(0,0,0,0.35)" }}>
-            {open ? "לסגור ▲" : "עוד ▼"}
-          </span>
-        </div>
-        {doors.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-            {many && (
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: "#059669", color: "#fff" }}>
-                שתי דרכים להיכנס
-              </span>
-            )}
-            {doors.map(f => (
-              <span key={f.id} className="text-[10.5px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(251,133,0,0.1)", color: "#92400e" }}>
-                דרך {f.name.split(" — ")[0]}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="text-[11px] mt-1 leading-[1.6]" style={{ color: "rgba(0,0,0,0.5)" }}>
-          {inst.address ?? inst.location}{inst.tuition ? ` · ${inst.tuition.split(".")[0]}` : ""}
-        </div>
-      </button>
-
-      {open && (
-        <div className="px-3 pb-3 flex flex-col gap-2" style={{ borderTop: "1px dashed rgba(0,0,0,0.1)", paddingTop: 10 }}>
-          {inst.warn && (
-            <div className="rounded-lg px-3 py-2 text-[11px] leading-[1.65]" style={{ background: "rgba(220,38,38,0.06)", color: "#991b1b" }}>
-              ⚠️ {inst.warn}
-            </div>
-          )}
-          {rows.filter(([, v]) => v && v.trim()).map(([k, v]) => (
-            <div key={k} className="text-[11px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
-              <b style={{ color: NAVY }}>{k}:</b> {v}
-            </div>
-          ))}
-          {contact && (
-            <div className="text-[11px] leading-[1.7] rounded-lg px-3 py-2" style={{ background: "rgba(5,150,105,0.06)", color: "#047857" }}>
-              <b>למי לפנות:</b> {contact}
-            </div>
-          )}
-          <div className="flex gap-2">
-            {inst.link && (
-              <a href={inst.link.startsWith("http") ? inst.link : `https://${inst.link}`}
-                target="_blank" rel="noopener noreferrer"
-                className="flex-1 text-[11.5px] font-bold px-3 py-2 rounded-lg text-center"
-                style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}>
-                לאתר הרשמי ↗
-              </a>
-            )}
-            {onToggleList && (
-              <button onClick={onToggleList}
-                className="flex-1 text-[11.5px] font-bold px-3 py-2 rounded-lg"
-                style={{
-                  background: inList ? `${ORANGE}18` : "rgba(0,0,0,0.04)",
-                  color: inList ? ORANGE : "rgba(0,0,0,0.5)",
-                  border: inList ? `1px solid ${ORANGE}40` : "1px solid rgba(0,0,0,0.08)",
-                }}>
-                {inList ? "✓ ברשימה שלי" : "+ הוסף לרשימה"}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /** הפאנל של תואר נבחר: מה הוא פותח, ההסתייגות, ואיפה לומדים אותו */
 function DegreeDetail({ degree: d, have, list, onToggleList }: {
   degree: Degree; have: string[]; list?: string[]; onToggleList?: (name: string) => void;
 }) {
   const [showRest, setShowRest] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const recommended = (d.recommendedAt ?? [])
     .map(id => INSTITUTIONS.find(i => i.id === id))
@@ -2501,7 +2400,7 @@ function DegreeDetail({ degree: d, have, list, onToggleList }: {
   );
 
   const Row = ({ inst, star }: { inst: (typeof INSTITUTIONS)[number]; star?: boolean }) =>
-    <InstRow inst={inst} star={star} doors={openDoors(inst, d.id)}
+    <InstitutionCard inst={inst} star={star} doors={openDoors(inst, d.id)}
       inList={list?.includes(inst.name)} onToggleList={onToggleList ? () => onToggleList(inst.name) : undefined} />;
 
   return (
@@ -2579,6 +2478,26 @@ function DegreeDetail({ degree: d, have, list, onToggleList }: {
           {" "}<b>אם אין כאן משהו באזור שלך — זה לא אומר שאין</b>, זה אומר שעוד לא בדקנו.
           הרכזת תשלים את זה בפגישה.
         </div>
+
+        {/*
+          המפה כאן ולא ברמה העליונה: במסלול התואר בוחרים קודם תואר, ומפה
+          שמציגה את כל מוסדות המסלול מתעלמת מהבחירה. כאן היא מציגה בדיוק
+          את מי שמלמד את התואר הזה.
+        */}
+        {(recommended.length + teaches.length) > 0 && (
+          <div className="mb-3">
+            <button onClick={() => setShowMap(!showMap)}
+              className="w-full py-2 rounded-xl text-[11.5px] font-bold"
+              style={{ background: "rgba(2,62,138,0.05)", color: NAVY }}>
+              {showMap ? "לסגור את המפה ▲" : "🗺 לראות על המפה איפה לומדים את התואר הזה"}
+            </button>
+            {showMap && (
+              <div className="mt-2">
+                <DegreeMap insts={[...recommended, ...teaches]} />
+              </div>
+            )}
+          </div>
+        )}
 
         {recommended.length === 0 && teaches.length === 0 ? (
           <div className="text-[11.5px] leading-[1.7]" style={{ color: "#92400e" }}>
