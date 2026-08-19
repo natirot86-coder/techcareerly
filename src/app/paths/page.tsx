@@ -2232,6 +2232,24 @@ function DegreeDetail({ degree: d }: { degree: Degree }) {
       <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.45)" }}>
         <b>הכניסה:</b> {d.entryNote}
       </div>
+
+      {/*
+        האתגר — רק כאן, בפאנל שנפתח, ולעולם לא על הכרטיס המצומצם.
+        כרטיס נסרק בשנייה ומשמש לסינון; פאנל נקרא רק אחרי שמישהו
+        כבר התעניין. ועם האתגר תמיד מה שמקטין אותו — אחרת זו הרתעה.
+      */}
+      {d.challenge && (
+        <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.04)", border: "1px solid rgba(2,62,138,0.08)" }}>
+          <div className="text-[11.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.62)" }}>
+            <b style={{ color: NAVY }}>האתגר:</b> {d.challenge}
+          </div>
+          {d.challengeHelp && (
+            <div className="text-[11px] leading-[1.65] mt-1.5 pt-1.5" style={{ color: "#047857", borderTop: "1px dashed rgba(0,0,0,0.08)" }}>
+              <b>מה מקטין אותו:</b> {d.challengeHelp} · ותוכניות הליווי קיימות בדיוק בשביל שנה א׳
+            </div>
+          )}
+        </div>
+      )}
       {d.salary && (
         <div className="text-[11px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.45)" }}>
           <b>על השכר:</b> {d.salary.toLocaleString("he-IL")} ₪ הוא הממוצע חמש-שש שנים אחרי התואר,
