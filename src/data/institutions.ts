@@ -351,6 +351,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.afeka.ac.il",
     location: "תל אביב",
     city: "תל אביב-יפו",
+    address: "מבצע קדש 38, תל אביב · מתחם הפיקוס", // אומת מאתר המכללה
     tuition: "לא אומת",
     admission: "מתמטיקה 4 יח׳ 85 או 5 יח׳ 75 + מקצוע מדעי 5 יח׳ 60 + אנגלית 4 יח׳ 70. חלופה: פסיכומטרי 620",
     noPsychometric: "כן — קבלה על בסיס בגרות בלבד, מדיניות מוצהרת",
@@ -376,6 +377,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.aac.ac.il/exact-sciences/",
     location: "אשקלון",
     city: "אשקלון",
+    address: "בן צבי 12, אשקלון 78211", // אומת מאתר המכללה
     tuition: "12,017 ₪ לשנה (מתוקצב). שנה ראשונה חינם לחיילים משוחררים בחלון 5 שנים",
     admission: "ממוצע בגרות 85 · סכם כמותי 570 · מתמטיקה 4 יח׳ 70",
     noPsychometric: "כנראה כן — המבנה המדויק לא אומת",
@@ -430,6 +432,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.ariel.ac.il",
     location: "אריאל",
     city: "אריאל",
+    address: "קמפוס אריאל, אריאל 40700", // כתובת הקמפוס — אין רחוב ומספר
     tuition: "לא אומת",
     admission: "תנאי סף: מתמטיקה 4 יח׳ 88 או 5 יח׳ 75 + פיזיקה 5 יח׳ 70. מסלולים: בגרות בלבד 104 · פסיכומטרי 680 · קבלה על תנאי 102",
     noPsychometric: "כן — ממוצע בגרות 104, או קבלה על תנאי ב-102",
@@ -1632,6 +1635,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.biu.ac.il/",
     location: "רמת גן",
     city: "רמת גן",
+    address: "קמפוס בר-אילן, רמת גן 5290002", // כתובת הקמפוס — אין רחוב ומספר
     tuition: "12,017 ₪ לשנה (מתוקצב)",
     admission: "לא אומת. דלתות: מכינת TechLeaders ותוכנית יואל (בחקירה)",
     noPsychometric: "לא אומת",
