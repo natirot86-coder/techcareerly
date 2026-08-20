@@ -66,7 +66,10 @@ export const FLOWS: Flow[] = [
     note:
       "אחרי פגישת ההיכרות נפתחים שבעת התחומים. בכל תחום: סימולציה קצרה, מרכז למידה עם יום-בחיי ותעלומה, וכלי עיבוד חוויה ששואל שש שאלות על עניין, תחושת מסוגלות וציפיות. הפער בין עניין גבוה למסוגלות נמוכה הוא מה שמעניין אותנו — זה בדיוק האדם שבשבילו הארגון קיים. בסוף השלב סיכום שמוכן לפגישה השנייה.",
     screens: [
-      { shot: "explore", label: "בחירת תחום", sub: "7 תחומים", url: `${B}/explore` },
+      { shot: "explore", label: "בחירת תחום", sub: "9 תחומים", url: `${B}/explore` },
+      { shot: "d-hardware", label: "דף תחום חדש", sub: "חומרה ואלקטרוניקה", url: `${B}/explore/hardware` },
+      { shot: "hardware-day", label: "יום בחיי + תכנון", sub: "מעבדה ותכן — שני הכובעים", url: `${B}/explore/hardware/learn/day` },
+      { shot: "d-qa", label: "דף תחום", sub: "בדיקות תוכנה", url: `${B}/explore/qa` },
       { shot: "d-networks", label: "דף תחום", sub: "רשתות", url: `${B}/explore/networks` },
       { shot: "s-networks", label: "סימולציה", sub: "תקלת רשת", url: `${B}/explore/networks/sim` },
       { shot: "networks-day", label: "יום בחיי", sub: "Network Engineer", url: `${B}/explore/networks/learn/day` },
@@ -83,6 +86,7 @@ export const FLOWS: Flow[] = [
     note:
       "תשעה מסכים שמביאים אדם שעדיין לא סגור לנקודה שבה הוא רואה מסלול אחד קונקרטי. שש שאלות על מגבלות החיים, ואז מנוע ניקוד משוקלל שממליץ — ואנחנו ממליצים על תואר במפורש, כי הוא מעלה את סיכויי הקבלה ומשרת סטודנט מתחילה כבר מסוף שנה א׳. אחרי ההמלצה: השוואת המסלולים כקווי רכבת, מסך החסמים (הלב של השלב), בניית רשימת מוסדות, ושאלות מוכנות לפגישה השלישית.",
     screens: [
+      { shot: "p-domain", label: "שער הכיוון", sub: "1–2 תחומים, אחרי פגישה 2", url: `${B}/paths?demo=1&phase=domain` },
       { shot: "p-intro", label: "פתיחה", sub: "מה נעשה כאן", url: `${B}/paths?reset=1` },
       { shot: "p-quiz", label: "6 שאלות", sub: "מגבלות החיים", url: `${B}/paths?demo=1&phase=quiz` },
       { shot: "p-result", label: "ההמלצה", sub: "ניקוד משוקלל", url: `${B}/paths?demo=1&phase=result` },
@@ -98,9 +102,10 @@ export const FLOWS: Flow[] = [
     stage: "שלב 5",
     color: "#059669",
     note:
-      "אחרי שהמסלול ננעל בפגישה השלישית. התוכנית מסודרת לפי חודשים, ובראשה כרטיס עוגן אחד עם הפעולה הדחופה ביותר — כל משימה בגודל ישיבה אחת, כי הפחד גדל עם גודל המשימה. מסך החשבון נותן את המספר במקום הרגעה: כמה זה עולה, כמה המלגות מכסות, ומה נשאר. ארון המסמכים עוקב אחרי סטטוס ומיקום בלבד — האפליקציה לא שומרת קבצים. והעדכון לרכזת נבנה מעצמו ונשלח בוואטסאפ.",
+      "אחרי שהמסלול ננעל בפגישה השלישית. התוכנית מסודרת לפי חודשים, ובראשה כרטיס עוגן אחד עם הפעולה הדחופה ביותר — כל משימה בגודל ישיבה אחת, כי הפחד גדל עם גודל המשימה. מסך החשבון נותן את המספר במקום הרגעה: כמה זה עולה, כמה המלגות מכסות, ומה נשאר. ארון המסמכים עוקב אחרי סטטוס ומיקום — עם חריג אחד מכוון: אישור הלימודים כן נשמר, כי משרד העבודה דורש את האסמכתא. והעדכון לרכזת נבנה מעצמו ונשלח בוואטסאפ.",
     screens: [
       { shot: "pl-intro", label: "פתיחה לשלב", sub: "מה קורה כאן", url: `${B}/plan?reset=1` },
+      { shot: "pl-inst-gate", label: "שער המוסד", sub: "מוסד + גיבוי, אחרי פגישה 3", url: `${B}/plan?view=plan` },
       { shot: "pl-plan", label: "התוכנית", sub: "עוגן + חודשים", url: `${B}/plan?view=plan` },
       { shot: "pl-money", label: "החשבון", sub: "מספר, לא נחמה", url: `${B}/plan?view=money` },
       { shot: "pl-docs", label: "ארון מסמכים", sub: "סטטוס ומיקום", url: `${B}/plan?view=docs` },
@@ -118,6 +123,9 @@ export const FLOWS: Flow[] = [
       { shot: "admin-inst", label: "מוסדות", sub: "34 · אישור", url: `${B}/admin/institutions` },
       { shot: "admin-funding", label: "מלגות ותוכניות", sub: "18 · אישור", url: `${B}/admin/scholarships` },
       { shot: "admin-analytics", label: "אנליטיקות", sub: "שאלות מחקר", url: `${B}/admin/analytics` },
+      { shot: "admin-degrees", label: "תארים", sub: "מטריצת כיסוי", url: `${B}/admin/degrees` },
+      { shot: "admin-coord", label: "מסך הרכזת", sub: "תור חילוץ + כל המשתתפים", url: `${B}/admin/coordinator` },
+      { shot: "admin-program", label: "ניהול התוכנית", sub: "רכזות ושיוך", url: `${B}/admin/program` },
       { shot: "reset", label: "איפוס", sub: "בדיקה מאפס", url: `${B}/reset` },
     ],
   },
