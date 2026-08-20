@@ -69,7 +69,21 @@ function AdminInstitutionsPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORE_KEY);
-      if (saved) { setItems(JSON.parse(saved)); setDirty(true); }
+      if (saved) {
+        /*
+         * מיזוג, לא החלפה. קודם הרשימה השמורה החליפה את רשימת הקוד כולה —
+         * ולכן מוסד חדש שנכנס בקוד לא הופיע אצל מי שערך פעם משהו (נתי ראה
+         * 69 כשבקוד היו 81). הבסיס תמיד הקוד הטרי; עריכות יושבות עליו לפי id.
+         */
+        const stored: Institution[] = JSON.parse(saved);
+        const editedById = new Map(stored.map(i => [i.id, i]));
+        const codeIds = new Set(INSTITUTIONS.map(i => i.id));
+        setItems([
+          ...INSTITUTIONS.map(i => editedById.get(i.id) ?? i),
+          ...stored.filter(i => !codeIds.has(i.id)),
+        ]);
+        setDirty(true);
+      }
     } catch { /* ignore */ }
   }, []);
 
