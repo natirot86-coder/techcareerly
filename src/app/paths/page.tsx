@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
-import { visibleByTrack, INSTITUTIONS } from "@/data/institutions";
+import { visibleByTrack, visibleFor, INSTITUTIONS } from "@/data/institutions";
 import { track as trackEvent } from "@vercel/analytics";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import AllPaths from "@/components/ui/AllPaths";
@@ -1718,12 +1718,49 @@ export default function PathsPage() {
       { key: "bootcamp", label: "הכשרה", emoji: "⚡" },
       { key: "mahat", label: "מה\"ט", emoji: "🏫" },
     ];
-    const list = visibleByTrack(activeTrack);
+    /*
+     * מי שבחר שני תחומים בשער רואה כאן בורר תחום — כל המסך מסונן לתחום
+     * אחד בכל רגע (נתי 20.8): תחום ← אפיק ← ובאקדמיה תואר ← מוסדות.
+     */
+    const focusDomain: Domain | null = pickedDomains.length > 1
+      ? (activeDomain && pickedDomains.includes(activeDomain) ? activeDomain : pickedDomains[0])
+      : null;
+    const instDomains: Domain[] = focusDomain ? [focusDomain] : chosenDomains;
+    const list = focusDomain ? visibleFor(activeTrack, [focusDomain]) : visibleByTrack(activeTrack);
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.institutions} phaseIndex={4} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-5 pb-32">
+
+          {pickedDomains.length > 1 && (
+            <div className="flex gap-2 mb-3">
+              {pickedDomains.map(d => {
+                const on = d === focusDomain;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      if (!on) {
+                        // מדד ההתלבטות: כמה מחליפים תחום תוך כדי חקר המוסדות
+                        logEvent("domain_switch", { to: d });
+                        trackEvent("domain_switch", { to: d });
+                      }
+                      setActiveDomain(d);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-[13px] font-black transition-all"
+                    style={{
+                      background: on ? ORANGE : "#fff",
+                      color: on ? "#fff" : "#92400e",
+                      border: on ? "none" : "1.5px solid rgba(251,133,0,0.35)",
+                    }}
+                  >
+                    {DOMAIN_LABEL[d]}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Track tabs */}
           <div className="flex gap-2 mb-5">
@@ -1811,8 +1848,8 @@ export default function PathsPage() {
                 : addToShortlist({ name, track: activeTrack })} />
           ) : (
           <>
-          {activeTrack === "bootcamp" && <WrappedCourses domains={chosenDomains} />}
-          {activeTrack === "degree" && <DegreePicker domains={chosenDomains} have={hasOf(answers)}
+          {activeTrack === "bootcamp" && <WrappedCourses domains={instDomains} />}
+          {activeTrack === "degree" && <DegreePicker domains={instDomains} have={hasOf(answers)}
             list={shortlist.map(s => s.name)}
             onToggleList={(name) => shortlist.find(s => s.name === name)
               ? removeFromShortlist(name)
