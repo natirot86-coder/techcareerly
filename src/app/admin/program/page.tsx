@@ -66,13 +66,27 @@ export default function ProgramAdmin() {
     const next = { ...assign, [personId]: coordId };
     setAssign(next);
     localStorage.setItem(ASSIGN_KEY, JSON.stringify(next));
+    // השיוך האמיתי — במסד, דרך צד השרת. אם המיגרציה טרם רצה נקבל הודעה ברורה
+    const c = sessionStorage.getItem("coordinator-code") ?? code;
+    fetch("/api/coordinator", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-coordinator-code": c },
+      body: JSON.stringify({ candidateId: personId, coordinatorId: coordId }),
+    })
+      .then(async r => {
+        if (!r.ok) {
+          const j = await r.json().catch(() => null);
+          setErr(j?.error ?? "השיוך נשמר מקומית בלבד");
+        }
+      })
+      .catch(() => setErr("השיוך נשמר מקומית בלבד — אין חיבור לשרת"));
   }
 
   async function loadPeople() {
     setLoading(true);
     setErr("");
     try {
-      const res = await fetch(`/api/coordinator?code=${encodeURIComponent(code)}`);
+      const res = await fetch("/api/coordinator", { headers: { "x-coordinator-code": code } });
       if (!res.ok) throw new Error(res.status === 401 ? "קוד שגוי" : `שגיאה ${res.status}`);
       const data = await res.json();
       sessionStorage.setItem("coordinator-code", code);

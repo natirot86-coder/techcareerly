@@ -395,6 +395,38 @@ export function logEvent(name: string, props: Record<string, unknown> = {}): voi
 const TOUCH_KEY = "last-touch-at";
 const TOUCH_EVERY_MS = 60 * 60 * 1000;
 
+/**
+ * סנכרון התקדמות הטעימות לשרת (נתי 20.8 — מפת המסע של הרכזת).
+ *
+ * סיום day/mystery/experience נכתב עד היום רק ל-localStorage, ולכן מפה
+ * שתציג אותו אצל הרכזת הייתה מציגה ריק גם למי שסיים. במקום לתקן שנים-עשר
+ * כפתורי "מיציתי" שונים — נקודת סנכרון אחת שרואה את הדגלים מכל תחום,
+ * מדווחת רק הפרשים (taste_done), ותופסת רטרואקטיבית גם השלמות עבר.
+ */
+export function syncTasteProgress(): void {
+  if (!supabase || typeof window === "undefined") return;
+  try {
+    const domains = ["code", "data", "cyber", "networks", "hardware", "ai", "ux", "marketing", "qa"];
+    const steps = ["sim", "day", "mystery", "experience", "analytics"];
+    const synced: Record<string, boolean> = JSON.parse(localStorage.getItem("taste-synced") ?? "{}");
+    let changed = false;
+    for (const d of domains) {
+      const raw = localStorage.getItem(`${d}-journey`);
+      if (!raw) continue;
+      const j = JSON.parse(raw) as Record<string, unknown>;
+      for (const step of steps) {
+        const key = `${d}.${step}`;
+        if (j[step] === true && !synced[key]) {
+          logEvent("taste_done", { domain: d, step });
+          synced[key] = true;
+          changed = true;
+        }
+      }
+    }
+    if (changed) localStorage.setItem("taste-synced", JSON.stringify(synced));
+  } catch { /* ignore */ }
+}
+
 export function touchActivity(): void {
   if (!supabase || typeof window === "undefined") return;
   try {

@@ -24,7 +24,7 @@ import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import { track as trackEvent } from "@vercel/analytics";
-import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl } from "@/lib/candidate";
+import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl, getCandidate } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
 import {
   BUDGETED_TUITION, SCHOLARSHIPS, RECOMMENDED_STACK, DOC_CATALOG,
@@ -33,7 +33,7 @@ import {
 } from "@/data/plan";
 import { INSTITUTIONS } from "@/data/institutions";
 
-import { coordinatorProfileFor } from "@/data/coordinators";
+import { coordinatorProfileFor, COORDINATOR_ROSTER } from "@/data/coordinators";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -1468,10 +1468,19 @@ function CoordView({
   const included = lines.filter(l => !excluded.includes(l.id));
   const message = `עדכון מהאפליקציה:\n\n${included.map(l => l.text).join("\n")}`;
   /*
-   * ישירות לרכזת — המספר נמשך מסגל הרכזות (דף ניהול התוכנית), לפי השיוך.
-   * כל עוד אין שיוך במסד — הרכזת הפעילה הראשונה. מספר ריק = בחירה ידנית.
+   * ישירות לרכזת — המספר נמשך מסגל הרכזות לפי השיוך של המועמד במסד
+   * (coordinator_id, מיגרציה 003). בלי שיוך — הרכזת הפעילה הראשונה.
    */
-  const coordPhone = coordinatorProfileFor().phone;
+  const [coordPhone, setCoordPhone] = useState(coordinatorProfileFor().phone);
+  useEffect(() => {
+    getCandidate()
+      .then(c => {
+        const cid = (c as { coordinator_id?: string | null } | null)?.coordinator_id;
+        const prof = cid ? COORDINATOR_ROSTER.find(r => r.id === cid) : null;
+        if (prof?.phone) setCoordPhone(prof.phone);
+      })
+      .catch(() => { /* ignore */ });
+  }, []);
   const waLink = coordPhone
     ? `https://wa.me/${coordPhone}?text=${encodeURIComponent(message)}`
     : `https://wa.me/?text=${encodeURIComponent(message)}`;

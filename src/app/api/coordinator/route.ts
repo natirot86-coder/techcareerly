@@ -230,3 +230,37 @@ export async function GET(req: NextRequest) {
     skipped, // שורות שלא ניתן היה לחשב — 0 במצב תקין
   });
 }
+
+/**
+ * POST /api/coordinator — שיוך רכזת למועמד (מדף מנהל התוכנית).
+ * אותו שער גישה. דורש את עמודת coordinator_id (מיגרציה 003) — עד שהיא
+ * רצה, מוחזרת שגיאה מפורשת במקום כישלון שקט.
+ */
+export async function POST(req: NextRequest) {
+  const code = process.env.COORDINATOR_CODE;
+  if (!code) return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
+  if (req.headers.get("x-coordinator-code") !== code) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !secret) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
+
+  const body = await req.json().catch(() => null) as { candidateId?: string; coordinatorId?: string } | null;
+  if (!body?.candidateId) return NextResponse.json({ error: "candidateId required" }, { status: 400 });
+
+  const db = createClient(url, secret, { auth: { persistSession: false } });
+  const { error } = await db
+    .from("candidates")
+    .update({ coordinator_id: body.coordinatorId || null })
+    .eq("id", body.candidateId);
+
+  if (error) {
+    const missing = /coordinator_id/.test(error.message);
+    return NextResponse.json(
+      { error: missing ? "העמודה coordinator_id חסרה — להריץ את supabase/migrations/003 בדשבורד" : error.message },
+      { status: missing ? 409 : 500 },
+    );
+  }
+  return NextResponse.json({ ok: true });
+}

@@ -15,7 +15,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { touchActivity } from "@/lib/candidate";
+import { touchActivity, syncTasteProgress } from "@/lib/candidate";
 
 const SKIP = ["/admin", "/map", "/reset", "/login", "/api"];
 export const LAST_LOCATION_KEY = "last-location";
@@ -37,6 +37,8 @@ export default function ResumeTracker() {
      * מי שפתח את האפליקציה והסתכל דקה נספר, גם אם לא לחץ על כלום.
      */
     touchActivity();
+    // התקדמות הטעימות עולה לשרת מכל ניווט — הפרשים בלבד
+    syncTasteProgress();
 
     if (pathname === "/") return; // נקודת מעבר, לא מיקום לחזור אליו
     localStorage.setItem(LAST_LOCATION_KEY, qs ? `${pathname}?${qs}` : pathname);
