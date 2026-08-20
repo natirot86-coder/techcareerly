@@ -721,6 +721,13 @@ export default function PathsPage() {
   const [chosenDomain, setChosenDomain] = useState<Domain | null>(null);
   // הבחירה המפורשת מהשער — עד שניים. מקור האמת החדש; השדות הוותיקים נשמרים כגישור
   const [pickedDomains, setPickedDomains] = useState<Domain[]>([]);
+  /*
+   * מצב הכנה — לפני שפגישה 2 התקיימה (נתי 20.8): השאלון והיכרות עם שלוש
+   * הדרכים פתוחים, כי אילוצי חיים ואוריינות מסלולים לא תלויים בתחום.
+   * בחירת התחום, המוסדות והחסמים נעולים — זו העבודה של הפגישה עם הרכזת.
+   * "התקיימה" נגזרת מהמועד שנשמר בקביעה, לא מלחיצת כפתור.
+   */
+  const [prepMode, setPrepMode] = useState(false);
   /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
   const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
   /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
@@ -811,11 +818,24 @@ export default function PathsPage() {
       const savedPhase = localStorage.getItem("paths-phase") as Phase | null;
       if (savedPhase) setPhase(savedPhase);
       /*
+       * פגישה 2 "התקיימה" = שעה אחרי המועד שנשמר בקביעה. מי שכבר בחר תחומים
+       * נשאר פתוח גם בלי מועד (לא נועלים אחורה), ודמו עוקף את הנעילה.
+       */
+      let m2Done = picked.length > 0 || !!savedChoice;
+      try {
+        const at = localStorage.getItem("meeting-2-at");
+        if (at && Date.now() > new Date(at).getTime() + 60 * 60 * 1000) m2Done = true;
+      } catch { }
+      if (params.has("demo")) m2Done = true;
+      setPrepMode(!m2Done);
+
+      /*
        * השער: מי שטרם בחר כיוון מתחיל בבחירה. זו החלטה מכוונת (נתי, 20.8) —
        * בחירת התחום היא שער משמעותי ולא העשרה. אין בו "עוד לא סגור":
        * מי שעוצר מולו נמדד (paths_domain_gate בלי domain_committed) ומגיע לרכזת.
+       * ובמצב הכנה השער לא מוצג בכלל — בחירת התחום שייכת לפגישה.
        */
-      if (!picked.length && !savedChoice && (!savedPhase || savedPhase === "intro")) setPhase("domain");
+      if (m2Done && !picked.length && !savedChoice && (!savedPhase || savedPhase === "intro")) setPhase("domain");
     } catch { /* ignore */ }
   }, []);
 
@@ -969,6 +989,44 @@ export default function PathsPage() {
     </div>
   );
 
+  // ── Prep lock — לפני פגישה 2 החלקים תלויי-התחום נעולים ─────────────────
+  if (prepMode && ["domain", "blockers", "institutions", "prep", "research"].includes(phase)) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <JourneyStrip current={4} phaseLabel="הכנה לפגישה" phaseIndex={0} phaseTotal={7} />
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-8 pb-32">
+          <div className="text-[34px] mb-3">🔒</div>
+          <div className="text-[20px] leading-[1.4] mb-2" style={{ ...HEEBO, color: NAVY }}>
+            החלק הזה נפתח אחרי הפגישה
+          </div>
+          <div className="text-[13px] leading-[1.85] mb-6" style={{ color: "rgba(0,0,0,0.58)" }}>
+            את התחום בוחרים <b>יחד עם הרכזת</b> בפגישה — ומשם נפתחים המוסדות,
+            החסמים וההכנה לפגישה השלישית.
+            <br />
+            מה שכן פתוח כבר עכשיו: השאלון והיכרות עם שלוש הדרכים — ככה מגיעים
+            לפגישה עם תמונה מלאה.
+          </div>
+          <button
+            onClick={() => goToPhase("intro")}
+            className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+            style={{ background: ORANGE, ...HEEBO }}
+          >
+            להכנה — השאלון ושלוש הדרכים ←
+          </button>
+          <Link
+            href="/explore"
+            className="block text-center w-full mt-3 text-[12px] font-bold"
+            style={{ color: "rgba(0,0,0,0.4)" }}
+          >
+            רוצה לטעום עוד תחום לפני הפגישה? ←
+          </Link>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
   // ── Domain gate — שער בחירת הכיוון (נתי 20.8: שער מפורש, בלי מילוט) ──────
   if (phase === "domain") {
     const tasted = (Object.keys(DOMAIN_LABEL) as Domain[])
@@ -1058,6 +1116,16 @@ export default function PathsPage() {
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.intro} phaseIndex={0} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+
+          {prepMode && (
+            <div
+              className="rounded-xl px-4 py-3 mb-4 text-[12.5px] leading-[1.7]"
+              style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)", color: "rgba(0,0,0,0.6)" }}
+            >
+              <b style={{ color: NAVY }}>את בחירת התחום תעשו יחד בפגישה.</b>{" "}
+              כאן בונים את התמונה — האילוצים שלך ושלוש הדרכים להייטק.
+            </div>
+          )}
 
           {/* Where you are in the journey */}
           <div
@@ -1382,7 +1450,23 @@ export default function PathsPage() {
           </div>
 
           {/* השאלה הישנה ישבה כאן; הבחירה עברה לשער בכניסה לשלב (נתי 20.8) */}
-          {!domainChoice && pickedDomains.length === 0 && (
+          {!domainChoice && pickedDomains.length === 0 && prepMode && (
+            <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(2,62,138,0.04)", border: "1.5px solid rgba(2,62,138,0.12)" }}>
+              <div className="text-[15px] mb-2" style={{ ...HEEBO, color: NAVY }}>עד כאן ההכנה — ואת ההמשך פותחים יחד 🎯</div>
+              <div className="text-[12.5px] leading-[1.8] mb-3" style={{ color: "rgba(0,0,0,0.6)" }}>
+                בפגישה תבחרו תחום עם הרכזת, ומיד אחריה ייפתחו כאן המוסדות, החסמים
+                וההכנה לפגישה השלישית. אתה מגיע אליה מוכן — עם האילוצים ממופים ושלוש הדרכים מוכרות.
+              </div>
+              <Link
+                href="/explore"
+                className="block text-center text-[12px] font-bold"
+                style={{ color: "rgba(0,0,0,0.4)" }}
+              >
+                רוצה לטעום עוד תחום לפני הפגישה? ←
+              </Link>
+            </div>
+          )}
+          {!domainChoice && pickedDomains.length === 0 && !prepMode && (
             <div className="rounded-2xl p-5 mb-5" style={{ background: "#fff", border: "1.5px solid rgba(2,62,138,0.15)" }}>
               <div className="text-[14px] font-bold mb-3" style={{ color: NAVY }}>עוד לא בחרת כיוון — נתחיל שם</div>
               <button
