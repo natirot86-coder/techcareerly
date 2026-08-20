@@ -197,6 +197,8 @@ export async function GET(req: NextRequest) {
     generatedAt: new Date().toISOString(),
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
+    // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)
+    quietList: queue.filter(q => q.signals.length === 0),
     total: queue.length,
     skipped, // שורות שלא ניתן היה לחשב — 0 במצב תקין
   });
