@@ -2295,12 +2295,38 @@ export default function PathsPage() {
 
         {/* The decision */}
         <div className="rounded-2xl p-5 mb-4" style={{ background: "rgba(251,133,0,0.07)", border: "1.5px solid rgba(251,133,0,0.25)" }}>
-          <div className="text-[11px] font-black uppercase tracking-widest mb-1.5" style={{ color: ORANGE }}>ההחלטה שלך</div>
-          <div className="text-[18px] mb-1" style={HEEBO}>{TRACK_META[recommended].emoji} {TRACK_META[recommended].label}</div>
-          {shortlist.length > 0 && (
-            <div className="text-[12.5px] leading-[1.7] mt-2" style={{ color: "rgba(0,0,0,0.6)" }}>
-              <span className="font-bold">המוסדות שבחרת:</span> {shortlist.map(s => s.name).join(" · ")}
-            </div>
+          {/*
+            "ההחלטה שלך" מציגה את מה שהוא בחר — לא את מה שהמלצנו (נתי 20.8).
+            קודם הכרטיס שם את ההמלצה שלנו תחת הכותרת "ההחלטה שלך", והמועמד
+            היה מגיע לפגישה 3 עם החלטה שלא באמת קיבל. ההמלצה מוצגת בנפרד.
+          */}
+          {shortlist.length > 0 ? (() => {
+            const myTracks = Array.from(new Set(shortlist.map(x => x.track)));
+            const matches = myTracks.includes(recommended);
+            return (
+              <>
+                <div className="text-[11px] font-black uppercase tracking-widest mb-1.5" style={{ color: ORANGE }}>הבחירות שלך</div>
+                <div className="text-[18px] mb-1" style={HEEBO}>
+                  {myTracks.map(t => `${TRACK_META[t].emoji} ${TRACK_META[t].label}`).join(" · ")}
+                </div>
+                <div className="text-[12.5px] leading-[1.7] mt-2" style={{ color: "rgba(0,0,0,0.6)" }}>
+                  <span className="font-bold">המוסדות שבחרת:</span> {shortlist.map(x => x.name).join(" · ")}
+                </div>
+                <div className="text-[11.5px] mt-2" style={{ color: "rgba(0,0,0,0.45)" }}>
+                  {matches
+                    ? `✓ תואם את ההמלצה שלנו (${TRACK_META[recommended].label})`
+                    : `ההמלצה שלנו הייתה ${TRACK_META[recommended].label} — ההבדל הוא בדיוק שיחה לפגישה.`}
+                </div>
+              </>
+            );
+          })() : (
+            <>
+              <div className="text-[11px] font-black uppercase tracking-widest mb-1.5" style={{ color: ORANGE }}>ההמלצה שלנו</div>
+              <div className="text-[18px] mb-1" style={HEEBO}>{TRACK_META[recommended].emoji} {TRACK_META[recommended].label}</div>
+              <div className="text-[12px] mt-1" style={{ color: "rgba(0,0,0,0.5)" }}>
+                עוד לא סימנת מוסדות — אפשר לחזור ולסמן, או להשאיר את הבחירה לפגישה עצמה.
+              </div>
+            </>
           )}
           {researched > 0 && (
             <div className="text-[12px] mt-2 font-bold" style={{ color: "#047857" }}>
