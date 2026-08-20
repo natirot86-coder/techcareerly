@@ -794,7 +794,12 @@ export default function PathsPage() {
       if (savedS) setShortlist(JSON.parse(savedS));
       const savedR = localStorage.getItem("paths-research");
       if (savedR) setResearch(JSON.parse(savedR));
-      setMeetingBooked(localStorage.getItem("meeting-booked") === "true");
+      /*
+       * דווקא המפתח הספציפי של פגישה 3. הדגל הכללי meeting-booked נדלק
+       * בכל קביעה שהיא — וגרם למסך הסיום להכריז שפגישה 3 קבועה
+       * למי שקבע רק את פגישה 1 (הבאג שישראל תפס, 20.8).
+       */
+      setMeetingBooked(localStorage.getItem("meeting-3-booked") === "true");
 
       // ציוני העניין משלב 3 — מה שכלי עיבוד החוויה שמר לכל תחום
       const interest: Partial<Record<Domain, number>> = {};
