@@ -1064,6 +1064,12 @@ function MoneyView() {
                 עוד לא בחרת מלגות — לחצו על מלגה ברשימה למטה והחשבון יתעדכן.
               </div>
             )}
+            {inst && inst.tuition && !inst.tuition.includes("מתוקצב") && (
+              <div className="text-[12.5px] mt-2.5 p-2.5 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.6 }}>
+                שים/י לב: {inst.name.split(" — ")[0]} אינה מוסד מתוקצב — שכר הלימוד בפועל
+                גבוה מהמספר המפוקח שמוצג כאן. המספר המדויק בכרטיס המוסד, וזו שאלה לרכזת.
+              </div>
+            )}
           </>
         )}
       </div>
