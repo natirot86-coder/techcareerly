@@ -27,6 +27,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { track as trackEvent } from "@vercel/analytics";
 import { coordinatorFor } from "@/data/meetings";
@@ -128,6 +129,7 @@ export default function WaitingPage() {
   const [booked, setBooked] = useState(false);
   const [name, setName] = useState("");
   /** null = הפגישה עוד לא סומנה · "yes" = התקיימה · "missed" = לא הגיע */
+  const router = useRouter();
   const [attended, setAttended] = useState<"yes" | "missed" | null>(null);
   /** האם המועד כבר עבר. כשאין מועד שמור — נשאר false, ומוצע קישור יזום */
   const [passed, setPassed] = useState(false);
@@ -165,7 +167,11 @@ export default function WaitingPage() {
     if (v === "missed") {
       // הסיגנל החזק ביותר ל-At Risk בכל הפאנל, ואין דרך אחרת להשיג אותו
       localStorage.setItem("at-risk", "missed-meeting-1");
+      return;
     }
+    // "היה טוב" ← ישר לטעימות. המסך הבא הוא הפעולה הבאה, לא כרטיס
+    // שמכריז שהיא נפתחה (אותו עיקרון כמו סוף האונבורדינג — נתי 20.8)
+    router.push("/explore");
   }
 
   useEffect(() => { window.scrollTo(0, 0); }, [screen, phase]);
