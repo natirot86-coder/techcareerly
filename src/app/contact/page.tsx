@@ -150,6 +150,19 @@ export default function ContactPage() {
 
   const meta = meeting ? MEETING_META[meeting] : null;
 
+  /*
+   * welcome=1 — הגעה ישירה מסוף האונבורדינג. המשפט האישי הוא כל המעבר:
+   * בלי מסך ביניים, בלי מפה — רק מי אתה ומה הצעד. השם מ-localStorage.
+   */
+  const [welcomeName, setWelcomeName] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("welcome") === "1") {
+        setWelcomeName(localStorage.getItem("user-name") || "");
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
       {/* Header */}
@@ -169,6 +182,21 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
+
+      {welcomeName !== null && (
+        <div className="max-w-[900px] mx-auto w-full px-[22px] md:px-12 pt-5">
+          <div
+            className="rounded-xl px-4 py-3.5 text-[13px] leading-[1.75]"
+            style={{ background: "rgba(251,133,0,0.08)", border: "1px solid rgba(251,133,0,0.2)", color: "rgba(0,0,0,0.65)" }}
+          >
+            <span className="font-black" style={{ color: "#92400e" }}>
+              {welcomeName ? `נעים להכיר, ${welcomeName} 👋` : "נעים להכיר 👋"}
+            </span>{" "}
+            סיימת את הצעד הראשון. עכשיו הדבר היחיד שנשאר כדי לצאת לדרך —
+            לבחור מועד לפגישת ההיכרות עם הרכזת.
+          </div>
+        </div>
+      )}
 
       {/* מה קורה בפגישה, ומה להביא אליה */}
       {meta && (

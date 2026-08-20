@@ -687,7 +687,9 @@ export default function OnboardingPage() {
       techInterestScore: score,
       blockers,
     });
-    router.push("/dashboard");
+    // ישר לקביעת הפגישה — לא לדשבורד. שיא המוטיבציה הוא רגע הבקשה הנכון,
+    // והדשבורד הוא מסך של מי שכבר יש לו מסע (החלטת נתי 20.8)
+    router.push("/contact?m=1&welcome=1");
   }
 
   function goBack() {
