@@ -2786,7 +2786,9 @@ function DegreeDetail({ degree: d, have, list, onToggleList }: {
             </button>
             {showMap && (
               <div className="mt-2">
-                <DegreeMap insts={[...recommended, ...teaches]} />
+                <DegreeMap insts={[...recommended, ...teaches]}
+                  inList={n => (list ?? []).includes(n)}
+                  onToggleList={onToggleList} />
               </div>
             )}
           </div>
