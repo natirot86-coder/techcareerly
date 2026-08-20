@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import { saveOnboarding } from "@/lib/candidate";
+import { saveOnboarding, logEvent } from "@/lib/candidate";
 import { JOURNEY } from "@/data/journey";
 
 // שמות השלבים — מ-src/data/journey.ts בלבד, אין כאן רשימה שנייה
@@ -423,18 +423,19 @@ function Step0({ onNext }: { onNext: () => void }) {
 // ─── Step 1 ───────────────────────────────────────────────────────────────────
 function Step1({
   firstName, setFirstName, lastName, setLastName,
-  gender, setGender, age, setAge, region, setRegion, onNext,
+  gender, setGender, age, setAge, region, setRegion, service, setService, onNext,
 }: {
   firstName: string; setFirstName: (v: string) => void;
   lastName: string; setLastName: (v: string) => void;
   gender: Gender; setGender: (v: Gender) => void;
   age: string; setAge: (v: string) => void;
   region: string; setRegion: (v: string) => void;
+  service: string; setService: (v: string) => void;
   onNext: () => void;
 }) {
-  const ageNum = parseInt(age, 10);
+  const ageNum = age ? Math.floor((Date.now() - new Date(age).getTime()) / (365.25 * 24 * 3600 * 1000)) : NaN;
   const ageValid = !isNaN(ageNum) && ageNum >= 15 && ageNum <= 80;
-  const valid = firstName.trim() && lastName.trim() && gender && ageValid && region;
+  const valid = firstName.trim() && lastName.trim() && gender && ageValid && region && service;
 
   const title = gender
     ? g(gender, "קודם כל, ספר לנו עליך", "קודם כל, ספרי לנו עליך", "קודם כל, ספר/י לנו עליך")
@@ -475,11 +476,38 @@ function Step1({
 
       {/* Age */}
       <div className="flex flex-col gap-2">
-        <label className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>גיל</label>
-        <TextInput value={age} onChange={setAge} placeholder="לדוגמה: 24" type="number" />
+        <label className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>תאריך לידה</label>
+        {/* תאריך במקום גיל (נתי 20.8): אותה שאלה אחת — הגיל נגזר, ויום ההולדת
+            נותן לרכזת נקודת מגע חמה שאי אפשר להמציא */}
+        <TextInput value={age} onChange={setAge} placeholder="" type="date" />
         {age && !ageValid && (
-          <div className="text-[12px]" style={{ color: "#c0392b" }}>גיל צריך להיות בין 15 ל-80</div>
+          <div className="text-[12px]" style={{ color: "#c0392b" }}>נראה שהתאריך לא מסתדר — גיל בין 15 ל-80</div>
         )}
+
+        {/* שירות: קובע זכאות לפיקדון, מימון האגף והשוברים — חצי ממפת המימון */}
+        <label className="text-[13px] font-bold mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>שירות צבאי או לאומי</label>
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["done", "סיימתי שירות"],
+            ["serving", "משרת/ת עכשיו"],
+            ["none", "בלי שירות"],
+          ].map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setService(v)}
+              className="px-3.5 py-2 rounded-xl text-[13px] font-bold"
+              style={{
+                background: service === v ? "#023e8a" : "#fff",
+                color: service === v ? "#fff" : "rgba(0,0,0,0.6)",
+                border: service === v ? "none" : "1px solid rgba(0,0,0,0.15)",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
       </div>
 
       {/* Region */}
@@ -659,6 +687,8 @@ export default function OnboardingPage() {
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState<Gender>("");
   const [age, setAge] = useState("");
+  // שירות צבאי/לאומי — קובע זכאות לחצי ממקורות המימון (פיקדון, האגף, שוברים)
+  const [service, setService] = useState("");
   const [region, setRegion] = useState("");
   const [score, setScore] = useState(5);
   const [blockers, setBlockers] = useState<string[]>([]);
@@ -678,11 +708,18 @@ export default function OnboardingPage() {
   function handleDone() {
     localStorage.setItem("onboarding-done", "1");
     localStorage.setItem("user-name", firstName.trim());
+    const derivedAge = Math.floor((Date.now() - new Date(age).getTime()) / (365.25 * 24 * 3600 * 1000));
+    try {
+      localStorage.setItem("birth-date", age);
+      localStorage.setItem("service-status", service);
+    } catch { /* ignore */ }
+    // צד שרת בלי מיגרציה: האירוע נושא את התאריך והשירות, ומסך הרכזת קורא אותם משם
+    logEvent("profile", { birthDate: age, service });
     saveOnboarding({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       gender: gender || "other",
-      age: parseInt(age, 10),
+      age: derivedAge,
       region,
       techInterestScore: score,
       blockers,
@@ -708,6 +745,7 @@ export default function OnboardingPage() {
           gender={gender} setGender={setGender}
           age={age} setAge={setAge}
           region={region} setRegion={setRegion}
+          service={service} setService={setService}
           onNext={() => setStep(2)}
         />
       )}
