@@ -93,6 +93,21 @@ export async function GET(req: NextRequest) {
       signals.push({ severity: 1, reason: `סימן/ה "לא הצלחתי להגיע" לפגישת ההיכרות${days > 0 ? ` — לפני ${days} ימים` : " — היום"}`, action: "call" });
     }
 
+    /*
+     * 2 — עצר בשער בחירת הכיוון: ראה את המסך ולא בחר.
+     * האופציה "עוד לא סגור" הוסרה בכוונה (נתי 20.8) — ולכן מי שעומד מול
+     * השער בלי לבחור חייב להפוך לסיגנל, אחרת לקחנו את פתח המילוט
+     * בלי לשים שם רכזת.
+     */
+    const gate = myEvents.find(e => e.name === "paths_domain_gate");
+    const committedDomain = myEvents.some(e => e.name === "domain_committed") || !!c.chosen_domain;
+    if (gate && !committedDomain) {
+      const days = Math.floor((now - ms(gate.created_at)) / DAY);
+      if (days >= 2) {
+        signals.push({ severity: 2, reason: `הגיע/ה לבחירת הכיוון בשלב 4 ולא בחר/ה — ${days} ימים. שווה שיחה על התחום`, action: "call" });
+      }
+    }
+
     // 1 — דדליין מלגה שעבר עם משימה פתוחה: כסף שלא יחזור
     for (const t of myTasks) {
       if (t.status === "open" && t.due_date && ms(t.due_date) < now) {

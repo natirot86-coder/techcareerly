@@ -8,7 +8,7 @@ import JourneyStrip from "@/components/ui/JourneyStrip";
 import AllPaths from "@/components/ui/AllPaths";
 import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
-import { savePathsAnswers, logEvent } from "@/lib/candidate";
+import { savePathsAnswers, saveChosenDomains, logEvent } from "@/lib/candidate";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
@@ -26,6 +26,7 @@ import { regionsForAnswer } from "@/data/regions";
 
 /** שם התת-שלב שמוצג בפס ההתקדמות */
 const PHASE_LABEL: Record<string, string> = {
+  domain: "בוחרים כיוון",
   intro: "מבינים מה עומד על הפרק",
   quiz: "עונים על 6 שאלות",
   result: "המסלול שמתאים לך",
@@ -41,7 +42,7 @@ const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 
-type Phase = "intro" | "quiz" | "result" | "routes" | "blockers" | "institutions" | "prep" | "research" | "done";
+type Phase = "domain" | "intro" | "quiz" | "result" | "routes" | "blockers" | "institutions" | "prep" | "research" | "done";
 
 /** תשובות מהחקר העצמי מול המוסדות */
 type Answer = "yes" | "no" | "unknown";
@@ -718,6 +719,8 @@ export default function PathsPage() {
   const [domainInterest, setDomainInterest] = useState<Partial<Record<Domain, number>>>({});
   const [domainChoice, setDomainChoice] = useState<"one" | "two" | "open" | null>(null);
   const [chosenDomain, setChosenDomain] = useState<Domain | null>(null);
+  // הבחירה המפורשת מהשער — עד שניים. מקור האמת החדש; השדות הוותיקים נשמרים כגישור
+  const [pickedDomains, setPickedDomains] = useState<Domain[]>([]);
   /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
   const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
   /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
@@ -740,7 +743,7 @@ export default function PathsPage() {
 
       // ?reset=1 — מנקה את ההתקדמות ומתחיל מאפס. שימושי לבדיקות.
       if (params.has("reset")) {
-        ["paths-quiz", "paths-shortlist", "paths-phase", "paths-journey", "paths-research"].forEach(k => localStorage.removeItem(k));
+        ["paths-quiz", "paths-shortlist", "paths-phase", "paths-journey", "paths-research", "paths-domains", "paths-domain", "paths-domain-choice"].forEach(k => localStorage.removeItem(k));
         window.history.replaceState({}, "", "/paths");
         return;
       }
@@ -802,10 +805,43 @@ export default function PathsPage() {
       if (savedChoice === "one" || savedChoice === "two" || savedChoice === "open") setDomainChoice(savedChoice);
       const savedDomain = localStorage.getItem("paths-domain") as Domain | null;
       if (savedDomain) setChosenDomain(savedDomain);
+      let picked: Domain[] = [];
+      try { picked = JSON.parse(localStorage.getItem("paths-domains") ?? "[]"); } catch { }
+      if (picked.length) setPickedDomains(picked);
       const savedPhase = localStorage.getItem("paths-phase") as Phase | null;
       if (savedPhase) setPhase(savedPhase);
+      /*
+       * השער: מי שטרם בחר כיוון מתחיל בבחירה. זו החלטה מכוונת (נתי, 20.8) —
+       * בחירת התחום היא שער משמעותי ולא העשרה. אין בו "עוד לא סגור":
+       * מי שעוצר מולו נמדד (paths_domain_gate בלי domain_committed) ומגיע לרכזת.
+       */
+      if (!picked.length && !savedChoice && (!savedPhase || savedPhase === "intro")) setPhase("domain");
     } catch { /* ignore */ }
   }, []);
+
+  // מדידת השער: הגעה בלי בחירה היא הסיגנל שמחליף את האופציה שהוסרה
+  useEffect(() => {
+    if (phase === "domain") {
+      trackEvent("paths_domain_gate");
+      logEvent("paths_domain_gate", {});
+    }
+  }, [phase]);
+
+  function commitDomains(list: Domain[]) {
+    if (!list.length) return;
+    setPickedDomains(list);
+    localStorage.setItem("paths-domains", JSON.stringify(list));
+    // גישור לשדות הוותיקים שכל שאר המסכים נשענים עליהם
+    const legacy = list.length === 1 ? "one" : "two";
+    setDomainChoice(legacy);
+    localStorage.setItem("paths-domain-choice", legacy);
+    setChosenDomain(list[0]);
+    localStorage.setItem("paths-domain", list[0]);
+    saveChosenDomains(list);
+    trackEvent("domain_committed", { domains: list.join(",") });
+    logEvent("domain_committed", { domains: list.join(",") });
+    goToPhase("intro");
+  }
 
   const recommended = recommendTrack(answers);
   const reason = buildReason(answers, recommended);
@@ -890,7 +926,7 @@ export default function PathsPage() {
     }
   }
 
-  const PHASE_ORDER: Phase[] = ["intro", "quiz", "result", "routes", "blockers", "institutions", "prep", "research", "done"];
+  const PHASE_ORDER: Phase[] = ["domain", "intro", "quiz", "result", "routes", "blockers", "institutions", "prep", "research", "done"];
   const phaseIndex = PHASE_ORDER.indexOf(phase);
 
   /**
@@ -900,6 +936,9 @@ export default function PathsPage() {
    * תחושת המסוגלות נמוכה באופן שיטתי ולא מוצדק.
    */
   const topDomains: { id: Domain; interest: number }[] = (() => {
+    if (pickedDomains.length) {
+      return pickedDomains.map(d => ({ id: d, interest: domainInterest[d] ?? 0 }));
+    }
     if (domainChoice === "one" && chosenDomain) {
       return [{ id: chosenDomain, interest: domainInterest[chosenDomain] ?? 0 }];
     }
@@ -914,9 +953,11 @@ export default function PathsPage() {
   const shown = topDomains.find(d => d.id === activeDomain) ?? topDomains[0] ?? null;
 
   /** התחומים שמנחים את שכבת ההצעות: הנבחר אם יש, אחרת המובילים מהחקר */
-  const chosenDomains: Domain[] = chosenDomain
-    ? [chosenDomain]
-    : topDomains.slice(0, 3).map(d => d.id);
+  const chosenDomains: Domain[] = pickedDomains.length
+    ? pickedDomains
+    : chosenDomain
+      ? [chosenDomain]
+      : topDomains.slice(0, 3).map(d => d.id);
 
   const Header = (
     <div className="text-white px-[22px] pt-[26px] pb-[30px] shrink-0" style={{ background: NAVY }}>
@@ -927,6 +968,81 @@ export default function PathsPage() {
       </div>
     </div>
   );
+
+  // ── Domain gate — שער בחירת הכיוון (נתי 20.8: שער מפורש, בלי מילוט) ──────
+  if (phase === "domain") {
+    const tasted = (Object.keys(DOMAIN_LABEL) as Domain[])
+      .filter(d => domainInterest[d] !== undefined)
+      .sort((a, b) => (domainInterest[b] ?? 0) - (domainInterest[a] ?? 0));
+    const untasted = (Object.keys(DOMAIN_LABEL) as Domain[]).filter(d => !tasted.includes(d));
+    const allDomains = [...tasted, ...untasted];
+    const toggle = (d: Domain) =>
+      setPickedDomains(prev =>
+        prev.includes(d) ? prev.filter(x => x !== d) : prev.length >= 2 ? prev : [...prev, d]);
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <JourneyStrip current={4} phaseLabel={PHASE_LABEL.domain} phaseIndex={0} phaseTotal={8} />
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-7 pb-32">
+          <div className="text-[22px] leading-[1.35] mb-2" style={{ ...HEEBO, color: NAVY }}>
+            חקר התחומים מאחוריך — מכאן מתחילים לבנות את הדרך
+          </div>
+          <div className="text-[13px] leading-[1.8] mb-6" style={{ color: "rgba(0,0,0,0.58)" }}>
+            לאיזה תחום נחפש לך מסלול לימודים? <b>אפשר לבחור עד שניים.</b>
+          </div>
+
+          <div className="flex flex-col gap-2.5 mb-6">
+            {allDomains.map(d => {
+              const on = pickedDomains.includes(d);
+              const seen = domainInterest[d] !== undefined;
+              return (
+                <button
+                  key={d}
+                  onClick={() => toggle(d)}
+                  className="w-full rounded-xl px-4 py-3.5 text-right transition-all"
+                  style={{
+                    background: on ? "rgba(2,62,138,0.07)" : "#fff",
+                    border: on ? `2px solid ${NAVY}` : "1px solid rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[14px] font-black" style={{ color: on ? NAVY : "rgba(0,0,0,0.7)" }}>
+                      {DOMAIN_LABEL[d]}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {seen && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: `${ORANGE}15`, color: "#92400e" }}>
+                          טעמת ✓
+                        </span>
+                      )}
+                      <span
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0"
+                        style={{ background: on ? NAVY : "rgba(0,0,0,0.12)" }}
+                      >{on ? "✓" : ""}</span>
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => commitDomains(pickedDomains)}
+            disabled={pickedDomains.length === 0}
+            className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+            style={{ background: pickedDomains.length ? ORANGE : "rgba(0,0,0,0.15)", ...HEEBO }}
+          >
+            נבנה את הדרך ←
+          </button>
+          <div className="text-[11px] text-center mt-3" style={{ color: "rgba(0,0,0,0.4)" }}>
+            הבחירה מלווה אותך בהמשך השלב — ואפשר לחזור ולשנות אותה
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   // ── Intro ──────────────────────────────────────────────────────────────────
   if (phase === "intro") {
@@ -1250,16 +1366,6 @@ export default function PathsPage() {
 
   // ── Routes to a first job ──────────────────────────────────────────────────
   if (phase === "routes") {
-    const knownDomains = (Object.keys(DOMAIN_LABEL) as Domain[]).filter(d => domainInterest[d] !== undefined);
-
-    function chooseDomain(c: "one" | "two" | "open", d?: Domain) {
-      setDomainChoice(c);
-      localStorage.setItem("paths-domain-choice", c);
-      if (d) { setChosenDomain(d); localStorage.setItem("paths-domain", d); }
-      else { setChosenDomain(null); localStorage.removeItem("paths-domain"); }
-      trackEvent("paths_domain_choice", { choice: c });
-    }
-
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         {Header}
@@ -1275,48 +1381,17 @@ export default function PathsPage() {
             הנה איך זה נראה בפועל — מהיום ועד המשכורת הראשונה.
           </div>
 
-          {/* One question, instead of guessing how settled he is */}
-          {!domainChoice && (
+          {/* השאלה הישנה ישבה כאן; הבחירה עברה לשער בכניסה לשלב (נתי 20.8) */}
+          {!domainChoice && pickedDomains.length === 0 && (
             <div className="rounded-2xl p-5 mb-5" style={{ background: "#fff", border: "1.5px solid rgba(2,62,138,0.15)" }}>
-              <div className="text-[16px] leading-tight mb-3" style={{ ...HEEBO, color: NAVY }}>
-                יש לך כבר תחום שאת/ה די בטוח/ה בו?
-              </div>
-              <div className="flex flex-col gap-2.5">
-                <button
-                  onClick={() => chooseDomain("two")}
-                  className="w-full rounded-xl px-4 py-3 text-right"
-                  style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
-                >
-                  <div className="text-[13px] font-bold" style={{ color: NAVY }}>מתלבט/ת בין שניים</div>
-                </button>
-                <button
-                  onClick={() => chooseDomain("open")}
-                  className="w-full rounded-xl px-4 py-3 text-right"
-                  style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
-                >
-                  <div className="text-[13px] font-bold" style={{ color: NAVY }}>עוד לא סגור/ה</div>
-                  <div className="text-[11.5px] mt-0.5" style={{ color: "rgba(0,0,0,0.45)" }}>נראה לך כמה אפשרויות</div>
-                </button>
-                {knownDomains.length > 0 && (
-                  <>
-                    <div className="text-[11.5px] font-bold mt-2 mb-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>
-                      כן — והתחום הוא:
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {knownDomains.map(d => (
-                        <button
-                          key={d}
-                          onClick={() => chooseDomain("one", d)}
-                          className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
-                          style={{ background: `${ORANGE}12`, color: "#92400e", border: `1px solid ${ORANGE}35` }}
-                        >
-                          {DOMAIN_LABEL[d]}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+              <div className="text-[14px] font-bold mb-3" style={{ color: NAVY }}>עוד לא בחרת כיוון — נתחיל שם</div>
+              <button
+                onClick={() => goToPhase("domain")}
+                className="w-full py-3 rounded-xl text-white text-[13px] font-black"
+                style={{ background: NAVY }}
+              >
+                לבחירת הכיוון ←
+              </button>
             </div>
           )}
 
@@ -1430,7 +1505,11 @@ export default function PathsPage() {
                 מה עומד בדרך שלי ←
               </button>
               <button
-                onClick={() => { setDomainChoice(null); localStorage.removeItem("paths-domain-choice"); }}
+                onClick={() => {
+                  setDomainChoice(null); localStorage.removeItem("paths-domain-choice");
+                  setPickedDomains([]); localStorage.removeItem("paths-domains");
+                  goToPhase("domain");
+                }}
                 className="w-full mt-3 text-[12px] font-bold"
                 style={{ color: "rgba(0,0,0,0.35)" }}
               >

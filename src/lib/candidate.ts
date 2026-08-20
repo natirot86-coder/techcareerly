@@ -457,6 +457,18 @@ export async function savePathsAnswers(patch: {
   if (error) console.error("savePathsAnswers failed", error);
 }
 
+/** הכיוון שנבחר בשער שלב 4 — עד שני תחומים, מופרדים בפסיק */
+export async function saveChosenDomains(domains: string[]): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+  const { error } = await supabase
+    .from("candidates")
+    .update({ chosen_domain: domains.join(",") })
+    .eq("id", candidateId);
+  if (error) console.error("saveChosenDomains failed", error);
+}
+
 /**
  * שלב 5 — סנכרון המשימות. localStorage נשאר מקור האמת המקומי; זה השיקוף
  * שהרכזת והאנליטיקות רואים.
