@@ -36,7 +36,21 @@ function AdminDegreesPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORE_KEY);
-      if (saved) { setItems(JSON.parse(saved)); setDirty(true); }
+      if (saved) {
+        /*
+         * מיזוג, לא החלפה — אותו תיקון כמו בלוח המוסדות (20.8): טיוטה ישנה
+         * דרסה את רשימת הקוד, ולכן תואר חדש שנכנס בקוד לא הופיע למי שערך פעם.
+         * הבסיס תמיד הקוד הטרי; עריכות מקומיות יושבות עליו לפי id.
+         */
+        const stored: Degree[] = JSON.parse(saved);
+        const editedById = new Map(stored.map(d => [d.id, d]));
+        const codeIds = new Set(DEGREES.map(d => d.id));
+        setItems([
+          ...DEGREES.map(d => editedById.get(d.id) ?? d),
+          ...stored.filter(d => !codeIds.has(d.id)),
+        ]);
+        setDirty(true);
+      }
     } catch { /* ignore */ }
   }, []);
 
