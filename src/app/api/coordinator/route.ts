@@ -167,6 +167,31 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    /*
+     * צ'קליסט התהליך — תשע אבני דרך, כולן נגזרות ממה שקרה (אירועים,
+     * שדות, משימות) ולא ממה שדווח. זה מה שהרכזת רואה קודם; יומן
+     * האירועים הגולמי משרת אנליטיקות, לא אותה.
+     */
+    const has = (n: string, pred?: (props: Record<string, unknown>) => boolean) =>
+      myEvents.some(e => e.name === n && (!pred || pred((e.props ?? {}) as Record<string, unknown>)));
+    const tastedDomains = new Set(
+      myEvents
+        .filter(e => e.name === "scct_done" || e.name === "sim_start")
+        .map(e => String((e.props as { domain?: string } | null)?.domain ?? ""))
+        .filter(Boolean)
+    ).size;
+    const checklist = [
+      { label: "נרשם/ה לאפליקציה", done: true },
+      { label: "קבע/ה פגישת היכרות", done: has("meeting_booked", pr => pr.n === "1") || has("meeting1_checkin") },
+      { label: "הגיע/ה לפגישה 1", done: has("meeting1_checkin", pr => pr.result === "yes") },
+      { label: "טעם/ה תחומים", done: tastedDomains > 0, detail: tastedDomains ? `${tastedDomains} תחומים` : undefined },
+      { label: "קבע/ה פגישת בחירת תחום", done: has("meeting_booked", pr => pr.n === "2") },
+      { label: "בחר/ה כיוון", done: has("domain_committed") || !!c.chosen_domain },
+      { label: "קבע/ה פגישת נעילת מסלול", done: has("meeting_booked", pr => pr.n === "3") },
+      { label: "בחר/ה מוסד", done: has("institution_committed") },
+      { label: "נרשם/ה ללימודים", done: myTasks.some(t => t.status === "done" && /הרשמה/.test(t.title ?? "")) },
+    ];
+
     const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "מועמד/ת ללא שם";
     return [{
       id: c.id,
@@ -178,6 +203,7 @@ export async function GET(req: NextRequest) {
       ranked: myRanks,
       lastActive: iso(seenAt),
       lastAction: doing?.created_at ?? null,
+      checklist,
       signals: signals.sort((a, b) => a.severity - b.severity),
       topSeverity: signals.length ? Math.min(...signals.map(s => s.severity)) : 9,
       // ציר הזמן — למסך הפרט: מה קרה, בסדר הפוך

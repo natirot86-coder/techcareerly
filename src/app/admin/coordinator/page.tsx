@@ -180,13 +180,37 @@ type Person = {
   id: string; name: string; anonymous: boolean; region: string | null;
   stage: number; domain: string | null; ranked: string[]; lastActive: string | null; lastAction: string | null;
   signals: { severity: 1 | 2 | 3; reason: string; action: string }[];
+  checklist: { label: string; done: boolean; detail?: string }[];
   timeline: Ev[];
 };
+
+/** צ'קליסט התהליך — קודם לציר האירועים: הרכזת צריכה "איפה הוא במסע", לא לוג */
+function Checklist({ items }: { items: { label: string; done: boolean; detail?: string }[] }) {
+  if (!items.length) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, margin: "4px 0 12px" }}>
+      {items.map((it, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
+          <span style={{
+            width: 16, height: 16, borderRadius: 999, flexShrink: 0,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            background: it.done ? "#059669" : "rgba(0,0,0,0.08)", color: "#fff", fontSize: 10, fontWeight: 900,
+          }}>{it.done ? "✓" : ""}</span>
+          <span style={{ color: it.done ? "#1c1a16" : "rgba(0,0,0,0.4)", fontWeight: it.done ? 700 : 500 }}>
+            {it.label}{it.detail ? ` — ${it.detail}` : ""}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function CoordinatorPage() {
   const [code, setCode] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [data, setData] = useState<{ needsAttention: Person[]; quiet: number; total: number; generatedAt: string } | null>(null);
+  const [data, setData] = useState<{ needsAttention: Person[]; quiet: number; quietList?: Person[]; total: number; generatedAt: string } | null>(null);
+  // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
+  const [tab, setTab] = useState<"queue" | "all">("queue");
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -262,15 +286,32 @@ export default function CoordinatorPage() {
           </div>
         )}
 
+        {data && (
+          <div style={{ display: "flex", gap: 6, background: "rgba(2,62,138,0.06)", borderRadius: 12, padding: 4, marginBottom: 14 }}>
+            {([["queue", "מי צריך אותי היום"], ["all", `כל המשתתפים (${data.total})`]] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setTab(v)}
+                style={{
+                  flex: 1, padding: "9px 0", borderRadius: 9, border: "none", cursor: "pointer",
+                  fontSize: 13, fontWeight: 800, fontFamily: "'Heebo', sans-serif",
+                  background: tab === v ? "#fff" : "transparent",
+                  color: tab === v ? NAVY : "rgba(0,0,0,0.45)",
+                  boxShadow: tab === v ? "0 1px 3px rgba(2,62,138,0.12)" : "none",
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading && <div style={{ padding: 30, textAlign: "center", color: "rgba(0,0,0,0.4)" }}>טוען…</div>}
 
-        {data && data.needsAttention.length === 0 && !loading && (
+        {tab === "queue" && data && data.needsAttention.length === 0 && !loading && (
           <div style={{ background: "#eef8f3", border: "1px solid #cfe9dd", color: "#08694c", borderRadius: 14, padding: 22, textAlign: "center", fontSize: 15, fontWeight: 700 }}>
             אף אחד לא תקוע כרגע 🎉
           </div>
         )}
 
-        {data?.needsAttention.map(p => {
+        {tab === "queue" && data?.needsAttention.map(p => {
           const sev = SEV_META[p.signals[0]?.severity ?? 3];
           const isOpen = open === p.id;
           return (
@@ -304,6 +345,8 @@ export default function CoordinatorPage() {
                       התקדם/ה: <b style={{ color: "#1c1a16" }}>{ago(p.lastAction)}</b>
                     </span>
                   </div>
+
+                  <Checklist items={p.checklist ?? []} />
 
                   {/* בקצרה — מה שקוראים אם קוראים רק שורה אחת */}
                   {summarize(p).map((line, i) => (
@@ -359,6 +402,47 @@ export default function CoordinatorPage() {
             </div>
           );
         })}
+
+        {tab === "all" && data && (() => {
+          const everyone = [...data.needsAttention, ...(data.quietList ?? [])]
+            .sort((a, b) => (b.stage ?? 0) - (a.stage ?? 0));
+          return everyone.map(p => {
+            const isOpen = open === p.id;
+            const doneCount = (p.checklist ?? []).filter(c => c.done).length;
+            const total = (p.checklist ?? []).length || 9;
+            return (
+              <div key={p.id} style={{ background: "#fff", borderRadius: 14, border: "1px solid rgba(0,0,0,0.08)", marginBottom: 8, overflow: "hidden" }}>
+                <button onClick={() => setOpen(isOpen ? null : p.id)}
+                  style={{ width: "100%", textAlign: "right", border: "none", background: "none", cursor: "pointer", padding: "12px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 14.5, fontWeight: 800, color: "#1c1a16" }}>{p.name}</span>
+                    <span style={{ fontSize: 11.5, color: "rgba(0,0,0,0.45)" }}>שלב {p.stage || "—"}</span>
+                    {p.signals.length > 0 && (
+                      <span style={{ fontSize: 10.5, fontWeight: 800, color: "#b91c1c" }}>● {p.signals.length} סיגנלים</span>
+                    )}
+                    <span style={{ marginRight: "auto", fontSize: 11.5, fontWeight: 800, color: NAVY }}>
+                      {doneCount}/{total}
+                    </span>
+                  </div>
+                  {/* פס התקדמות דק — סריקה של שנייה על כל הרשימה */}
+                  <div style={{ height: 4, borderRadius: 999, background: "rgba(0,0,0,0.06)", marginTop: 8 }}>
+                    <div style={{ height: "100%", width: `${(doneCount / total) * 100}%`, borderRadius: 999, background: doneCount === total ? "#059669" : ORANGE }} />
+                  </div>
+                </button>
+                {isOpen && (
+                  <div style={{ padding: "0 16px 14px", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
+                    <div style={{ paddingTop: 10 }}>
+                      <Checklist items={p.checklist ?? []} />
+                    </div>
+                    {summarize(p).map((line, i2) => (
+                      <div key={i2} style={{ fontSize: 12.5, fontWeight: 700, color: "#1c1a16", lineHeight: 1.7 }}>· {line}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          });
+        })()}
 
         {data && (
           <button onClick={() => load(code)} style={{ marginTop: 8, fontSize: 12.5, fontWeight: 700, padding: "8px 16px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.14)", background: "#fff", color: NAVY, cursor: "pointer" }}>
