@@ -457,6 +457,35 @@ export async function savePathsAnswers(patch: {
   if (error) console.error("savePathsAnswers failed", error);
 }
 
+/**
+ * אישור הלימודים — המסמך היחיד שאנחנו כן שומרים (נתי 20.8): האסמכתא
+ * שמשרד העבודה דורש. כל מועמד כותב רק לתיקייה של עצמו (RLS לפי auth.uid).
+ */
+export async function uploadEnrollmentDoc(file: File): Promise<string | null> {
+  if (!supabase) return null;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return null;
+  const ext = file.name.split(".").pop() || "pdf";
+  const path = `${candidateId}/enrollment-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("enrollment-docs").upload(path, file, { upsert: true });
+  if (error) { console.error("uploadEnrollmentDoc failed", error); return null; }
+  logEvent("enrollment_doc_uploaded", {});
+  try { localStorage.setItem("enrollment-doc-path", path); } catch { }
+  return path;
+}
+
+/** קישור חתום לצפייה חוזרת — שעה אחת, מספיק לפתיחה */
+export async function enrollmentDocUrl(): Promise<string | null> {
+  if (!supabase) return null;
+  try {
+    const path = localStorage.getItem("enrollment-doc-path");
+    if (!path) return null;
+    const { data, error } = await supabase.storage.from("enrollment-docs").createSignedUrl(path, 3600);
+    if (error) { console.error("enrollmentDocUrl failed", error); return null; }
+    return data.signedUrl;
+  } catch { return null; }
+}
+
 /** הכיוון שנבחר בשער שלב 4 — עד שני תחומים, מופרדים בפסיק */
 export async function saveChosenDomains(domains: string[]): Promise<void> {
   if (!supabase) return;

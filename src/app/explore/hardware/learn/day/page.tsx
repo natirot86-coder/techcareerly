@@ -17,10 +17,14 @@ type Phase =
   | "scope-result"
   | "fix-it"
   | "debrief"
+  | "design-intro"
+  | "design-cap"
+  | "design-logic"
   | "done";
 
 const PHASE_ORDER: Phase[] = [
   "step-first", "multimeter-result", "scope-result", "fix-it", "debrief",
+  "design-intro", "design-cap", "design-logic",
 ];
 function phaseNum(p: Phase) { return PHASE_ORDER.indexOf(p) + 1; }
 
@@ -170,6 +174,23 @@ function GlossaryRow({ terms }: { terms: { term: string; explanation: React.Reac
       </div>
       <div className="flex flex-wrap">
         {terms.map(t => <GlossaryChip key={t.term} term={t.term} explanation={t.explanation} />)}
+      </div>
+    </div>
+  );
+}
+
+// ─── Video embed ──────────────────────────────────────────────────────────────
+
+function VideoEmbed({ id, label }: { id: string; label: string }) {
+  return (
+    <div className="rounded-2xl overflow-hidden mb-5" style={{ border: "1px solid rgba(0,0,0,0.1)" }}>
+      <div className="px-4 py-2.5" style={{ background: "rgba(0,0,0,0.04)" }}>
+        <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.35)" }}>🎥 סרטון בעברית</div>
+        <div className="text-[12px] font-bold" style={{ color: NAVY }}>{label}</div>
+      </div>
+      <div className="relative" style={{ paddingTop: "56.25%" }}>
+        <iframe src={`https://www.youtube.com/embed/${id}`} title={label} allowFullScreen
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }} />
       </div>
     </div>
   );
@@ -357,6 +378,11 @@ export default function HardwareDayPage() {
             </div>
           </RevealCard>
 
+          {/* סרטון מאומת (ASR) — מכללת אפקה, 2:50. סרטון הקריירה אחרי כל ה-RevealCards, לפני ה-CTA */}
+          <RevealCard emoji="🎥" title="מהי הנדסת חשמל? — בעברית (3 דק')">
+            <VideoEmbed id="HQo6hRkVh70" label="מהי הנדסת חשמל? — מכללת אפקה" />
+          </RevealCard>
+
           <button onClick={() => go("intro")} className="w-full py-[14px] rounded-xl font-bold text-[15px] text-white mt-2"
             style={{ background: HW, fontFamily: "'Heebo', sans-serif" }}>
             הבנתי — קדימה לתקלה האמיתית ←
@@ -386,6 +412,27 @@ export default function HardwareDayPage() {
               על השולחן: מולטימטר, אוסצילוסקופ, מלחם — והלוח החשוד.
             </span>
           </div>
+
+          {/* הדימוי שמלווה את כל הדף — מוצג לפני שפוגשים מושג ראשון */}
+          <div className="rounded-xl px-3 py-2 mb-3 flex items-center gap-2"
+            style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}>
+            <span style={{ fontSize: 14 }}>🚰</span>
+            <span className="text-[11.5px] leading-[1.5]" dir="rtl" style={{ color: "rgba(0,0,0,0.6)" }}>
+              <strong style={{ color: NAVY }}>הדימוי שילווה אותנו כל הדרך:</strong>{" "}
+              חשמל בלוח מתנהג כמו מים בצנרת — <strong>מתח</strong> = לחץ המים,{" "}
+              <strong>זרם</strong> = כמות המים שזורמת. בלי לחץ תקין, אף "ברז" (שבב) לא עובד.
+            </span>
+          </div>
+
+          {/* לאימות שמע ידני לפני חשיפה רחבה — אין caption track, אך ההתאמה התמטית (אנלוגיית המים) מדויקת */}
+          <RevealCard emoji="🎥" title="מתח וזרם דרך בריכת מים — הסרטון של הדימוי שלנו (3 דק')">
+            <VideoEmbed id="e0rFS1o4Lv4" label="מטען, פוטנציאל, מתח וזרם — אנלוגיית בריכת המים" />
+          </RevealCard>
+
+          {/* סרטון מאומת (ASR) — 45 שניות, בגובה בית-ספר. לפני מושג המעגל הראשון (הלוח והפסים) */}
+          <RevealCard emoji="🎥" title="מהו מעגל חשמלי? — ב-45 שניות">
+            <VideoEmbed id="F79vcL0ZC9k" label="מהו מעגל חשמלי?" />
+          </RevealCard>
 
           {/* The failing board */}
           <div className="rounded-2xl p-4 mb-5" style={{ background: "#0f172a" }}>
@@ -429,9 +476,9 @@ export default function HardwareDayPage() {
             <div className="text-[12px] font-bold mb-2" style={{ color: "#c2410c" }}>🛠️ הכלים שישמשו אותנו</div>
             <div className="flex flex-col gap-1.5">
               {[
-                { tool: "מולטימטר", desc: "מודד מתח, זרם והתנגדות — מספר אחד בכל רגע" },
-                { tool: "אוסצילוסקופ", desc: "מצייר את המתח לאורך זמן — רואים נפילות רגעיות" },
-                { tool: "בדיקה חזותית", desc: "עיניים + זכוכית מגדלת — לחמות סדוקות ורכיבים שרופים" },
+                { tool: "מולטימטר", desc: "מד הלחץ של הלוח — כמה מתח יש בנקודה, ברגע זה" },
+                { tool: "אוסצילוסקופ", desc: "סרט של הלחץ לאורך זמן — תופס נפילות רגעיות" },
+                { tool: "בדיקה חזותית", desc: "עיניים + זכוכית מגדלת — חיבורים סדוקים ורכיבים שרופים" },
               ].map(({ tool, desc }) => (
                 <div key={tool} className="flex items-center gap-2">
                   <code className="text-[11px] font-black px-2 py-0.5 rounded"
@@ -472,7 +519,7 @@ export default function HardwareDayPage() {
           </div>
 
           <GlossaryRow terms={[
-            { term: "מולטימטר", explanation: "מכשיר המדידה הבסיסי של כל טכנאי — מודד מתח (וולט), זרם (אמפר) והתנגדות (אוהם). עולה כמה עשרות שקלים ונמצא בכל מעבדה." },
+            { term: "מולטימטר", explanation: "מכשיר המדידה הבסיסי של כל טכנאי — כמו מד לחץ שמצמידים לצינור: מראה כמה מתח (לחץ) יש בנקודה ברגע זה. עולה כמה עשרות שקלים ונמצא בכל מעבדה." },
             {
               term: "פס מתח (Power Rail)",
               explanation: (
@@ -484,6 +531,11 @@ export default function HardwareDayPage() {
             },
             { term: "firmware", explanation: "התוכנה הקטנה שצרובה על הלוח עצמו ומריצה אותו — הצעד הראשון כשהלוח נדלק. אם הלוח בכלל לא נדלק, הבעיה כנראה לפני ה-firmware — בחשמל." },
           ]} />
+
+          {/* סרטון מאומת (ASR) — 1:15. לפני סצנת קריאת המולטימטר (כלל 7: סרטון לפני השאלה שמשתמשת במושג) */}
+          <RevealCard emoji="🎥" title="איך משתמשים ברב־מודד (מולטימטר)? — דקה ורבע">
+            <VideoEmbed id="gcUbsYWruE0" label="שימוש ברב־מודד למדידת זרם" />
+          </RevealCard>
 
           <Question
             q="לוח שנכשל לסירוגין. מה הצעד הראשון?"
@@ -531,12 +583,13 @@ export default function HardwareDayPage() {
               term: "קצר (Short)",
               explanation: (
                 <span dir="rtl">
-                  חיבור חשמלי לא רצוי בין שתי נקודות — הזרם "מקצר" את הדרך במקום לעבור דרך הרכיבים.<br />
-                  קצר מלא בדרך כלל מפיל את המתח לאפס ומחמם רכיבים. כאן המתח נפל ל-2.38V ולא לאפס — כנראה לא קצר מלא.
+                  במים: <strong>פיצוץ בצינור</strong> — כל הלחץ מתנקז החוצה בבת אחת, ולברזים לא מגיע כלום.<br />
+                  בחשמל: חיבור לא רצוי שהזרם "מקצר" דרכו במקום לעבור ברכיבים. קצר מלא מפיל את המתח לאפס ומחמם רכיבים.<br />
+                  אצלנו המתח נפל ל-2.38V ולא לאפס — כלומר הלחץ ירד, לא נעלם. כנראה לא קצר מלא.
                 </span>
               )
             },
-            { term: "נפילת מתח", explanation: "כשהמתח יורד מתחת למה שהרכיבים צריכים — הם פשוט מפסיקים לעבוד. שבב שדורש 3.3V ומקבל 2.4V מתנהג בדיוק כמו הלוח שלנו: לפעמים עולה, לפעמים לא." },
+            { term: "נפילת מתח", explanation: "הלחץ בצינור ירד מתחת למה שהברזים צריכים — והם פשוט מפסיקים לעבוד. שבב שדורש לחץ 3.3 ומקבל 2.4 מתנהג בדיוק כמו הלוח שלנו: לפעמים עולה, לפעמים לא." },
             { term: "קבל (Capacitor)", explanation: "רכיב שאוגר חשמל ומייצב את המתח — כמו מיכל מים קטן ליד הברז ששומר על לחץ קבוע. קבל תקול = מתח לא יציב. אחד הרכיבים שמתקלקלים הכי הרבה." },
           ]} />
 
@@ -678,6 +731,166 @@ export default function HardwareDayPage() {
             okMsg="✓ בדיוק! בפסי ייצור אמיתיים יש AOI — מצלמה שסורקת כל לחמה — ובדיקות burn-in שמחממות את הלוח לפני משלוח. ככה תקלת חום נתפסת במפעל, לא בשטח."
             errMsg="✗ דווקא אפשר: בדיקה אופטית אוטומטית (AOI) סורקת כל לחמה בייצור, ובדיקת burn-in מחממת לוחות לפני משלוח כדי להקדים תקלות חום. דבק לא מוליך חשמל."
             onAnswer={ok => answer(ok)}
+            nextLabel="הבוקר נסגר — לישיבת התכנון של אחר הצהריים ←"
+            onNext={() => go("design-intro")}
+          />
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ── Design Intro — אחר הצהריים: עכשיו מתכננים (הצד של המהנדס/ת) ─────────────
+  if (phase === "design-intro") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+          <div className="text-[22px] leading-tight mb-1" style={{ color: NAVY, ...HEEBO }}>אחר הצהריים — עכשיו מתכננים</div>
+          <div className="text-[13px] mb-4" dir="rtl" style={{ color: "rgba(0,0,0,0.42)" }}>13:30. התקלה של הבוקר סגורה. עכשיו — ישיבת תכן על הגרסה הבאה של המכשיר.</div>
+
+          {/* החלפת כובע — הרגע שבו ההבדל הנדסאי/מהנדס נחווה ולא רק נאמר */}
+          <div className="rounded-xl p-4 mb-5" style={{ background: "rgba(2,62,138,0.05)", border: "1.5px solid rgba(2,62,138,0.15)" }}>
+            <div className="text-[12px] font-black mb-1" style={{ color: NAVY }}>🎩 החלפת כובע</div>
+            <div className="text-[12.5px] leading-[1.7]" dir="rtl" style={{ color: "rgba(0,0,0,0.62)" }}>
+              כל הבוקר עבדת עם כובע של <strong>הנדסאי/ת</strong> — לבנות, למדוד, לאתר.
+              עכשיו נטעם את הצד השני: <strong style={{ color: HW }}>זו העבודה של מהנדס/ת התכנון — ההנדסאי בונה ובודק את מה שתוכנן כאן.</strong>{" "}
+              ההשוואה המלאה בין שתי הדלתות מחכה בדף התחום.
+            </div>
+          </div>
+
+          {/* עיקרון לפני השאלה */}
+          <div className="rounded-xl p-4 mb-5" style={{ background: "rgba(124,45,18,0.05)", border: "1px solid rgba(124,45,18,0.13)" }}>
+            <div className="text-[12px] font-black mb-1" style={{ color: HW }}>הכלל: בתכנון אין תשובה מושלמת — יש עסקה</div>
+            <div className="text-[12px] leading-[1.7]" dir="rtl" style={{ color: "rgba(0,0,0,0.62)" }}>
+              כל בחירה נותנת משהו ולוקחת משהו. במים: <strong>משאבה חזקה</strong> נותנת לחץ גבוה —
+              אבל שואבת את מיכל המים מהר. <strong>משאבה חסכונית</strong> מספיקה לברזים — והמיכל מחזיק יום שלם.
+              מי שבוחר "הכי חזק" בכל סעיף — מקבל מכשיר שנגמר לו הכוח בצהריים.
+            </div>
+          </div>
+
+          <div className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "rgba(0,0,0,0.35)" }}>
+            הדרישה מהלקוח + שני המעבדים על השולחן
+          </div>
+          <div className="rounded-2xl overflow-hidden mb-5" style={{ border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
+            <div className="px-4 py-2.5" style={{ background: "rgba(2,62,138,0.05)", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+              <span className="text-[12px] font-bold" dir="rtl" style={{ color: NAVY }}>📋 דרישה: המכשיר חייב להחזיק 24 שעות על סוללה</span>
+            </div>
+            {[
+              { name: "מעבד A — החזק", spec: "מהיר פי שלושה ממה שהמכשיר צריך · צורך פי ארבעה חשמל", result: "הסוללה תחזיק ~9 שעות", ok: false },
+              { name: "מעבד B — החסכוני", spec: "עומד בדיוק בדרישות המכשיר · צריכת חשמל נמוכה", result: "הסוללה תחזיק ~26 שעות", ok: true },
+            ].map((p, i) => (
+              <div key={i} className="px-4 py-3" dir="rtl"
+                style={{ borderBottom: i === 0 ? "1px solid rgba(0,0,0,0.05)" : "none", background: "#fff" }}>
+                <div className="text-[12.5px] font-black mb-0.5" style={{ color: NAVY }}>{p.name}</div>
+                <div className="text-[11.5px] mb-1" style={{ color: "rgba(0,0,0,0.55)" }}>{p.spec}</div>
+                <div className="text-[11px] font-bold" style={{ color: p.ok ? "#15803d" : "#b91c1c" }}>🔋 {p.result}</div>
+              </div>
+            ))}
+          </div>
+
+          <Question
+            q="החלטת תכנון ראשונה: איזה מעבד נכנס לגרסה הבאה?"
+            options={[
+              "מעבד A החזק — שיהיה מהיר, את הסוללה נפתור אחר כך",
+              "מעבד B החסכוני — עומד בדרישות, והסוללה תחזיק 24 שעות כנדרש",
+              "שניהם על הלוח — ליתר ביטחון",
+            ]}
+            correct={1}
+            okMsg="✓ חשבת כמו מתכננת! הדרישה היא 24 שעות — ומעבד B עומד בה. 'הכי חזק' זה לא תמיד 'הכי נכון': תכנון טוב בוחר את מה שמספיק ועומד בדרישה. זו העסקה."
+            errMsg="✗ הדרישה הקשיחה היא 24 שעות סוללה — מעבד A נותן 9, ושני מעבדים = כפול משקל, מחיר וצריכה. המשאבה החסכונית שמספיקה לברזים מנצחת. זו העסקה של התכנון."
+            onAnswer={ok => answer(ok)}
+            nextLabel="להחלטה הבאה — איפה שמים את המיכל? ←"
+            onNext={() => go("design-cap")}
+          />
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ── Design — מיקום הקבל (מונע את התקלה של הבוקר) ─────────────────────────────
+  if (phase === "design-cap") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+          <div className="text-[13.5px] leading-[1.7] mb-4" dir="rtl" style={{ color: "rgba(0,0,0,0.62)" }}>
+            ההחלטה הבאה קשורה ישירות לבוקר שלך: ראינו מה קורה כשהלחץ בצינור ה-3.3 נופל לרגע —
+            השבב "משתהק" והלוח נכשל.
+          </div>
+
+          {/* מושג לפני השאלה — קבל כמיכל רזרבה */}
+          <div className="rounded-xl p-4 mb-5" style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}>
+            <div className="text-[12px] font-black mb-1" style={{ color: NAVY }}>🫙 המושג: קבל = מיכל רזרבה קטן</div>
+            <div className="text-[12px] leading-[1.7]" dir="rtl" style={{ color: "rgba(0,0,0,0.62)" }}>
+              קבל שומר רזרבה של חשמל ומחליק נפילות רגעיות בלחץ — כמו מיכל קטן שממשיך לספק מים
+              לברז גם כשהצינור "שיהק" לשנייה. בתכנון הלוח, <strong>המתכננת מחליטה איפה לשים אותו</strong> —
+              וההחלטה הזו קובעת אם הוא באמת יציל את השבב.
+            </div>
+          </div>
+
+          <Question
+            q="החלטת תכנון שנייה: איפה לשים את הקבל, כדי שנפילת לחץ רגעית לא תפיל את השבב הרגיש?"
+            options={[
+              "צמוד לשבב הרגיש — המיכל ליד הברז שצריך אותו",
+              "בכניסת החשמל של הלוח — רחוק מהשבב, אבל מקום מרווח",
+              "לא צריך קבל — עדיף לחסוך רכיב",
+            ]}
+            correct={0}
+            okMsg="✓ בדיוק! מיכל ליד הברז עוזר מיד; מיכל בכניסה לבית — עד שהמים מגיעים לברז, הברז כבר שיהק. בתכנון אמיתי זה כלל ברזל: קבל צמוד לכל שבב. ככה הגרסה הבאה לא תסבול מהתקלה של הבוקר."
+            errMsg="✗ נפילת לחץ נבלמת רק אם הרזרבה קרובה: מיכל בכניסה לבית לא מספיק מהיר, ובלי מיכל בכלל — כל שיהוק מפיל את השבב. הכלל בתכנון: קבל צמוד לשבב הרגיש."
+            onAnswer={ok => answer(ok)}
+            nextLabel="להחלטה האחרונה — קצת לוגיקה ←"
+            onNext={() => go("design-logic")}
+          />
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ── Design — שער לוגי (אבני הלגו של השבב) ────────────────────────────────────
+  if (phase === "design-logic") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+          <div className="text-[13.5px] leading-[1.7] mb-4" dir="rtl" style={{ color: "rgba(0,0,0,0.62)" }}>
+            החלטה אחרונה להיום — והיא הצצה למה שקורה <strong>בתוך</strong> השבבים שמהנדסים מתכננים.
+          </div>
+
+          {/* מושג לפני השאלה — שערים לוגיים במילים של יומיום */}
+          <div className="rounded-xl p-4 mb-5" style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}>
+            <div className="text-[12px] font-black mb-1" style={{ color: NAVY }}>🧱 המושג: שערים לוגיים — אבני הלגו של כל שבב</div>
+            <div className="text-[12px] leading-[1.85]" dir="rtl" style={{ color: "rgba(0,0,0,0.62)" }}>
+              שער לוגי הוא רכיב זעיר שמקבל תנאים ומחליט כן/לא. יש שלושה בסיסיים:<br />
+              🔒 <strong>שער "וגם" (AND)</strong> — אומר כן רק אם <strong>שני</strong> התנאים מתקיימים יחד<br />
+              🔓 <strong>שער "או" (OR)</strong> — אומר כן אם <strong>לפחות אחד</strong> מהתנאים מתקיים<br />
+              🔄 <strong>שער "לא" (NOT)</strong> — הופך: כן נהיה לא, לא נהיה כן<br />
+              מיליארדי שערים כאלה, מחוברים נכון — זה שבב.
+            </div>
+          </div>
+
+          <div className="rounded-xl px-4 py-3 mb-5" style={{ background: "rgba(124,45,18,0.05)", border: "1px solid rgba(124,45,18,0.13)" }}>
+            <div className="text-[12px] leading-[1.7]" dir="rtl" style={{ color: "rgba(0,0,0,0.65)" }}>
+              📋 <strong style={{ color: HW }}>הדרישה מהלקוח:</strong>{" "}
+              "האזעקה תצפצף רק אם הטמפרטורה גבוהה <strong>וגם</strong> המכסה פתוח.
+              מכסה פתוח לבד? לא נורא. חום לבד? המאוורר מטפל. שניהם יחד — סכנה אמיתית."
+            </div>
+          </div>
+
+          <Question
+            q="החלטת תכנון שלישית: איזה שער מחבר את שני החיישנים לאזעקה?"
+            options={[
+              'שער "או" (OR) — שהאזעקה תתריע על כל דבר חשוד',
+              'שער "וגם" (AND) — האזעקה תצפצף רק כששני התנאים מתקיימים יחד',
+              'שער "לא" (NOT) — שיהפוך את האות של החיישן',
+            ]}
+            correct={1}
+            okMsg='✓ נכון! "וגם" = שני התנאים יחד, בדיוק כמו שהלקוח ביקש. עם "או" האזעקה הייתה מצפצפת בכל פתיחת מכסה שגרתית — ואחרי שבוע כולם היו מתעלמים ממנה. מאבני לגו כאלה בנוי כל שבב שתכננת היום.'
+            errMsg='✗ הדרישה: רק כששני התנאים מתקיימים יחד — זה בדיוק שער "וגם" (AND). "או" מצפצף על כל תנאי בודד, ו"לא" רק הופך אות. הקשיבו ללקוח: המילה "וגם" הייתה שם.'
+            onAnswer={ok => answer(ok)}
             nextLabel="לסיכום היום ←"
             onNext={() => go("done")}
           />
@@ -703,18 +916,19 @@ export default function HardwareDayPage() {
           <div className="text-center mb-7">
             <div className="text-[52px] mb-2">🔬</div>
             <div className="text-[26px] leading-tight mb-1" style={{ color: NAVY, ...HEEBO }}>הלוח חזר לחיים</div>
-            <div className="text-[13px]" style={{ color: "rgba(0,0,0,0.4)" }}>אבחנת תקלה לסירוגין — הסוג שהכי קשה לתפוס</div>
+            <div className="text-[13px]" dir="rtl" style={{ color: "rgba(0,0,0,0.4)" }}>אבחנת תקלה לסירוגין בבוקר — וקיבלת שלוש החלטות תכנון אחר הצהריים</div>
           </div>
 
           <div className="mb-6">
             <div className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(0,0,0,0.35)" }}>מה השתמשת היום</div>
             <div className="flex flex-col gap-2">
               {[
-                { tool: "מולטימטר", desc: "מדידת פסי מתח — 3.3V נופל ל-2.38V בכישלון", icon: "📟" },
-                { tool: "אוסצילוסקופ", desc: "המתח לאורך זמן — נפילות שמתחילות עם החום", icon: "📈" },
+                { tool: "מולטימטר", desc: "מדידת הלחץ בפסי המתח — 3.3V נופל ל-2.38V בכישלון", icon: "📟" },
+                { tool: "אוסצילוסקופ", desc: "סרט הלחץ לאורך זמן — נפילות שמתחילות עם החום", icon: "📈" },
                 { tool: "בדיקה חזותית", desc: "לחמה סדוקה במחבר המתח — בזכוכית מגדלת", icon: "🔎" },
                 { tool: "הלחמה מחדש", desc: "תיקון ממוקד + 50 מחזורי אימות קר/חם", icon: "🔧" },
                 { tool: "יומן מעבדה", desc: "תיעוד + מניעה — AOI ו-burn-in בייצור", icon: "📝" },
+                { tool: "החלטות תכן", desc: "מעבד חסכוני · קבל צמוד לשבב · שער וגם (AND)", icon: "📐" },
               ].map(({ tool, desc, icon }) => (
                 <div key={tool} className="flex items-start gap-3 rounded-xl px-4 py-3"
                   style={{ background: "rgba(34,197,94,0.07)", border: "1px solid #22c55e44" }}>
@@ -746,7 +960,11 @@ export default function HardwareDayPage() {
             style={{ background: "rgba(251,133,0,0.08)", border: "1.5px solid rgba(251,133,0,0.22)" }}>
             <div className="text-[11px] font-bold uppercase tracking-wide mb-2" style={{ color: ORANGE }}>מה זה אומר לקריירה שלך</div>
             <div className="text-[13px] leading-[1.65]" dir="rtl" style={{ color: "rgba(0,0,0,0.65)" }}>
-              העולם מלא מכשירים — ומעט מדי אנשים שיודעים למצוא למה הם מפסיקים לעבוד.{" "}
+              טעמת היום את <strong>שני הכובעים</strong> של התחום: בבוקר עבדת כמו{" "}
+              <span className="font-bold" style={{ color: HW }}>הנדסאי/ת</span> — לבנות, למדוד, לאתר;
+              אחר הצהריים כמו{" "}
+              <span className="font-bold" style={{ color: NAVY }}>מהנדס/ת תכנון</span> — להחליט מה ייכנס לגרסה הבאה.
+              אלו שתי דלתות אמיתיות לאותו עולם — ההשוואה המלאה ביניהן (כולל שכר מאומת) מחכה בדף התחום.{" "}
               <span className="font-bold" style={{ color: NAVY }}>מי שיודעת למדוד — תמיד תהיה נחוצה.</span>
             </div>
           </div>

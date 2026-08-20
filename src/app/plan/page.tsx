@@ -24,7 +24,7 @@ import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import { track as trackEvent } from "@vercel/analytics";
-import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent } from "@/lib/candidate";
+import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
 import {
   BUDGETED_TUITION, SCHOLARSHIPS, RECOMMENDED_STACK, DOC_CATALOG,
@@ -1145,6 +1145,62 @@ function Row({ label, value, tone, bold }: { label: string; value: string; tone?
 
 // ─── 3 — ארון המסמכים ─────────────────────────────────────────────────────────
 
+/**
+ * העלאת אישור הלימודים — החריג היחיד ל"הארון לא שומר קבצים" (נתי 20.8):
+ * זו האסמכתא שמשרד העבודה, שמממן את התוכנית, דורש. מסמך אחד, תיקייה
+ * אישית, וכפתור צפייה קבוע כדי שיהיה קל לחזור אליו.
+ */
+function EnrollmentUpload() {
+  const [state, setState] = useState<"none" | "uploading" | "done" | "error">("none");
+
+  useEffect(() => {
+    try { if (localStorage.getItem("enrollment-doc-path")) setState("done"); } catch { /* ignore */ }
+  }, []);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setState("uploading");
+    const path = await uploadEnrollmentDoc(file);
+    setState(path ? "done" : "error");
+  }
+
+  async function view() {
+    const url = await enrollmentDocUrl();
+    if (url) window.open(url, "_blank");
+  }
+
+  return (
+    <div className="p-[18px] rounded-[18px]" style={{ background: state === "done" ? "#eef8f3" : "#fff", border: state === "done" ? "1px solid #cfe9dd" : `1px solid ${BORDER}` }}>
+      <div className="text-[16px] font-extrabold mb-1" style={{ color: state === "done" ? "#08694c" : NAVY }}>
+        {state === "done" ? "✓ אישור הלימודים שלך שמור" : "אישור לימודים / הרשמה"}
+      </div>
+      <p className="text-[13.5px] mb-3" style={{ color: "#5c574e", lineHeight: 1.6 }}>
+        {state === "done"
+          ? "אפשר לפתוח אותו מכאן בכל רגע — או להחליף בגרסה עדכנית."
+          : "זה המסמך היחיד שכן מעלים לכאן: משרד העבודה, שמלווה את התוכנית, צריך את האסמכתא. צילום או PDF."}
+      </p>
+      <div className="flex gap-2">
+        {state === "done" && (
+          <button onClick={view} className="flex-1 py-3 rounded-xl text-[14px] font-bold text-white" style={{ background: GREEN }}>
+            לפתוח את האישור
+          </button>
+        )}
+        <label className="flex-1 py-3 rounded-xl text-[14px] font-bold text-center cursor-pointer"
+          style={{ background: state === "done" ? "rgba(0,0,0,0.05)" : ORANGE, color: state === "done" ? "#5c574e" : "#fff" }}>
+          {state === "uploading" ? "מעלה…" : state === "done" ? "החלפה" : "העלאת האישור"}
+          <input type="file" accept="image/*,.pdf" onChange={onFile} className="hidden" />
+        </label>
+      </div>
+      {state === "error" && (
+        <div className="text-[12px] mt-2 font-bold" style={{ color: "#b91c1c" }}>
+          ההעלאה נכשלה — ייתכן שהאחסון עוד לא הופעל (SQL אצל נתי). המסמך לא אבד לך.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DocsView({
   docs, onOpenSheet, onRemove,
 }: {
@@ -1161,6 +1217,8 @@ function DocsView({
           מה כבר יש לו — לא מחפש הכל בלחץ ברגע האחרון. שום דבר כאן לא חוסם אותך.
         </p>
       </div>
+
+      <EnrollmentUpload />
 
       {docs.length === 0 ? (
         <>

@@ -89,6 +89,23 @@ function SimTeaser({ emoji, challenge }: { emoji: string; challenge: string }) {
   );
 }
 
+// ─── Video embed ──────────────────────────────────────────────────────────────
+
+function VideoEmbed({ id, label, source }: { id: string; label: string; source?: string }) {
+  return (
+    <div className="rounded-2xl overflow-hidden mb-7" style={{ border: "1.5px solid rgba(124,45,18,0.2)" }}>
+      <div className="px-4 pt-3 pb-2" style={{ background: "rgba(124,45,18,0.06)" }}>
+        <div className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: HW }}>🎥 סרטון בעברית{source ? ` · ${source}` : ""}</div>
+        <div className="text-[12px] font-bold" style={{ color: NAVY }}>{label}</div>
+      </div>
+      <div className="relative" style={{ paddingTop: "56.25%" }}>
+        <iframe src={`https://www.youtube.com/embed/${id}`} title={label} allowFullScreen
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HardwareDomainPage() {
@@ -217,11 +234,25 @@ export default function HardwareDomainPage() {
           )}
         </div>
 
+        {/* סרטון מאומת (ASR) — רן לוי, 4:46. אחרי הטיזר: המשתמש בדיוק לחץ על קריאת מתח */}
+        <VideoEmbed
+          id="M5mPxAr6pLg"
+          label="מה ההבדל בין חשמל AC ו-DC? — ב-5 דקות"
+          source="רן לוי"
+        />
+
         <WowStat
           stat="15.3B$"
           label="אינטל רכשה את מובילאיי הישראלית ב-15.3 מיליארד דולר"
           sub="חברת שבבים לרכב אוטונומי שנוסדה בירושלים — העסקה הגדולה בתולדות ההייטק הישראלי בזמנה (2017)"
           color={HW}
+        />
+
+        {/* סרטון מאומת (ASR) — כאן 11, 5:05. מוצמד בכוונה ל-WowStat של מובילאיי */}
+        <VideoEmbed
+          id="0sM98dn5Gss"
+          label="עסקת הענק בתולדות ההייטק — אינטל ומובילאיי"
+          source="כאן 11"
         />
 
         {/* Industry context block — לפני SimTeaser, לפי הסטנדרט */}
@@ -270,6 +301,56 @@ export default function HardwareDomainPage() {
           </div>
         </div>
 
+        {/* הנדסאי מול מהנדס — שתי דלתות אמיתיות. שכר: למ״ס בלבד, תמיד עם אופק הזמן */}
+        <div className="mb-7">
+          <Label text="שתי דלתות לתחום — הנדסאי מול מהנדס" />
+          <div className="flex flex-col gap-3">
+            <div className="rounded-2xl p-4" style={{ background: "rgba(124,45,18,0.05)", border: "1.5px solid rgba(124,45,18,0.18)" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[18px]">🛠️</span>
+                <span className="text-[13px] font-black" style={{ color: HW }}>הנדסאי/ת אלקטרוניקה (מה״ט) — הדלת הקצרה</span>
+              </div>
+              <div className="text-[11.5px] leading-[1.65]" dir="rtl" style={{ color: "rgba(0,0,0,0.58)" }}>
+                בונה, בודק/ת ומאתר/ת תקלות במעבדה ובקו הייצור — <strong>עבודת ביצוע ואיתור</strong>.
+                בדיוק מה שעשית בטעימה וב"יום בחיי".
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {["כשנתיים", "מימון 90% מהאגף לחיילים משוחררים", "חזק בתעשייה הביטחונית"].map(c => (
+                  <span key={c} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(124,45,18,0.1)", color: HW }}>{c}</span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl p-4" style={{ background: "rgba(2,62,138,0.04)", border: "1.5px solid rgba(2,62,138,0.12)" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[18px]">📐</span>
+                <span className="text-[13px] font-black" style={{ color: NAVY }}>מהנדס/ת (תואר הנדסת חשמל) — דלת התכנון</span>
+              </div>
+              <div className="text-[11.5px] leading-[1.65]" dir="rtl" style={{ color: "rgba(0,0,0,0.58)" }}>
+                מתכנן/ת את המעגל והשבב עצמם — <strong>עבודת תכנון ופיתוח</strong>.
+                מחליט/ה אילו רכיבים, איפה, ואיך הכל יעבוד יחד — וההנדסאים בונים ובודקים את מה שתוכנן.
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {["ארבע שנים", "פותח את תפקידי התכנון", "התקרה הגבוהה של התחום"].map(c => (
+                  <span key={c} className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>{c}</span>
+                ))}
+              </div>
+            </div>
+            {/* שכר מאומת (למ״ס) — המספר תמיד עם האופק, אחרת הוא נקרא כמשכורת התחלתית */}
+            <div className="rounded-xl px-4 py-3" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>
+                שכר חודשי 5–6 שנים אחרי הסיום, בהייטק (למ״ס)
+              </div>
+              <div className="text-[13px] font-black" dir="rtl" style={{ color: NAVY, ...HEEBO }}>
+                בוגרי תואר 22–27.7 אלף ₪ · הנדסאים 13.5–20.7 אלף ₪
+              </div>
+              <div className="text-[11px] mt-1.5 leading-[1.6]" dir="rtl" style={{ color: "rgba(0,0,0,0.45)" }}>
+                שתי הדלתות אמיתיות — הפער הוא מידע לבחירה, לא איום.
+                ומי שנכנס/ת דרך הדלת הקצרה יכול/ה להמשיך משם לתואר.
+              </div>
+            </div>
+          </div>
+        </div>
+
         <JobMarketBlock
           color={HW}
           demand="ישראל היא אחד ממרכזי פיתוח השבבים המובילים בעולם — אינטל, Nvidia, Apple ומובילאיי מחזיקות כאן מרכזי פיתוח"
@@ -277,6 +358,66 @@ export default function HardwareDomainPage() {
           nonHitech="תעשייה ביטחונית · מכשור רפואי · רכב · תעשייה ואנרגיה"
           ai="AI לא מחליף ידיים במעבדה — מישהו צריך לתכנן, להרכיב ולמדוד את השבבים שה-AI עצמו רץ עליהם. דווקא מהפכת ה-AI מגדילה את הביקוש לחומרה: כל מודל צריך מעבדים."
         />
+
+        {/* News article cards — כתבות 2026 מאומתות (URL + תאריך).
+            הערה: כתבות 2 ו-3 מסקרות את אותה חברה (מג'סטיק לאבס) משני כלי תקשורת —
+            בחירה מכוונת: אלו הסיפורים המאומתים החזקים של 2026. לא מוסיפים אינטל
+            (אין כתבה חיובית מאומתת מ-2026) ולא Hailo (חדשות שליליות ב-2026). */}
+        <div className="mb-5">
+          <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+          <div className="text-[14px] font-bold mb-3" style={{ color: NAVY }}>כתבות אחרונות על תעשיית השבבים בישראל</div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              {
+                img: "",
+                summary: "אנבידיה תגייס השנה אלף עובדים. כך תתקבלו לעבודה שם",
+                source: "TheMarker · 5.5.2026",
+                href: "https://www.themarker.com/magazine/2026-05-05/ty-article-magazine/.highlight/0000019d-ec75-dd9a-a79d-ecfd56430000",
+              },
+              {
+                img: "",
+                summary: "מג'סטיק לאבס נגד אנבידיה: הסטארט-אפ שמבטיח פי 10 ביצועים",
+                source: "כלכליסט · 21.4.2026",
+                href: "https://www.calcalist.co.il/calcalistech/article/2girlba7c",
+              },
+              {
+                img: "",
+                summary: "החברה שמאתגרת את אנבידיה מכיוון לא צפוי",
+                source: "גלובס · 19.6.2026",
+                href: "https://www.globes.co.il/news/article.aspx?did=1001546415",
+              },
+            ].map((a) => (
+              <a
+                key={a.href}
+                href={a.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+                style={{ background: "#fff", border: "1px solid rgba(124,45,18,0.15)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
+              >
+                <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(124,45,18,0.06)" }}>
+                  {a.img ? (
+                    <img
+                      src={a.img}
+                      alt={a.summary}
+                      className="w-full h-full object-cover object-top"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <span className="text-[28px]">📰</span>
+                  )}
+                </div>
+                <div className="p-3 flex flex-col flex-1">
+                  <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                  <div className="text-[12px] font-bold leading-[1.4] mb-3 flex-1" style={{ color: NAVY }}>{a.summary}</div>
+                  <div className="flex justify-end">
+                    <span className="text-[11px] font-bold" style={{ color: HW }}>קריאה ←</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
 
         <SimTeaser
           emoji="🔧"
@@ -298,7 +439,7 @@ export default function HardwareDomainPage() {
               {
                 num: "2", emoji: "🔬",
                 title: "יום בחיי מהנדסת חומרה",
-                sub: "לוח שנכשל לסירוגין — מולטימטר, אוסצילוסקופ, לחמה קרה · ~15 דק'",
+                sub: "בוקר: אבחון לוח שנכשל לסירוגין · אחר הצהריים: שלוש החלטות תכנון · ~20 דק'",
                 href: "/explore/hardware/learn/day",
                 doneKey: "day" as const, lockedBy: "sim" as const,
               },

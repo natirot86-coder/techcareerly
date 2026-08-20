@@ -189,7 +189,8 @@ export async function GET(req: NextRequest) {
       { label: "בחר/ה כיוון", done: has("domain_committed") || !!c.chosen_domain },
       { label: "קבע/ה פגישת נעילת מסלול", done: has("meeting_booked", pr => pr.n === "3") },
       { label: "בחר/ה מוסד", done: has("institution_committed") },
-      { label: "נרשם/ה ללימודים", done: myTasks.some(t => t.status === "done" && /הרשמה/.test(t.title ?? "")) },
+      { label: "נרשם/ה ללימודים", done: myTasks.some(t => t.status === "done" && /הרשמה/.test(t.title ?? "")) || has("enrollment_doc_uploaded") },
+      { label: "העלה/תה אישור לימודים", done: has("enrollment_doc_uploaded") },
     ];
 
     const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "מועמד/ת ללא שם";

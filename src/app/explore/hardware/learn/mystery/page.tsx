@@ -495,7 +495,7 @@ export default function HardwareMysteryPage() {
                   { text: "  all other joints: shiny, clean  ✓", color: "#22c55e" },
                 ]} />
                 <div className="flex flex-wrap gap-1 mb-4">
-                  <GlossaryChip term="קבל נפוח" explanation={<span dir="rtl">ראש הקבל אמור להיות שטוח לגמרי. כיפה קלה = לחץ פנימי — האלקטרוליט בפנים מתאדה. קבל כזה עדיין עובד... עד שלא.</span>} />
+                  <GlossaryChip term="קבל נפוח" explanation={<span dir="rtl">זוכרת? קבל = מיכל הרזרבה הקטן ששומר על לחץ (מתח) חלק. ראש הקבל אמור להיות שטוח לגמרי — כיפה קלה = המיכל תפח מלחץ פנימי, סימן שהוא גוסס. קבל כזה עדיין עובד... עד שלא.</span>} />
                   <GlossaryChip term="טבעת עמומה" explanation={<span dir="rtl">לחמה בריאה מבריקה. טבעת מט סביב פין = לחמה שהתעייפה או נסדקה — מגע חשמלי לא אמין.</span>} />
                 </div>
                 <Q q="הבדיקה החזותית מצאה שני ממצאים חשודים. מה נכון לעשות?"
@@ -523,8 +523,8 @@ export default function HardwareMysteryPage() {
                   { text: "3.3V rail:           2.71 V  ⚠️ (starved)", color: "#f87171" },
                 ]} />
                 <div className="flex flex-wrap gap-1 mb-4">
-                  <GlossaryChip term="ממיר מתח (Regulator)" explanation={<span dir="rtl">רכיב שממיר את מתח הסוללה למתח קבוע שהשבבים צריכים — כאן: 7.4V ל-5V. הוא מתחמם תוך כדי — זה חלק מהעבודה שלו.</span>} />
-                  <GlossaryChip term="starved" explanation={<span dir="rtl">"מורעב" — פס שמקבל פחות מתח ממה שהוא צריך, כי מה שמזין אותו כבר שבור. תקלה אחת במעלה הזרם גוררת הכל אחריה.</span>} />
+                  <GlossaryChip term="ממיר מתח (Regulator)" explanation={<span dir="rtl">כמו וסת לחץ בכניסה לבית: מקבל לחץ גבוה מהקו (הסוללה — 7.4) ומוריד אותו ללחץ קבוע שהבית צריך (5). הוא מתחמם תוך כדי — זה חלק מהעבודה שלו.</span>} />
+                  <GlossaryChip term="starved" explanation={<span dir="rtl">"מורעב" — כמו ברז שמקבל רק טפטוף, כי הלחץ נשבר עוד לפניו בצנרת. תקלה אחת במעלה הזרם גוררת את כל מה שאחריה.</span>} />
                 </div>
                 <Q q="המתח תקין עד הממיר — ונשבר אחריו. מה זה מלמד?"
                   options={[
@@ -641,7 +641,7 @@ export default function HardwareMysteryPage() {
               { text: "cool C7 → device recovers  ✓", color: "#eab308" },
             ]} />
             <div className="flex flex-wrap gap-1 mb-4">
-              <GlossaryChip term="ripple" explanation={<span dir="rtl">"אדוות" — רעידות קטנות במתח שאמור להיות חלק. קבל בריא מחליק אותן; קבל גוסס נותן להן לגדול. ripple עולה = הקבל מאבד את התפקיד שלו.</span>} />
+              <GlossaryChip term="ripple" explanation={<span dir="rtl">"אדוות" — רעידות קטנות בלחץ (המתח) שאמור להיות חלק. מיכל הרזרבה (הקבל) הבריא מחליק אותן; מיכל גוסס נותן להן לגדול. ripple עולה = הקבל מאבד את התפקיד שלו.</span>} />
               <GlossaryChip term="בידוד משתנים" explanation={<span dir="rtl">העיקרון מאחורי הבדיקה: משנים דבר אחד בלבד (חום על רכיב אחד) ורואים מה קורה. אם משנים שני דברים — אי אפשר לדעת מי גרם למה.</span>} />
             </div>
             <Q
