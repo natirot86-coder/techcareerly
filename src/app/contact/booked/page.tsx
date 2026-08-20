@@ -16,6 +16,7 @@ const DOMAINS = [
   { id: "ai",        label: "AI ובינה מלאכותית",  color: "#7c3aed" },
   { id: "ux",        label: "עיצוב UX/UI",        color: "#db2777" },
   { id: "marketing", label: "שיווק דיגיטלי",     color: "#f97316" },
+  { id: "hardware",  label: "חומרה ואלקטרוניקה", color: "#7c2d12" },
 ];
 
 /** מה יקרה בפגישה — שונה לכל אחת מהשלוש */

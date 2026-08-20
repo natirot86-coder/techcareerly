@@ -11,6 +11,7 @@ const DOMAINS = [
   { id: "code",      badge: "פ",  label: "פיתוח תוכנה",      desc: "בונים אפליקציות, אתרים ומערכות",         color: "#3b82f6", img: "/domains/domain-code.jpeg" },
   { id: "data",      badge: "ד",  label: "דאטה ואנליטיקס",   desc: "מוצאים תובנות בתוך ים של מידע",           color: "#0d9488", img: "/domains/domain-data.jpeg" },
   { id: "networks",  badge: "ר",  label: "רשתות ותקשורת",    desc: "בונים את התשתית שמחזיקה את האינטרנט",     color: "#2563eb", img: "/domains/domain-networks.jpeg" },
+  { id: "hardware",  badge: "ח",  label: "חומרה ואלקטרוניקה", desc: "בונים את השבבים והמכשירים עצמם — כולל מכטרוניקה", color: "#7c2d12", img: "/domains/domain-code.jpeg" },
   { id: "cyber",     badge: "ס",  label: "סייבר",             desc: "מגנים על מידע ומערכות מפני תקיפות",       color: "#dc2626", img: "/domains/domain-cyber.jpeg" },
   { id: "ai",        badge: "AI", label: "AI ובינה מלאכותית", desc: "מלמדים מחשבים לחשוב ולהחליט",             color: "#7c3aed", img: "/domains/domain-ai.jpeg" },
   { id: "ux",        badge: "UX", label: "עיצוב UX/UI",       desc: "יוצרים חוויות שמרגישות נכון",             color: "#db2777", img: "/domains/domain-ux.jpeg" },

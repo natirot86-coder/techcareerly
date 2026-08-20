@@ -15,6 +15,7 @@ const DOMAINS = [
   { id: "ai",        badge: "AI", label: "AI ובינה מלאכותית",  color: "#7c3aed" },
   { id: "ux",        badge: "UX", label: "עיצוב UX/UI",        color: "#db2777" },
   { id: "marketing", badge: "ש",  label: "שיווק דיגיטלי",     color: "#f97316" },
+  { id: "hardware",  badge: "ח",  label: "חומרה ואלקטרוניקה", color: "#7c2d12" },
 ];
 
 type DomainResult = {
