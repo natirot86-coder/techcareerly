@@ -133,7 +133,7 @@ export const INSTITUTIONS: Institution[] = [
   // ─── תואר אקדמי ─────────────────────────────────────────────────────────────
   {
     id: "bgu",
-    degreeIds: ["cs", "ai", "software-eng", "ee", "info-systems-eng", "info-systems-ba", "industrial-eng", "statistics", "math", "psych-ux"],
+    degreeIds: ["cs", "ai", "software-eng", "ee", "info-systems-eng", "info-systems-ba", "industrial-eng", "statistics", "math", "psych-ux", "data-eng", "neuro"],
     programIds: ["sicket", "atudim"],
     name: "אוניברסיטת בן-גוריון",
     track: "degree",
@@ -188,7 +188,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "runi",
-    degreeIds: ["cs", "business-is", "psych-ux", "business-accountech", "econ-data-science"],
+    degreeIds: ["cs", "business-is", "psych-ux", "business-accountech", "econ-data-science", "entrepreneurship"],
     programIds: ["runi-keren-or"],
     name: "אוניברסיטת רייכמן",
     track: "degree",
@@ -216,7 +216,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "tau",
-    degreeIds: ["cs", "ee", "industrial-eng", "statistics", "math", "psych-ux"],
+    degreeIds: ["cs", "ee", "industrial-eng", "statistics", "math", "psych-ux", "neuro"],
     programIds: ["tau-admas", "atudim"],
     name: "אוניברסיטת תל אביב",
     track: "degree",
@@ -244,7 +244,7 @@ export const INSTITUTIONS: Institution[] = [
   },
   {
     id: "sapir",
-    degreeIds: ["cs", "statistics", "industrial-eng"],
+    degreeIds: ["cs", "statistics", "industrial-eng", "tech-marketing"],
     name: "מכללת ספיר",
     track: "degree",
     why: "השילוב הטוב ביותר למי שעובד: לימודים בשלושה ימים בלבד. קבלה אפשרית על בגרות 95 ללא פסיכומטרי, או 90 עם ראיון. שנה ראשונה חינם לחיילים משוחררים. התמחויות בדאטה, סייבר ו-AI.",
@@ -1692,7 +1692,7 @@ export const INSTITUTIONS: Institution[] = [
     id: "technion",
     // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
     programIds: ["atudim"],
-    degreeIds: ["cs", "software-eng", "ee", "info-systems-eng", "industrial-eng", "math"],
+    degreeIds: ["cs", "software-eng", "ee", "info-systems-eng", "industrial-eng", "math", "data-eng"],
     name: "הטכניון",
     track: "degree",
     why: "המוסד הטכנולוגי המוביל בישראל, ואחד מארבעת מוסדות המכינה של TechLeaders — כלומר יש דלת ייעודית לקהל שלנו דרך מכינה ממומנת, לא דרך סף הקבלה.",
@@ -1718,7 +1718,7 @@ export const INSTITUTIONS: Institution[] = [
     id: "bar-ilan",
     // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
     programIds: ["atudim"],
-    degreeIds: ["cs", "software-eng", "ee", "industrial-eng", "statistics", "math", "info-systems-ba", "psych-ux"],
+    degreeIds: ["cs", "software-eng", "ee", "industrial-eng", "statistics", "math", "info-systems-ba", "psych-ux", "data-eng", "neuro"],
     name: "אוניברסיטת בר-אילן",
     track: "degree",
     why: "אוניברסיטה מתוקצבת ברמת גן, מוסד מכינה של TechLeaders — ונתי הצביע על תוכנית יואל כדלת ייעודית שדורשת חקירה.",
@@ -1791,7 +1791,7 @@ export const INSTITUTIONS: Institution[] = [
     id: "huji",
     // אומת 18.8.2026: עתידים לתעשייה והייטק פועלת במוסד הזה
     programIds: ["atudim"],
-    degreeIds: ["cs", "ai", "ee", "statistics", "math", "psych-ux"],
+    degreeIds: ["cs", "ai", "ee", "statistics", "math", "psych-ux", "neuro"],
     name: "האוניברסיטה העברית",
     track: "degree",
     why: "מוסד מכינה של TechLeaders בירושלים — הדלת לקהל שלנו היא המכינה הממומנת, לא הרישום הישיר.",

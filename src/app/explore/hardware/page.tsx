@@ -369,7 +369,7 @@ export default function HardwareDomainPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
               {
-                img: "",
+                img: "/articles/hw-nvidia.jpg",
                 summary: "אנבידיה תגייס השנה אלף עובדים. כך תתקבלו לעבודה שם",
                 source: "TheMarker · 5.5.2026",
                 href: "https://www.themarker.com/magazine/2026-05-05/ty-article-magazine/.highlight/0000019d-ec75-dd9a-a79d-ecfd56430000",

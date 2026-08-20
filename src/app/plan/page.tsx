@@ -33,8 +33,7 @@ import {
 } from "@/data/plan";
 import { INSTITUTIONS } from "@/data/institutions";
 
-/** וואטסאפ הרכזת — בפורמט בינלאומי (9725XXXXXXXX). ריק = בחירת איש קשר ידנית */
-const COORDINATOR_WA = "";
+import { coordinatorProfileFor } from "@/data/coordinators";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -1468,9 +1467,13 @@ function CoordView({
 
   const included = lines.filter(l => !excluded.includes(l.id));
   const message = `עדכון מהאפליקציה:\n\n${included.map(l => l.text).join("\n")}`;
-  // ישירות לרכזת — בלי לבחור איש קשר. כשהמספר ריק, נופלים לבחירה ידנית
-  const waLink = COORDINATOR_WA
-    ? `https://wa.me/${COORDINATOR_WA}?text=${encodeURIComponent(message)}`
+  /*
+   * ישירות לרכזת — המספר נמשך מסגל הרכזות (דף ניהול התוכנית), לפי השיוך.
+   * כל עוד אין שיוך במסד — הרכזת הפעילה הראשונה. מספר ריק = בחירה ידנית.
+   */
+  const coordPhone = coordinatorProfileFor().phone;
+  const waLink = coordPhone
+    ? `https://wa.me/${coordPhone}?text=${encodeURIComponent(message)}`
     : `https://wa.me/?text=${encodeURIComponent(message)}`;
 
   return (
