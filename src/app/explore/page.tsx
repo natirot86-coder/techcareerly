@@ -24,7 +24,7 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
   const copyByState = [
     "שיחה בלי טעימות = 20 דקות של 'לא יודע מה אני רוצה'. שיחה אחרי 2 טעימות = שיחה שמגיעה לאיפשהו.",
     "כמעט שם — עוד טעימה אחת ואפשר לדבר ברצינות.",
-    `ניסית ${doneCount} תחומים — יש לנו על מה לדבר.`,
+    "אפשר לקבוע — וכל טעימה נוספת תחדד את הבחירה בפגישה.",
   ];
   const copy = doneCount === 0 ? copyByState[0] : doneCount === 1 ? copyByState[1] : copyByState[2];
 
@@ -47,8 +47,12 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
               שיחה עם הרכזת
             </div>
           </div>
-          {/* Progress slots */}
-          <div className="flex gap-1.5">
+          {/*
+            ריבוע לכל תחום עם טעימה אמיתית (4 היום) — לא רק למינימום.
+            שני ריבועים אמרו "המשימה היא 2" והסלילו לעצור שם; קו הסף אחרי
+            השניים הראשונים אומר את שתי האמיתות: 2 פותחות, השאר מחדדות.
+          */}
+          <div className="flex items-center gap-1.5">
             {[0, 1].map((i) => {
               const filled = doneCount > i;
               return (
@@ -64,7 +68,28 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
                 </div>
               );
             })}
+            <div className="w-px h-6 mx-1" style={{ background: "rgba(0,0,0,0.18)" }} />
+            {[2, 3].map((i) => {
+              const filled = doneCount > i;
+              return (
+                <div
+                  key={i}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black transition-all duration-300"
+                  style={{
+                    background: filled ? ORANGE : "rgba(0,0,0,0.055)",
+                    color: "white",
+                    border: filled ? "none" : "1px dashed rgba(0,0,0,0.12)",
+                  }}
+                >
+                  {filled ? "✓" : ""}
+                </div>
+              );
+            })}
           </div>
+        </div>
+
+        <div className="text-[10.5px] mb-1 text-left" style={{ color: "rgba(0,0,0,0.35)" }}>
+          שתי טעימות פותחות את הפגישה · השאר מחדדות
         </div>
 
         <div className="text-[12px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.45)" }}>
