@@ -8,7 +8,7 @@
  * משתנים כל שנה. מה שלא אומת מסומן ב-status: "needs-check".
  */
 
-export type Track = "bootcamp" | "mahat" | "degree";
+export type Track = "bootcamp" | "mahat" | "degree" | "prep";
 
 /** תחומי הטעימה בשלב 3 — מוסד מוצג רק אם הוא רלוונטי לתחום שהמשתמש טעם */
 export type Domain = "code" | "data" | "cyber" | "networks" | "hardware" | "ai" | "ux" | "marketing" | "qa";
@@ -1248,7 +1248,7 @@ export const INSTITUTIONS: Institution[] = [
   {
     id: "levinsky-bagrut",
     name: "השלמת בגרויות — סמינר לוינסקי",
-    track: "degree",
+    track: "prep",
     why: "לא בית ספר להייטק — מסיר חסם. ״אין בגרות מלאה״ הוא אחד מששת החסמים בשאלון שלנו, והוא מה שסוגר את מסלול התואר שאנחנו ממליצים עליו. השלמת בגרויות פותחת את ההמלצה עצמה.",
     tag: "מסיר חסם", tagColor: "#fb8500",
     link: "https://www.levinsky.ac.il/",
@@ -1264,7 +1264,7 @@ export const INSTITUTIONS: Institution[] = [
     contactName: "", contactRole: "", contactPhone: "", contactEmail: "", openDays: "",
     domains: ["code", "data", "cyber", "networks", "ai", "ux", "marketing"],
     status: "needs-check",
-    notes: "קטגוריה חדשה: מסיר-חסם. 📞 לאמת עלות, משך, ואם יש מימון דרך האגף. שווה לבדוק גם חלופות בפריפריה.",
+    notes: "קטגוריה חדשה: מסיר-חסם. 📞 לאמת עלות, משך, ואם יש מימון דרך האגף. שווה לבדוק גם חלופות בפריפריה.  תוקן 23.8.2026: סווג בטעות כמוסד תואר — זהו אפיק הכנה (track: prep), הראשון מסוגו במודל.",
     verified: "13.8.2026 — מקורות משניים",
   },
   {
