@@ -34,33 +34,48 @@ export default function ProgramAdmin() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(ROSTER_KEY);
-      if (saved) {
-        // מיזוג, לא החלפה — אותו לקח כמו בלוחות המוסדות והתארים
-        const stored: CoordinatorProfile[] = JSON.parse(saved);
-        const byId = new Map(stored.map(c => [c.id, c]));
-        const codeIds = new Set(COORDINATOR_ROSTER.map(c => c.id));
-        setRoster([
-          ...COORDINATOR_ROSTER.map(c => byId.get(c.id) ?? c),
-          ...stored.filter(c => !codeIds.has(c.id)),
-        ]);
-      }
       setAssign(JSON.parse(localStorage.getItem(ASSIGN_KEY) ?? "{}"));
       const savedCode = sessionStorage.getItem("coordinator-code");
       if (savedCode) setCode(savedCode);
     } catch { /* ignore */ }
   }, []);
 
-  function saveRoster(next: CoordinatorProfile[]) {
-    setRoster(next);
-    localStorage.setItem(ROSTER_KEY, JSON.stringify(next));
+  /* הסגל נטען מה-DB ברגע שיש קוד — עריכה נשמרת מיד, בלי JSON (נתי 23.8) */
+  async function loadRoster(c: string) {
+    try {
+      const res = await fetch("/api/roster", { headers: { "x-coordinator-code": c } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.roster?.length) setRoster(data.roster);
+      }
+    } catch { /* ignore */ }
+  }
+
+  const saveTimer = { current: null as ReturnType<typeof setTimeout> | null };
+  function persistRow(row: CoordinatorProfile) {
+    const c = sessionStorage.getItem("coordinator-code") ?? code;
+    fetch("/api/roster", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-coordinator-code": c },
+      body: JSON.stringify(row),
+    })
+      .then(r => { if (!r.ok) setErr("שמירת הרכזת נכשלה — בדוק/י את הקוד"); else setToast("נשמר ✓"); })
+      .then(() => setTimeout(() => setToast(""), 1500))
+      .catch(() => setErr("אין חיבור לשרת — השינוי לא נשמר"));
   }
   function update(id: string, key: keyof CoordinatorProfile, value: string | boolean) {
-    saveRoster(roster.map(c => (c.id === id ? { ...c, [key]: value } : c)));
+    const next = roster.map(c => (c.id === id ? { ...c, [key]: value } : c));
+    setRoster(next);
+    // שמירה מרוסנת — כדי לא לירות בקשה על כל תו
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    const row = next.find(c => c.id === id);
+    if (row) saveTimer.current = setTimeout(() => persistRow(row), 700);
   }
   function addCoordinator() {
     const id = `coord-${Date.now()}`;
-    saveRoster([...roster, { id, name: "", location: "", email: "", phone: "", active: true }]);
+    const row = { id, name: "", location: "", email: "", phone: "", active: true };
+    setRoster([...roster, row]);
+    persistRow(row);
   }
   function setAssignment(personId: string, coordId: string) {
     const next = { ...assign, [personId]: coordId };
@@ -94,20 +109,19 @@ export default function ProgramAdmin() {
       setPeople(all.map((q: { id: string; name: string; stage?: number; lastActive?: string | null }) => ({
         id: q.id, name: q.name || "ללא שם", stage: q.stage ?? 0, seenAt: (q as unknown as { lastActive?: string | null }).lastActive ?? null,
       })));
+      // השיוך שכבר במסד גובר על מה שבדפדפן
+      const fromDb: Record<string, string> = {};
+      for (const q of all as { id: string; coordinatorId?: string | null }[]) {
+        if (q.coordinatorId) fromDb[q.id] = q.coordinatorId;
+      }
+      if (Object.keys(fromDb).length) setAssign(prev => ({ ...prev, ...fromDb }));
+      loadRoster(code);
       if (!all.length) setErr("החיבור עבד אבל אין עדיין נתוני משתתפים בתשובה");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "שגיאה");
     } finally {
       setLoading(false);
     }
-  }
-
-  function exportJson() {
-    const payload = JSON.stringify({ roster, assignments: assign }, null, 2);
-    navigator.clipboard.writeText(payload).then(() => {
-      setToast("הועתק — לשלוח לקלוד להטמעה בקוד");
-      setTimeout(() => setToast(""), 2500);
-    });
   }
 
   const nameOf = (id: string) => roster.find(c => c.id === id)?.name || "—";
@@ -127,10 +141,9 @@ export default function ProgramAdmin() {
       <div className="max-w-[1000px] mx-auto px-6 py-6 flex flex-col gap-6">
 
         <div className="rounded-xl px-4 py-3 text-[12.5px] leading-[1.7]"
-          style={{ background: "#fff7ec", border: "1px solid #f5dcb8", color: "#8a4d00" }}>
-          <b>השיוך נשמר בדפדפן הזה + ייצוא JSON.</b> החיבור המלא — עמודת שיוך
-          במסד — ממתין להרצת SQL (אצל נתי). עד אז כל המועמדים רואים את פרטי
-          הרכזת הפעילה הראשונה ברשימה.
+          style={{ background: "#ecfdf5", border: "1px solid #cfe9dd", color: "#065f46" }}>
+          <b>מחובר למסד.</b> עריכת רכזת נשמרת אוטומטית תוך שנייה, והשיוך נכתב
+          מיד — המועמד המשויך יקבל את הטלפון של הרכזת שלו בכפתור הוואטסאפ.
         </div>
 
         {/* ── סגל הרכזות ── */}
@@ -140,8 +153,7 @@ export default function ProgramAdmin() {
             <div className="flex gap-2">
               <button onClick={addCoordinator} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
                 style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}>+ רכזת</button>
-              <button onClick={exportJson} className="text-[12px] font-bold px-3 py-1.5 rounded-lg text-white"
-                style={{ background: ORANGE }}>העתק JSON</button>
+
             </div>
           </div>
           <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.1)" }}>

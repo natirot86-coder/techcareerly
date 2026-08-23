@@ -490,6 +490,34 @@ export async function savePathsAnswers(patch: {
 }
 
 /**
+ * הרכזת של המועמד — מה-DB (טבלת coordinators + השיוך בשורת המועמד).
+ * בלי שיוך — הרכזת הפעילה הראשונה. RLS מתיר למועמד לקרוא רכזות פעילות.
+ */
+export async function myCoordinator(): Promise<{ name: string; phone: string } | null> {
+  if (!supabase) return null;
+  try {
+    const candidateId = await ensureCandidateId();
+    if (!candidateId) return null;
+    const { data: rows } = await supabase
+      .from("coordinators")
+      .select("id, name, phone")
+      .eq("active", true)
+      .order("created_at");
+    if (!rows?.length) return null;
+    const { data: cand } = await supabase
+      .from("candidates")
+      .select("coordinator_id")
+      .eq("id", candidateId)
+      .maybeSingle();
+    const mine = cand?.coordinator_id ? rows.find(r => r.id === cand.coordinator_id) : null;
+    const row = mine ?? rows[0];
+    return { name: row.name ?? "", phone: row.phone ?? "" };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * אישור הלימודים — המסמך היחיד שאנחנו כן שומרים (נתי 20.8): האסמכתא
  * שמשרד העבודה דורש. כל מועמד כותב רק לתיקייה של עצמו (RLS לפי auth.uid).
  */

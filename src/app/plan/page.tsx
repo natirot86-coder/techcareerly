@@ -24,7 +24,7 @@ import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import { track as trackEvent } from "@vercel/analytics";
-import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl, getCandidate } from "@/lib/candidate";
+import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl, myCoordinator } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
 import {
   BUDGETED_TUITION, SCHOLARSHIPS, RECOMMENDED_STACK, DOC_CATALOG,
@@ -33,7 +33,7 @@ import {
 } from "@/data/plan";
 import { INSTITUTIONS } from "@/data/institutions";
 
-import { coordinatorProfileFor, COORDINATOR_ROSTER } from "@/data/coordinators";
+import { coordinatorProfileFor } from "@/data/coordinators";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -1473,12 +1473,9 @@ function CoordView({
    */
   const [coordPhone, setCoordPhone] = useState(coordinatorProfileFor().phone);
   useEffect(() => {
-    getCandidate()
-      .then(c => {
-        const cid = (c as { coordinator_id?: string | null } | null)?.coordinator_id;
-        const prof = cid ? COORDINATOR_ROSTER.find(r => r.id === cid) : null;
-        if (prof?.phone) setCoordPhone(prof.phone);
-      })
+    // המספר האמיתי מגיע מטבלת הרכזות ב-DB, לפי השיוך של המועמד
+    myCoordinator()
+      .then(c => { if (c?.phone) setCoordPhone(c.phone); })
       .catch(() => { /* ignore */ });
   }, []);
   const waLink = coordPhone
