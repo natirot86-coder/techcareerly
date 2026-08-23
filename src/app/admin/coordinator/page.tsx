@@ -364,6 +364,40 @@ const NODE_COLOR: Record<Station["state"], { bg: string; border: string; icon: s
 
 function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; onBack: () => void }) {
   const stations = useMemo(() => buildStations(p), [p]);
+
+  /* הפרופיל מאירוע profile — גיל נגזר, שעון זכאות משוחררים נגזר, יו"ה מתנה */
+  const profile = useMemo(() => {
+    const e = p.timeline.find(ev => ev.name === "profile");
+    const pr = (e?.props ?? {}) as Record<string, unknown>;
+    const S = (v: unknown) => (v == null ? "" : String(v));
+    const birth = S(pr.birthDate);
+    const age = birth ? Math.floor((Date.now() - +new Date(birth)) / (365.25 * 24 * 3600 * 1000)) : null;
+    const service = S(pr.service);
+    const serviceLabel =
+      service === "done-army" ? "סיים/ה שירות צבאי"
+      : service === "done-national" ? "סיים/ה שירות לאומי"
+      : service === "done" ? "סיים/ה שירות"
+      : service === "serving" ? "משרת/ת עכשיו"
+      : service === "none" ? "ללא שירות" : "";
+    const discharge = S(pr.discharge);
+    let clock: string | null = null;
+    if (discharge) {
+      const end = new Date(discharge + "-01");
+      end.setFullYear(end.getFullYear() + 5);
+      const months = Math.floor((+end - Date.now()) / (30.44 * 24 * 3600 * 1000));
+      clock = months <= 0 ? "הסתיימה — לוודא מול האגף"
+        : months < 12 ? `עוד ${months} חודשים בלבד ⚠️`
+        : `עוד כ-${Math.floor(months / 12)} שנים`;
+    }
+    let birthdaySoon = false;
+    if (birth) {
+      const b = new Date(birth); const now = new Date();
+      const next = new Date(now.getFullYear(), b.getMonth(), b.getDate());
+      if (+next < +now) next.setFullYear(next.getFullYear() + 1);
+      birthdaySoon = (+next - +now) / 86400000 <= 14;
+    }
+    return { age, city: S(pr.city), serviceLabel, clock, miluim: S(pr.miluim) === "1", birthdaySoon };
+  }, [p.timeline]);
   const stuck = stations.find(st => st.state === "stuck");
   const current = stuck ?? stations.find(st => st.state === "current") ?? null;
   const [openId, setOpenId] = useState<string | null>(stuck ? stuck.id : null);
@@ -390,7 +424,14 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
           <div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
               <span style={{ fontSize: 30, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>{p.name}</span>
-              <span style={{ fontSize: 14, fontWeight: 500, color: "#8d867a" }}>{p.region ?? ""}</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#8d867a" }}>
+                {[profile.age ? `גיל ${profile.age}` : null, profile.city || null, p.region].filter(Boolean).join(" · ")}
+              </span>
+              {profile.birthdaySoon && (
+                <span style={{ background: "#eef3fa", color: NAVY, fontWeight: 800, borderRadius: 999, padding: "2px 10px", fontSize: 12 }}>
+                  🎂 יום הולדת בקרוב
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 13.5, color: "#8d867a", marginTop: 6 }}>
               נראה/תה לאחרונה: <b style={{ color: "#1c1a16" }}>{ago(p.lastActive)}</b>
@@ -433,6 +474,8 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
               return pr.backup ? `${main} · גיבוי: ${String(pr.backup).split(" — ")[0]}` : main;
             })()],
             ["רכזת מלווה", coordName || "—"],
+            ["שירות", profile.serviceLabel ? `${profile.serviceLabel}${profile.miluim ? " · מילואים פעיל ✓" : ""}` : "—"],
+            ...(profile.clock ? [["שעון זכאות משוחררים", profile.clock] as [string, string]] : []),
             ["שלב במסע", `שלב ${p.stage || 1} מתוך 6`],
           ].map(([label, val]) => (
             <div key={label as string}>
