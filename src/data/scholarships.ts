@@ -856,6 +856,7 @@ export function programsFor(track: Track): { funding: Funding; score: Score }[] 
 }
 
 export const TRACK_TITLE: Record<Track, string> = {
+  prep: "מסלולי הכנה — מכינות והשלמות",
   degree: "תואר אקדמי",
   mahat: "מה״ט — הנדסאים",
   bootcamp: "הכשרה מקצועית",

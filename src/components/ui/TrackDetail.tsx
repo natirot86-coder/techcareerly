@@ -16,7 +16,9 @@
  * הכל מורכב מנתונים קיימים — מוסדות ומסלולים — ולא נכתב מחדש.
  */
 
-import { DOMAIN_LABEL, visibleFor, type Domain, type Track } from "@/data/institutions";
+import { DOMAIN_LABEL, visibleFor, type Domain, type Track as DataTrack } from "@/data/institutions";
+// prep הוא אפיק הכנה, לא מסילת לימודים — שלוש המסילות בלבד כאן
+type Track = Exclude<DataTrack, "prep">;
 import { routesFor, DEEPEN_NOTE } from "@/data/routes";
 
 const NAVY = "#023e8a";

@@ -18,6 +18,7 @@ const ORANGE = "#fb8500";
 const STORE_KEY = "admin-institutions-draft";
 
 const TRACK_LABEL: Record<Track, string> = {
+  prep: "הכנה",
   degree: "תואר אקדמי",
   mahat: "מה״ט",
   bootcamp: "הכשרה טכנולוגית",
