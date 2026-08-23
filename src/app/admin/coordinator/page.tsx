@@ -11,7 +11,7 @@
  * מקומית אחרי הזנה ראשונה — שכבת הגנה מינימלית עד שיהיה Auth אמיתי.
  */
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -185,6 +185,384 @@ type Person = {
 };
 
 /** צ'קליסט התהליך — קודם לציר האירועים: הרכזת צריכה "איפה הוא במסע", לא לוג */
+/* ─── מסע הלקוח הוויזואלי (עיצוב 23.8) ──────────────────────────────────────
+   סרפנטינה של 12 תחנות ב-6 שלבים. מצבי תחנה נגזרים מאירועים בלבד:
+   הושלם / כאן עכשיו / עצר כאן / עוד לא הגיע — בלי רגשות מומצאים ובלי ציונים.
+   תחנת עצירה מקבלת את הבולטות הגבוהה ביותר אחרי סיגנל, כולל משך העמידה. */
+
+type Station = {
+  id: string;
+  stage: string;
+  title: string;
+  emoji: string;
+  state: "done" | "current" | "stuck" | "future";
+  date?: string | null;
+  stuckDays?: number;
+  signal?: boolean;
+  chips: { text: string; kind: "info" | "quote" | "talk" | "stop" | "alert" }[];
+  events: Ev[];
+  action?: string;
+};
+
+const DAY_MS = 86400000;
+
+/** בניית 12 התחנות מהאירועים — מקור אמת אחד, אפס דיווח עצמי */
+function buildStations(p: Person): Station[] {
+  const evs = [...p.timeline].reverse(); // מהישן לחדש
+  const by = (name: string, pred?: (pr: Record<string, unknown>) => boolean) =>
+    evs.filter(e => e.name === name && (!pred || pred((e.props ?? {}) as Record<string, unknown>)));
+  const latest = (name: string, pred?: (pr: Record<string, unknown>) => boolean) => {
+    const all = by(name, pred);
+    return all.length ? all[all.length - 1] : null;
+  };
+  const S = (v: unknown) => (v == null ? "" : String(v));
+
+  const tasted = [...new Set([...by("sim_start"), ...by("scct_done"), ...by("taste_done")]
+    .map(e => S((e.props as Record<string, unknown>)?.domain)).filter(Boolean))];
+
+  const m1 = latest("meeting1_checkin");
+  const m1ok = m1 && S((m1.props as Record<string, unknown>)?.result) === "yes";
+  const m1missed = m1 && S((m1.props as Record<string, unknown>)?.result) === "missed";
+
+  const gate = latest("paths_domain_gate");
+  const committed = latest("domain_committed");
+  const instGate = latest("plan_inst_gate");
+  const instCommitted = latest("institution_committed");
+  const picks = [...new Set(by("plan_scholarship_pick")
+    .map(e => S((e.props as Record<string, unknown>)?.id)).filter(Boolean))];
+  const quizDone = latest("paths_quiz_done");
+  const enrolled = (p.checklist ?? []).find(c => c.label.includes("נרשם/ה ללימודים"))?.done ?? false;
+  const docUp = latest("enrollment_doc_uploaded");
+
+  const def: Omit<Station, "state">[] = [
+    { id: "signup", stage: "פתיחת חשבון", title: "נרשם/ה ומילא/ה שאלון בסיס", emoji: "📝",
+      date: evs[0]?.at ?? null, chips: [], events: by("profile") },
+    { id: "m1", stage: "היכרות", title: "פגישה 1 — נקבעה והתקיימה", emoji: "🗓",
+      date: m1?.at ?? latest("meeting_booked", pr => S(pr.n) === "1")?.at ?? null,
+      signal: !!m1missed,
+      chips: m1ok ? [{ text: "״היה טוב״", kind: "quote" as const }]
+        : m1missed ? [{ text: "לא הצליח/ה להגיע", kind: "alert" as const }] : [],
+      events: [...by("meeting_open", pr => S(pr.n) === "1"), ...by("meeting_booked", pr => S(pr.n) === "1"), ...by("meeting1_checkin")] },
+    { id: "taste", stage: "טעימות הייטק", title: "טעימות תחומים", emoji: "🧪",
+      date: latest("scct_done")?.at ?? latest("sim_start")?.at ?? null,
+      chips: tasted.length ? [{ text: "טעם/ה: " + tasted.map(dom).join(", "), kind: "info" as const }] : [],
+      events: [...by("sim_start"), ...by("scct_done"), ...by("taste_done")] },
+    { id: "m2", stage: "מסלול לימודים", title: "פגישה 2 — בחירת תחום", emoji: "🗓",
+      date: latest("meeting_booked", pr => S(pr.n) === "2")?.at ?? null, chips: [],
+      events: [...by("meeting_open", pr => S(pr.n) === "2"), ...by("meeting_booked", pr => S(pr.n) === "2")] },
+    { id: "domain", stage: "", title: "בחירת כיוון", emoji: "🧭",
+      date: committed?.at ?? null,
+      chips: committed
+        ? [{ text: "בחר/ה: " + S((committed.props as Record<string, unknown>)?.domains).split(",").map(dom).join(" + "), kind: "info" as const }]
+        : [],
+      events: [...by("paths_domain_gate"), ...by("domain_committed")] },
+    { id: "quiz", stage: "", title: "שאלון אילוצים", emoji: "📋",
+      date: quizDone?.at ?? null, chips: [],
+      events: [...by("paths_question"), ...by("paths_quiz_done")] },
+    { id: "inst-research", stage: "", title: "חקר מוסדות וחסמים", emoji: "🔍",
+      date: latest("paths_solution_click")?.at ?? latest("paths_blocker_open")?.at ?? null, chips: [],
+      events: [...by("paths_blocker_open"), ...by("paths_solution_click"), ...by("paths_solution_open")] },
+    { id: "m3", stage: "מלגות והרשמה", title: "פגישה 3 — נעילת מסלול", emoji: "🗓",
+      date: latest("meeting_booked", pr => S(pr.n) === "3")?.at ?? null, chips: [],
+      events: [...by("meeting_open", pr => S(pr.n) === "3"), ...by("meeting_booked", pr => S(pr.n) === "3")] },
+    { id: "inst", stage: "", title: "בחירת מוסד + גיבוי", emoji: "🏛",
+      date: instCommitted?.at ?? null,
+      chips: instCommitted
+        ? [{ text: S((instCommitted.props as Record<string, unknown>)?.main).split(" — ")[0], kind: "info" as const }]
+        : [],
+      events: [...by("plan_inst_gate"), ...by("institution_committed")] },
+    { id: "scholarships", stage: "", title: "בחירת מלגות", emoji: "💰",
+      date: latest("plan_scholarship_pick")?.at ?? null,
+      chips: picks.length ? [{ text: `${picks.length} מלגות בחשבון`, kind: "info" as const }] : [],
+      events: [...by("plan_money_opened"), ...by("plan_scholarship_pick")] },
+    { id: "anchor", stage: "", title: "העוגן: ההרשמה עצמה", emoji: "⚓",
+      date: null, chips: [], events: by("plan_task_open") },
+    { id: "student", stage: "סטודנט/ית", title: "אישור לימודים הועלה", emoji: "🎓",
+      date: docUp?.at ?? null, chips: [], events: by("enrollment_doc_uploaded") },
+  ];
+
+  // מצב כל תחנה: מה הושלם — לפי ראיות; העצירה — שער שנראה בלי בחירה
+  const doneFlags = [
+    true,
+    !!m1ok,
+    tasted.length >= 2,
+    !!latest("meeting_booked", pr => S(pr.n) === "2"),
+    !!committed,
+    !!quizDone,
+    by("paths_solution_click").length > 0 || by("paths_blocker_open").length > 0,
+    !!latest("meeting_booked", pr => S(pr.n) === "3"),
+    !!instCommitted,
+    picks.length > 0,
+    enrolled,
+    !!docUp,
+  ];
+
+  const now = Date.now();
+  const daysSince = (iso?: string | null) => (iso ? Math.floor((now - +new Date(iso)) / DAY_MS) : 0);
+
+  // התחנה הפתוחה הראשונה היא "כאן עכשיו" — או "עצר כאן" אם יש ראיית עמידה
+  let currentIdx = doneFlags.findIndex(d => !d);
+  if (currentIdx === -1) currentIdx = def.length - 1;
+
+  return def.map((d, i) => {
+    if (doneFlags[i]) return { ...d, state: "done" as const };
+    if (i !== currentIdx) return { ...d, state: "future" as const, date: null };
+    // עצירה מוכחת: שער נראה בלי בחירה יומיים+, או אי-תנועה שבוע כשנכנסים
+    let stuckDays = 0;
+    if (d.id === "domain" && gate && !committed) stuckDays = daysSince(gate.at);
+    if (d.id === "inst" && instGate && !instCommitted) stuckDays = daysSince(instGate.at);
+    if (!stuckDays && p.lastAction && daysSince(p.lastAction) >= 5 && p.lastActive && daysSince(p.lastActive) < 3) {
+      stuckDays = daysSince(p.lastAction);
+    }
+    if (stuckDays >= 2) {
+      return { ...d, state: "stuck" as const, stuckDays,
+        chips: [...d.chips, { text: `⏸ ${stuckDays} ימים מול ${d.title}`, kind: "stop" as const }],
+        action: p.signals[0]?.reason ? `הסיגנל הפעיל: ${p.signals[0].reason}` : "שיחת וואטסאפ קצרה — לשאול איפה זה עומד" };
+    }
+    return { ...d, state: "current" as const };
+  });
+}
+
+const NODE_COLOR: Record<Station["state"], { bg: string; border: string; icon: string }> = {
+  done:    { bg: "#059669", border: "#059669", icon: "#fff" },
+  current: { bg: "#fb8500", border: "#fb8500", icon: "#fff" },
+  stuck:   { bg: "#fff7ed", border: "#fb8500", icon: "#9a3412" },
+  future:  { bg: "#fbf9f5", border: "#e2ddd3", icon: "#a8a195" },
+};
+
+function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; onBack: () => void }) {
+  const stations = useMemo(() => buildStations(p), [p]);
+  const stuck = stations.find(st => st.state === "stuck");
+  const current = stuck ?? stations.find(st => st.state === "current") ?? null;
+  const [openId, setOpenId] = useState<string | null>(stuck ? stuck.id : null);
+  const open = stations.find(st => st.id === openId) ?? null;
+
+  const idleDays = p.lastActive ? Math.floor((Date.now() - +new Date(p.lastActive)) / DAY_MS) : null;
+  const actionDays = p.lastAction ? Math.floor((Date.now() - +new Date(p.lastAction)) / DAY_MS) : null;
+  const inButStuck = idleDays !== null && idleDays < 2 && actionDays !== null && actionDays >= 5;
+
+  const rows: Station[][] = [stations.slice(0, 4), stations.slice(4, 8), stations.slice(8, 12)];
+  const visits = sessions(p.timeline);
+
+  return (
+    <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+      <style>{`@keyframes tcPulse { 0% { box-shadow: 0 0 0 0 rgba(251,133,0,.35); } 70% { box-shadow: 0 0 0 14px rgba(251,133,0,0); } 100% { box-shadow: 0 0 0 0 rgba(251,133,0,0); } }`}</style>
+
+      <button onClick={onBack} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 14, fontWeight: 500, color: NAVY, padding: "4px 0", fontFamily: "'Heebo', sans-serif" }}>
+        ← חזרה לרשימת המשתתפים
+      </button>
+
+      {/* כרטיס פרסונה */}
+      <div style={{ background: "#fff", borderRadius: 18, boxShadow: "0 2px 10px rgba(2,62,138,.06)", padding: "24px 28px", marginTop: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 30, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>{p.name}</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: "#8d867a" }}>{p.region ?? ""}</span>
+            </div>
+            <div style={{ fontSize: 13.5, color: "#8d867a", marginTop: 6 }}>
+              נראה/תה לאחרונה: <b style={{ color: "#1c1a16" }}>{ago(p.lastActive)}</b>
+              {inButStuck && (
+                <span style={{ marginRight: 10, background: "#fff7ed", border: "1.5px solid #fb8500", color: "#9a3412", fontWeight: 700, borderRadius: 999, padding: "3px 12px", fontSize: 12.5 }}>
+                  נכנס/ת — ולא מתקדם/ת
+                </span>
+              )}
+            </div>
+          </div>
+          {current && (
+            <div style={current.state === "stuck"
+              ? { background: "#fff7ed", border: "2.5px solid #fb8500", color: "#9a3412", borderRadius: 999, padding: "8px 18px", fontSize: 15, fontWeight: 900 }
+              : { background: "#fb8500", color: "#fff", borderRadius: 999, padding: "8px 18px", fontSize: 15, fontWeight: 900, boxShadow: "0 3px 10px rgba(251,133,0,.35)" }}>
+              {current.state === "stuck"
+                ? `⏸ עצר/ה כאן: ${current.title} · ${current.stuckDays} ימים`
+                : `🏃 כאן עכשיו: ${current.title} · בתנועה`}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+          {p.signals.length === 0 ? (
+            <span style={{ background: "#ecfdf5", color: "#059669", fontWeight: 700, borderRadius: 999, padding: "4px 12px", fontSize: 12.5 }}>אין סיגנלים פעילים</span>
+          ) : p.signals.map((sig, i) => (
+            <span key={i} style={{ background: "#fef2f2", border: "1.5px solid #dc2626", color: "#dc2626", fontWeight: 700, borderRadius: 999, padding: "4px 12px", fontSize: 12.5, whiteSpace: "nowrap" }}>
+              ⚠ {sig.reason}
+            </span>
+          ))}
+        </div>
+
+        <div style={{ borderTop: "1px solid #f0ece2", marginTop: 14, paddingTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+          {[
+            ["תחומים שבחר/ה", p.domain ? p.domain.split(",").map(dom).join(" + ") : "טרם נבחרו"],
+            ["מוסד + גיבוי", (() => {
+              const e = [...p.timeline].find(ev => ev.name === "institution_committed");
+              if (!e) return "טרם נבחר";
+              const pr = (e.props ?? {}) as Record<string, unknown>;
+              const main = String(pr.main ?? "").split(" — ")[0];
+              return pr.backup ? `${main} · גיבוי: ${String(pr.backup).split(" — ")[0]}` : main;
+            })()],
+            ["רכזת מלווה", coordName || "—"],
+            ["שלב במסע", `שלב ${p.stage || 1} מתוך 6`],
+          ].map(([label, val]) => (
+            <div key={label as string}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "#a8a195" }}>{label}</div>
+              <div style={{ fontSize: 14.5, fontWeight: 700, color: "#1c1a16" }}>{val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* מפת המסע */}
+      <div style={{ background: "#fff", borderRadius: 18, boxShadow: "0 2px 10px rgba(2,62,138,.06)", padding: "22px 24px", marginTop: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ fontSize: 19, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>מפת המסע</div>
+          <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#8d867a", flexWrap: "wrap" }}>
+            {[["#059669", "הושלם"], ["#fb8500", "כאן עכשיו"], ["stuck", "עצר/ה כאן"], ["#e2ddd3", "עוד לא הגיע/ה"], ["#dc2626", "סיגנל פעיל"]].map(([c, label]) => (
+              <span key={label} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span style={c === "stuck"
+                  ? { width: 11, height: 11, borderRadius: 999, background: "#fff7ed", border: "2px solid #fb8500", display: "inline-block" }
+                  : { width: 11, height: 11, borderRadius: 999, background: c as string, display: "inline-block" }} />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ overflowX: "auto", overflowY: "hidden", paddingBottom: 16 }}>
+          <div style={{ minWidth: 1000 }}>
+            {rows.map((row, ri) => (
+              <div key={ri} style={{ position: "relative", height: 196, display: "flex", flexDirection: ri === 1 ? "row-reverse" : "row", alignItems: "flex-start" }}>
+                {/* הקו המקווקו של השורה */}
+                <div style={{ position: "absolute", top: 60, right: "6%", left: "6%", borderTop: "3px dashed #ddd6c9" }} />
+                {row.map(st => {
+                  const c = NODE_COLOR[st.state];
+                  const isOpen = openId === st.id;
+                  return (
+                    <button key={st.id} onClick={() => setOpenId(isOpen ? null : st.id)}
+                      style={{ flex: 1, border: "none", background: "none", cursor: "pointer", position: "relative", paddingTop: 30, textAlign: "center", fontFamily: "'Heebo', sans-serif" }}>
+                      {st.stage && (
+                        <span style={{ position: "absolute", top: 0, right: "50%", transform: "translateX(50%)", background: "#eef3fa", color: NAVY, fontSize: 11.5, fontWeight: 900, borderRadius: 999, padding: "3px 12px", whiteSpace: "nowrap" }}>
+                          {st.stage}
+                        </span>
+                      )}
+                      <span style={{
+                        position: "relative", zIndex: 1, width: 56, height: 56, borderRadius: 999, display: "inline-flex",
+                        alignItems: "center", justifyContent: "center", fontSize: 24,
+                        background: c.bg, border: `${st.state === "stuck" ? 3 : 2}px solid ${c.border}`,
+                        boxShadow: st.state === "stuck" ? "0 0 0 6px rgba(251,133,0,.14)" : "none",
+                        animation: st.state === "current" ? "tcPulse 2s infinite" : "none",
+                      }}>
+                        <span style={{ filter: st.state === "future" ? "grayscale(1) opacity(.55)" : "none" }}>{st.emoji}</span>
+                        {st.state === "done" && (
+                          <span style={{ position: "absolute", bottom: -3, left: -3, width: 20, height: 20, borderRadius: 999, background: "#fff", color: "#059669", fontSize: 12, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 3px rgba(0,0,0,.15)" }}>✓</span>
+                        )}
+                        {st.state === "stuck" && (
+                          <span style={{ position: "absolute", bottom: -3, left: -3, width: 22, height: 22, borderRadius: 999, background: "#fb8500", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>⏸</span>
+                        )}
+                        {st.signal && (
+                          <span style={{ position: "absolute", top: -4, right: -4, width: 22, height: 22, borderRadius: 999, background: "#dc2626", color: "#fff", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>⚠</span>
+                        )}
+                      </span>
+                      {st.state === "current" && (
+                        <div><span style={{ display: "inline-block", marginTop: 5, background: "#fb8500", color: "#fff", fontSize: 12.5, fontWeight: 900, borderRadius: 999, padding: "2px 12px" }}>כאן עכשיו</span></div>
+                      )}
+                      <div style={{ fontSize: 13.5, fontWeight: st.state === "stuck" ? 900 : 700, marginTop: 6, maxWidth: 170, marginRight: "auto", marginLeft: "auto",
+                        color: st.state === "future" ? "#b8b1a4" : st.state === "stuck" ? "#9a3412" : "#1c1a16" }}>
+                        {st.title}
+                      </div>
+                      {st.state === "done" && st.date && (
+                        <div style={{ fontSize: 11.5, color: "#a8a195", marginTop: 2 }}>{new Date(st.date).toLocaleDateString("he-IL")}</div>
+                      )}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "center", marginTop: 4 }}>
+                        {st.chips.slice(0, 2).map((ch, i) => (
+                          <span key={i} style={{
+                            fontSize: ch.kind === "stop" ? 12.5 : 11.5, borderRadius: 999, padding: "2px 10px", maxWidth: 190,
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            ...(ch.kind === "info" ? { background: "#f6f2ea", color: "#5b5648" }
+                              : ch.kind === "quote" ? { background: "#ecfdf5", color: "#059669" }
+                              : ch.kind === "talk" ? { background: "#eef3fa", color: NAVY, fontWeight: 700 }
+                              : ch.kind === "stop" ? { background: "#fff7ed", border: "2px solid #fb8500", color: "#9a3412", fontWeight: 900 }
+                              : { background: "#fef2f2", border: "1.5px solid #dc2626", color: "#dc2626", fontWeight: 700 }),
+                          }}>{ch.text}</span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* פאנל פירוט תחנה */}
+        {open && (
+          <div style={{
+            borderRadius: 14, padding: "18px 22px", marginTop: 6,
+            background: open.state === "stuck" ? "#fffdf8" : "#fdfcf9",
+            border: open.state === "stuck" ? "2px solid #fb8500" : "1.5px solid #eee9dd",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ fontSize: 15.5, fontWeight: 900, color: NAVY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {open.emoji} {open.title}
+                <span style={{ marginRight: 10, fontSize: 12, fontWeight: 700, color: "#8d867a" }}>
+                  {open.state === "done" ? "הושלם" : open.state === "current" ? "כאן עכשיו" : open.state === "stuck" ? `עצירה — ${open.stuckDays} ימים` : "עוד לא הגיע/ה"}
+                </span>
+              </div>
+              <button onClick={() => setOpenId(null)} style={{ width: 28, height: 28, borderRadius: 999, border: "1px solid #e2ddd3", background: "#fff", cursor: "pointer", fontSize: 13 }}>✕</button>
+            </div>
+            <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+              {open.events.length === 0 && <div style={{ fontSize: 13, color: "#a8a195" }}>אין אירועים בתחנה זו עדיין</div>}
+              {[...open.events].reverse().slice(0, 12).map((e, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, fontSize: 14 }}>
+                  <span style={{ minWidth: 52, fontSize: 12.5, fontWeight: 700, color: "#8d867a" }}>
+                    {new Date(e.at).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" })}
+                  </span>
+                  <span style={{ fontWeight: 500, color: "#1c1a16" }}>{describe(e)}</span>
+                </div>
+              ))}
+            </div>
+            {open.action && (
+              <div style={{ marginTop: 12, background: NAVY, color: "#fff", borderRadius: 12, padding: "10px 14px", fontSize: 14, fontWeight: 700 }}>
+                הפעולה שלך: {open.action}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ציר הביקורים */}
+      <div style={{ marginTop: 20 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <div style={{ fontSize: 17, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>ציר הביקורים</div>
+          <div style={{ fontSize: 12.5, color: "#8d867a" }}>המפה היא הסיכום — כאן הזום־אין</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 10 }}>
+          {visits.slice(0, 9).map((visit, vi) => {
+            const end = new Date(visit[0].at);
+            const start = new Date(visit[visit.length - 1].at);
+            const took = +end - +start;
+            const seen = new Set<string>();
+            const acts = compact(visit).map(describe).filter(t => { if (seen.has(t)) return false; seen.add(t); return true; });
+            return (
+              <div key={vi} style={{ background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1px solid rgba(0,0,0,0.06)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 900, color: NAVY, whiteSpace: "nowrap" }}>
+                    {start.toLocaleDateString("he-IL", { day: "numeric", month: "numeric" })} · {start.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <span style={{ background: "#f6f2ea", borderRadius: 999, padding: "2px 10px", fontSize: 11.5, color: "#5b5648" }}>{minutes(took)}</span>
+                </div>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: "#5b5648", marginTop: 6, lineHeight: 1.6 }}>
+                  {acts.slice(0, 3).join(" · ")}{acts.length > 3 ? " · …" : ""}
+                </div>
+              </div>
+            );
+          })}
+          {visits.length === 0 && <div style={{ fontSize: 13, color: "#a8a195" }}>אין עדיין ביקורים</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Checklist({ items }: { items: { label: string; done: boolean; detail?: string }[] }) {
   if (!items.length) return null;
   return (
@@ -213,6 +591,8 @@ export default function CoordinatorPage() {
   const [tab, setTab] = useState<"queue" | "all">("queue");
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  // מסע הלקוח: לחיצה על שם בטאב "כל המשתתפים" פותחת את המפה של האדם
+  const [journeyFor, setJourneyFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => { setCode(localStorage.getItem("coordinator-code")); }, []);
@@ -286,7 +666,13 @@ export default function CoordinatorPage() {
           </div>
         )}
 
-        {data && (
+        {journeyFor && data && (() => {
+          const person = [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor);
+          if (!person) { setJourneyFor(null); return null; }
+          return <JourneyMap p={person} coordName="" onBack={() => setJourneyFor(null)} />;
+        })()}
+
+        {!journeyFor && data && (
           <div style={{ display: "flex", gap: 6, background: "rgba(2,62,138,0.06)", borderRadius: 12, padding: 4, marginBottom: 14 }}>
             {([["queue", "מי צריך אותי היום"], ["all", `כל המשתתפים (${data.total})`]] as const).map(([v, label]) => (
               <button key={v} onClick={() => setTab(v)}
@@ -305,13 +691,13 @@ export default function CoordinatorPage() {
 
         {loading && <div style={{ padding: 30, textAlign: "center", color: "rgba(0,0,0,0.4)" }}>טוען…</div>}
 
-        {tab === "queue" && data && data.needsAttention.length === 0 && !loading && (
+        {!journeyFor && tab === "queue" && data && data.needsAttention.length === 0 && !loading && (
           <div style={{ background: "#eef8f3", border: "1px solid #cfe9dd", color: "#08694c", borderRadius: 14, padding: 22, textAlign: "center", fontSize: 15, fontWeight: 700 }}>
             אף אחד לא תקוע כרגע 🎉
           </div>
         )}
 
-        {tab === "queue" && data?.needsAttention.map(p => {
+        {!journeyFor && tab === "queue" && data?.needsAttention.map(p => {
           const sev = SEV_META[p.signals[0]?.severity ?? 3];
           const isOpen = open === p.id;
           return (
@@ -345,6 +731,11 @@ export default function CoordinatorPage() {
                       התקדם/ה: <b style={{ color: "#1c1a16" }}>{ago(p.lastAction)}</b>
                     </span>
                   </div>
+
+                  <button onClick={(e) => { e.stopPropagation(); setJourneyFor(p.id); }}
+                    style={{ border: "none", background: "rgba(2,62,138,0.06)", color: NAVY, fontWeight: 800, fontSize: 12.5, borderRadius: 10, padding: "7px 14px", cursor: "pointer", marginBottom: 10, fontFamily: "'Heebo', sans-serif" }}>
+                    🗺 למפת המסע המלאה ←
+                  </button>
 
                   <Checklist items={p.checklist ?? []} />
 
@@ -403,7 +794,7 @@ export default function CoordinatorPage() {
           );
         })}
 
-        {tab === "all" && data && (() => {
+        {!journeyFor && tab === "all" && data && (() => {
           const everyone = [...data.needsAttention, ...(data.quietList ?? [])]
             .sort((a, b) => (b.stage ?? 0) - (a.stage ?? 0));
           return everyone.map(p => {
@@ -412,10 +803,10 @@ export default function CoordinatorPage() {
             const total = (p.checklist ?? []).length || 9;
             return (
               <div key={p.id} style={{ background: "#fff", borderRadius: 14, border: "1px solid rgba(0,0,0,0.08)", marginBottom: 8, overflow: "hidden" }}>
-                <button onClick={() => setOpen(isOpen ? null : p.id)}
+                <button onClick={() => setJourneyFor(p.id)}
                   style={{ width: "100%", textAlign: "right", border: "none", background: "none", cursor: "pointer", padding: "12px 16px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 14.5, fontWeight: 800, color: "#1c1a16" }}>{p.name}</span>
+                    <span style={{ fontSize: 14.5, fontWeight: 800, color: NAVY, textDecoration: "underline", textUnderlineOffset: 3 }}>{p.name}</span>
                     <span style={{ fontSize: 11.5, color: "rgba(0,0,0,0.45)" }}>שלב {p.stage || "—"}</span>
                     {p.signals.length > 0 && (
                       <span style={{ fontSize: 10.5, fontWeight: 800, color: "#b91c1c" }}>● {p.signals.length} סיגנלים</span>
