@@ -423,19 +423,25 @@ function Step0({ onNext }: { onNext: () => void }) {
 // ─── Step 1 ───────────────────────────────────────────────────────────────────
 function Step1({
   firstName, setFirstName, lastName, setLastName,
-  gender, setGender, age, setAge, region, setRegion, service, setService, onNext,
+  gender, setGender, age, setAge, region, setRegion, city, setCity,
+  service, setService, discharge, setDischarge, miluim, setMiluim, onNext,
 }: {
   firstName: string; setFirstName: (v: string) => void;
   lastName: string; setLastName: (v: string) => void;
   gender: Gender; setGender: (v: Gender) => void;
   age: string; setAge: (v: string) => void;
   region: string; setRegion: (v: string) => void;
+  city: string; setCity: (v: string) => void;
   service: string; setService: (v: string) => void;
+  discharge: string; setDischarge: (v: string) => void;
+  miluim: boolean; setMiluim: (v: boolean) => void;
   onNext: () => void;
 }) {
   const ageNum = age ? Math.floor((Date.now() - new Date(age).getTime()) / (365.25 * 24 * 3600 * 1000)) : NaN;
   const ageValid = !isNaN(ageNum) && ageNum >= 15 && ageNum <= 80;
-  const valid = firstName.trim() && lastName.trim() && gender && ageValid && region && service;
+  const dischargeNeeded = service === "done-army" || service === "done-national";
+  const valid = firstName.trim() && lastName.trim() && gender && ageValid && region &&
+    city.trim() && service && (!dischargeNeeded || discharge);
 
   const title = gender
     ? g(gender, "קודם כל, ספר לנו עליך", "קודם כל, ספרי לנו עליך", "קודם כל, ספר/י לנו עליך")
@@ -484,13 +490,19 @@ function Step1({
           <div className="text-[12px]" style={{ color: "#c0392b" }}>נראה שהתאריך לא מסתדר — גיל בין 15 ל-80</div>
         )}
 
-        {/* שירות: קובע זכאות לפיקדון, מימון האגף והשוברים — חצי ממפת המימון */}
+        {/*
+          שירות — עובדות, לא הגדרות (נתי 23.8): לא שואלים "אתה חייל משוחרר?"
+          כי אף אחד לא מכיר את ההגדרה המשפטית. שואלים מה היה ומתי השתחרר —
+          והמערכת גוזרת: זכאות האגף (5 שנים משחרור, 10 לבודדים/מילואים),
+          ייעוד 44 (שירות לאומי 12 חוד' = 50%), ומלגות המילואים.
+        */}
         <label className="text-[13px] font-bold mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>שירות צבאי או לאומי</label>
         <div className="flex flex-wrap gap-2">
           {[
-            ["done", "סיימתי שירות"],
+            ["done-army", "סיימתי שירות צבאי"],
+            ["done-national", "סיימתי שירות לאומי/אזרחי"],
             ["serving", "משרת/ת עכשיו"],
-            ["none", "בלי שירות"],
+            ["none", "לא שירתתי"],
           ].map(([v, label]) => (
             <button
               key={v}
@@ -508,6 +520,33 @@ function Step1({
           ))}
         </div>
 
+        {(service === "done-army" || service === "done-national") && (
+          <>
+            <label className="text-[13px] font-bold mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>
+              מתי השתחררת? (חודש ושנה בערך)
+            </label>
+            <TextInput value={discharge} onChange={setDischarge} placeholder="" type="month" />
+            <div className="text-[11px] -mt-1" style={{ color: "rgba(0,0,0,0.4)" }}>
+              רוב המימון למשוחררים תקף חמש שנים מהשחרור — התאריך עוזר לנו לראות כמה זמן נשאר לך.
+            </div>
+            <button
+              type="button"
+              onClick={() => setMiluim(!miluim)}
+              className="flex items-center gap-2 text-[13px] font-bold text-right"
+              style={{ color: miluim ? "#023e8a" : "rgba(0,0,0,0.55)" }}
+            >
+              <span className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[12px]"
+                style={{ background: miluim ? "#023e8a" : "rgba(0,0,0,0.15)" }}>{miluim ? "✓" : ""}</span>
+              יש לי תעודת משרת/ת מילואים פעיל/ה
+            </button>
+            {miluim && (
+              <div className="text-[11px] -mt-1" style={{ color: "rgba(0,0,0,0.4)" }}>
+                מעולה — זה מאריך זכאויות ופותח מלגות ייעודיות. נסמן את זה לרכזת.
+              </div>
+            )}
+          </>
+        )}
+
       </div>
 
       {/* Region */}
@@ -517,6 +556,16 @@ function Step1({
           {REGION_OPTIONS.map((opt) => (
             <Chip key={opt} label={opt} selected={region === opt} onClick={() => setRegion(opt)} />
           ))}
+        </div>
+
+        {/* היישוב המדויק פותח את מלגת פריפריה 45 — שנקבעת לפי כתובת המגורים
+            (5 מתוך 6 השנים האחרונות), לא לפי מקום הלימודים */}
+        <label className="text-[13px] font-bold mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>
+          באיזה יישוב גרת רוב שש השנים האחרונות?
+        </label>
+        <TextInput value={city} onChange={setCity} placeholder="לדוגמה: קריית מלאכי" />
+        <div className="text-[11px] -mt-1" style={{ color: "rgba(0,0,0,0.4)" }}>
+          למה זה חשוב: יש מלגה ששווה שנת לימודים שלמה ונקבעת לפי היישוב שגרים בו.
         </div>
       </div>
 
@@ -687,8 +736,12 @@ export default function OnboardingPage() {
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState<Gender>("");
   const [age, setAge] = useState("");
-  // שירות צבאי/לאומי — קובע זכאות לחצי ממקורות המימון (פיקדון, האגף, שוברים)
+  // שירות — עובדות שגוזרות זכאות: סוג, תאריך שחרור, מילואים פעיל (נתי 23.8)
   const [service, setService] = useState("");
+  const [discharge, setDischarge] = useState("");
+  const [miluim, setMiluim] = useState(false);
+  // היישוב המדויק — פותח את פריפריה 45 (נקבעת לפי כתובת מגורים)
+  const [city, setCity] = useState("");
   const [region, setRegion] = useState("");
   const [score, setScore] = useState(5);
   const [blockers, setBlockers] = useState<string[]>([]);
@@ -712,9 +765,12 @@ export default function OnboardingPage() {
     try {
       localStorage.setItem("birth-date", age);
       localStorage.setItem("service-status", service);
+      localStorage.setItem("home-city", city.trim());
+      if (discharge) localStorage.setItem("discharge-date", discharge);
+      localStorage.setItem("miluim-active", miluim ? "1" : "0");
     } catch { /* ignore */ }
-    // צד שרת בלי מיגרציה: האירוע נושא את התאריך והשירות, ומסך הרכזת קורא אותם משם
-    logEvent("profile", { birthDate: age, service });
+    // צד שרת בלי מיגרציה: האירוע נושא הכל, ומסך הרכזת גוזר משם
+    logEvent("profile", { birthDate: age, service, city: city.trim(), discharge, miluim: miluim ? "1" : "0" });
     saveOnboarding({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -745,7 +801,10 @@ export default function OnboardingPage() {
           gender={gender} setGender={setGender}
           age={age} setAge={setAge}
           region={region} setRegion={setRegion}
+          city={city} setCity={setCity}
           service={service} setService={setService}
+          discharge={discharge} setDischarge={setDischarge}
+          miluim={miluim} setMiluim={setMiluim}
           onNext={() => setStep(2)}
         />
       )}
