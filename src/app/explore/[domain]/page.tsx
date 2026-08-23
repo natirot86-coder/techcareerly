@@ -822,6 +822,48 @@ function AIContent() {
         color="#7c3aed"
       />
 
+      {/* כתבות מאומתות (23.8, סוכן אימות — URL + תאריך + og:image).
+          מדורי תוכן שיווקי מסומנים בשדה המקור — לא מסתירים. */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על AI בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/ai-salary.jpg",
+              summary: "עובדים עם התמחות AI משתכרים כ-43,000 ₪ — פער של 9% מעל שאר ההייטק",
+              source: "Geektime · 7.2026",
+              href: "https://www.geektime.co.il/israel-tech-salary-report-q1-2026/",
+            },
+            {
+              img: "/articles/ai-roles.jpg",
+              summary: "תפקידי ה-AI החדשים: איך מתקבלים — ומה השכר",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/h1pjlbofzg",
+            },
+            {
+              img: "/articles/ai-hiring.jpg",
+              summary: "לא עוצרות: החברות האלה מגייסות עכשיו לתפקידי AI",
+              source: "Geektime · 3.2026",
+              href: "https://www.geektime.co.il/ai-dev-job-offers-326/",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.09)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <SimTeaser
         emoji="🤖"
         challenge="בטעימה: תקבלי 500 ביקורות לקוחות מעורבבות. המשימה — ללמד מודל להבדיל חיובי משלילי. כמה דוגמאות תצטרכי?"
@@ -905,34 +947,35 @@ function UXContent() {
         color="#db2777"
       />
 
-      {/* כתבות מאומתות (20.8, סוכן אימות — URL + תאריך + og:image) */}
+      {/* כתבות מאומתות (23.8, סוכן אימות — URL + תאריך + og:image).
+          מדורי תוכן שיווקי מסומנים בשדה המקור — לא מסתירים. */}
       <div className="mb-5">
         <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
-        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על עולם הדאטה בישראל</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על עיצוב מוצר בישראל</div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             {
-              img: "/articles/data-salary-2026.jpg",
-              summary: "דוח חדש: דאטה אנליסט זינק 14% ל-31,000 ₪ — מהמרוויחים הגדולים של גל ה-AI",
-              source: "Geektime · 7.2026",
-              href: "https://www.geektime.co.il/israel-tech-salary-report-q1-2026/",
+              img: "/articles/ux-figma.jpg",
+              summary: "ענקית העיצוב פיגמה רוכשת סטארטאפ ישראלי צעיר ב-200 מיליון דולר",
+              source: "Geektime · 10.2025",
+              href: "https://www.geektime.co.il/figma-acquires-israeli-startup-weavy/",
             },
             {
-              img: "/articles/data-analyst-vs.jpg",
-              summary: "הקרב על הנתונים: האם כדאי להיות דאטה סיינטיסט או אנליסט",
-              source: "כלכליסט",
-              href: "https://www.calcalist.co.il/calcalistech/article/bkcl0eza1e",
+              img: "/articles/ux-product.jpg",
+              summary: "עידן חדש לאנשי מוצר: ה-AI פותח ביקוש למי שמקימים מוצרים שלמים",
+              source: "TheMarker · תוכן שיווקי",
+              href: "https://www.themarker.com/labels/technologies/2026-02-16/ty-article-labels/0000019c-647b-d631-a3de-7dffb03d0000",
             },
             {
-              img: "/articles/data-salary-2025.jpg",
-              summary: "Data Engineer בצד המנצח: ביקוש לתשתיות דאטה ל-AI מזניק את השכר",
-              source: "Geektime",
-              href: "https://www.geektime.co.il/israeli-tech-salary-2025/",
+              img: "/articles/ux-triolla.jpg",
+              summary: "מי הן חברות עיצוב ה-UX/UI המובילות בישראל?",
+              source: "כלכליסט · תוכן שיווקי",
+              href: "https://www.calcalist.co.il/article/h1cu4k5nlx",
             },
           ].map((a) => (
             <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
               className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
-              style={{ background: "#fff", border: "1px solid rgba(13,148,136,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.09)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
               <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
                 <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -945,6 +988,7 @@ function UXContent() {
           ))}
         </div>
       </div>
+
       <SimTeaser
         emoji="🎨"
         challenge="בטעימה: תקבלי wireframe גרוע של אפליקציית זימון תורים. המשימה — לזהות 3 בעיות UX ולהציע כל אחת כיצד לתקן."
@@ -1074,6 +1118,46 @@ function DataContent() {
         color={TEAL}
       />
 
+      {/* כתבות מאומתות (20.8, סוכן אימות — URL + תאריך + og:image) */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על עולם הדאטה בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/data-salary-2026.jpg",
+              summary: "דוח חדש: דאטה אנליסט זינק 14% ל-31,000 ₪ — מהמרוויחים הגדולים של גל ה-AI",
+              source: "Geektime · 7.2026",
+              href: "https://www.geektime.co.il/israel-tech-salary-report-q1-2026/",
+            },
+            {
+              img: "/articles/data-analyst-vs.jpg",
+              summary: "הקרב על הנתונים: האם כדאי להיות דאטה סיינטיסט או אנליסט",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/bkcl0eza1e",
+            },
+            {
+              img: "/articles/data-salary-2025.jpg",
+              summary: "Data Engineer בצד המנצח: ביקוש לתשתיות דאטה ל-AI מזניק את השכר",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/israeli-tech-salary-2025/",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(13,148,136,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
       <JobMarketBlock
         color={TEAL}
         demand="אחד הכותרים הנפוצים ביותר בישראל — ביקוש גבוה ויציב"
@@ -1327,6 +1411,48 @@ function MarketingContent() {
         sub="הביא $12M הכנסות תוך שנה — ומכירה ב-$1B ל-Unilever. שיווק נכון = הכל."
         color="#f97316"
       />
+
+      {/* כתבות מאומתות (23.8, סוכן אימות — URL + תאריך + og:image).
+          מדורי תוכן שיווקי מסומנים בשדה המקור — לא מסתירים. */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על שיווק בהייטק</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/mkt-trends.jpg",
+              summary: "2026 מסמנת נקודת מפנה בעולם השיווק — 5 המגמות שיובילו",
+              source: "גלובס · 1.2026",
+              href: "https://www.globes.co.il/news/article.aspx?did=1001531113",
+            },
+            {
+              img: "/articles/mkt-ai.jpg",
+              summary: "איך מנהלי שיווק הולכים לעבוד עם AI ב-2026?",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/ai-in-marketing-event-231225/",
+            },
+            {
+              img: "/articles/mkt-secure.jpg",
+              summary: "בכירי השיווק לא חוששים שה-AI תגזול את תפקידם — והם צודקים",
+              source: "גלובס",
+              href: "https://www.globes.co.il/news/article.aspx?did=1001497446",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.09)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
 
       <SimTeaser
         emoji="📢"
