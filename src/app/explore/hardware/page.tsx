@@ -154,21 +154,28 @@ export default function HardwareDomainPage() {
 
       {/* Content */}
       <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] md:px-6 pt-6 pb-28">
-        {/* Hook */}
-        <div className="mb-6 rounded-2xl p-4 text-[13.5px] leading-[1.7]" style={{ background: "rgba(124,45,18,0.07)" }}>
-          כל אפליקציה, כל מסך, כל רכב אוטונומי — רץ על לוח שמישהו תכנן, בדק ותיקן.{" "}
-          <span className="font-black" style={{ color: NAVY }}>זה התחום שבו נוגעים במוצר בידיים.</span>
+        {/* Hook — היי-לבל קודם (נתי 23.8): מה זה בכלל חומרה, לפני כל מספר */}
+        <div className="mb-4 rounded-2xl p-5 text-[14px] leading-[1.85]" style={{ background: "rgba(124,45,18,0.07)" }}>
+          <div className="text-[16px] mb-2 font-black" style={{ color: NAVY }}>מה זה בכלל חומרה?</div>
+          תסתכלו על הטלפון שלכם. האפליקציות, המסך, המצלמה — הכל עובד כי בפנים יש
+          לוח קטן עם שבבים ורכיבים. <b>זו החומרה: הגוף הפיזי שכל התוכנה רצה עליו.</b>{" "}
+          בלי הלוח הזה אין אפליקציה ואין מסך. אותו סיפור ברכב, במכשיר בבית החולים, במזגן החכם.
+          <div className="mt-2">
+            אנשי החומרה מתכננים את הלוחות האלה, בונים אותם, ומגלים למה לוח מסוים
+            לא עובד. <span className="font-black" style={{ color: NAVY }}>זה התחום שבו נוגעים במוצר בידיים.</span>
+          </div>
         </div>
 
         {/* Interactive teaser — find the faulty rail */}
         <div className="mb-7">
-          <Label text="מצאי את פס המתח התקול — לחצי על השורה" />
+          <Label text="רגע של טעימה — בלי שום ידע מוקדם" />
           <div className="rounded-xl px-4 py-3 mb-3 flex gap-2 items-start"
             style={{ background: "rgba(124,45,18,0.06)", border: "1px solid rgba(124,45,18,0.15)" }}>
             <span className="text-[16px] shrink-0">🔎</span>
             <div className="text-[12.5px] leading-[1.55]" dir="rtl" style={{ color: HW }}>
-              <span className="font-bold">לוח לא נדלק. מולטימטר מודד שלושה פסי מתח.</span>{" "}
-              אחד מהם לא מה שהוא אמור להיות — איזה?
+              <span className="font-bold">חשמל בלוח מתנהג כמו מים בצינורות.</span>{" "}
+              מכשיר לא נדלק, ומדדנו את ה״לחץ״ בשלושת ה״צינורות״ שלו. אחד מספק
+              פחות ממה שהוא אמור — תמצאו אותו?
             </div>
           </div>
           <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(124,45,18,0.2)", boxShadow: "0 4px 24px rgba(124,45,18,0.1)" }}>

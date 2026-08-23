@@ -12,6 +12,7 @@
  */
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { FUNDING } from "@/data/scholarships";
 import Link from "next/link";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -51,6 +52,27 @@ const dom = (v: unknown) => DOMAIN_HE[s(v)] ?? s(v);
  * JSON — רק מה קרה. מה שאין לו ניסוח מוצג כמו שהוא, כדי שאירוע חדש
  * לא ייעלם מהמסך בשקט.
  */
+const TASTE_STEP_HE: Record<string, string> = {
+  sim: "את הסימולציה", day: "את יום-בחיי", mystery: "את משימת העומק",
+  experience: "את עיבוד החוויה", analytics: "את מרכז הלמידה",
+};
+
+/** שם מלגה ממזהה — "poalim-success" ← השם האמיתי מהדאטה */
+function fundName(id: string): string {
+  const f = FUNDING.find(x => x.id === id);
+  return f ? f.name.split(" — ")[0] : id;
+}
+
+/** מזהי משימות תוכנית: s-close-<מלגה> / s-open-<מלגה> / r-check-<מוסד> */
+function taskName(id: string): string {
+  if (id.startsWith("s-close-")) return "להגיש ל" + fundName(id.slice(8));
+  if (id.startsWith("s-open-")) return "ההרשמה ל" + fundName(id.slice(7)) + " נפתחת";
+  if (id.startsWith("r-check-")) return "בירור הרשמה מול " + id.slice(8).split(" — ")[0];
+  if (id === "m-math") return "לראות את החשבון";
+  if (id === "h-commute") return "לבדוק את הנסיעה";
+  return id;
+}
+
 function describe(e: Ev): string {
   const p = e.props ?? {};
   switch (e.name) {
@@ -68,7 +90,17 @@ function describe(e: Ev): string {
     case "paths_blocker_open":     return `הוצג לו/ה החסם: ${s(p.blocker)}`;
     case "paths_solution_click":   return `פתח/ה פתרון: ${s(p.solution)}`;
     case "plan_money_opened":      return "פתח/ה את מסך החשבון";
-    case "plan_task_open":         return `חזר/ה למשימה "${s(p.task)}" — פעם ${s(p.count)}`;
+    case "plan_task_open":         return `חזר/ה למשימה "${taskName(s(p.task))}" — פעם ${s(p.count)}`;
+    case "paths_domain_gate":      return "הגיע/ה לשער בחירת הכיוון";
+    case "domain_committed":       return `בחר/ה כיוון: ${s(p.domains).split(",").map(dom).join(" + ")}`;
+    case "domain_switch":          return `החליף/ה תחום פעיל ל${dom(p.to)}`;
+    case "plan_inst_gate":         return "הגיע/ה לשער בחירת המוסד";
+    case "institution_committed":  return `בחר/ה מוסד: ${s(p.main).split(" — ")[0]}${p.backup ? ` · גיבוי: ${s(p.backup).split(" — ")[0]}` : ""}`;
+    case "plan_scholarship_pick":  return s(p.on) === "true" ? `הוסיף/ה לחשבון את ${fundName(s(p.id))}` : `הסיר/ה מהחשבון את ${fundName(s(p.id))}`;
+    case "paths_solution_open":    return `התעניין/ה בפתרון: ${s(p.solution)}`;
+    case "taste_done":             return `השלים/ה ${TASTE_STEP_HE[s(p.step)] ?? s(p.step)} ב${dom(p.domain)}`;
+    case "enrollment_doc_uploaded": return "העלה/תה אישור לימודים 🎓";
+    case "profile":                return "השלים/ה את פרטי הפרופיל";
     case "plan_update_sent":       return "שלח/ה עדכון לרכזת";
     case "plan_intro_done":        return "נכנס/ה לשלב התוכנית";
     case "waiting_taste_start":    return "התחיל/ה את שתי הדקות";
@@ -529,34 +561,75 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
         )}
       </div>
 
-      {/* ציר הביקורים */}
-      <div style={{ marginTop: 20 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <div style={{ fontSize: 17, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>ציר הביקורים</div>
-          <div style={{ fontSize: 12.5, color: "#8d867a" }}>המפה היא הסיכום — כאן הזום־אין</div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 10 }}>
-          {visits.slice(0, 9).map((visit, vi) => {
-            const end = new Date(visit[0].at);
-            const start = new Date(visit[visit.length - 1].at);
-            const took = +end - +start;
-            const seen = new Set<string>();
-            const acts = compact(visit).map(describe).filter(t => { if (seen.has(t)) return false; seen.add(t); return true; });
-            return (
-              <div key={vi} style={{ background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1px solid rgba(0,0,0,0.06)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 900, color: NAVY, whiteSpace: "nowrap" }}>
-                    {start.toLocaleDateString("he-IL", { day: "numeric", month: "numeric" })} · {start.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                  <span style={{ background: "#f6f2ea", borderRadius: 999, padding: "2px 10px", fontSize: 11.5, color: "#5b5648" }}>{minutes(took)}</span>
-                </div>
-                <div style={{ fontSize: 13.5, fontWeight: 500, color: "#5b5648", marginTop: 6, lineHeight: 1.6 }}>
-                  {acts.slice(0, 3).join(" · ")}{acts.length > 3 ? " · …" : ""}
-                </div>
+      {/*
+        "לקראת השיחה" במקום ציר ביקורים גולמי (נתי 23.8): הכרונולוגיה שירתה
+        אנליטיקות, לא רכזת. מה שרכזת צריכה לפני שהיא מרימה טלפון: במה הוא
+        מתעניין, איפה הוא מסתובב במעגלים, וכמה הוא בכלל פה. הכל נגזר, כרגיל.
+      */}
+      <div style={{ marginTop: 20, background: "#fff", borderRadius: 18, boxShadow: "0 2px 10px rgba(2,62,138,.06)", padding: "20px 24px" }}>
+        <div style={{ fontSize: 17, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>לקראת השיחה</div>
+        <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 2 }}>מה שכדאי לדעת לפני שמרימים טלפון — נגזר מהפעילות שלו/ה</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12, marginTop: 14 }}>
+          {(() => {
+            const evs = p.timeline; // מהחדש לישן
+            const S = (v: unknown) => (v == null ? "" : String(v));
+            const cards: { icon: string; title: string; body: string }[] = [];
+
+            // 1 — במה מתעניין/ת: פתרונות ומלגות שנפתחו, מהחדש לישן, בלי כפולים
+            const interests: string[] = [];
+            for (const e of evs) {
+              const pr = (e.props ?? {}) as Record<string, unknown>;
+              let t = "";
+              if (e.name === "paths_solution_open" || e.name === "paths_solution_click") t = S(pr.solution);
+              if (e.name === "plan_scholarship_pick" && S(pr.on) === "true") t = fundName(S(pr.id));
+              if (t && !interests.includes(t)) interests.push(t);
+              if (interests.length >= 3) break;
+            }
+            if (interests.length) cards.push({
+              icon: "✨", title: "במה הוא/היא מתעניין/ת",
+              body: interests.join(" · "),
+            });
+
+            // 2 — איפה מסתובב/ת במעגלים: המשימה עם הכי הרבה חזרות
+            let loopTask = ""; let loopCount = 0;
+            for (const e of evs) {
+              if (e.name !== "plan_task_open") continue;
+              const pr = (e.props ?? {}) as Record<string, unknown>;
+              const c = parseInt(S(pr.count) || "0", 10);
+              if (c > loopCount) { loopCount = c; loopTask = taskName(S(pr.task)); }
+            }
+            if (loopCount >= 2) cards.push({
+              icon: "🔄", title: "חוזר/ת לאותו מקום",
+              body: `"${loopTask}" נפתחה ${loopCount} פעמים בלי להיסגר — כנראה תקוע/ה שם, וזו נקודת פתיחה טובה לשיחה.`,
+            });
+
+            // 3 — כמה הוא/היא פה: ביקורים בשבוע האחרון + הביקור האחרון
+            const weekAgo = Date.now() - 7 * DAY_MS;
+            const recent = visits.filter(v => +new Date(v[0].at) >= weekAgo);
+            if (visits.length) {
+              const last = visits[0];
+              const lastStart = new Date(last[last.length - 1].at);
+              const lastTook = +new Date(last[0].at) - +lastStart;
+              const what = describe(compact(last)[0]);
+              cards.push({
+                icon: "📈", title: "כמה הוא/היא פה",
+                body: `${recent.length} ביקורים בשבוע האחרון. האחרון: ${lastStart.toLocaleDateString("he-IL", { day: "numeric", month: "numeric" })}, ${minutes(lastTook)} — ${what}.`,
+              });
+            }
+
+            // 4 — פערי SCCT: עניין גבוה ומסוגלות נמוכה — שיחה מחזקת
+            const talk = p.signals.find(sig => sig.reason.includes("מסוגלות נמוכה"));
+            if (talk) cards.push({ icon: "💬", title: "שיחה מחזקת", body: talk.reason });
+
+            if (!cards.length) cards.push({ icon: "🌱", title: "עוד אין מספיק פעילות", body: "כשיתחיל/תתחיל לזוז — התובנות יופיעו כאן מעצמן." });
+
+            return cards.map((c, i) => (
+              <div key={i} style={{ background: "#fdfcf9", border: "1px solid #eee9dd", borderRadius: 14, padding: "14px 16px" }}>
+                <div style={{ fontSize: 13, fontWeight: 900, color: NAVY, marginBottom: 5 }}>{c.icon} {c.title}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: "#5b5648", lineHeight: 1.65 }}>{c.body}</div>
               </div>
-            );
-          })}
-          {visits.length === 0 && <div style={{ fontSize: 13, color: "#a8a195" }}>אין עדיין ביקורים</div>}
+            ));
+          })()}
         </div>
       </div>
     </div>
@@ -655,7 +728,7 @@ export default function CoordinatorPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 24px 60px" }}>
+      <div style={{ maxWidth: journeyFor ? 1240 : 760, margin: "0 auto", padding: "16px 24px 60px" }}>
         {error && (
           <div style={{ background: "rgba(220,38,38,0.07)", border: "1px solid rgba(220,38,38,0.2)", color: "#b91c1c", borderRadius: 12, padding: 14, fontSize: 13, lineHeight: 1.7 }}>
             {error === "SUPABASE_SECRET_KEY not configured" ? (

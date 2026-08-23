@@ -109,9 +109,15 @@ export default function PinMap({ track, myRegions = [], inList, onToggleList }: 
     // הסיכה מייצגת את הטוב ביותר שיושב בעיר — אחרת מוסד מומלץ נעלם
     // מאחורי שכן לא מאומת שנוסף לפניו
     for (const spot of byCity.values()) {
+      /*
+       * סדר שונה מ-QUALITY_RANK בכוונה: ברמת הכרטיס אזהרה גוברת על הכל,
+       * אבל ברמת העיר — מוסד אחד עם אזהרה לא הופך עיר שלמה לאדומה.
+       * אדום עירוני רק כשאין בעיר שום דבר טוב יותר.
+       */
+      const CITY_ORDER: Record<string, number> = { recommended: 0, ok: 1, unverified: 2, warn: 3 };
       spot.best = pickedInsts(spot.city, track)
         .map(qualityOf)
-        .sort((a, b) => QUALITY_RANK[a] - QUALITY_RANK[b])[0] ?? "unverified";
+        .sort((a, b) => CITY_ORDER[a] - CITY_ORDER[b])[0] ?? "unverified";
     }
     return { spots: [...byCity.values()], unplaced };
   }, [track, myRegions]);
@@ -198,7 +204,7 @@ export default function PinMap({ track, myRegions = [], inList, onToggleList }: 
                 <div>
                   <div className="text-[15px] font-black" style={{ color: NAVY }}>{picked}</div>
                   <div className="text-[11px]" style={{ color: "rgba(0,0,0,0.45)" }}>
-                    {pickedInsts(picked, track).length} מסלולים · המומלצים למעלה
+                    {pickedInsts(picked, track).length} מסלולים בעיר · המומלצים למעלה
                   </div>
                 </div>
                 <button onClick={() => setPicked(null)} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
@@ -206,13 +212,36 @@ export default function PinMap({ track, myRegions = [], inList, onToggleList }: 
               </div>
             </div>
             <div style={{ overflowY: "auto", padding: "10px 12px 22px", display: "flex", flexDirection: "column", gap: 8 }}>
-              {pickedInsts(picked, track)
-                .sort((a, b) => QUALITY_RANK[qualityOf(a)] - QUALITY_RANK[qualityOf(b)])
-                .map((i, idx) => (
-                  <InstitutionCard key={i.id} inst={i} defaultOpen={idx === 0}
-                    inList={inList?.(i.name)}
-                    onToggleList={onToggleList ? () => onToggleList(i.name) : undefined} />
-                ))}
+              {(() => {
+                const sorted = pickedInsts(picked, track)
+                  .sort((a, b) => QUALITY_RANK[qualityOf(a)] - QUALITY_RANK[qualityOf(b)]);
+                const addrs = new Set(sorted.map(i => i.address ?? ""));
+                const multiAddr = addrs.size > 1;
+                // קיבוץ לפי כתובת — עיר אחת, כמה בניינים: שהעין תדע מה ליד מה
+                const byAddr = new Map<string, typeof sorted>();
+                for (const i of sorted) {
+                  const k = i.address ?? "כתובת לא פורסמה";
+                  byAddr.set(k, [...(byAddr.get(k) ?? []), i]);
+                }
+                let first = true;
+                return [...byAddr.entries()].map(([addr, list]) => (
+                  <div key={addr} className="flex flex-col gap-2">
+                    {multiAddr && (
+                      <div className="text-[11px] font-bold px-1 pt-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+                        📍 {addr}
+                      </div>
+                    )}
+                    {list.map(i => {
+                      const openIt = first; first = false;
+                      return (
+                        <InstitutionCard key={i.id} inst={i} defaultOpen={openIt}
+                          inList={inList?.(i.name)}
+                          onToggleList={onToggleList ? () => onToggleList(i.name) : undefined} />
+                      );
+                    })}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </>

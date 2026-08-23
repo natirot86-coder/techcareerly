@@ -354,7 +354,7 @@ const BLOCKERS: Blocker[] = [
       { name: "מלגת פריפריה לבוגרי מכינה (ייעוד 46)", detail: "עד 50% שכר לימוד לשלוש שנות התואר, לבוגרי מכינה קדם-אקדמית ממומנת שמתגוררים באזור עדיפות. אפשר לקבל רק מלגת פריפריה אחת — או 44 או 46.", link: "https://www.hachvana.mod.gov.il/MainEducation/HachvanaScholarship/Pages/Perypheria46.aspx", date: { m: 8, d: 3, label: "ההגשה נפתחה", closeM: 10, closeD: 31 } },
       { name: "קרן גרוס", detail: "עד 10,000 ₪ בשנה למשוחררים עד חמש שנים, ויוצאי אתיופיה מצוינים אצלה כאוכלוסיית יעד. שימו לב: היא לא מתאפשרת יחד עם מלגה אחרת מעל 5,000 ₪ — זו בחירה, לא תוספת.", link: "https://www.gruss.org.il/blank", date: { m: 9, d: 15, label: "ההגשה נפתחת", closeM: 12, closeD: 15 } },
       { name: "קרן חנן עינור", detail: "2,000 עד 7,000 ₪ ליוצאי אתיופיה, בלי התנדבות. חשוב במיוחד: היא מכסה גם לימודי הנדסאי ולימודי תעודה, ולא רק תואר.", date: { m: 11, d: 1, label: "חלון ההגשה נפתח", closeM: 11, closeD: 22 } },
-      { name: "האגף לחיילים משוחררים — מסלול הנדסאים", detail: "90% משכר הלימוד ללימודי הנדסאי וטכנאי, כולל מכינה. נרשמים דרך המכללה לאורך כל השנה, בלי טופס נפרד. שנה ג׳ אינה ממומנת.", },
+      { name: "האגף לחיילים משוחררים — מסלול הנדסאים", detail: "90% משכר הלימוד ללימודי הנדסאי וטכנאי, כולל מכינה. נרשמים דרך המכללה לאורך כל השנה, בלי טופס נפרד. שנה ג׳ אינה ממומנת.", link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx" },
       { name: "הישגים (אלומה)", detail: "לא מלגה אלא ייעוץ וליווי אישיים בחינם — בחירת מוסד, תנאי קבלה, פסיכומטרי ומימון. ערוץ טוב להתחיל בו כשלא ברור מאיפה מתחילים.", link: "https://hesegim.org.il/" },
     ],
   },
@@ -368,7 +368,7 @@ const BLOCKERS: Blocker[] = [
       { group: "לתואר", name: "מלגת מרום", detail: "ליוצאי אתיופיה שבארץ 15+ שנים או ילידי הארץ. מדעי המחשב נמצאים בקבוצת העדיפות העליונה שלה. מתשפ״ז בוטלה חובת ההתנדבות — אפשר לצבור אותה יחד עם מלגות אחרות.", link: "https://che.org.il/scholarships/marom/", date: { m: 9, d: 9, label: "ההרשמה נפתחת", closeM: 11, closeD: 10 } },
       { group: "לתואר", name: "עתידים לתעשייה והייטק", detail: "מלגת קיום חודשית, מחשב נייד, סיוע בשכר לימוד — והשמה בתעשייה כבר מהסמסטר השלישי. עדיפות לפריפריה ולקהילות מיוצגות-חסר. ההרשמה פתוחה.", link: "https://www.atidimtaasya.com/" },
       { group: "לתואר", name: "המינהל לסטודנטים עולים", detail: "למי שבארץ פחות מ-15 שנה: מימון שכר לימוד, שיעורי עזר, חונך אישי ומלגת קיום חודשית. זה המסלול המשלים למרום — לא מקבלים את שניהם.", date: { m: 11, d: 1, label: "מועד לסמסטר א׳" } },
-      { group: "להכשרה מקצועית", name: "שוברים להכשרה מקצועית", detail: "יוצאי אתיופיה נמצאים בקבוצת הזכאות הגבוהה ביותר — סבסוד של עד 90% מעלות הקורס ועוד מענק השמה. נדרשת הפניה ממרכז הכוון או שירות התעסוקה." },
+      { group: "להכשרה מקצועית", name: "שוברים להכשרה מקצועית", detail: "יוצאי אתיופיה נמצאים בקבוצת הזכאות הגבוהה ביותר — סבסוד של עד 90% מעלות הקורס ועוד מענק השמה. נדרשת הפניה ממרכז הכוון או שירות התעסוקה.", link: "https://www.gov.il/he/service/vouchers-for-professional-training" },
       { group: "להנדסאים (מה״ט)", name: "האגף לחיילים משוחררים", detail: "אם שירתת ואת/ה שוקל/ת מסלול הנדסאי — האגף מממן 90% משכר הלימוד במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים.", link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx" },
     ],
   },
@@ -437,7 +437,7 @@ const BLOCKERS: Blocker[] = [
     heading: "יש היום יותר דרכים לעקוף אותו מאי פעם",
     lead: "הפסיכומטרי כבר לא השער היחיד. אלה מסלולים אמיתיים שקיימים היום — רובם לא מוכרים מספיק.",
     solutions: [
-      { name: "סף ייעודי לקהילה", detail: "באוניברסיטת חיפה: פסיכומטרי 400 בתוספת ראיון אישי — הסף הנמוך בארץ. בבן-גוריון, תוכנית סיקט שוקלת ציון של עד 100 נקודות מתחת לסף הרגיל." },
+      { name: "סף ייעודי לקהילה", detail: "באוניברסיטת חיפה: פסיכומטרי 400 בתוספת ראיון אישי — הסף הנמוך בארץ. בבן-גוריון, תוכנית סיקט שוקלת ציון של עד 100 נקודות מתחת לסף הרגיל.", link: "https://dekanat.haifa.ac.il/student-services/academic-excellence/students-from-the-ethiopian-community/" },
       { name: "קבלה על בסיס בגרות בלבד", detail: "אפקה, ספיר (ממוצע 95), אשקלון (ממוצע 95) ו-HIT (ממוצע 102) מקבלים בלי פסיכומטרי בכלל. שימו לב: בכולם יש תנאי מתמטיקה נלווה." },
       { name: "קרן אור — רייכמן", detail: "מדעי המחשב ללא פסיכומטרי, בלי צורך בציוני בגרות גבוהים, ובמימון כמעט מלא. הקריטריון הוא כלכלי-חברתי.", link: "https://www.runi.ac.il/admissions/undergraduate/scholarships/keren-or" },
       { name: "ראויים לקידום", detail: "האגודה קובעת ציון זכאות של עד 60 נקודות לפי אזור מגורים, בית ספר והשכלת ההורים — ומ-30 ומעלה כל אחת משש האוניברסיטאות נותנת הקלה משלה בתנאי הקבלה. הטיפול לוקח כחודשיים — צריך להגיש מוקדם.", link: "https://kidum-edu.org.il/reuim-lekidum/" },
@@ -638,7 +638,7 @@ function SolutionTile({ s, blockerId }: { s: Solution; blockerId: string }) {
       <div className="flex items-start justify-between gap-1.5">
         <div className="text-[11.5px] font-black leading-[1.45]" style={{ color: "#92400e" }}>{s.name}</div>
         <span className="text-[13px] font-black shrink-0" style={{ color: "#92400e", opacity: 0.55 }}>
-          {open ? "−" : "+"}
+          {open ? "סגירה ✕" : "+"}
         </span>
       </div>
       {s.date && (
@@ -1738,6 +1738,12 @@ export default function PathsPage() {
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.institutions} phaseIndex={4} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-5 pb-32">
 
+          {/* התחום תמיד נראה למעלה (נתי 23.8): עם שניים — בורר; עם אחד — שורת הקשר */}
+          {pickedDomains.length <= 1 && chosenDomains.length > 0 && (
+            <div className="text-[12.5px] font-bold mb-3 px-1" style={{ color: "rgba(0,0,0,0.5)" }}>
+              מחפשים מסלול ל: <span style={{ color: NAVY, fontWeight: 900 }}>{chosenDomains.slice(0, 2).map(d => DOMAIN_LABEL[d]).join(" · ")}</span>
+            </div>
+          )}
           {pickedDomains.length > 1 && (
             <div className="flex gap-2 mb-3">
               {pickedDomains.map(d => {

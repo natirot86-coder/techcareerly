@@ -84,8 +84,11 @@ export default function PlanPage() {
   const [instBackup, setInstBackup] = useState<string | null>(null);
   useEffect(() => {
     try {
-      setInstMain(localStorage.getItem("plan-inst-main"));
+      const m0 = localStorage.getItem("plan-inst-main");
+      setInstMain(m0);
       setInstBackup(localStorage.getItem("plan-inst-backup"));
+      // ריפוי לאחור: מי שבחר מוסד לפני התיקון מקבל את משימת העוגן עכשיו
+      if (m0) setTimeout(() => ensureAnchorTasks(m0, localStorage.getItem("plan-inst-backup")), 0);
     } catch { /* ignore */ }
   }, []);
   function commitInstitution(main: string, backup: string | null) {
@@ -95,6 +98,38 @@ export default function PlanPage() {
     if (backup) localStorage.setItem("plan-inst-backup", backup);
     else localStorage.removeItem("plan-inst-backup");
     logEvent("institution_committed", backup ? { main, backup } : { main });
+    ensureAnchorTasks(main, backup);
+  }
+
+  /*
+   * משימת העוגן נוצרת מהשער עצמו (נתי 23.8): קודם היא נוצרה רק למוסדות
+   * מהשורטליסט של שלב 4 — מי שבחר בשער מוסד אחר נשאר בלי משימת הרשמה,
+   * והעוגן נפל לדדליין של מלגה. הבחירה בשער מולידה את המשימה.
+   */
+  function ensureAnchorTasks(main: string, backup: string | null) {
+    setTasks(prev => {
+      const next = [...prev];
+      const shortOf = (n: string) => n.split(" — ")[0];
+      const addIfMissing = (inst: string, isBackup: boolean) => {
+        const short = shortOf(inst);
+        if (next.some(t => t.area === "registration" && t.title.includes(short))) return;
+        next.unshift({
+          id: `r-register-${inst}`,
+          title: isBackup ? `${short} (גיבוי) — לבדוק תאריך אחרון להרשמה` : `להירשם ל${short} — זו המשימה שהכול תלוי בה`,
+          note: "שיחה אחת ליחידת התמיכה, לא למדור רישום. וגם אם המועד הרשמי עבר — כמעט תמיד שווה לבדוק: במוסדות רבים יש רשימות המתנה ומחזורים נוספים.",
+          area: "registration",
+          due: null,
+          status: "open",
+          openCount: 0,
+          doneAt: null,
+        } as PlanTask);
+      };
+      if (backup) addIfMissing(backup, true);
+      addIfMissing(main, false);
+      localStorage.setItem(LS.tasks, JSON.stringify(next));
+      syncPlanTasks(next);
+      return next;
+    });
   }
   const [ready, setReady] = useState(false);
   const [tasks, setTasks] = useState<PlanTask[]>([]);

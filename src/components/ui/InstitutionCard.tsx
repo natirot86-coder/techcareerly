@@ -95,11 +95,18 @@ export default function InstitutionCard({
               ⚠️ {inst.warn}
             </div>
           )}
-          {rows.filter(([, v]) => v && v.trim()).map(([k, v]) => (
+          {/* "לא אומת" איננו מידע למועמד — הוא רעש שמוריד אמון. מה שלא
+              אומת פשוט לא מוצג, ושורה אחת בסוף אומרת את האמת (נתי 23.8) */}
+          {rows.filter(([, v]) => v && v.trim() && !/^לא אומת|^לא פורסם|^לא נמצא$/.test(v.trim())).map(([k, v]) => (
             <div key={k} className="text-[11px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
               <b style={{ color: NAVY }}>{k}:</b> {v}
             </div>
           ))}
+          {rows.some(([, v]) => v && /^לא אומת|^לא פורסם/.test(v.trim())) && (
+            <div className="text-[10.5px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+              מה שלא אומת מול המוסד לא מוצג כאן — אלה שאלות טובות לרכזת.
+            </div>
+          )}
           {contact && (
             <div className="text-[11px] leading-[1.7] rounded-lg px-3 py-2" style={{ background: "rgba(5,150,105,0.06)", color: "#047857" }}>
               <b>למי לפנות:</b> {contact}
