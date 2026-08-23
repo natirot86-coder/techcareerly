@@ -359,10 +359,10 @@ export default function HardwareDomainPage() {
           ai="AI לא מחליף ידיים במעבדה — מישהו צריך לתכנן, להרכיב ולמדוד את השבבים שה-AI עצמו רץ עליהם. דווקא מהפכת ה-AI מגדילה את הביקוש לחומרה: כל מודל צריך מעבדים."
         />
 
-        {/* News article cards — כתבות 2026 מאומתות (URL + תאריך).
-            הערה: כתבות 2 ו-3 מסקרות את אותה חברה (מג'סטיק לאבס) משני כלי תקשורת —
-            בחירה מכוונת: אלו הסיפורים המאומתים החזקים של 2026. לא מוסיפים אינטל
-            (אין כתבה חיובית מאומתת מ-2026) ולא Hailo (חדשות שליליות ב-2026). */}
+        {/* News article cards — כתבות 2026 מאומתות (URL + תאריך + og:image).
+            הרכב מכוון (נתי 20.8): אחת על גיוסים (אנבידיה), ושתיים כלליות על
+            השוק — היקף משרות ושכר (דוח אתוסיה) והביקוש הביטחוני. לא מוסיפים
+            אינטל (אין כתבה חיובית מ-2026) ולא Hailo (חדשות שליליות). */}
         <div className="mb-5">
           <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
           <div className="text-[14px] font-bold mb-3" style={{ color: NAVY }}>כתבות אחרונות על תעשיית השבבים בישראל</div>
@@ -375,16 +375,16 @@ export default function HardwareDomainPage() {
                 href: "https://www.themarker.com/magazine/2026-05-05/ty-article-magazine/.highlight/0000019d-ec75-dd9a-a79d-ecfd56430000",
               },
               {
-                img: "",
-                summary: "מג'סטיק לאבס נגד אנבידיה: הסטארט-אפ שמבטיח פי 10 ביצועים",
-                source: "כלכליסט · 21.4.2026",
-                href: "https://www.calcalist.co.il/calcalistech/article/2girlba7c",
+                img: "/articles/hw-jobs.jpg",
+                summary: "המשבר בהייטק? התחום הזה רק גדל ומתפוצץ — 1,718 משרות חומרה פתוחות",
+                source: "mako נקסטר · 24.7.2026",
+                href: "https://www.mako.co.il/nexter-news/Article-3a6061958b56f91027.htm",
               },
               {
-                img: "",
-                summary: "החברה שמאתגרת את אנבידיה מכיוון לא צפוי",
-                source: "גלובס · 19.6.2026",
-                href: "https://www.globes.co.il/news/article.aspx?did=1001546415",
+                img: "/articles/hw-defense.jpg",
+                summary: "הביקוש לעובדים בתעשיות הביטחוניות גובר על השפעות השקל וה-AI",
+                source: "כלכליסט · 7.7.2026",
+                href: "https://www.calcalist.co.il/calcalistech/article/sjzl008tmfl",
               },
             ].map((a) => (
               <a
