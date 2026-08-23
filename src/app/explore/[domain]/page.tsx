@@ -905,6 +905,46 @@ function UXContent() {
         color="#db2777"
       />
 
+      {/* כתבות מאומתות (20.8, סוכן אימות — URL + תאריך + og:image) */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על עולם הדאטה בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/data-salary-2026.jpg",
+              summary: "דוח חדש: דאטה אנליסט זינק 14% ל-31,000 ₪ — מהמרוויחים הגדולים של גל ה-AI",
+              source: "Geektime · 7.2026",
+              href: "https://www.geektime.co.il/israel-tech-salary-report-q1-2026/",
+            },
+            {
+              img: "/articles/data-analyst-vs.jpg",
+              summary: "הקרב על הנתונים: האם כדאי להיות דאטה סיינטיסט או אנליסט",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/bkcl0eza1e",
+            },
+            {
+              img: "/articles/data-salary-2025.jpg",
+              summary: "Data Engineer בצד המנצח: ביקוש לתשתיות דאטה ל-AI מזניק את השכר",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/israeli-tech-salary-2025/",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(13,148,136,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
       <SimTeaser
         emoji="🎨"
         challenge="בטעימה: תקבלי wireframe גרוע של אפליקציית זימון תורים. המשימה — לזהות 3 בעיות UX ולהציע כל אחת כיצד לתקן."
@@ -1545,6 +1585,46 @@ function NetworksContent() {
         </div>
       </div>
 
+      {/* כתבות מאומתות (20.8, סוכן אימות — URL + תאריך + og:image) */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על תשתיות ורשתות בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/net-datacenters.jpg",
+              summary: "פעילות הדאטה סנטרס בישראל צפויה להכפיל את עצמה תוך חמש שנים",
+              source: "TheMarker · 1.2026",
+              href: "https://www.themarker.com/markets/2026-01-15/ty-article/.premium/0000019b-bda3-decf-a99f-bffbaea40000",
+            },
+            {
+              img: "/articles/net-power.jpg",
+              summary: "40+ דאטה סנטרים בדרך: האם ישראל הופכת למעצמת תשתיות?",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/can-israel-become-a-data-center-powerhouse/",
+            },
+            {
+              img: "/articles/net-nvidia.jpg",
+              summary: "עם 10,000 עובדים: הקמפוס הענק של אנבידיה נבנה סביב לב הרשתות שלה",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/sj11wgxxze",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(37,99,235,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
       <SimTeaser
         emoji="🌐"
         challenge="בטעימה תשלחי בקשה לשרת של גוגל ותראי בדיוק מה קורה בין הרגע שלחצת Enter לרגע שהדף נפתח — DNS, Routing, TCP/IP, HTTP — אחד אחד"
