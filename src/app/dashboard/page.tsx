@@ -374,7 +374,9 @@ export default function DashboardPage() {
     // ⚠️ קביעת פגישה איננה השתתפות בה. לכן שלב 2 נגזר מהקביעה, אבל שלב 3
     // ומעלה נגזרים ממה שהמועמד **עשה בפועל** — ולא מהזמנה ביומן.
     const derived =
-      has("plan-tasks") || has("plan-intro-seen") ? 5
+      // אישור לימודים הועלה = סטודנט/ית. ההעלאה היא שער שלב 6 (נתי 25.8)
+      has("enrollment-doc-path") ? 6
+      : has("plan-tasks") || has("plan-intro-seen") ? 5
         : has("paths-quiz") || has("paths-journey") ? 4
           : has("waiting-taste") && flag("meeting-1-attended") ? 3
             : flag("meeting-1-booked") ? 2

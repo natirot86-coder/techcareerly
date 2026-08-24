@@ -496,6 +496,20 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
             </div>
           ))}
         </div>
+        {/* האסמכתא למשרד העבודה — קישור חתום מצד השרת, כי הקובץ בתיקייה אישית */}
+        {p.timeline.some(e => e.name === "enrollment_doc_uploaded") && (
+          <a
+            href={`/api/enrollment-doc?candidate=${encodeURIComponent(p.id)}&code=${encodeURIComponent(typeof window !== "undefined" ? sessionStorage.getItem("coordinator-code") ?? "" : "")}`}
+            target="_blank" rel="noopener noreferrer"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14,
+              background: "#e8f6ef", color: "#04543a", borderRadius: 12,
+              padding: "9px 14px", fontSize: 13.5, fontWeight: 800, textDecoration: "none",
+            }}
+          >
+            🎓 הורדת אישור הלימודים — האסמכתא למשרד העבודה
+          </a>
+        )}
       </div>
 
       {/* מפת המסע */}
