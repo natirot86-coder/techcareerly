@@ -1325,17 +1325,10 @@ function DataContent() {
               doneKey: "sim" as const,
               lockedBy: null,
             },
+            /* מרכז הלמידה ירד מהשרשרת (נתי 24.8) — הזרימה ישרה: sim ←
+               אנליטיקה ← תעלומה. שבעת המודולים נשארים נגישים מהמפה כרשות */
             {
               num: "2",
-              emoji: "🎯",
-              title: "מרכז למידה — 7 מודולים",
-              sub: "חקירה · גרפים שבורים · חיזויים · החלטות עסקיות · ~20 דק'",
-              href: "/explore/data/learn",
-              doneKey: null,
-              lockedBy: null,
-            },
-            {
-              num: "3",
               emoji: "🔬",
               title: "אנליטיקה בשטח — 5 שלבים",
               sub: "שאלת מחקר · ניקוי נתונים · AI Prompting · המנכ\"ל · ~15 דק'",
@@ -1344,7 +1337,7 @@ function DataContent() {
               lockedBy: "sim" as const,
             },
             {
-              num: "4",
+              num: "3",
               emoji: "🕵️",
               title: "תעלומת SQL — מתקדם",
               sub: "חקירת הדלפה בסטארטאפ · כתיבת שאילתות אמיתיות · ~15 דק'",
@@ -1353,7 +1346,7 @@ function DataContent() {
               lockedBy: "analytics" as const,
             },
             {
-              num: "5",
+              num: "4",
               emoji: "💭",
               title: "כלי עיבוד החוויה",
               sub: "6 שאלות קצרות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",

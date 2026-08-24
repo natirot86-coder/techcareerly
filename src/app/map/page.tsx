@@ -70,7 +70,7 @@ const NODES: Node[] = [
   { id: "admin-analytics", label: "אנליטיקות", sub: "מה קורה באפליקציה · פנימי", url: `${BASE}/admin/analytics`, cx: 415, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
   // ── Explore ───────────────────────────────────────────────────────────────
-  { id: "explore", label: "חקר תחומים", sub: "דירוג 8 תחומים", url: `${BASE}/explore`, cx: 575, cy: 455, w: 140, color: "#fb8500" },
+  { id: "explore", label: "חקר תחומים", sub: "דירוג 9 תחומים", url: `${BASE}/explore`, cx: 575, cy: 455, w: 140, color: "#fb8500" },
 
   // ── Domain pages ──────────────────────────────────────────────────────────
   { id: "d-code",      label: "קוד",       url: `${BASE}/explore/code`,      cx: 70,  cy: 555, w: 72, color: "#fb8500" },
@@ -100,7 +100,7 @@ const NODES: Node[] = [
   { id: "code-experience", label: "עיבוד חוויה",     sub: "6 שאלות SCCT",        url: `${BASE}/explore/code/experience`,    cx: 70, cy: 950, w: 115, color: "#3b82f6", badge: "חדש", badgeColor: "#3b82f6" },
 
   // ── Learn — Data ──────────────────────────────────────────────────────────
-  { id: "learn",      label: "מרכז למידה",     sub: "7 מודולים",        url: `${BASE}/explore/data/learn`,             cx: 208, cy: 760, w: 120, color: "#0d9488" },
+  { id: "learn",      label: "מרכז למידה",     sub: "רשות · 7 מודולים", url: `${BASE}/explore/data/learn`,             cx: 90, cy: 1045, w: 120, color: "#0d9488" },
   { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 208, cy: 855, w: 120, color: "#0d9488" },
   { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 208, cy: 950, w: 130, color: "#0d9488" },
   { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 208, cy: 1045, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
@@ -115,9 +115,6 @@ const NODES: Node[] = [
   { id: "networks-mystery",    label: "תעלומת TechFlow",   sub: "Firewall · DNS · curl",         url: `${BASE}/explore/networks/learn/mystery`, cx: 840, cy: 855, w: 130, color: "#2563eb" },
   { id: "networks-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",                  url: `${BASE}/explore/networks/experience`,    cx: 840, cy: 950, w: 140, color: "#2563eb", badge: "חדש", badgeColor: "#2563eb" },
 
-  // דפי הקורסים — המשך אמיתי למי שרוצה ללמוד עוד
-  { id: "data-courses",     label: "קורסי דאטה",  sub: "העשרה חיצונית", url: `${BASE}/explore/data/courses`,     cx: 208,  cy: 1135, w: 100, color: "#0d9488" },
-  { id: "networks-courses", label: "קורסי רשתות", sub: "קמפוס IL · Cisco", url: `${BASE}/explore/networks/courses`, cx: 840, cy: 1045, w: 118, color: "#2563eb" },
 
   // ── Learn — QA ────────────────────────────────────────────────────────────
   { id: "qa-day",        label: "יום בחיי QA",       sub: "triage · test review",   url: `${BASE}/explore/qa/learn/day`,     cx: 985, cy: 760, w: 130, color: "#d97706" },
@@ -213,6 +210,7 @@ const EDGES: Edge[] = [
   { from: "explore", to: "d-ux" },
   { from: "explore", to: "d-networks" },
   { from: "explore", to: "d-qa" },
+  { from: "explore", to: "d-hardware" },
 
   // Domains → sims
   { from: "d-code",      to: "s-code" },
@@ -231,11 +229,11 @@ const EDGES: Edge[] = [
   { from: "code-mystery",   to: "code-experience", color: "#3b82f6" },
 
   // Data domain → learn
-  { from: "d-data",    to: "learn",      label: "מרכז למידה",   color: "#0d9488" },
-  { from: "s-data",    to: "learn",     color: "#0d9488", dashed: true },
+
 
   // Data learn flow (sequential)
-  { from: "learn",     to: "analytics",  label: "אנליטיקה",     color: "#0d9488" },
+  { from: "s-data",    to: "analytics",  label: "אנליטיקה",     color: "#0d9488" },
+  { from: "mystery",   to: "learn",      label: "רשות", color: "#0d9488", dashed: true },
   { from: "analytics", to: "mystery",     color: "#0d9488" },
   { from: "mystery",   to: "experience",     color: "#0d9488" },
 
@@ -274,8 +272,6 @@ const EDGES: Edge[] = [
   { from: "qa-experience",       to: "results", color: "#fb8500", dashed: true },
 
   // סיכום → פגישה 2 → אישור
-  { from: "experience", to: "data-courses", label: "ללמוד עוד", dashed: true, color: "#0d9488" },
-  { from: "networks-experience", to: "networks-courses", label: "ללמוד עוד", dashed: true, color: "#2563eb" },
   { from: "results", to: "m2", label: "לקביעת פגישה", color: "#0ea5e9" },
   { from: "m1", to: "booked",  label: "אישור Cal.com", color: "#023e8a" },
 
