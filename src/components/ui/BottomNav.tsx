@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/dashboard", label: "המסע", icon: "⊞" },
   { href: "/explore", label: "חקר", icon: "⊙" },
-  { href: "/chat", label: "Co-pilot", icon: "◎" },
+  /* הצ'אט ירד (נתי 25.8): ייעוץ מגיע מהרכזת, לא ממודל בלי שליטה.
+     במקומו — שאלות ותשובות סגורות על התהליך, שכל מילה בהן נכתבה ידנית */
+  { href: "/faq", label: "שאלות", icon: "?" },
   { href: "/squad", label: "קהילה", icon: "◈" },
   { href: "/contact", label: "רכזת", icon: "◉" },
 ];
