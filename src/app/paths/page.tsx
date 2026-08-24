@@ -222,7 +222,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
     emoji: "🏫",
     label: "מה\"ט / הנדסאי",
     duration: "2–3 שנים, לרוב בערב",
-    cost: "כ-8,900–10,900 ₪ לשנה (יסוד + נלווים)",
+    cost: "כ-9,300–11,100 ₪ לשנה (יסוד + נלווים, לפי המאומת אצלנו)",
     entry: "בגרות מלאה עם מתמטיקה — כמעט מה שתואר דורש",
     pros: [
       "אם שירתת — האגף לחיילים משוחררים מממן 90 אחוז משכר הלימוד בלימודי הנדסאי במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים. זו ההטבה הגדולה ביותר במסלול הזה",
@@ -269,6 +269,51 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
  * equal pillar.
  */
 const TRACK_ORDER: Track[] = ["degree", "bootcamp", "mahat"];
+
+/**
+ * מסך התוצאה (1a — "רשת שוויונית עם כתר", handoff 24.8): שלושה כרטיסים
+ * שווי-גודל, ההמלצה מסומנת בכתר במקומה הקבוע. התוכן verbatim מה-handoff
+ * המאושר, למעט מחיר מה"ט שתוקן למאומת (9,300–11,100 — בעיצוב היה מספר
+ * שלא נמצא לו מקור). בדיוק שלוש שורות השוואה — לא להוסיף.
+ */
+const RESULT_CARD: Record<Track, {
+  emoji: string; label: string; tagA: string; tagB: string;
+  income: string; cost: string; entry: string;
+  plus: string; minus: string; fit: string;
+  mini: { income: string; cost: string; entry: string };
+}> = {
+  degree: {
+    emoji: "🎓", label: "תואר אקדמי", tagA: "3–4 שנים", tagB: "משרה מלאה",
+    income: "משרת סטודנט מסוף שנה א׳",
+    cost: "12,203 ₪ (מפוקח) — ורוב המלגות בנויות סביבו",
+    entry: "בגרות מלאה; יש מסלולים בלי פסיכומטרי",
+    plus: "מעלה משמעותית את הסיכוי להיכנס להייטק עצמו — לחברות הטכנולוגיה, ולא רק לתפקידים טכנולוגיים בבנקים וארגונים אחרים",
+    minus: "שלוש שנים בלי משכורת מלאה — אבל משרת סטודנט ומלגות סוגרות חלק גדול",
+    fit: "מתאים למי שיכול להשקיע עכשיו — זו ההשקעה שמחזירה הכי הרבה לאורך זמן",
+    mini: { income: "משרת סטודנט מסוף שנה א׳", cost: "12,203 ₪", entry: "בגרות מלאה" },
+  },
+  bootcamp: {
+    emoji: "💻", label: "הכשרה טכנולוגית", tagA: "6–12 חודשים", tagB: "אינטנסיבי קצר",
+    income: "ג'וניור מיד בסיום, והתחרות על המשרה הראשונה אמיתית",
+    cost: "980–6,000 ₪ במסלולים שאנחנו מציגים",
+    entry: "ברוב המסלולים בלי דרישות קדם",
+    plus: "הדרך הקצרה ביותר למשרה ראשונה בהייטק",
+    minus: "התחרות על המשרה הראשונה אמיתית — אבל ליווי השמה ותיק עבודות טוב מקטינים את הפער",
+    fit: "מתאים למי שחייב להגיע מהר לשוק עכשיו — ותואר יכול לחכות ולהגיע אחר כך",
+    mini: { income: "ג'וניור מיד בסיום", cost: "980–6,000 ₪", entry: "בלי דרישות קדם" },
+  },
+  mahat: {
+    emoji: "⚙️", label: "הנדסאי (מה\"ט)", tagA: "2–3 שנים", tagB: "משלב עבודה — ערב",
+    income: "עבודה במקביל ללימודי ערב",
+    cost: "כ-9,300–11,100 ₪, ולחיילים משוחררים האגף מממן 90%",
+    entry: "בגרות חלקית מספיקה, בלי פסיכומטרי",
+    plus: "ממשיכים לעבוד ולהתפרנס לאורך כל הלימודים",
+    minus: "מוכר פחות מתואר אקדמי אצל חלק מהמעסיקים — אבל אפשר להשלים ממנו לתואר בהמשך",
+    // המסגור הקבוע של מה"ט (11.8) חי כאן: קריירה ביטחונית/ממשלתית/חומרה
+    fit: "מתאים למי שמכוון לקריירה ביטחונית, ממשלתית או לחומרה — וחייב הכנסה שוטפת בקצב יציב",
+    mini: { income: "עבודה במקביל ללימודים", cost: "9,300–11,100 ₪", entry: "בגרות חלקית" },
+  },
+};
 
 // ─── Deadlines ────────────────────────────────────────────────────────────────
 // ⚠️ תחזוקה שנתית: התאריכים חוזרים כל שנה אך משתנים מדי פעם. לאמת לפני כל שנת לימודים.
@@ -709,6 +754,8 @@ export default function PathsPage() {
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [chips, setChips] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track>("bootcamp");
+  /** מסך התוצאה (1a): איזה כרטיס פתוח במצב פירוט ("להכיר את המסלול הזה") */
+  const [detailTrack, setDetailTrack] = useState<Track | null>(null);
   /*
    * במסלול האקדמי הקטלוג המלא מקופל כברירת מחדל: קודם בוחרים תואר, והמוסדות
    * נפתחים בתוך התואר. רשימה שטוחה של כל המוסדות לצד רשימת התארים הייתה שתי
@@ -1331,24 +1378,75 @@ export default function PathsPage() {
 
   // ── Result ─────────────────────────────────────────────────────────────────
   if (phase === "result") {
-    const meta = TRACK_META[recommended];
+    /*
+     * מסך התוצאה בעיצוב 1a — "רשת שוויונית עם כתר" (handoff מאושר 24.8):
+     * שלושה כרטיסים שווי-גודל בסדר קבוע (תואר · הכשרה · מה"ט), ההמלצה
+     * מקבלת כתר + נימוק אישי + CTA מלא — במקומה, בלי לשנות סדר. בחירה
+     * במסלול לא-מומלץ לגיטימית ובלי חיכוך, אבל נמדדת (track_choice) —
+     * סיגנל לרכזת לפני פגישה 3.
+     */
+    const chooseTrack = (t: Track) => {
+      setActiveTrack(t);
+      logEvent("track_choice", { track: t, followed: t === recommended ? "recommended" : "other" });
+      trackEvent("track_choice", { track: t });
+      goToPhase("routes");
+    };
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.result} phaseIndex={2} phaseTotal={7} />
-        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+        <div className="flex-1 max-w-[1060px] mx-auto w-full px-[22px] pt-6 pb-32">
 
-          {/* Recommendation card */}
-          <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(251,133,0,0.07)", border: "1.5px solid rgba(251,133,0,0.3)" }}>
-            <div className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "#92400e" }}>המסלול המומלץ לך</div>
-            <div className="text-[22px] mb-1" style={HEEBO}>{meta.emoji} {meta.label}</div>
-            <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>{reason}</div>
-            <div className="flex flex-wrap gap-3 mt-3">
-              <span className="text-[11.5px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(251,133,0,0.15)", color: "#92400e" }}>⏱ {meta.duration}</span>
-              <span className="text-[11.5px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>💰 {meta.cost}</span>
+          {/* Header */}
+          <div className="mb-5">
+            <div className="text-[12px] font-black mb-1" style={{ color: ORANGE }}>שלב 4 · תוצאת השאלון</div>
+            <div className="text-[27px] leading-tight" style={{ ...HEEBO, color: NAVY }}>המסלול שמתאים לך</div>
+            <div className="text-[14px] mt-1" style={{ color: "#5d6b7a" }}>
+              על סמך התשובות שלך — המלצה אחת, ושני מסלולים נוספים להשוואה מהירה
             </div>
-            <div className="mt-2.5 text-[11.5px]" style={{ color: "rgba(0,0,0,0.45)" }}>תנאי קבלה: {meta.entry}</div>
           </div>
+
+          {/* נימוק אישי — במובייל מעל הטבלה (בדסקטופ הוא בתוך הכרטיס המומלץ) */}
+          <div className="sm:hidden rounded-xl px-4 py-3 mb-4 text-[13px] leading-[1.6]"
+            style={{ background: "#fff", border: "1px solid #fdd9ae", color: "#7a3c00" }}>
+            {reason}
+          </div>
+
+          {/* מובייל: שלושתם במסך אחד — לחיצה קופצת לכרטיס המלא */}
+          <div className="sm:hidden grid grid-cols-3 gap-[7px] mb-5" dir="rtl">
+            {TRACK_ORDER.map(t => {
+              const c = RESULT_CARD[t];
+              const isRec = t === recommended;
+              return (
+                <button
+                  key={t}
+                  onClick={() => document.getElementById(`track-card-${t}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  className="rounded-xl overflow-hidden text-right flex flex-col"
+                  style={{ background: "#fff", border: isRec ? "2px solid #fb8500" : "2px solid #ece5d8" }}
+                >
+                  <div className="px-2 py-1.5 text-[10.5px] font-black text-center"
+                    style={{ background: isRec ? "#fb8500" : "#eef3fb", color: isRec ? "#fff" : NAVY }}>
+                    {isRec ? "👑 ההמלצה" : " "}
+                  </div>
+                  <div className="px-2 pt-2 text-center text-[18px]">{c.emoji}</div>
+                  <div className="px-2 pt-1 text-center text-[12px] font-black leading-tight" style={{ color: NAVY }}>{c.label}</div>
+                  <div className="px-2 pt-0.5 pb-1.5 text-center text-[10px]" style={{ color: "#5d6b7a" }}>{c.tagA}</div>
+                  <div className="px-2 pb-2 flex flex-col gap-1 mt-auto">
+                    <div className="text-[10px] leading-snug" style={{ color: "#3f4f63" }}>⏳ {c.mini.income}</div>
+                    <div className="text-[10px] leading-snug" style={{ color: "#3f4f63" }}>💰 {c.mini.cost} לשנה</div>
+                    <div className="text-[10px] leading-snug" style={{ color: "#3f4f63" }}>🚪 {c.mini.entry}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => chooseTrack(recommended)}
+            className="sm:hidden w-full py-3.5 rounded-2xl text-white text-[15px] font-black mb-6 active:scale-[0.98] transition-transform"
+            style={{ background: ORANGE, ...HEEBO }}
+          >
+            נמשיך עם {RESULT_CARD[recommended].label} ←
+          </button>
 
           {/* Bagrut gateway — the honest first step when the degree door is closed */}
           {answers.education === "A" && (
@@ -1394,47 +1492,117 @@ export default function PathsPage() {
             </div>
           )}
 
-          {/* 3 path comparison */}
-          <div className="text-[13px] font-black mb-3" style={{ color: NAVY }}>השוואת שלושת המסלולים</div>
-
-          {TRACK_ORDER.map(track => {
-            const m = TRACK_META[track];
-            const isRec = track === recommended;
-            return (
-              <RevealCard key={track} emoji={m.emoji} title={`${m.label}${isRec ? " ✦ מומלץ לך" : ""}`}>
-                <div className="pt-2">
-                  {track === "mahat" && (
-                    <div className="rounded-xl px-3.5 py-3 mb-3 text-[12px] leading-[1.7]"
-                      style={{ background: "rgba(2,62,138,0.05)", color: "rgba(0,0,0,0.62)" }}>
-                      <span className="font-bold">שווה לדעת לפני שקוראים:</span> מה״ט מתאים בעיקר לסוג קריירה מסוים —
-                      גופים ביטחוניים וממשלתיים, חומרה ואלקטרוניקה. אם היעד שלך הוא חברת תוכנה או סטארטאפ,
-                      תואר או הכשרה טכנולוגית כמעט תמיד יתאימו לך יותר.
+          {/* שלושת הכרטיסים — רשת בדסקטופ, ערימה במובייל (המומלץ ראשון) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+            {TRACK_ORDER.map(track => {
+              const c = RESULT_CARD[track];
+              const m = TRACK_META[track];
+              const isRec = track === recommended;
+              const detailOpen = detailTrack === track;
+              return (
+                <div
+                  key={track}
+                  id={`track-card-${track}`}
+                  className={`rounded-2xl overflow-hidden flex flex-col bg-white ${isRec ? "order-first sm:order-none" : ""}`}
+                  style={{
+                    border: isRec ? "2px solid #fb8500" : "2px solid #ece5d8",
+                    boxShadow: "0 2px 10px rgba(30,25,15,0.05)",
+                    scrollMarginTop: 80,
+                  }}
+                >
+                  {isRec && (
+                    <div className="px-4 py-[7px] text-[12.5px] font-black text-white" style={{ background: ORANGE }}>
+                      👑 ההמלצה שלנו בשבילך
                     </div>
                   )}
-                  <div className="flex gap-3 mb-3 flex-wrap">
-                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold" style={{ background: "rgba(0,0,0,0.05)" }}>⏱ {m.duration}</span>
-                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold" style={{ background: "rgba(0,0,0,0.05)" }}>💰 {m.cost}</span>
-                  </div>
-                  <div className="mb-3">
-                    <div className="text-[11px] font-black mb-1.5" style={{ color: "#059669" }}>✅ יתרונות</div>
-                    {m.pros.map((p, i) => <div key={i} className="text-[12px] mb-1">• {p}</div>)}
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-black mb-1.5" style={{ color: "#dc2626" }}>❌ חסרונות</div>
-                    {m.cons.map((c, i) => <div key={i} className="text-[12px] mb-1">• {c}</div>)}
+                  <div className="p-4 flex flex-col flex-1">
+                    {/* Header */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[24px]">{c.emoji}</span>
+                      <span className="text-[18px] font-black" style={{ color: NAVY }}>{c.label}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      <span className="text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "#eef3fb", color: NAVY }}>{c.tagA}</span>
+                      <span className="text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ border: "1px solid #d8dfe9", color: "#3f4f63" }}>{c.tagB}</span>
+                    </div>
+
+                    {/* נימוק אישי — רק במומלץ */}
+                    {isRec && (
+                      <div className="rounded-xl px-3.5 py-3 mb-3 text-[13.5px] leading-[1.6] max-sm:hidden"
+                        style={{ background: "#fff8ee", border: "1px solid #fdd9ae", color: "#7a3c00" }}>
+                        {reason}
+                      </div>
+                    )}
+
+                    {/* שלוש שורות ההשוואה הקבועות — לא להוסיף רביעית */}
+                    <div className="flex flex-col gap-2.5 mb-3">
+                      {([
+                        ["⏳", "מתי מתחילה הכנסה", c.income],
+                        ["💰", "כמה עולה בשנה", c.cost],
+                        ["🚪", "מה צריך כדי להיכנס", c.entry],
+                      ] as const).map(([ic, label, val]) => (
+                        <div key={label} className="flex items-start gap-2">
+                          <span className="text-[15px] shrink-0">{ic}</span>
+                          <div>
+                            <div className="text-[11.5px] font-black" style={{ color: "#94908a" }}>{label}</div>
+                            <div className="text-[13.5px] leading-snug" style={{ color: "#1e2f42" }}>{val}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* שורת אמת: ✓ תמיד, ✕ תמיד עם המקטין שלו */}
+                    <div className="flex flex-col gap-1.5 mb-3">
+                      <div className="rounded-[10px] px-3 py-2 text-[12.5px] leading-[1.55]" style={{ background: "#e8f6ef", color: "#04543a" }}>✓ {c.plus}</div>
+                      <div className="rounded-[10px] px-3 py-2 text-[12.5px] leading-[1.55]" style={{ background: "#fdeede", color: "#8a4a09" }}>✕ {c.minus}</div>
+                    </div>
+
+                    {/* פירוט מלא — "להכיר את המסלול הזה" פותח את התוכן העמוק הקיים */}
+                    {detailOpen && (
+                      <div className="mb-3 rounded-xl p-3" style={{ background: "#fbf9f5", border: "1px solid #ece5d8" }}>
+                        <div className="text-[11px] font-black mb-1.5" style={{ color: "#059669" }}>✅ מה זה נותן</div>
+                        {m.pros.map((p, i) => <div key={i} className="text-[12px] leading-[1.6] mb-1.5" style={{ color: "#1e2f42" }}>• {p}</div>)}
+                        <div className="text-[11px] font-black mb-1.5 mt-3" style={{ color: "#8a4a09" }}>⚖️ מה חשוב לדעת</div>
+                        {m.cons.map((con, i) => <div key={i} className="text-[12px] leading-[1.6] mb-1.5" style={{ color: "#1e2f42" }}>• {con}</div>)}
+                      </div>
+                    )}
+
+                    <div className="text-[12.5px] leading-[1.55] mb-3 mt-auto" style={{ color: "#6d675c" }}>{c.fit}</div>
+
+                    {/* CTA — המומלץ מלא, האחרים בלי חיכוך ובלי אישור נוסף */}
+                    {isRec ? (
+                      <button
+                        onClick={() => chooseTrack(track)}
+                        className="w-full py-[13px] rounded-[14px] text-white text-[15.5px] font-black active:scale-[0.98] transition-transform"
+                        style={{ background: ORANGE, ...HEEBO }}
+                      >
+                        נמשיך עם זה ←
+                      </button>
+                    ) : detailOpen ? (
+                      <button
+                        onClick={() => chooseTrack(track)}
+                        className="w-full py-[12px] rounded-[14px] text-[14px] font-black active:scale-[0.98] transition-transform"
+                        style={{ background: NAVY, color: "#fff", ...HEEBO }}
+                      >
+                        נמשיך עם {c.label} ←
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setDetailTrack(track);
+                          logEvent("track_detail_open", { track });
+                        }}
+                        className="w-full py-[12px] rounded-[14px] text-[14px] font-black transition-colors"
+                        style={{ background: "#fff", border: "1.5px solid #023e8a", color: NAVY }}
+                      >
+                        להכיר את המסלול הזה
+                      </button>
+                    )}
                   </div>
                 </div>
-              </RevealCard>
-            );
-          })}
-
-          <button
-            onClick={() => goToPhase("routes")}
-            className="w-full py-4 rounded-2xl text-white text-[15px] font-black mt-2 active:scale-[0.98] transition-transform"
-            style={{ background: NAVY, ...HEEBO }}
-          >
-            איך זה נראה בתחום שלי ←
-          </button>
+              );
+            })}
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -1699,8 +1867,9 @@ export default function PathsPage() {
             </div>
           </div>
 
+          {/* לא דורסים את הבחירה ממסך התוצאה — מי שבחר מסלול לא-מומלץ ממשיך איתו */}
           <button
-            onClick={() => { setActiveTrack(recommended); goToPhase("institutions"); }}
+            onClick={() => goToPhase("institutions")}
             className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
             style={{ background: NAVY, ...HEEBO }}
           >

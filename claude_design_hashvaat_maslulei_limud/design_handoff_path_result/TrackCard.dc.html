@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap');
+    body { margin: 0; background: #fbf9f5; font-family: 'Heebo', sans-serif; }
+    a { color: #023e8a; } a:hover { color: #fb8500; }
+  </style>
+</helmet>
+<div dir="rtl" style="font-family:'Heebo',sans-serif;background:#ffffff;border:2px solid {{ borderColor }};border-radius:16px;box-shadow:0 2px 10px rgba(30,25,15,0.05);overflow:hidden;display:flex;flex-direction:column;height:100%">
+  <sc-if value="{{ isRec }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#fb8500;color:#ffffff;font-size:12.5px;font-weight:800;padding:7px 16px;display:flex;gap:6px;align-items:center"><span aria-hidden="true">👑</span><span>ההמלצה שלנו בשבילך</span></div>
+  </sc-if>
+  <div style="padding:16px 16px 18px;display:flex;flex-direction:column;gap:13px;flex:1">
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <span style="font-size:24px" aria-hidden="true">{{ icon }}</span>
+        <span style="font-size:18px;font-weight:800;color:#023e8a;line-height:1.2">{{ name }}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">
+        <span style="background:#eef3fb;color:#023e8a;font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px">{{ duration }}</span>
+        <span style="border:1px solid #d8dfe9;color:#3f4f63;font-size:12px;font-weight:600;padding:1px 10px;border-radius:999px">{{ nature }}</span>
+      </div>
+    </div>
+    <sc-if value="{{ hasReason }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff8ee;border:1px solid #fdd9ae;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.6;color:#7a3c00;font-weight:500">{{ reason }}</div>
+    </sc-if>
+    <sc-if value="{{ showFull }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+          <div style="display:flex;gap:9px;align-items:flex-start">
+            <span style="font-size:15px;line-height:1.4" aria-hidden="true">{{ r.emoji }}</span>
+            <div style="display:flex;flex-direction:column;gap:1px">
+              <div style="font-size:11.5px;font-weight:800;color:#94908a">{{ r.label }}</div>
+              <div style="font-size:13.5px;line-height:1.55;color:#1e2f42">{{ r.value }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="background:#e8f6ef;color:#04543a;border-radius:10px;padding:8px 11px;font-size:12.5px;line-height:1.5">✓ {{ pro }}</div>
+        <div style="background:#fdeede;color:#8a4a09;border-radius:10px;padding:8px 11px;font-size:12.5px;line-height:1.5">✕ {{ con }}</div>
+      </div>
+      <div style="font-size:12.5px;color:#6d675c;line-height:1.5;margin-top:auto">{{ fit }}</div>
+    </sc-if>
+    <sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;gap:8px;align-items:flex-start"><span aria-hidden="true">⏳</span><span style="font-size:13px;line-height:1.5;color:#1e2f42">{{ incomeShort }}</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span aria-hidden="true">💰</span><span style="font-size:13px;line-height:1.5;color:#1e2f42">{{ costShort }}</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span aria-hidden="true">🚪</span><span style="font-size:13px;line-height:1.5;color:#1e2f42">{{ entryShort }}</span></div>
+      </div>
+      <button onClick="{{ toggle }}" style="align-self:flex-start;background:transparent;border:none;color:#023e8a;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;padding:0;text-decoration:underline">להשוואה מלאה ↓</button>
+    </sc-if>
+    <sc-if value="{{ showCollapse }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ toggle }}" style="align-self:flex-start;background:transparent;border:none;color:#023e8a;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;padding:0;text-decoration:underline">לצמצם ↑</button>
+    </sc-if>
+    <sc-if value="{{ isRec }}" hint-placeholder-val="{{ false }}">
+      <button style="background:#fb8500;border:none;color:#ffffff;border-radius:14px;padding:13px;font-family:inherit;font-weight:800;font-size:15.5px;cursor:pointer;width:100%" style-hover="background:#e07600">נמשיך עם זה ←</button>
+    </sc-if>
+    <sc-if value="{{ isSecondary }}" hint-placeholder-val="{{ true }}">
+      <button style="background:transparent;border:1.5px solid #023e8a;color:#023e8a;border-radius:14px;padding:11px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;width:100%" style-hover="background:#eef3fb">להכיר את המסלול הזה</button>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:380,&quot;height&quot;:760},&quot;track&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;rec&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;reason&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;full&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onToggle&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const t = this.props.track || {};
+    const isRec = !!this.props.rec;
+    const hasToggle = this.props.onToggle != null;
+    const full = hasToggle ? !!this.props.full : true;
+    return {
+      icon: t.icon, name: t.name, duration: t.duration, nature: t.nature,
+      rows: t.rows || [], pro: t.pro, con: t.con, fit: t.fit,
+      incomeShort: t.income, costShort: t.cost, entryShort: t.entry,
+      isRec, hasReason: isRec && !!this.props.reason, reason: this.props.reason,
+      borderColor: isRec ? '#fb8500' : '#ece5d8',
+      showFull: full, compact: hasToggle && !full, showCollapse: hasToggle && full,
+      isSecondary: !isRec,
+      toggle: this.props.onToggle || (() => {})
+    };
+  }
+}
+</script>
+</body>
+</html>
