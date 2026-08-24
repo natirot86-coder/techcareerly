@@ -100,10 +100,10 @@ const NODES: Node[] = [
   { id: "code-experience", label: "עיבוד חוויה",     sub: "6 שאלות SCCT",        url: `${BASE}/explore/code/experience`,    cx: 70, cy: 950, w: 115, color: "#3b82f6", badge: "חדש", badgeColor: "#3b82f6" },
 
   // ── Learn — Data ──────────────────────────────────────────────────────────
-  { id: "learn",      label: "מרכז למידה",     sub: "רשות · 7 מודולים", url: `${BASE}/explore/data/learn`,             cx: 90, cy: 1045, w: 120, color: "#0d9488" },
-  { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 208, cy: 855, w: 120, color: "#0d9488" },
-  { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 208, cy: 950, w: 130, color: "#0d9488" },
-  { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 208, cy: 1045, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
+  { id: "learn",      label: "מרכז למידה",     sub: "רשות · 7 מודולים", url: `${BASE}/explore/data/learn`,             cx: 208, cy: 1060, w: 120, color: "#0d9488" },
+  { id: "analytics",  label: "אנליטיקה בשטח",  sub: "5 שלבים",          url: `${BASE}/explore/data/learn/analytics`,   cx: 208, cy: 760, w: 120, color: "#0d9488" },
+  { id: "mystery",    label: "תעלומת TechFlow", sub: "SQL חקירה",        url: `${BASE}/explore/data/learn/mystery`,     cx: 208, cy: 855, w: 130, color: "#0d9488" },
+  { id: "experience", label: "כלי עיבוד חוויה", sub: "6 שאלות SCCT",    url: `${BASE}/explore/data/experience`,        cx: 208, cy: 950, w: 140, color: "#0d9488", badge: "חדש", badgeColor: "#0d9488" },
 
   // ── Learn — Cyber ─────────────────────────────────────────────────────────
   { id: "cyber-day",        label: "יום בחיי SOC",      sub: "Ransomware response",      url: `${BASE}/explore/cyber/learn/day`,     cx: 596, cy: 760, w: 130, color: "#dc2626" },
