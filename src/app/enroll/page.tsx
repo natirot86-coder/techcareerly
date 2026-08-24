@@ -54,9 +54,12 @@ export default function EnrollPage() {
             {justDone ? "זהו. את/ה סטודנט/ית." : "האישור שלך שמור — את/ה סטודנט/ית."}
           </h1>
           <p className="text-[15px] leading-[1.8] mt-4" style={{ opacity: 0.85 }}>
-            מהודעת SMS ראשונה ועד אישור לימודים ביד — עברת את כל הדרך.
-            האישור שמור, הרכזת רואה אותו, והוא האסמכתא שמסכמת את המסע מול
-            משרד העבודה שמלווה את התוכנית.
+            מהודעת SMS ראשונה ועד אישור לימודים ביד — עברת את כל הדרך,
+            ועכשיו מתחיל החלק שבשבילו עשינו את הכל.
+            <br /><br />
+            <b>וחשוב שתדע/י: זה לא שלום.</b> הרכזת נשארת איתך גם בלימודים,
+            כל מה שפתחת באפליקציה נשאר פתוח — המלגות, החשבון, המשימות —
+            ואפשר לחזור ולהיעזר בכל שלב, מתי שתרצה/י.
           </p>
           <div className="flex flex-col gap-3 mt-10">
             <button onClick={view} className="w-full py-3.5 rounded-2xl text-[15px] font-black" style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}>
@@ -77,12 +80,13 @@ export default function EnrollPage() {
           <h1 className="text-[27px] font-black leading-tight mt-1" style={{ color: NAVY }}>
             נרשמת ללימודים?
             <br />
-            האישור סוגר את המסע.
+            זה הרגע לעדכן אותנו 🎓
           </h1>
           <p className="text-[14.5px] leading-[1.8] mt-3" style={{ color: "rgba(0,0,0,0.6)" }}>
             אישור לימודים / הרשמה מהמוסד — צילום או PDF. זה המסמך היחיד
             שמעלים לאפליקציה: משרד העבודה, שמלווה ומממן את התוכנית, צריך
-            את האסמכתא. ההעלאה הופכת אותך רשמית לסטודנט/ית בשלב 6.
+            את האסמכתא. ההעלאה מעבירה אותך לשלב 6 — סטודנט/ית —
+            והליווי ממשיך איתך גם שם.
           </p>
           <label className="block w-full mt-8 py-4 rounded-2xl text-[16px] font-black text-center cursor-pointer text-white" style={{ background: state === "uploading" ? "#f0a95e" : ORANGE }}>
             {state === "uploading" ? "מעלה…" : "העלאת האישור 🎓"}

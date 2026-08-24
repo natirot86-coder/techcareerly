@@ -388,7 +388,7 @@ export default function PlanPage() {
           className="fixed bottom-[76px] right-4 left-4 max-w-[560px] mx-auto flex items-center justify-between gap-3 rounded-2xl px-4 py-3 z-40"
           style={{ background: NAVY, color: "#fff", boxShadow: "0 6px 24px rgba(2,62,138,0.35)" }}
         >
-          <span className="text-[13.5px] font-bold leading-snug">נרשמת ללימודים? העלאת האישור סוגרת את המסע 🎓</span>
+          <span className="text-[13.5px] font-bold leading-snug">נרשמת ללימודים? עדכן אותנו — ועבור/י לשלב 6 🎓</span>
           <span className="text-[16px] shrink-0">←</span>
         </Link>
       )}
