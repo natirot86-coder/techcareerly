@@ -105,6 +105,9 @@ function describe(e: Ev): string {
     case "plan_intro_done":        return "נכנס/ה לשלב התוכנית";
     case "waiting_taste_start":    return "התחיל/ה את שתי הדקות";
     case "waiting_taste_done":     return "סיים/ה את שתי הדקות";
+    case "intro_start":            return "פתח/ה את המבוא לעולם ההייטק";
+    case "intro_step":             return `במבוא להייטק — כרטיס ${s(p.n)} מתוך 7`;
+    case "intro_done":             return "סיים/ה את המבוא לעולם ההייטק 🌍";
     case "waiting_prep_open":      return "קרא/ה את ההכנה לפגישה";
     case "waiting_booked_self_declared": return "סימן/ה 'כבר קבעתי'";
     default: {
