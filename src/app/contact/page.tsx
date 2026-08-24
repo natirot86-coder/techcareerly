@@ -5,7 +5,7 @@ import Cal, { getCalApi } from "@calcom/embed-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Link from "next/link";
 import { calLinkFor, currentMeeting, MEETING_META, type MeetingNum } from "@/data/meetings";
-import { logEvent } from "@/lib/candidate";
+import { logEvent, myCoordinator } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -39,6 +39,12 @@ export default function ContactPage() {
   const router = useRouter();
   /** null עד שיודעים — כדי לא לטעון את היומן של הפגישה הלא נכונה ואז להחליף */
   const [meeting, setMeeting] = useState<MeetingNum | null>(null);
+  /**
+   * היומן של הרכזת המשויכת (מהסגל ב-DB). null = עוד בודקים, "" = אין לה
+   * קישור משלה — נופלים לברירת המחדל מ-meetings.ts. הרינדור מחכה לבדיקה
+   * כדי לא לטעון יומן של רכזת אחת ואז להחליף לשנייה מול העיניים.
+   */
+  const [assignedCal, setAssignedCal] = useState<string | null>(null);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get("m");
@@ -46,6 +52,9 @@ export default function ContactPage() {
       ? (Number(param) as MeetingNum)
       : currentMeeting(localStorage);
     setMeeting(n);
+    myCoordinator()
+      .then(c => setAssignedCal(c?.calLinks[n] ?? ""))
+      .catch(() => setAssignedCal(""));
   }, []);
 
   useEffect(() => {
@@ -214,10 +223,10 @@ export default function ContactPage() {
 
       {/* Cal.com embed */}
       <div className="flex-1 max-w-[900px] mx-auto w-full px-4 md:px-12 pb-24">
-        {meeting && (
+        {meeting && assignedCal !== null && (
           <Cal
             namespace="contact"
-            calLink={calLinkFor(meeting)}
+            calLink={assignedCal || calLinkFor(meeting)}
             style={{ width: "100%", minHeight: "600px", borderRadius: "16px", overflow: "hidden" }}
             config={{ layout: "month_view", theme: "light" }}
           />

@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null) as {
     id?: string; name?: string; location?: string; email?: string; phone?: string; active?: boolean;
+    cal_m1?: string; cal_m2?: string; cal_m3?: string;
   } | null;
   if (!body?.id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
@@ -53,6 +54,10 @@ export async function POST(req: NextRequest) {
     email: body.email ?? "",
     phone: body.phone ?? "",
     active: body.active ?? true,
+    // קישורי Cal פר-פגישה — מה שבא אחרי cal.com/ . המועמד המשויך מקבל את היומן של הרכזת שלו
+    cal_m1: body.cal_m1 ?? "",
+    cal_m2: body.cal_m2 ?? "",
+    cal_m3: body.cal_m3 ?? "",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });

@@ -493,14 +493,21 @@ export async function savePathsAnswers(patch: {
  * הרכזת של המועמד — מה-DB (טבלת coordinators + השיוך בשורת המועמד).
  * בלי שיוך — הרכזת הפעילה הראשונה. RLS מתיר למועמד לקרוא רכזות פעילות.
  */
-export async function myCoordinator(): Promise<{ name: string; phone: string } | null> {
+export type MyCoordinator = {
+  name: string;
+  phone: string;
+  /** קישורי Cal פר-פגישה (מה שאחרי cal.com/). ריק = לרכזת אין יומן משלה — נופלים לברירת המחדל */
+  calLinks: { 1: string; 2: string; 3: string };
+};
+
+export async function myCoordinator(): Promise<MyCoordinator | null> {
   if (!supabase) return null;
   try {
     const candidateId = await ensureCandidateId();
     if (!candidateId) return null;
     const { data: rows } = await supabase
       .from("coordinators")
-      .select("id, name, phone")
+      .select("id, name, phone, cal_m1, cal_m2, cal_m3")
       .eq("active", true)
       .order("created_at");
     if (!rows?.length) return null;
@@ -511,7 +518,11 @@ export async function myCoordinator(): Promise<{ name: string; phone: string } |
       .maybeSingle();
     const mine = cand?.coordinator_id ? rows.find(r => r.id === cand.coordinator_id) : null;
     const row = mine ?? rows[0];
-    return { name: row.name ?? "", phone: row.phone ?? "" };
+    return {
+      name: row.name ?? "",
+      phone: row.phone ?? "",
+      calLinks: { 1: row.cal_m1 ?? "", 2: row.cal_m2 ?? "", 3: row.cal_m3 ?? "" },
+    };
   } catch {
     return null;
   }

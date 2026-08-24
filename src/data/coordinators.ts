@@ -14,10 +14,18 @@ export type CoordinatorProfile = {
   name: string;
   /** אזור הפעילות — דרום/מרכז/צפון או עיר */
   location: string;
+  /**
+   * חייב להיות זהה למייל בחשבון ה-Cal.com של הרכזת — לפיו ה-webhook
+   * מזהה איזו הזמנה שייכת לאיזו רכזת (webhook אחד משותף לכולן).
+   */
   email: string;
   /** בפורמט בינלאומי לוואטסאפ: 9725XXXXXXXX */
   phone: string;
   active: boolean;
+  /** קישורי היומן לשלוש הפגישות — מה שבא אחרי cal.com/ . ריק = ברירת המחדל מ-meetings.ts */
+  cal_m1?: string;
+  cal_m2?: string;
+  cal_m3?: string;
 };
 
 export const COORDINATOR_ROSTER: CoordinatorProfile[] = [

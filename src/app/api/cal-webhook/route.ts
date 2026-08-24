@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       title?: string;
       startTime?: string;
       attendees?: { name?: string; email?: string }[];
+      organizer?: { name?: string; email?: string };
       eventType?: { title?: string };
     };
   };
@@ -46,12 +47,25 @@ export async function POST(req: NextRequest) {
   const p = body.payload ?? {};
   const attendee = p.attendees?.[0] ?? {};
   const db = createClient(url, key, { auth: { persistSession: false } });
+
+  // רב-רכזות בלי רב-חיבורים: כל רכזת שמה את אותו webhook בחשבון Cal שלה,
+  // וההזמנה מזוהה כאן לפי מייל ה-organizer מול סגל הרכזות ב-DB
+  const organizerEmail = (p.organizer?.email ?? "").trim().toLowerCase();
+  let coordinatorId: string | null = null;
+  if (organizerEmail) {
+    const { data: match } = await db.from("coordinators")
+      .select("id").ilike("email", organizerEmail).limit(1);
+    coordinatorId = match?.[0]?.id ?? null;
+  }
+
   const { error } = await db.from("cal_bookings").insert({
     trigger: body.triggerEvent ?? "unknown",
     title: p.eventType?.title ?? p.title ?? "",
     start_time: p.startTime ?? null,
     attendee_name: attendee.name ?? "",
     attendee_email: attendee.email ?? "",
+    organizer_email: organizerEmail,
+    coordinator_id: coordinatorId,
     raw: body,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

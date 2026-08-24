@@ -12,7 +12,7 @@
  * לרכזת הפעילה הראשונה.
  */
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { COORDINATOR_ROSTER, type CoordinatorProfile } from "@/data/coordinators";
 
@@ -73,7 +73,7 @@ export default function ProgramAdmin() {
   }
   function addCoordinator() {
     const id = `coord-${Date.now()}`;
-    const row = { id, name: "", location: "", email: "", phone: "", active: true };
+    const row = { id, name: "", location: "", email: "", phone: "", active: true, cal_m1: "", cal_m2: "", cal_m3: "" };
     setRoster([...roster, row]);
     persistRow(row);
   }
@@ -169,7 +169,8 @@ export default function ProgramAdmin() {
                 {roster.map(c => {
                   const count = Object.values(assign).filter(v => v === c.id).length;
                   return (
-                    <tr key={c.id} style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                    <React.Fragment key={c.id}>
+                    <tr style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
                       {(["name", "location", "email", "phone"] as const).map(k => (
                         <td key={k} className="px-2 py-1.5">
                           <input
@@ -185,6 +186,28 @@ export default function ProgramAdmin() {
                       </td>
                       <td className="px-3 py-1.5 font-black text-center" style={{ color: NAVY }}>{count}</td>
                     </tr>
+                    {/* היומן האישי: כל רכזת עם חשבון Cal משלה. המייל למעלה חייב להיות
+                        המייל של חשבון ה-Cal — לפיו המערכת מזהה את ההזמנות שלה */}
+                    <tr>
+                      <td colSpan={6} className="px-2 pb-2.5" style={{ background: "rgba(2,62,138,0.02)" }}>
+                        <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                          <span className="text-[11.5px] font-bold whitespace-nowrap" style={{ color: "rgba(0,0,0,0.45)" }}>
+                            יומן Cal (מה שאחרי cal.com/):
+                          </span>
+                          {([["cal_m1", "פגישה 1"], ["cal_m2", "פגישה 2"], ["cal_m3", "פגישה 3"]] as const).map(([k, label]) => (
+                            <input
+                              key={k}
+                              value={c[k] ?? ""}
+                              onChange={e => update(c.id, k, e.target.value)}
+                              placeholder={label}
+                              className="flex-1 min-w-[140px] px-2 py-1.5 rounded-lg text-[11.5px]"
+                              style={{ border: "1px solid rgba(0,0,0,0.1)", direction: "ltr" }}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                    </React.Fragment>
                   );
                 })}
               </tbody>

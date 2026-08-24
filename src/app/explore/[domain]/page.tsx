@@ -106,6 +106,109 @@ function SalaryCard({ min, max }: { min: number; max: number }) {
   );
 }
 
+/**
+ * מפת המסע הנעולה של תחום — הסטנדרט מ-28.7: השלבים נפתחים בהדרגה
+ * (sim → day → mystery → experience). ההתקדמות נקראת מ-`${id}-journey`,
+ * שכל דף כותב אליו בסיומו (הסימולציה הדינמית כותבת sim בעצמה).
+ * תבנית משותפת לתחומים החדשים (ai/ux/marketing) — בוותיקים המפה עדיין inline.
+ */
+function TasteJourney({ id, color, title, steps }: {
+  id: string;
+  color: string;
+  title: string;
+  steps: { emoji: string; title: string; sub: string; href: string; doneKey: string; lockedBy: string | null }[];
+}) {
+  const [journey, setJourney] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`${id}-journey`);
+      if (saved) setJourney(JSON.parse(saved));
+    } catch {/* ignore */}
+  }, [id]);
+
+  const rgb = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16)).join(",");
+  const tint = (a: number) => `rgba(${rgb},${a})`;
+
+  return (
+    <div className="mb-7">
+      <Label text={title} />
+      <div className="flex flex-col gap-2">
+        {steps.map((step, i, arr) => {
+          const isDone = !!journey[step.doneKey];
+          const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
+          const highlight = i === 0 && !journey["sim"];
+
+          return (
+            <div key={step.doneKey}>
+              <Link href={isLocked ? "#" : step.href} className="block" onClick={isLocked ? (e) => e.preventDefault() : undefined}>
+                <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                  style={{
+                    background: isDone ? tint(0.06) : highlight ? color : "#fff",
+                    border: isDone ? `1.5px solid ${tint(0.2)}` : isLocked ? "1px solid rgba(0,0,0,0.06)" : highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
+                    opacity: isLocked ? 0.55 : 1,
+                    boxShadow: highlight ? `0 4px 20px ${tint(0.25)}` : "none",
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                    style={{ background: isDone ? color : highlight ? "rgba(255,255,255,0.25)" : tint(0.1), color: isDone || highlight ? "#fff" : color }}>
+                    {isDone ? "✓" : i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px]">{isLocked ? "🔒" : step.emoji}</span>
+                      <span className="text-[12.5px] font-bold"
+                        style={{ color: isDone ? color : highlight ? "#fff" : "#023e8a" }}>
+                        {step.title}
+                      </span>
+                      {highlight && (
+                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                      )}
+                    </div>
+                    <div className="mt-0.5">
+                      {isLocked ? (
+                        <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+                          זמין אחרי שלב {i}
+                        </span>
+                      ) : (() => {
+                        const parts = step.sub.split(/ · (~\d+.*)$/);
+                        return (
+                          <>
+                            <div className="text-[11px]" dir="rtl"
+                              style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                              {parts[0]}
+                            </div>
+                            {parts[1] && (
+                              <div className="text-[10px] mt-0.5 font-bold" dir="rtl"
+                                style={{ color: highlight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.28)" }}>
+                                ⏱ {parts[1]}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <span className="text-[16px] font-bold shrink-0"
+                    style={{ color: isDone ? color : highlight ? "#fff" : isLocked ? "rgba(0,0,0,0.2)" : color }}>
+                    {isLocked ? "🔒" : "←"}
+                  </span>
+                </div>
+              </Link>
+              {i < arr.length - 1 && (
+                <div className="flex justify-center my-1">
+                  <div className="w-[1.5px] h-3"
+                    style={{ background: isDone ? tint(0.4) : tint(0.2) }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── CODE ────────────────────────────────────────────────────────────────────
 function CodeContent() {
   const [ran, setRan] = useState(false);
@@ -869,6 +972,18 @@ function AIContent() {
         challenge="בטעימה: תקבלי 500 ביקורות לקוחות מעורבבות. המשימה — ללמד מודל להבדיל חיובי משלילי. כמה דוגמאות תצטרכי?"
       />
 
+      <TasteJourney
+        id="ai"
+        color="#7c3aed"
+        title="המסלול שלך ב-AI"
+        steps={[
+          { emoji: "🤖", title: "טעימה — אמני מודל בעצמך", sub: "ללמד מודל להבדיל ביקורת חיובית משלילית · ~10 דק'", href: "/explore/ai/sim", doneKey: "sim", lockedBy: null },
+          { emoji: "🥐", title: "יום בחיי מיישמ/ת AI", sub: "הצ'אטבוט של המאפייה — תדריך, הזיות, גדרות · ~15 דק'", href: "/explore/ai/learn/day", doneKey: "day", lockedBy: "sim" },
+          { emoji: "🛠️", title: "מיני-פרויקט — העוזר של המרפאה", sub: "שלוש הגדרות שהופכות AI כללי לעוזר אמיתי · ~20 דק'", href: "/explore/ai/learn/mystery", doneKey: "mystery", lockedBy: "day" },
+          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/ai/experience", doneKey: "experience", lockedBy: "mystery" },
+        ]}
+      />
+
       <SalaryCard min={18000} max={35000} />
     </>
   );
@@ -992,6 +1107,18 @@ function UXContent() {
       <SimTeaser
         emoji="🎨"
         challenge="בטעימה: תקבלי wireframe גרוע של אפליקציית זימון תורים. המשימה — לזהות 3 בעיות UX ולהציע כל אחת כיצד לתקן."
+      />
+
+      <TasteJourney
+        id="ux"
+        color="#db2777"
+        title="המסלול שלך ב-UX/UI"
+        steps={[
+          { emoji: "🎨", title: "טעימה — תקני את ה-wireframe", sub: "שלוש בעיות UX באפליקציית זימון תורים · ~10 דק'", href: "/explore/ux/sim", doneKey: "sim", lockedBy: null },
+          { emoji: "🛒", title: "יום בחיי מעצב/ת מוצר", sub: "60% נוטשים בשדה הטלפון — למצוא למה ולתקן · ~15 דק'", href: "/explore/ux/learn/day", doneKey: "day", lockedBy: "sim" },
+          { emoji: "🛠️", title: "מיני-פרויקט — עצבי את מסך הקבלה", sub: "מסך לגמ\"ח שכונתי שגם רחל בת ה-72 מבינה · ~20 דק'", href: "/explore/ux/learn/mystery", doneKey: "mystery", lockedBy: "day" },
+          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/ux/experience", doneKey: "experience", lockedBy: "mystery" },
+        ]}
       />
 
       <SalaryCard min={10000} max={22000} />
@@ -1457,6 +1584,18 @@ function MarketingContent() {
       <SimTeaser
         emoji="📢"
         challenge="בטעימה: תקציב ₪2,000 לחודש, 3 ערוצים. המשימה — להחליט כיצד לפצל כדי להגיע ל-500 לידים. לכל החלטה יש מחיר."
+      />
+
+      <TasteJourney
+        id="marketing"
+        color="#f97316"
+        title="המסלול שלך בשיווק דיגיטלי"
+        steps={[
+          { emoji: "📢", title: "טעימה — פצלי את התקציב", sub: "2,000 ₪ · שלושה ערוצים · יעד 500 לידים · ~10 דק'", href: "/explore/marketing/sim", doneKey: "sim", lockedBy: null },
+          { emoji: "🏋️", title: "יום בחיי מנהל/ת שיווק", sub: "הסטודיו של מיכל — 667 ₪ לפנייה, ואיך מורידים ל-91 · ~15 דק'", href: "/explore/marketing/learn/day", doneKey: "day", lockedBy: "sim" },
+          { emoji: "🛠️", title: "מיני-פרויקט — קמפיין ב-300 ₪", sub: "המספרה של יוסי — קהל, מסר, תמונה, ואיטרציה · ~20 דק'", href: "/explore/marketing/learn/mystery", doneKey: "mystery", lockedBy: "day" },
+          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/marketing/experience", doneKey: "experience", lockedBy: "mystery" },
+        ]}
       />
 
       <SalaryCard min={9000} max={20000} />
