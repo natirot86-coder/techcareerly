@@ -35,7 +35,7 @@ type Edge = {
 
 // ─── Canvas ───────────────────────────────────────────────────────────────────
 
-const W = 1150;
+const W = 1300;
 const H = 1900;
 const NH = 44;   // node height default
 
@@ -47,7 +47,7 @@ const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────
   { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 65,  cy: 195,  w: 82,  color: "#023e8a" },
   { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 920,  cy: 195,  w: 92, color: "#023e8a" },
-  { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + טעימה + הכנה", url: `${BASE}/waiting`, cx: 1060, cy: 195, w: 100, color: "#0ea5e9", badge: "חדש", badgeColor: "#0ea5e9" },
+  { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + מבוא להייטק + הכנה", url: `${BASE}/waiting`, cx: 1060, cy: 195, w: 110, color: "#0ea5e9", badge: "עודכן", badgeColor: "#0ea5e9" },
 
 
   // ששת מסכי האונבורדינג (Step 0–5 בקוד). לא נפתחים ישירות — הזרימה רציפה
@@ -81,6 +81,7 @@ const NODES: Node[] = [
   { id: "d-ux",        label: "UX",        url: `${BASE}/explore/ux`,        cx: 716, cy: 555, w: 60, color: "#fb8500" },
   { id: "d-networks",  label: "רשתות",     url: `${BASE}/explore/networks`,  cx: 840, cy: 555, w: 76, color: "#fb8500" },
   { id: "d-qa",        label: "QA",        url: `${BASE}/explore/qa`,        cx: 985, cy: 555, w: 60, color: "#fb8500" },
+  { id: "d-hardware",  label: "חומרה",     url: `${BASE}/explore/hardware`,  cx: 1130, cy: 555, w: 72, color: "#fb8500" },
 
   // ── Simulations ───────────────────────────────────────────────────────────
   { id: "s-code",      label: "sim / קוד",      url: `${BASE}/explore/code/sim`,      cx: 70,  cy: 655, w: 90,  color: "#d97706" },
@@ -91,6 +92,7 @@ const NODES: Node[] = [
   { id: "s-ux",        label: "sim / UX",       url: `${BASE}/explore/ux/sim`,        cx: 716, cy: 655, w: 80,  color: "#d97706" },
   { id: "s-networks",  label: "sim / רשתות",    url: `${BASE}/explore/networks/sim`,  cx: 840, cy: 655, w: 100, color: "#d97706" },
   { id: "s-qa",        label: "sim / QA",       url: `${BASE}/explore/qa/sim`,        cx: 985, cy: 655, w: 90,  color: "#d97706" },
+  { id: "s-hardware",  label: "sim / חומרה",    url: `${BASE}/explore/hardware/sim`,  cx: 1130, cy: 655, w: 100, color: "#d97706" },
 
   // ── Learn — Code ──────────────────────────────────────────────────────────
   { id: "code-day",        label: "יום בחיי מפתח",   sub: "triage · review",     url: `${BASE}/explore/code/learn/day`,     cx: 70, cy: 760, w: 115, color: "#3b82f6" },
@@ -121,6 +123,26 @@ const NODES: Node[] = [
   { id: "qa-day",        label: "יום בחיי QA",       sub: "triage · test review",   url: `${BASE}/explore/qa/learn/day`,     cx: 985, cy: 760, w: 130, color: "#d97706" },
   { id: "qa-mystery",    label: "איך זה עבר QA?",    sub: "coverage · CI history",  url: `${BASE}/explore/qa/learn/mystery`, cx: 985, cy: 855, w: 135, color: "#d97706" },
   { id: "qa-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",           url: `${BASE}/explore/qa/experience`,    cx: 985, cy: 950, w: 140, color: "#d97706", badge: "חדש", badgeColor: "#d97706" },
+
+  // ── Learn — Marketing (טעימה מלאה 24.8 — מיני-פרויקט במקום תעלומה) ────────
+  { id: "mkt-day",        label: "יום בחיי שיווק",   sub: "הסטודיו של מיכל",     url: `${BASE}/explore/marketing/learn/day`,     cx: 348, cy: 760, w: 125, color: "#f97316" },
+  { id: "mkt-mystery",    label: "קמפיין ב-300 ₪",   sub: "מיני-פרויקט · מספרה", url: `${BASE}/explore/marketing/learn/mystery`, cx: 348, cy: 855, w: 125, color: "#f97316" },
+  { id: "mkt-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",        url: `${BASE}/explore/marketing/experience`,    cx: 348, cy: 950, w: 140, color: "#f97316", badge: "חדש", badgeColor: "#f97316" },
+
+  // ── Learn — AI (טעימה מלאה 24.8) ──────────────────────────────────────────
+  { id: "ai-day",        label: "יום בחיי מיישם AI", sub: "הצ'אטבוט של המאפייה",  url: `${BASE}/explore/ai/learn/day`,     cx: 478, cy: 760, w: 140, color: "#7c3aed" },
+  { id: "ai-mystery",    label: "העוזר של המרפאה",   sub: "מיני-פרויקט · 3 הגדרות", url: `${BASE}/explore/ai/learn/mystery`, cx: 478, cy: 855, w: 130, color: "#7c3aed" },
+  { id: "ai-experience", label: "כלי עיבוד חוויה",   sub: "6 שאלות SCCT",          url: `${BASE}/explore/ai/experience`,    cx: 478, cy: 950, w: 140, color: "#7c3aed", badge: "חדש", badgeColor: "#7c3aed" },
+
+  // ── Learn — UX (טעימה מלאה 24.8) ──────────────────────────────────────────
+  { id: "ux-day",        label: "יום בחיי מעצב/ת",  sub: "60% נוטשים בטלפון",     url: `${BASE}/explore/ux/learn/day`,     cx: 716, cy: 760, w: 130, color: "#db2777" },
+  { id: "ux-mystery",    label: "מסך הקבלה לגמ\"ח", sub: "מיני-פרויקט · רחל 72",  url: `${BASE}/explore/ux/learn/mystery`, cx: 716, cy: 855, w: 130, color: "#db2777" },
+  { id: "ux-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",          url: `${BASE}/explore/ux/experience`,    cx: 716, cy: 950, w: 140, color: "#db2777", badge: "חדש", badgeColor: "#db2777" },
+
+  // ── Learn — Hardware (20.8 — שני הכובעים: מעבדה + תכנון) ──────────────────
+  { id: "hw-day",        label: "יום בחיי חומרה",   sub: "מעבדה + תכנון",       url: `${BASE}/explore/hardware/learn/day`,     cx: 1130, cy: 760, w: 130, color: "#0891b2" },
+  { id: "hw-mystery",    label: "אצוות הקבלים",     sub: "תעלומת ייצור",        url: `${BASE}/explore/hardware/learn/mystery`, cx: 1130, cy: 855, w: 120, color: "#0891b2" },
+  { id: "hw-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",        url: `${BASE}/explore/hardware/experience`,    cx: 1130, cy: 950, w: 140, color: "#0891b2", badge: "חדש", badgeColor: "#0891b2" },
 
   // ── סיכום והכנה לפגישה 2 ─────────────────────────────────────────────────
   { id: "results", label: "סיכום הטעימות", sub: "הכנה לפגישה עם הרכזת", url: `${BASE}/explore/results`, cx: 575, cy: 1150, w: 165, color: "#fb8500" },
@@ -201,6 +223,7 @@ const EDGES: Edge[] = [
   { from: "d-ux",        to: "s-ux" },
   { from: "d-networks",  to: "s-networks" },
   { from: "d-qa",        to: "s-qa" },
+  { from: "d-hardware",  to: "s-hardware" },
 
   // Code learn flow (sequential)
   { from: "s-code",         to: "code-day", color: "#3b82f6" },
@@ -228,6 +251,18 @@ const EDGES: Edge[] = [
 
   // QA learn flow (sequential)
   { from: "s-qa",        to: "qa-day", color: "#d97706" },
+  { from: "s-marketing",  to: "mkt-day", color: "#f97316" },
+  { from: "mkt-day",      to: "mkt-mystery", color: "#f97316" },
+  { from: "mkt-mystery",  to: "mkt-experience", color: "#f97316" },
+  { from: "s-ai",         to: "ai-day", color: "#7c3aed" },
+  { from: "ai-day",       to: "ai-mystery", color: "#7c3aed" },
+  { from: "ai-mystery",   to: "ai-experience", color: "#7c3aed" },
+  { from: "s-ux",         to: "ux-day", color: "#db2777" },
+  { from: "ux-day",       to: "ux-mystery", color: "#db2777" },
+  { from: "ux-mystery",   to: "ux-experience", color: "#db2777" },
+  { from: "s-hardware",   to: "hw-day", color: "#0891b2" },
+  { from: "hw-day",       to: "hw-mystery", color: "#0891b2" },
+  { from: "hw-mystery",   to: "hw-experience", color: "#0891b2" },
   { from: "qa-day",      to: "qa-mystery", color: "#d97706" },
   { from: "qa-mystery",  to: "qa-experience", color: "#d97706" },
 
