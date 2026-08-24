@@ -463,11 +463,14 @@ function Back({ onClick }: { onClick: () => void }) {
 }
 
 // ─── כרטיסי המבוא ────────────────────────────────────────────────────────────
+// v2 (24.8): ניחוש-לפני-חשיפה במקום קריאה פסיבית. מי שניחש קודם — זוכר
+// את המספר ומופתע ממנו. אין ניחוש שגוי שמעניש: טעות מקבלת "רוב האנשים
+// מנחשים ככה" והחשיפה עושה את העבודה. כמו תמיד כאן — אי אפשר להיכשל.
 
 /** מספר גדול + שורת מקור. המקור מוצג — מספר בלי מקור נקרא כפרסומת */
 function BigStat({ kicker, stat, sub, source }: { kicker: string; stat: string; sub: string; source: string }) {
   return (
-    <div style={{ background: "#fff", borderRadius: 24, padding: 22, marginTop: 16 }}>
+    <div style={{ background: "#fff", borderRadius: 24, padding: 22, marginTop: 14 }}>
       <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00" }}>{kicker}</div>
       <div style={{ fontSize: 40, fontWeight: 800, color: NAVY, marginTop: 4, letterSpacing: "-0.02em" }}>{stat}</div>
       <div style={{ fontSize: 16, color: "#1b1f27", lineHeight: 1.55, marginTop: 6 }}>{sub}</div>
@@ -479,197 +482,401 @@ function BigStat({ kicker, stat, sub, source }: { kicker: string; stat: string; 
 function IntroKicker({ n, children }: { n: number; children: React.ReactNode }) {
   return (
     <>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00", marginTop: 18 }}>
-        העולם שאתה נכנס אליו · {n} מתוך {INTRO_TOTAL}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00" }}>העולם שאתה נכנס אליו</div>
+        <div style={{ display: "flex", gap: 4 }}>
+          {Array.from({ length: INTRO_TOTAL }, (_, i) => (
+            <span key={i} style={{
+              width: i === n - 1 ? 16 : 6, height: 6, borderRadius: 999,
+              background: i < n ? ORANGE : "#e3ddd2", transition: "all .25s",
+            }} />
+          ))}
+        </div>
       </div>
-      <h1 style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.3, marginTop: 4, color: "#1b1f27" }}>{children}</h1>
+      <h1 style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.3, marginTop: 6, color: "#1b1f27" }}>{children}</h1>
+    </>
+  );
+}
+
+/** צ'יפ ניחוש — אחרי בחירה הצ'יפים קופאים והחשיפה מופיעה */
+function GuessChips({ options, picked, onPick }: { options: string[]; picked: string | null; onPick: (v: string) => void }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+      {options.map(o => (
+        <button
+          key={o}
+          onClick={() => !picked && onPick(o)}
+          style={{
+            padding: "13px 16px", borderRadius: 16, textAlign: "right", cursor: picked ? "default" : "pointer",
+            fontSize: 16, fontWeight: 700, ...HEEBO, transition: "all .2s",
+            background: picked === o ? NAVY : "#fff",
+            color: picked === o ? "#fff" : "#1b1f27",
+            border: picked === o ? "none" : "1.5px solid #e3ddd2",
+            opacity: picked && picked !== o ? 0.45 : 1,
+          }}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const introNextBtn = (onNext: () => void, label = "הבנתי, הלאה ←") => (
+  <button onClick={onNext} style={btnPrimary}>{label}</button>
+);
+
+// כרטיס 1 — כמה גדול: ניחוש ← חשיפה
+function IntroSize({ onNext }: { onNext: () => void }) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const RIGHT = "יותר מ-400 אלף";
+  return (
+    <>
+      <IntroKicker n={1}>נחש: כמה אנשים עובדים בהייטק הישראלי?</IntroKicker>
+      <GuessChips options={["בערך 40 אלף", "בערך 150 אלף", RIGHT]} picked={picked} onPick={setPicked} />
+      {picked && (
+        <>
+          <div style={{ fontSize: 15, fontWeight: 700, color: picked === RIGHT ? "#046c4e" : "#b35e00", marginTop: 14 }}>
+            {picked === RIGHT ? "בול 🎯 רוב האנשים מנחשים הרבה פחות." : "רוב האנשים מנחשים ככה — והאמת מפתיעה:"}
+          </div>
+          <BigStat
+            kicker="עובדים בהייטק הישראלי"
+            stat="+400,000"
+            sub="בערך אחד מכל תשעה עובדים במשק. זו לא נישה של מעטים — זו תעשייה שלמה, והיא כל הזמן מחפשת אנשים חדשים."
+            source="רשות החדשנות, דוח מצב ההייטק 2026 — 11.4% מהמועסקים ב-2025"
+          />
+          {introNextBtn(onNext)}
+        </>
+      )}
+    </>
+  );
+}
+
+// כרטיס 2 — כמה משלמים: ניחוש ← עמודות שגדלות מול העיניים
+function IntroSalary({ onNext }: { onNext: () => void }) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const [grow, setGrow] = useState(false);
+  useEffect(() => {
+    if (picked) { const t = setTimeout(() => setGrow(true), 150); return () => clearTimeout(t); }
+  }, [picked]);
+  const RIGHT = "יותר מ-30 אלף";
+  return (
+    <>
+      <IntroKicker n={2}>ונחש: כמה מרוויחים שם בממוצע בחודש?</IntroKicker>
+      <GuessChips options={["בערך 15 אלף ₪", "בערך 22 אלף ₪", RIGHT + " ₪"]} picked={picked} onPick={setPicked} />
+      {picked && (
+        <>
+          <div style={{ fontSize: 15, fontWeight: 700, color: picked.startsWith(RIGHT) ? "#046c4e" : "#b35e00", marginTop: 14 }}>
+            {picked.startsWith(RIGHT) ? "בדיוק 🎯" : "גבוה ממה שנדמה:"}
+          </div>
+          <div style={{ background: "#fff", borderRadius: 24, padding: 20, marginTop: 10 }}>
+            {[
+              ["הייטק", "כ-32,000 ₪", 100, NAVY],
+              ["שאר המשק", "כ-13,600 ₪", 42, "#b9c3d4"],
+            ].map(([label, val, w, color]) => (
+              <div key={label as string} style={{ marginTop: label === "הייטק" ? 0 : 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14.5, fontWeight: 700, color: "#1b1f27" }}>
+                  <span>{label}</span><span style={{ color: color as string }}>{val}</span>
+                </div>
+                <div style={{ height: 14, borderRadius: 999, background: "#f0ede6", marginTop: 6, overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%", borderRadius: 999, background: color as string,
+                    width: grow ? `${w}%` : "4%", transition: "width .9s cubic-bezier(.2,.8,.2,1)",
+                  }} />
+                </div>
+              </div>
+            ))}
+            <div style={{ fontSize: 12.5, color: FAINT, marginTop: 12 }}>נתוני הלמ״ס, סוף 2025 — יותר מפי שניים</div>
+          </div>
+          {/* שורת האמת — בלעדיה המספר מרחיק ("לא בשבילי") או מייצר ציפייה שגויה */}
+          <div style={{ background: "#fff3e2", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: "#7a4100" }}>
+            <b>חשוב לקרוא את המספר נכון:</b> זה ממוצע על כולם — כולל אנשים עם 15
+            שנות ניסיון. מתחילים נמוך מזה, ועולים מהר יותר מכמעט כל מקצוע אחר.
+          </div>
+          {introNextBtn(onNext)}
+        </>
+      )}
+    </>
+  );
+}
+
+// כרטיס 3 — מי עובד בהייטק: הופכים כרטיסים, מגלים שכולם
+function IntroWho({ onNext }: { onNext: () => void }) {
+  const [flipped, setFlipped] = useState<Record<string, boolean>>({});
+  const PEOPLE: [string, string, string][] = [
+    ["🎨", "מעצבת", "מעצבת את המסכים של האפליקציה"],
+    ["🗣️", "איש מכירות", "מוכר את המוצר לחברות בחו״ל"],
+    ["📊", "אנליסטית", "מנתחת מה המשתמשים באמת עושים"],
+    ["🧭", "מנהל מוצר", "מחליט מה בונים ולמה"],
+    ["💻", "מתכנתת", "כותבת את הקוד"],
+    ["🔍", "בודק תוכנה", "מוצא את התקלות לפני הלקוחות"],
+  ];
+  const count = Object.keys(flipped).length;
+  return (
+    <>
+      <IntroKicker n={3}>מי מהאנשים האלה עובד בהייטק?</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 6 }}>לחץ על כל אחד כדי לגלות.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+        {PEOPLE.map(([e, role, what]) => {
+          const on = flipped[role];
+          return (
+            <button
+              key={role}
+              onClick={() => setFlipped({ ...flipped, [role]: true })}
+              style={{
+                borderRadius: 18, padding: "14px 12px", textAlign: "center", cursor: on ? "default" : "pointer",
+                background: on ? "#e7f6f0" : "#fff", border: on ? "1.5px solid #a7dcc8" : "1.5px solid #e3ddd2",
+                transition: "all .25s", ...HEEBO,
+              }}
+            >
+              <div style={{ fontSize: 24 }}>{e}</div>
+              <div style={{ fontSize: 14.5, fontWeight: 800, color: "#1b1f27", marginTop: 4 }}>{role}</div>
+              <div style={{ fontSize: 12, lineHeight: 1.45, marginTop: 4, color: on ? "#046c4e" : FAINT, fontWeight: on ? 700 : 500 }}>
+                {on ? `✓ בהייטק — ${what}` : "לחץ לגילוי"}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      {count >= 3 && (
+        <>
+          <BigStat
+            kicker="התשובה: כולם"
+            stat="בערך חצי"
+            sub="מעובדי ההייטק בכלל לא כותבים קוד — מוצר, עיצוב, נתונים, שיווק, מכירות, בדיקות ותמיכה."
+            source="רשות החדשנות 2026 — 49% במשרות מו״פ, 110 אלף במשרות מוצר"
+          />
+          {introNextBtn(onNext)}
+        </>
+      )}
+    </>
+  );
+}
+
+// כרטיס 4 — שני עולמות: בחירה בלי תשובה נכונה
+function IntroWhere({ onNext }: { onNext: () => void }) {
+  const [picked, setPicked] = useState<string | null>(null);
+  return (
+    <>
+      <IntroKicker n={4}>איפה היית רוצה לעבוד?</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 6 }}>
+        אנשי טכנולוגיה עובדים גם בבנקים, בקופות חולים ובממשלה — לא רק בחברות הייטק. בחר מה מדבר אליך:
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+        {[
+          ["🚀", "בחברת הייטק", "הטכנולוגיה היא המוצר עצמו. בדרך כלל שכר גבוה יותר וקצב למידה מהיר יותר."],
+          ["🏦", "בארגון גדול ויציב", "הטכנולוגיה משרתת את העסק — בנק, קופת חולים, ממשלה. לרוב יציב יותר, ולפעמים קל יותר להתקבל למשרה ראשונה."],
+        ].map(([e, t, d]) => {
+          const on = picked === t;
+          return (
+            <button
+              key={t}
+              onClick={() => setPicked(t as string)}
+              style={{
+                textAlign: "right", borderRadius: 20, padding: 16, cursor: "pointer", ...HEEBO,
+                background: on ? "#eaf0f9" : "#fff",
+                border: on ? `1.5px solid ${NAVY}` : "1.5px solid #e3ddd2",
+                transition: "all .2s",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#1b1f27" }}>{e} {t}</div>
+              <div style={{ fontSize: 14, lineHeight: 1.6, color: MUTED, marginTop: 4 }}>{d}</div>
+            </button>
+          );
+        })}
+      </div>
+      {picked && (
+        <>
+          <div style={{ background: "#e7f6f0", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: "#046c4e" }}>
+            <b>בחירה טובה — ואין פה תשובה נכונה.</b> שני העולמות פתוחים לך,
+            והדרך אליהם עוברת דרך אותם לימודים. את הבחירה האמיתית תעשה
+            בהמשך המסע, עם הרבה יותר מידע.
+          </div>
+          {introNextBtn(onNext)}
+        </>
+      )}
+    </>
+  );
+}
+
+// כרטיס 5 — שרשרת המוצר דרך אפליקציה שכולם מכירים (נתי 24.8: עוגן קונקרטי).
+// Waze: ישראלית, בשימוש יומיומי אצל קהל היעד, וכל תפקיד מקבל דוגמה מוחשית.
+function IntroChain({ onNext }: { onNext: () => void }) {
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const CHAIN: [string, string, string][] = [
+    ["💡", "מנהל/ת מוצר", "החליט/ה ש-Waze תזהיר על ניידת משטרה — כי זה מה שנהגים באמת רוצים"],
+    ["🎨", "מעצב/ת UX", "עיצב/ה מסך שמבינים במבט אחד — גם כשנוהגים ב-90 קמ״ש"],
+    ["💻", "מפתחים/ות", "כתבו את הקוד שמחשב לך מסלול מחדש תוך שניות כשפספסת יציאה"],
+    ["📊", "אנשי דאטה", "הפקקים שאתה רואה מגיעים מהנתונים של הנהגים עצמם — מישהו בנה את זה"],
+    ["🔍", "QA", "בדקו מה קורה כשה-GPS נעלם באמצע מנהרה"],
+    ["🛡️", "סייבר", "דואגים שאף אחד לא יוכל לעקוב אחרי המיקום שלך"],
+    ["🔌", "רשתות וחומרה", "השרתים שעונים למיליוני נהגים בו-זמנית בשעת פקק"],
+    ["📣", "שיווק", "הפכו אפליקציה ישראלית קטנה לשם עולמי"],
+  ];
+  return (
+    <>
+      <IntroKicker n={5}>מי בנה את Waze?</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 6 }}>
+        האפליקציה שמנווטת אותך כל יום נבנתה בישראל — על ידי שרשרת של אנשים,
+        וכל חוליה בה היא מקצוע. לחץ על תחנה כדי לראות מה עשו שם:
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+        {CHAIN.map(([e, role, what], i) => {
+          const on = open[role];
+          return (
+            <button
+              key={role}
+              onClick={() => setOpen({ ...open, [role]: !on })}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, textAlign: "right",
+                background: on ? "#eaf0f9" : "#fff", borderRadius: 16, padding: "12px 14px",
+                border: "none", cursor: "pointer", transition: "background .2s", ...HEEBO,
+              }}
+            >
+              <span style={{
+                width: 24, height: 24, borderRadius: 999, background: on ? NAVY : "#f0ede6",
+                color: on ? "#fff" : FAINT, fontSize: 12.5, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>{i + 1}</span>
+              <span style={{ fontSize: 20, flexShrink: 0 }}>{e}</span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: "#1b1f27" }}>{role}</span>
+                {on && <span style={{ display: "block", fontSize: 13.5, color: NAVY, lineHeight: 1.5, marginTop: 2, fontWeight: 600 }}>{what}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {/* עוגן ה-wow: עובדה ציבורית מאומתת (2013) שממחישה לאן שרשרת כזאת מגיעה */}
+      <div style={{ background: "#fff", borderRadius: 18, padding: 14, marginTop: 12, fontSize: 14.5, lineHeight: 1.65, color: "#1b1f27" }}>
+        💰 בסוף, גוגל קנתה את Waze ביותר מ<b>מיליארד דולר</b> — אפליקציה
+        שהתחילה מכמה ישראלים עם רעיון.
+      </div>
+      <div style={{ background: "#eaf0f9", borderRadius: 18, padding: 14, marginTop: 10, fontSize: 14.5, lineHeight: 1.6, color: NAVY, fontWeight: 600 }}>
+        אחרי הפגישה תתנסה בכמה מהתפקידים האלה בעצמך — ותרגיש מה מדבר אליך.
+      </div>
+      {introNextBtn(onNext)}
+    </>
+  );
+}
+
+// כרטיס 6 — AI על כל התעשייה: בחר תפקיד ← ראה מה השתנה בו (נתי 24.8)
+function IntroAI({ onNext }: { onNext: () => void }) {
+  const [seen, setSeen] = useState<Record<string, boolean>>({});
+  const [active, setActive] = useState<string | null>(null);
+  const ROLES: [string, string, string][] = [
+    ["💻", "מפתחים", "כלי AI כותבים חלק מהקוד. המפתח הפך למי שמכוון, בודק ומאמת — פחות להקליד, יותר להחליט."],
+    ["📣", "שיווק", "טקסטים, תמונות וקמפיינים נוצרים בעזרת AI ברגעים — והמשווק מתפנה לאסטרטגיה: למי, מתי ולמה."],
+    ["🎨", "עיצוב", "סקיצות ראשונות מיוצרות בשניות. המעצב מתמקד בשאלה הקשה באמת — מה המשתמש צריך."],
+    ["📊", "דאטה", "ה-AI מנתח מהר — אבל מישהו צריך לשאול את השאלות הנכונות, ולתפוס אותו כשהוא ממציא."],
+    ["🎧", "תמיכה ושירות", "צ'אטבוטים עונים על הפשוטות — האנשים מטפלים בבעיות המורכבות, ומלמדים את הבוט."],
+    ["🔍", "QA", "ה-AI מייצר בדיקות אוטומטיות — והבודק מתכנן מה בכלל צריך לבדוק ואיפה זה יישבר."],
+  ];
+  const count = Object.keys(seen).length;
+  return (
+    <>
+      <IntroKicker n={6}>ומה עם כל ה-AI הזה?</IntroKicker>
+      <p style={{ fontSize: 15, color: "#1b1f27", lineHeight: 1.65, marginTop: 6 }}>
+        בלי לייפות: ה-AI באמת משנה את התעשייה — <b>את כולה, לא רק את המתכנתים.</b>{" "}
+        לחץ על תפקיד כדי לראות מה השתנה בו:
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 12 }}>
+        {ROLES.map(([e, role]) => {
+          const on = active === role;
+          const was = seen[role];
+          return (
+            <button
+              key={role}
+              onClick={() => { setActive(role); setSeen({ ...seen, [role]: true }); }}
+              style={{
+                borderRadius: 999, padding: "9px 14px", fontSize: 14, fontWeight: 700, cursor: "pointer", ...HEEBO,
+                background: on ? NAVY : "#fff", color: on ? "#fff" : was ? "#046c4e" : "#1b1f27",
+                border: on ? "none" : was ? "1.5px solid #a7dcc8" : "1.5px solid #e3ddd2",
+                transition: "all .2s",
+              }}
+            >
+              {e} {role}{was && !on ? " ✓" : ""}
+            </button>
+          );
+        })}
+      </div>
+      {active && (
+        <div style={{ background: "#fff", borderRadius: 20, padding: 18, marginTop: 12, fontSize: 15, lineHeight: 1.7, color: "#1b1f27" }}>
+          {ROLES.find(r => r[1] === active)?.[2]}
+        </div>
+      )}
+      {count >= 2 && (
+        <>
+          <div style={{ background: "#eaf0f9", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: NAVY }}>
+            <b>ונולדו גם תפקידים חדשים לגמרי:</b> מיישמי AI בעסקים, בוני
+            סוכנים חכמים, מנהלי מוצר AI — תפקידים שלפני שלוש שנים לא היו קיימים.
+          </div>
+          <div style={{ background: "#fff", borderRadius: 20, padding: 16, marginTop: 10 }}>
+            <div style={{ fontSize: 15, lineHeight: 1.65, color: "#1b1f27" }}>
+              והמספרים? התמהיל משתנה — פחות משרות של כתיבת קוד טהורה, יותר משרות
+              מוצר ועבודה עם AI. אבל הביקוש לא נעלם: מספר המשרות הפנויות בהייטק{" "}
+              <b>עלה ב-12% ב-2025.</b>
+            </div>
+            <div style={{ fontSize: 12.5, color: FAINT, marginTop: 8 }}>רשות החדשנות, דוח 2026 — משרות פנויות +12.1%</div>
+          </div>
+          <div style={{ background: "#e7f6f0", borderRadius: 20, padding: 16, marginTop: 10, fontSize: 15, lineHeight: 1.6, color: "#046c4e", fontWeight: 600 }}>
+            השורה התחתונה: מי שנכנס לתעשייה עכשיו לומד לעבוד עם AI מהיום
+            הראשון — וזה בדיוק היתרון שלך על מי שכבר בפנים.
+          </div>
+          {introNextBtn(onNext)}
+        </>
+      )}
+    </>
+  );
+}
+
+// כרטיס 7 — ייצוג: סיפורים אמיתיים, לא סטטיסטיקה
+function IntroPeople({ who, onNext }: { who: string; onNext: () => void }) {
+  return (
+    <>
+      <IntroKicker n={7}>אנשים כמוך כבר שם</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
+        לא סטטיסטיקה — אנשים אמיתיים שעברו בדיוק את הדרך שאתה מתחיל עכשיו:
+      </p>
+      {[
+        {
+          name: "יהונתן",
+          story: "עבד כמאבטח בחברת הייטק. אחרי הכשרה בטק-קריירה חזר לאותו בניין — הפעם כאיש הייטק.",
+          source: "ynet, הכתבה המלאה",
+          href: "https://www.ynet.co.il/articles/0,7340,L-5456028,00.html",
+        },
+        {
+          name: "עמנואל",
+          story: "עלה מאתיופיה בגיל צעיר — ותוך שנים ספורות כבר עבד כבודק תוכנה (QA) בחברת הייטק תל-אביבית.",
+          source: "ynet, הכתבה המלאה",
+          href: "https://www.ynet.co.il/activism/article/rjhmifnqn",
+        },
+      ].map(x => (
+        <div key={x.name} style={{ background: "#fff", borderRadius: 20, padding: 18, marginTop: 12 }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>{x.name}</div>
+          <p style={{ fontSize: 15, lineHeight: 1.65, color: "#1b1f27", marginTop: 6 }}>{x.story}</p>
+          <a href={x.href} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13.5, fontWeight: 700, color: NAVY }}>
+            {x.source} ↗
+          </a>
+        </div>
+      ))}
+      <p style={{ fontSize: 14.5, color: MUTED, lineHeight: 1.6, marginTop: 12 }}>
+        {who} ליוותה אנשים כאלה בדיוק — וזה מה שמחכה לך בפגישה.
+      </p>
+      {introNextBtn(onNext, "סיימתי את המבוא ✓")}
     </>
   );
 }
 
 function IntroCard({ idx, who, onNext }: { idx: number; who: string; onNext: () => void }) {
-  const next = (label = "הבנתי, הלאה ←") => (
-    <button onClick={onNext} style={btnPrimary}>{label}</button>
-  );
-
   switch (idx) {
-    case 0: return (
-      <>
-        <IntroKicker n={1}>כמה גדול הדבר הזה?</IntroKicker>
-        <BigStat
-          kicker="עובדים בהייטק הישראלי"
-          stat="+400,000"
-          sub="בערך אחד מכל תשעה עובדים במשק. זו לא נישה של מעטים — זו תעשייה שלמה, והיא כל הזמן מחפשת אנשים חדשים."
-          source="רשות החדשנות, דוח מצב ההייטק 2026 — 11.4% מהמועסקים ב-2025"
-        />
-        {next()}
-      </>
-    );
-
-    case 1: return (
-      <>
-        <IntroKicker n={2}>וכמה משלמים בו?</IntroKicker>
-        <BigStat
-          kicker="שכר חודשי ממוצע בהייטק"
-          stat="כ-32,000 ₪"
-          sub="יותר מפי שניים מהשכר הממוצע בשאר המשק (כ-13,600 ₪)."
-          source="נתוני הלמ״ס, סוף 2025"
-        />
-        {/* שורת האמת — בלעדיה המספר מרחיק ("לא בשבילי") או מייצר ציפייה שגויה */}
-        <div style={{ background: "#fff3e2", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: "#7a4100" }}>
-          <b>חשוב לקרוא את המספר נכון:</b> זה ממוצע על כולם — כולל אנשים עם 15
-          שנות ניסיון. מתחילים נמוך מזה, ועולים מהר יותר מכמעט כל מקצוע אחר.
-        </div>
-        {next()}
-      </>
-    );
-
-    case 2: return (
-      <>
-        <IntroKicker n={3}>וזה לא רק מתכנתים</IntroKicker>
-        <BigStat
-          kicker="כמה מעובדי ההייטק כותבים קוד"
-          stat="בערך חצי"
-          sub="כל השאר עובדים בתפקידים שאינם פיתוח — ניהול מוצר, עיצוב, נתונים, שיווק, מכירות, בדיקות ותמיכה."
-          source="רשות החדשנות 2026 — 49% במשרות מו״פ, 110 אלף במשרות מוצר"
-        />
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
-          {["ניהול מוצר", "עיצוב UX", "אנליזת נתונים", "שיווק דיגיטלי", "QA", "מכירות", "תמיכה"].map(t => (
-            <span key={t} style={{ background: "#fff", borderRadius: 999, padding: "7px 13px", fontSize: 13.5, fontWeight: 600, color: NAVY }}>{t}</span>
-          ))}
-        </div>
-        {next()}
-      </>
-    );
-
-    case 3: return (
-      <>
-        <IntroKicker n={4}>והוא גם לא רק בחברות הייטק</IntroKicker>
-        <div style={{ background: "#fff", borderRadius: 24, padding: 20, marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ fontSize: 16, lineHeight: 1.65, color: "#1b1f27" }}>
-            אנשי טכנולוגיה עובדים גם בבנקים, בקופות חולים, בממשלה ובכל ארגון גדול.
-            ההבדל פשוט:
-          </div>
-          <div style={{ background: "#eaf0f9", borderRadius: 16, padding: 14, fontSize: 15, lineHeight: 1.6, color: NAVY }}>
-            <b>בחברת הייטק</b> — הטכנולוגיה היא המוצר עצמו. שם בדרך כלל השכר
-            הגבוה יותר וקצב הלמידה המהיר יותר.
-          </div>
-          <div style={{ background: "#f4f5f7", borderRadius: 16, padding: 14, fontSize: 15, lineHeight: 1.6, color: "#3f4a5c" }}>
-            <b>בארגון רגיל</b> — הטכנולוגיה משרתת את העסק. לרוב יציב יותר,
-            ולפעמים קל יותר להתקבל למשרה ראשונה דרכו.
-          </div>
-          <div style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED }}>
-            שני העולמות פתוחים לך — ובהמשך המסע נדבר בדיוק על ההבדל הזה.
-          </div>
-        </div>
-        {next()}
-      </>
-    );
-
-    case 4: return (
-      <>
-        <IntroKicker n={5}>איך בכלל נולד מוצר?</IntroKicker>
-        <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
-          כל אפליקציה שיש לך בטלפון עברה דרך שרשרת של אנשים — וכל חוליה היא מקצוע:
-        </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
-          {[
-            ["💡", "מנהל/ת מוצר", "מחליט/ה מה בונים ולמה"],
-            ["🎨", "מעצב/ת UX", "מצייר/ת איך זה ייראה וירגיש"],
-            ["💻", "מפתחים/ות", "כותבים את הקוד שמפעיל הכל"],
-            ["📊", "אנשי דאטה", "מודדים מה עובד ומה לא"],
-            ["🔍", "QA", "מוצאים את התקלות לפני הלקוחות"],
-            ["🛡️", "סייבר", "שומרים שאף אחד לא יפרוץ"],
-            ["🔌", "רשתות וחומרה", "הברזלים והחיבורים שהכל רץ עליהם"],
-            ["📣", "שיווק", "דואגים שהעולם ישמע על זה"],
-          ].map(([e, role, what]) => (
-            <div key={role} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", borderRadius: 16, padding: "11px 14px" }}>
-              <span style={{ fontSize: 20, flexShrink: 0 }}>{e}</span>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#1b1f27" }}>{role}</div>
-                <div style={{ fontSize: 13.5, color: MUTED, lineHeight: 1.45 }}>{what}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ background: "#eaf0f9", borderRadius: 18, padding: 14, marginTop: 12, fontSize: 14.5, lineHeight: 1.6, color: NAVY, fontWeight: 600 }}>
-          אחרי הפגישה תתנסה בכמה מהתפקידים האלה בעצמך — ותרגיש מה מדבר אליך.
-        </div>
-        {next()}
-      </>
-    );
-
-    case 5: return (
-      <>
-        <IntroKicker n={6}>ומה עם כל ה-AI הזה?</IntroKicker>
-        <div style={{ background: "#fff", borderRadius: 24, padding: 20, marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontSize: 16, lineHeight: 1.65, color: "#1b1f27" }}>
-            בלי לייפות: ה-AI באמת משנה את התעשייה. יש פחות משרות של כתיבת קוד
-            טהורה — ויותר משרות של עבודה <b>עם</b> AI, ניהול מוצר ותפקידים שסביב הקוד.
-          </div>
-          <div style={{ fontSize: 15, lineHeight: 1.65, color: MUTED }}>
-            בשנת 2025 מספר המשרות הפנויות בהייטק דווקא <b>עלה ב-12%</b> — הביקוש
-            לא נעלם, הוא משנה צורה.
-          </div>
-          <div style={{ background: "#e7f6f0", borderRadius: 16, padding: 14, fontSize: 15, lineHeight: 1.6, color: "#046c4e", fontWeight: 600 }}>
-            השורה התחתונה של המעסיקים: מי שיודע לעבוד עם AI שווה יותר, לא פחות.
-            ומי שנכנס לתעשייה עכשיו — לומד את זה מהיום הראשון.
-          </div>
-          <div style={{ fontSize: 12.5, color: FAINT }}>רשות החדשנות, דוח 2026 — משרות פנויות +12.1% ב-2025</div>
-        </div>
-        {/* סרטון מאומת (oEmbed 24.8): TechMonster — בעברית, בדיוק על השאלה הזאת */}
-        <a
-          href="https://www.youtube.com/watch?v=qo0iIqyYc_k"
-          target="_blank" rel="noopener noreferrer"
-          style={{ display: "block", background: "#fff", borderRadius: 20, overflow: "hidden", marginTop: 12, textDecoration: "none" }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="https://i.ytimg.com/vi/qo0iIqyYc_k/hqdefault.jpg" alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }} />
-          <div style={{ padding: "12px 14px" }}>
-            <div style={{ fontSize: 14.5, fontWeight: 700, color: "#1b1f27", lineHeight: 1.4 }}>
-              ▶ האם ללמוד תכנות בעידן ה-AI: מה המעסיקים באמת מחפשים?
-            </div>
-            <div style={{ fontSize: 12.5, color: FAINT, marginTop: 3 }}>TechMonster · יוטיוב · בעברית</div>
-          </div>
-        </a>
-        {next()}
-      </>
-    );
-
-    default: return (
-      <>
-        <IntroKicker n={7}>אנשים כמוך כבר שם</IntroKicker>
-        <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
-          לא סטטיסטיקה — אנשים אמיתיים שעברו בדיוק את הדרך שאתה מתחיל עכשיו:
-        </p>
-        {[
-          {
-            name: "יהונתן",
-            story: "עבד כמאבטח בחברת הייטק. אחרי הכשרה בטק-קריירה חזר לאותו בניין — הפעם כאיש הייטק.",
-            source: "ynet, הכתבה המלאה",
-            href: "https://www.ynet.co.il/articles/0,7340,L-5456028,00.html",
-          },
-          {
-            name: "עמנואל",
-            story: "עלה מאתיופיה בגיל צעיר — ותוך שנים ספורות כבר עבד כבודק תוכנה (QA) בחברת הייטק תל-אביבית.",
-            source: "ynet, הכתבה המלאה",
-            href: "https://www.ynet.co.il/activism/article/rjhmifnqn",
-          },
-        ].map(x => (
-          <div key={x.name} style={{ background: "#fff", borderRadius: 20, padding: 18, marginTop: 12 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>{x.name}</div>
-            <p style={{ fontSize: 15, lineHeight: 1.65, color: "#1b1f27", marginTop: 6 }}>{x.story}</p>
-            <a href={x.href} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13.5, fontWeight: 700, color: NAVY }}>
-              {x.source} ↗
-            </a>
-          </div>
-        ))}
-        <p style={{ fontSize: 14.5, color: MUTED, lineHeight: 1.6, marginTop: 12 }}>
-          {who} ליוותה אנשים כאלה בדיוק — וזה מה שמחכה לך בפגישה.
-        </p>
-        {next("סיימתי את המבוא ✓")}
-      </>
-    );
+    case 0: return <IntroSize onNext={onNext} />;
+    case 1: return <IntroSalary onNext={onNext} />;
+    case 2: return <IntroWho onNext={onNext} />;
+    case 3: return <IntroWhere onNext={onNext} />;
+    case 4: return <IntroChain onNext={onNext} />;
+    case 5: return <IntroAI onNext={onNext} />;
+    default: return <IntroPeople who={who} onNext={onNext} />;
   }
 }
 
@@ -689,7 +896,7 @@ function IntroDone({ who, onPrep, onHome }: { who: string; onPrep: () => void; o
       <div style={{ background: "#fff3e2", borderRadius: 24, padding: 20, marginTop: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: "#7a4100" }}>שווה להביא לפגישה</div>
         <p style={{ fontSize: 15, color: "#7a4100", lineHeight: 1.6, marginTop: 6 }}>
-          מה הפתיע אותך מכל מה שקראת? תגיד את זה ל{who} — זו פתיחה מצוינת לשיחה.
+          מה הפתיע אותך מכל מה שראית? תגיד את זה ל{who} — זו פתיחה מצוינת לשיחה.
         </p>
       </div>
 
@@ -711,6 +918,23 @@ function IntroDone({ who, onPrep, onHome }: { who: string; onPrep: () => void; o
           ))}
         </div>
       </div>
+
+      {/* צלילה למי שרוצה — פרק מלא, עם תווית אורך כנה. ירד מכרטיס 6 בכוונה:
+          21 דקות בתוך מבוא של 7 גונבות את הקצב; כאן זה מתנה, לא מטלה */}
+      <a
+        href="https://www.youtube.com/watch?v=qo0iIqyYc_k"
+        target="_blank" rel="noopener noreferrer"
+        style={{ display: "flex", gap: 12, background: "#fff", borderRadius: 18, overflow: "hidden", textDecoration: "none", marginTop: 16, alignItems: "stretch" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="https://i.ytimg.com/vi/qo0iIqyYc_k/hqdefault.jpg" alt="" style={{ width: 96, objectFit: "cover", flexShrink: 0 }} />
+        <div style={{ padding: "10px 12px 10px 4px" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#1b1f27", lineHeight: 1.45 }}>
+            ▶ רוצה לצלול? "האם ללמוד תכנות בעידן ה-AI" — שיחה מלאה בעברית
+          </div>
+          <div style={{ fontSize: 12, color: FAINT, marginTop: 4 }}>TechMonster · פרק פודקאסט מלא (21 דק׳) · יוטיוב</div>
+        </div>
+      </a>
 
       <button onClick={onPrep} style={{ ...btnPrimary, background: NAVY }}>להכנה לפגישה</button>
       <button

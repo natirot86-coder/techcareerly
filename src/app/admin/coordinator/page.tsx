@@ -383,14 +383,23 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
       : service === "serving" ? "משרת/ת עכשיו"
       : service === "none" ? "ללא שירות" : "";
     const discharge = S(pr.discharge);
+    const miluimActive = S(pr.miluim) === "1";
     let clock: string | null = null;
     if (discharge) {
+      /*
+       * חלון הזכאות של האגף: 5 שנים מהשחרור — ו-10 למשרתי מילואים
+       * פעילים ולחיילים בודדים. מילואים אנחנו שואלים באונבורדינג; בדידות
+       * לא (שאלה רגישה) — ולכן כשחלון ה-5 נסגר, הנוסח מזכיר לרכזת לבדוק
+       * גם את מסלול הבודד לפני שמוותרים.
+       */
+      const years = miluimActive ? 10 : 5;
       const end = new Date(discharge + "-01");
-      end.setFullYear(end.getFullYear() + 5);
+      end.setFullYear(end.getFullYear() + years);
       const months = Math.floor((+end - Date.now()) / (30.44 * 24 * 3600 * 1000));
-      clock = months <= 0 ? "הסתיימה — לוודא מול האגף"
-        : months < 12 ? `עוד ${months} חודשים בלבד ⚠️`
-        : `עוד כ-${Math.floor(months / 12)} שנים`;
+      const basis = miluimActive ? " (10 שנים — מילואים פעיל)" : "";
+      clock = months <= 0 ? (miluimActive ? "הסתיימה גם במסלול המילואים — לוודא מול האגף" : "חלון ה-5 נסגר — אם בודד/ה או מילואים: 10 שנים. לבדוק לפני שמוותרים")
+        : months < 12 ? `עוד ${months} חודשים בלבד ⚠️${basis}`
+        : `עוד כ-${Math.floor(months / 12)} שנים${basis}`;
     }
     let birthdaySoon = false;
     if (birth) {
