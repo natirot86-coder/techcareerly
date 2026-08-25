@@ -534,6 +534,20 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
               <div key={ri} style={{ position: "relative", height: 196, display: "flex", flexDirection: ri === 1 ? "row-reverse" : "row", alignItems: "flex-start" }}>
                 {/* הקו המקווקו של השורה */}
                 <div style={{ position: "absolute", top: 60, right: "6%", left: "6%", borderTop: "3px dashed #ddd6c9" }} />
+                {/*
+                  הקשת המקווקה שמחברת שורה לשורה (נתי 25.8 — הייתה חסרה):
+                  הסרפנטינה זורמת ימין←שמאל←ימין, אז אחרי שורה 0 הקשת בצד
+                  שמאל, ואחרי שורה 1 בצד ימין. חצי-טבעת ב-CSS: מסגרת מקווקה
+                  בלי הצלע הפנימית, מעוגלת כלפי חוץ.
+                */}
+                {ri < rows.length - 1 && (
+                  <div style={{
+                    position: "absolute", top: 60, height: 196, width: "5.5%",
+                    ...(ri % 2 === 0
+                      ? { left: "0.5%", border: "3px dashed #ddd6c9", borderRight: "none", borderRadius: "110px 0 0 110px" }
+                      : { right: "0.5%", border: "3px dashed #ddd6c9", borderLeft: "none", borderRadius: "0 110px 110px 0" }),
+                  }} />
+                )}
                 {row.map(st => {
                   const c = NODE_COLOR[st.state];
                   const isOpen = openId === st.id;
