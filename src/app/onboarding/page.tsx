@@ -206,6 +206,8 @@ type TourSlideDef = {
   body?: string;
   /** צילום מסך אמיתי מהאפליקציה — מוצג במסגרת טלפון. מה שרואים בסיור זה מה שמקבלים */
   shot?: string;
+  /** איור רחב 16:9 — נוצר בננו בננה בשפה הוויזואלית שלנו (25.8) */
+  hero?: string;
   appTabs?: { sym: string; label: string; desc: string }[];
 };
 
@@ -216,6 +218,7 @@ const TOUR_SLIDES: TourSlideDef[] = [
     iconBg: "#023e8a",
     bg: "#dce8ff",
     icon: "meeting",
+    hero: "/tour/northstar.jpeg",
     headline: "שתי מטרות. זהו.",
     body: "לעזור לך לגלות איזה תחום הייטק באמת מתאים לך — ולוודא שתצא/י מפה רשומ/ה למסלול הלימודים הנכון עבורך. כל מסך באפליקציה משרת את זה, ורכזת אמיתית מלווה אותך מהפגישה הראשונה ועד האישור ביד.",
   },
@@ -253,13 +256,14 @@ const TOUR_SLIDES: TourSlideDef[] = [
     icon: "meeting",
     headline: "עד שהאישור ביד",
     body: "המסע נגמר ברגע אמיתי אחד: אישור לימודים. וגם אז — הליווי ממשיך איתך לתוך הלימודים.",
-    shot: "/tour/student.png",
+    hero: "/tour/graduate.jpeg",
   },
   {
     tag: "מה יש לך כאן",
     iconBg: "#023e8a",
     bg: "#f2ede6",
     icon: "app",
+    hero: "/tour/support.jpeg",
     headline: "הכלים שילוו אותך",
     appTabs: [
       { sym: "⊞", label: "המסע", desc: "לדעת בכל רגע איפה את/ה — ולחזור לכל מקום שהיית" },
@@ -343,8 +347,13 @@ function WizardTour({ gender, onDone }: { gender: Gender; onDone: () => void }) 
         </button>
       </div>
 
-      {/* Illustration — צילום מסך אמיתי במסגרת טלפון, או אייקון כשאין */}
-      {cur.shot ? (
+      {/* Illustration — תמונת hero / צילום מסך אמיתי בטלפון / אייקון */}
+      {cur.hero ? (
+        <div className="mx-[22px] rounded-2xl overflow-hidden" style={{ background: "#fff", boxShadow: "0 4px 18px rgba(2,30,60,0.08)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={cur.hero} alt="" className="w-full" style={{ aspectRatio: "16/9", objectFit: "cover" }} />
+        </div>
+      ) : cur.shot ? (
         <div className="mx-auto" style={{ width: 172 }}>
           <div
             className="overflow-hidden"
