@@ -18,6 +18,7 @@ const ORANGE = "#fb8500";
 const STORE_KEY = "admin-institutions-draft";
 
 const TRACK_LABEL: Record<Track, string> = {
+  prep: "הכנה",
   degree: "תואר אקדמי",
   mahat: "מה״ט",
   bootcamp: "הכשרה טכנולוגית",
@@ -69,7 +70,21 @@ function AdminInstitutionsPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORE_KEY);
-      if (saved) { setItems(JSON.parse(saved)); setDirty(true); }
+      if (saved) {
+        /*
+         * מיזוג, לא החלפה. קודם הרשימה השמורה החליפה את רשימת הקוד כולה —
+         * ולכן מוסד חדש שנכנס בקוד לא הופיע אצל מי שערך פעם משהו (נתי ראה
+         * 69 כשבקוד היו 81). הבסיס תמיד הקוד הטרי; עריכות יושבות עליו לפי id.
+         */
+        const stored: Institution[] = JSON.parse(saved);
+        const editedById = new Map(stored.map(i => [i.id, i]));
+        const codeIds = new Set(INSTITUTIONS.map(i => i.id));
+        setItems([
+          ...INSTITUTIONS.map(i => editedById.get(i.id) ?? i),
+          ...stored.filter(i => !codeIds.has(i.id)),
+        ]);
+        setDirty(true);
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -187,7 +202,7 @@ function AdminInstitutionsPage() {
           style={{ background: "rgba(251,133,0,0.1)", border: "1.5px solid rgba(251,133,0,0.3)" }}>
           <span className="text-[18px] shrink-0">⚠️</span>
           <div className="text-[12.5px] leading-[1.7]" style={{ color: "#92400e" }}>
-            <span className="font-black">אין עדיין בקאנד, אז מה שנערך כאן נשמר רק בדפדפן הזה.</span>{" "}
+            <span className="font-black">הקטלוג יושב בקוד, לא בבסיס הנתונים — לכן עריכה כאן נשמרת רק בדפדפן הזה.</span>{" "}
             המשתמשים באפליקציה עדיין רואים את הגרסה המקורית. כדי להעלות שינויים באמת —
             ערוך כאן, לחץ <span className="font-bold">״העתק JSON״</span>, ושלח לקלוד. זה ייכנס לקוד ויעלה לאוויר.
             {dirty && <span className="block mt-1.5 font-black">יש לך שינויים שעוד לא ייצאת.</span>}

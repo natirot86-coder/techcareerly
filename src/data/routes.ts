@@ -16,7 +16,10 @@
  *    והוא נכתב ביד לכל מסלול — לא נגזר מקבוע.
  */
 
-import type { Domain, Track } from "./institutions";
+import type { Domain, Track as DataTrack } from "./institutions";
+
+// מסלולי הכניסה הם שלוש מסילות הלימוד — prep הוא אפיק הכנה, לא מסילה
+type Track = Exclude<DataTrack, "prep">;
 
 export type Station = {
   label: string;
@@ -112,6 +115,18 @@ export const ROUTES: Record<Domain, Route[]> = {
     {
       track: "mahat", span: "2-3 שנים", destination: "הנדסאי/ת תקשורת ותשתיות",
       note: "לחיילים משוחררים: 90% מימון שכר הלימוד",
+      stations: [
+        { label: "קבלה", gap: 0 }, { label: "תעודת הנדסאי", gap: 150 },
+        { label: "השמה", gap: 40, income: true },
+      ],
+    },
+  ],
+
+  hardware: [
+    degreeRoute("מהנדס/ת חומרה · אלקטרוניקה", "שבבים, מערכות משובצות ותעשייה ביטחונית — התואר פותח את כולם"),
+    {
+      track: "mahat", span: "2-3 שנים", destination: "הנדסאי/ת אלקטרוניקה · מכטרוניקה",
+      note: "המסלול הקלאסי של מה״ט — מבוקש בתעשייה הביטחונית, ולחיילים משוחררים 90% מימון",
       stations: [
         { label: "קבלה", gap: 0 }, { label: "תעודת הנדסאי", gap: 150 },
         { label: "השמה", gap: 40, income: true },

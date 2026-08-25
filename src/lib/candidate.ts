@@ -415,6 +415,38 @@ export function logEvent(name: string, props: Record<string, unknown> = {}): voi
 const TOUCH_KEY = "last-touch-at";
 const TOUCH_EVERY_MS = 60 * 60 * 1000;
 
+/**
+ * סנכרון התקדמות הטעימות לשרת (נתי 20.8 — מפת המסע של הרכזת).
+ *
+ * סיום day/mystery/experience נכתב עד היום רק ל-localStorage, ולכן מפה
+ * שתציג אותו אצל הרכזת הייתה מציגה ריק גם למי שסיים. במקום לתקן שנים-עשר
+ * כפתורי "מיציתי" שונים — נקודת סנכרון אחת שרואה את הדגלים מכל תחום,
+ * מדווחת רק הפרשים (taste_done), ותופסת רטרואקטיבית גם השלמות עבר.
+ */
+export function syncTasteProgress(): void {
+  if (!supabase || typeof window === "undefined") return;
+  try {
+    const domains = ["code", "data", "cyber", "networks", "hardware", "ai", "ux", "marketing", "qa"];
+    const steps = ["sim", "day", "mystery", "experience", "analytics"];
+    const synced: Record<string, boolean> = JSON.parse(localStorage.getItem("taste-synced") ?? "{}");
+    let changed = false;
+    for (const d of domains) {
+      const raw = localStorage.getItem(`${d}-journey`);
+      if (!raw) continue;
+      const j = JSON.parse(raw) as Record<string, unknown>;
+      for (const step of steps) {
+        const key = `${d}.${step}`;
+        if (j[step] === true && !synced[key]) {
+          logEvent("taste_done", { domain: d, step });
+          synced[key] = true;
+          changed = true;
+        }
+      }
+    }
+    if (changed) localStorage.setItem("taste-synced", JSON.stringify(synced));
+  } catch { /* ignore */ }
+}
+
 export function touchActivity(): void {
   if (!supabase || typeof window === "undefined") return;
   try {
@@ -475,6 +507,86 @@ export async function savePathsAnswers(patch: {
   if (patch.completed) row.completed_at = new Date().toISOString();
   const { error } = await supabase.from("paths_answers").upsert(row, { onConflict: "candidate_id" });
   if (error) console.error("savePathsAnswers failed", error);
+}
+
+/**
+ * הרכזת של המועמד — מה-DB (טבלת coordinators + השיוך בשורת המועמד).
+ * בלי שיוך — הרכזת הפעילה הראשונה. RLS מתיר למועמד לקרוא רכזות פעילות.
+ */
+export type MyCoordinator = {
+  name: string;
+  phone: string;
+  /** קישורי Cal פר-פגישה (מה שאחרי cal.com/). ריק = לרכזת אין יומן משלה — נופלים לברירת המחדל */
+  calLinks: { 1: string; 2: string; 3: string };
+};
+
+export async function myCoordinator(): Promise<MyCoordinator | null> {
+  if (!supabase) return null;
+  try {
+    const candidateId = await ensureCandidateId();
+    if (!candidateId) return null;
+    const { data: rows } = await supabase
+      .from("coordinators")
+      .select("id, name, phone, cal_m1, cal_m2, cal_m3")
+      .eq("active", true)
+      .order("created_at");
+    if (!rows?.length) return null;
+    const { data: cand } = await supabase
+      .from("candidates")
+      .select("coordinator_id")
+      .eq("id", candidateId)
+      .maybeSingle();
+    const mine = cand?.coordinator_id ? rows.find(r => r.id === cand.coordinator_id) : null;
+    const row = mine ?? rows[0];
+    return {
+      name: row.name ?? "",
+      phone: row.phone ?? "",
+      calLinks: { 1: row.cal_m1 ?? "", 2: row.cal_m2 ?? "", 3: row.cal_m3 ?? "" },
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * אישור הלימודים — המסמך היחיד שאנחנו כן שומרים (נתי 20.8): האסמכתא
+ * שמשרד העבודה דורש. כל מועמד כותב רק לתיקייה של עצמו (RLS לפי auth.uid).
+ */
+export async function uploadEnrollmentDoc(file: File): Promise<string | null> {
+  if (!supabase) return null;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return null;
+  const ext = file.name.split(".").pop() || "pdf";
+  const path = `${candidateId}/enrollment-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("enrollment-docs").upload(path, file, { upsert: true });
+  if (error) { console.error("uploadEnrollmentDoc failed", error); return null; }
+  logEvent("enrollment_doc_uploaded", {});
+  try { localStorage.setItem("enrollment-doc-path", path); } catch { }
+  return path;
+}
+
+/** קישור חתום לצפייה חוזרת — שעה אחת, מספיק לפתיחה */
+export async function enrollmentDocUrl(): Promise<string | null> {
+  if (!supabase) return null;
+  try {
+    const path = localStorage.getItem("enrollment-doc-path");
+    if (!path) return null;
+    const { data, error } = await supabase.storage.from("enrollment-docs").createSignedUrl(path, 3600);
+    if (error) { console.error("enrollmentDocUrl failed", error); return null; }
+    return data.signedUrl;
+  } catch { return null; }
+}
+
+/** הכיוון שנבחר בשער שלב 4 — עד שני תחומים, מופרדים בפסיק */
+export async function saveChosenDomains(domains: string[]): Promise<void> {
+  if (!supabase) return;
+  const candidateId = await ensureCandidateId();
+  if (!candidateId) return;
+  const { error } = await supabase
+    .from("candidates")
+    .update({ chosen_domain: domains.join(",") })
+    .eq("id", candidateId);
+  if (error) console.error("saveChosenDomains failed", error);
 }
 
 /**

@@ -72,3 +72,9 @@ body {
 .animate-pop-in { animation: popIn 0.35s ease forwards; }
 .animate-fade-slide-up { animation: fadeSlideUp 0.3s ease forwards; }
 .animate-slide-up { animation: slideUp 0.3s ease forwards; }
+
+
+/* הפס הצדי דוחף את התוכן במקום לשבת עליו — רק כשהוא באמת מוצג */
+@media (min-width: 1200px) {
+  body:has(.journey-rail) { padding-right: 225px; }
+}

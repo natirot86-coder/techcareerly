@@ -10,7 +10,9 @@
  *  3. אורך הקו מייצג משך, דחוס בכוונה ולא בקנה מידה אמיתי
  */
 
-import { type Domain, type Track } from "@/data/institutions";
+import { type Domain, type Track as DataTrack } from "@/data/institutions";
+// prep הוא אפיק הכנה, לא מסילת לימודים — שלוש המסילות בלבד כאן
+type Track = Exclude<DataTrack, "prep">;
 import { routesFor, stationYs, NO_ROUTE_NOTE, DEEPEN_NOTE } from "@/data/routes";
 
 const GREEN = "#059669";

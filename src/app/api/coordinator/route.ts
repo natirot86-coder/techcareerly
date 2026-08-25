@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain")
+      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -91,6 +91,21 @@ export async function GET(req: NextRequest) {
     if (missed) {
       const days = Math.floor((now - ms(missed.created_at)) / DAY);
       signals.push({ severity: 1, reason: `סימן/ה "לא הצלחתי להגיע" לפגישת ההיכרות${days > 0 ? ` — לפני ${days} ימים` : " — היום"}`, action: "call" });
+    }
+
+    /*
+     * 2 — עצר בשער בחירת הכיוון: ראה את המסך ולא בחר.
+     * האופציה "עוד לא סגור" הוסרה בכוונה (נתי 20.8) — ולכן מי שעומד מול
+     * השער בלי לבחור חייב להפוך לסיגנל, אחרת לקחנו את פתח המילוט
+     * בלי לשים שם רכזת.
+     */
+    const gate = myEvents.find(e => e.name === "paths_domain_gate");
+    const committedDomain = myEvents.some(e => e.name === "domain_committed") || !!c.chosen_domain;
+    if (gate && !committedDomain) {
+      const days = Math.floor((now - ms(gate.created_at)) / DAY);
+      if (days >= 2) {
+        signals.push({ severity: 2, reason: `הגיע/ה לבחירת הכיוון בשלב 4 ולא בחר/ה — ${days} ימים. שווה שיחה על התחום`, action: "call" });
+      }
     }
 
     // 1 — דדליין מלגה שעבר עם משימה פתוחה: כסף שלא יחזור
@@ -152,6 +167,32 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    /*
+     * צ'קליסט התהליך — תשע אבני דרך, כולן נגזרות ממה שקרה (אירועים,
+     * שדות, משימות) ולא ממה שדווח. זה מה שהרכזת רואה קודם; יומן
+     * האירועים הגולמי משרת אנליטיקות, לא אותה.
+     */
+    const has = (n: string, pred?: (props: Record<string, unknown>) => boolean) =>
+      myEvents.some(e => e.name === n && (!pred || pred((e.props ?? {}) as Record<string, unknown>)));
+    const tastedDomains = new Set(
+      myEvents
+        .filter(e => e.name === "scct_done" || e.name === "sim_start")
+        .map(e => String((e.props as { domain?: string } | null)?.domain ?? ""))
+        .filter(Boolean)
+    ).size;
+    const checklist = [
+      { label: "נרשם/ה לאפליקציה", done: true },
+      { label: "קבע/ה פגישת היכרות", done: has("meeting_booked", pr => pr.n === "1") || has("meeting1_checkin") },
+      { label: "הגיע/ה לפגישה 1", done: has("meeting1_checkin", pr => pr.result === "yes") },
+      { label: "טעם/ה תחומים", done: tastedDomains > 0, detail: tastedDomains ? `${tastedDomains} תחומים` : undefined },
+      { label: "קבע/ה פגישת בחירת תחום", done: has("meeting_booked", pr => pr.n === "2") },
+      { label: "בחר/ה כיוון", done: has("domain_committed") || !!c.chosen_domain },
+      { label: "קבע/ה פגישת נעילת מסלול", done: has("meeting_booked", pr => pr.n === "3") },
+      { label: "בחר/ה מוסד", done: has("institution_committed") },
+      { label: "נרשם/ה ללימודים", done: myTasks.some(t => t.status === "done" && /הרשמה/.test(t.title ?? "")) || has("enrollment_doc_uploaded") },
+      { label: "העלה/תה אישור לימודים", done: has("enrollment_doc_uploaded") },
+    ];
+
     const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "מועמד/ת ללא שם";
     return [{
       id: c.id,
@@ -160,9 +201,11 @@ export async function GET(req: NextRequest) {
       region: c.region,
       stage: c.current_stage,
       domain: c.chosen_domain,
+      coordinatorId: c.coordinator_id ?? null,
       ranked: myRanks,
       lastActive: iso(seenAt),
       lastAction: doing?.created_at ?? null,
+      checklist,
       signals: signals.sort((a, b) => a.severity - b.severity),
       topSeverity: signals.length ? Math.min(...signals.map(s => s.severity)) : 9,
       // ציר הזמן — למסך הפרט: מה קרה, בסדר הפוך
@@ -182,7 +225,43 @@ export async function GET(req: NextRequest) {
     generatedAt: new Date().toISOString(),
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
+    // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)
+    quietList: queue.filter(q => q.signals.length === 0),
     total: queue.length,
     skipped, // שורות שלא ניתן היה לחשב — 0 במצב תקין
   });
+}
+
+/**
+ * POST /api/coordinator — שיוך רכזת למועמד (מדף מנהל התוכנית).
+ * אותו שער גישה. דורש את עמודת coordinator_id (מיגרציה 003) — עד שהיא
+ * רצה, מוחזרת שגיאה מפורשת במקום כישלון שקט.
+ */
+export async function POST(req: NextRequest) {
+  const code = process.env.COORDINATOR_CODE;
+  if (!code) return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
+  if (req.headers.get("x-coordinator-code") !== code) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !secret) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
+
+  const body = await req.json().catch(() => null) as { candidateId?: string; coordinatorId?: string } | null;
+  if (!body?.candidateId) return NextResponse.json({ error: "candidateId required" }, { status: 400 });
+
+  const db = createClient(url, secret, { auth: { persistSession: false } });
+  const { error } = await db
+    .from("candidates")
+    .update({ coordinator_id: body.coordinatorId || null })
+    .eq("id", body.candidateId);
+
+  if (error) {
+    const missing = /coordinator_id/.test(error.message);
+    return NextResponse.json(
+      { error: missing ? "העמודה coordinator_id חסרה — להריץ את supabase/migrations/003 בדשבורד" : error.message },
+      { status: missing ? 409 : 500 },
+    );
+  }
+  return NextResponse.json({ ok: true });
 }

@@ -16,6 +16,7 @@ const DOMAINS = [
   { id: "ai",        label: "AI ובינה מלאכותית",  color: "#7c3aed" },
   { id: "ux",        label: "עיצוב UX/UI",        color: "#db2777" },
   { id: "marketing", label: "שיווק דיגיטלי",     color: "#f97316" },
+  { id: "hardware",  label: "חומרה ואלקטרוניקה", color: "#7c2d12" },
 ];
 
 /** מה יקרה בפגישה — שונה לכל אחת מהשלוש */
@@ -28,7 +29,7 @@ const WHAT_HAPPENS: Record<MeetingNum, { emoji: string; text: string }[]> = {
   2: [
     { emoji: "🎯", text: "הרכז/ת יקרא/תקרא את הסיכום שהכנת — הפגישה מתחילה כבר ממקום מעמיק" },
     { emoji: "🔍", text: "ביחד תבחנו את התחומים שהכי דיברו אליך — מה מאחורי האינטרס, מה הספקות" },
-    { emoji: "🗺️", text: "בסוף תצא/י עם תחום נבחר, וייפתח לך חקר מסלולי הלימוד" },
+    { emoji: "🗺️", text: "בסוף תבחרו יחד תחום — ואז ייפתח החקר המלא: מוסדות, חסמים והכנה לפגישה השלישית" },
   ],
   3: [
     { emoji: "🎓", text: "תעברו יחד על המוסדות שברשימה ועל השאלות שהכנת" },
@@ -55,8 +56,8 @@ const NEXT: Record<MeetingNum, { stage: string; title: string; body: string; hre
   },
   2: {
     stage: "נפתח עכשיו",
-    title: "חקר מסלולי הלימוד נפתח",
-    body: "אפשר להתחיל כבר עכשיו לבדוק איזה מסלול לימודים מתאים לך — תואר, מה״ט או הכשרה טכנולוגית. תגיע/י לפגישה עם רשימת מוסדות ושאלות מוכנות, וזה יחסוך זמן יקר.",
+    title: "ההכנה לחקר המסלולים נפתחה",
+    body: "השאלון והיכרות עם שלוש הדרכים — תואר, מה״ט והכשרה — פתוחים כבר עכשיו. תגיע/י לפגישה עם תמונה מלאה של האילוצים והאפשרויות; את בחירת התחום והמוסדות תעשו יחד בפגישה.",
     href: "/paths",
     cta: "לחקר מסלולי לימוד ←",
   },
@@ -264,13 +265,27 @@ export default function BookedPage() {
           </Link>
         </div>
 
-        <Link
-          href="/dashboard"
-          className="block w-full py-3.5 text-center font-bold text-[13.5px] rounded-2xl active:scale-[0.98] transition-transform"
-          style={{ background: "rgba(2,62,138,0.06)", color: NAVY }}
-        >
-          חזרה למסע
-        </Link>
+        {/*
+          בפגישה 2 הפעולה המשנית היא חיזוק, לא ניווט: עוד טעימה לפני הפגישה
+          מחדדת את הבחירה. "חזרה למסע" היה תווית של יעד — לא של כוונה.
+        */}
+        {m === 2 ? (
+          <Link
+            href="/explore"
+            className="block w-full py-3.5 text-center font-bold text-[13.5px] rounded-2xl active:scale-[0.98] transition-transform"
+            style={{ background: "rgba(2,62,138,0.06)", color: NAVY }}
+          >
+            רוצה לטעום עוד תחום לפני הפגישה? ←
+          </Link>
+        ) : (
+          <Link
+            href="/dashboard"
+            className="block w-full py-3.5 text-center font-bold text-[13.5px] rounded-2xl active:scale-[0.98] transition-transform"
+            style={{ background: "rgba(2,62,138,0.06)", color: NAVY }}
+          >
+            חזרה למסע
+          </Link>
+        )}
       </div>
 
       <BottomNav />

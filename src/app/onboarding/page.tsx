@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import { saveOnboarding } from "@/lib/candidate";
+import { saveOnboarding, logEvent } from "@/lib/candidate";
 import { JOURNEY } from "@/data/journey";
 
 // שמות השלבים — מ-src/data/journey.ts בלבד, אין כאן רשימה שנייה
@@ -204,45 +204,72 @@ type TourSlideDef = {
   icon: "meeting" | "explore" | "checklist" | "app";
   headline: string;
   body?: string;
+  /** צילום מסך אמיתי מהאפליקציה — מוצג במסגרת טלפון. מה שרואים בסיור זה מה שמקבלים */
+  shot?: string;
+  /** איור רחב 16:9 — נוצר בננו בננה בשפה הוויזואלית שלנו (25.8) */
+  hero?: string;
   appTabs?: { sym: string; label: string; desc: string }[];
 };
 
 const TOUR_SLIDES: TourSlideDef[] = [
+  /* כוכב הצפון קודם — כל שקף אחריו עונה "איך זה מקרב אותך אליו" (נתי 25.8) */
   {
-    tag: "שלב 2 — פגישת פתיחה",
+    tag: "לפני שמתחילים — בשביל מה כל זה",
     iconBg: "#023e8a",
     bg: "#dce8ff",
     icon: "meeting",
-    headline: "הצעד הבא — מפגש עם הרכזת",
-    body: "הרכזת תיצור איתך קשר לפגישת היכרות — מפגש פנים אל פנים. שיחה חופשית, לא ראיון. רק שתכירו ותצאו לדרך יחד.",
+    hero: "/tour/northstar.jpeg",
+    headline: "שתי מטרות. זהו.",
+    body: "לעזור לך לגלות איזה תחום הייטק באמת מתאים לך — ולוודא שתצא/י מפה רשומ/ה למסלול הלימודים הנכון עבורך. כל מסך באפליקציה משרת את זה, ורכזת אמיתית מלווה אותך מהפגישה הראשונה ועד האישור ביד.",
   },
   {
-    tag: "שלב 3 — טעימות הייטק",
+    tag: "טעימות הייטק — איך תדע/י מה מתאים לך",
     iconBg: "#fb8500",
     bg: "#fff3e0",
     icon: "explore",
-    headline: "לגלות מה מדליק אותך",
-    body: "קוד, סייבר, AI, עיצוב, דאטה, שיווק דיגיטלי — תנסה/י כמה כיוונים בסימולציות קצרות ותגלה/י מה קורה לך. בלי לחץ לבחור מראש.",
+    headline: "מתנסים באמת, לא מנחשים",
+    body: "9 תחומים — קוד, AI, סייבר, עיצוב, דאטה ועוד — כל אחד בסימולציה אמיתית קצרה. מגלים מה מדליק אותך מתוך עשייה.",
+    shot: "/tour/explore.png",
   },
   {
-    tag: "שלבים 4-5 — מסלול וצ׳קליסט",
+    tag: "בחירת מסלול — הדרך אל התחום שבחרת",
+    iconBg: "#023e8a",
+    bg: "#e8efff",
+    icon: "checklist",
+    headline: "רואים בדיוק מה כל מסלול נותן",
+    body: "תואר, הכשרה או הנדסאים — השוואה כנה, מספרים אמיתיים, והמלצה אישית לפי התשובות שלך. ההחלטה נשארת שלך.",
+    shot: "/tour/paths.png",
+  },
+  {
+    tag: "מלגות והרשמה — שהכסף לא יעצור אותך",
     iconBg: "#2e7d46",
     bg: "#e8f5e9",
     icon: "checklist",
-    headline: "מסלול + הכנה מלאה לרישום",
-    body: "נמצא את מסגרת הלימודים הנכונה — אקדמאית, הנדסאים, הכשרה מקצועית. ונכין יחד הכל: מימון, מלגות, דיור, פסיכומטרי, תנאי קבלה.",
+    headline: "כמה זה באמת עולה — ומי עוזר לשלם",
+    body: "רוב הסטודנטים שלנו לא משלמים את המחיר המלא. נראה לך בדיוק כמה עולה המסלול שבחרת, אילו מלגות מגיעות לך — ומה באמת נשאר לסגור.",
+    shot: "/tour/money.png",
+  },
+  {
+    tag: "היעד — סטודנט/ית",
+    iconBg: "#023e8a",
+    bg: "#dce8ff",
+    icon: "meeting",
+    headline: "עד שהאישור ביד",
+    body: "המסע נגמר ברגע אמיתי אחד: אישור לימודים. וגם אז — הליווי ממשיך איתך לתוך הלימודים.",
+    hero: "/tour/graduate.jpeg",
   },
   {
     tag: "מה יש לך כאן",
     iconBg: "#023e8a",
     bg: "#f2ede6",
     icon: "app",
-    headline: "4 כלים לאורך כל הדרך",
+    hero: "/tour/support.jpeg",
+    headline: "האנשים והכלים שילוו אותך",
     appTabs: [
-      { sym: "⊞", label: "המסע", desc: "מעקב אחרי השלבים שלך" },
-      { sym: "◎", label: "Co-pilot", desc: "AI שעוזר עם שאלות" },
-      { sym: "◈", label: "קהילה", desc: "סטודנטים בדרך דומה" },
-      { sym: "◉", label: "רכזת", desc: "מלווה אותך מהתחלה ועד הרשמה" },
+      { sym: "⊞", label: "המסע", desc: "לדעת בכל רגע איפה את/ה — ולחזור לכל מקום שהיית" },
+      { sym: "⊙", label: "הצעד שלך", desc: "טאב שמתקדם איתך: טעימות ← מסלול ← תוכנית. תמיד מוביל למה שעכשיו" },
+      { sym: "?", label: "שאלות", desc: "כמה טעימות צריך? כמה זה עולה? פספסתי פגישה? — תשובות ישרות, בלי אותיות קטנות" },
+      { sym: "◉", label: "רכזת", desc: "בן-אדם אמיתי שמכיר אותך — פגישות, וואטסאפ, ותשובות מדויקות לך" },
     ],
   },
 ];
@@ -320,13 +347,33 @@ function WizardTour({ gender, onDone }: { gender: Gender; onDone: () => void }) 
         </button>
       </div>
 
-      {/* Illustration */}
-      <div
-        className="mx-[22px] rounded-2xl flex items-center justify-center"
-        style={{ height: 174, background: cur.iconBg }}
-      >
-        <TourIcon type={cur.icon} strokeColor={cur.bg} />
-      </div>
+      {/* Illustration — תמונת hero / צילום מסך אמיתי בטלפון / אייקון */}
+      {cur.hero ? (
+        <div className="mx-[22px] rounded-2xl overflow-hidden" style={{ background: "#fff", boxShadow: "0 4px 18px rgba(2,30,60,0.08)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={cur.hero} alt="" className="w-full" style={{ aspectRatio: "16/9", objectFit: "cover" }} />
+        </div>
+      ) : cur.shot ? (
+        <div className="mx-auto" style={{ width: 172 }}>
+          <div
+            className="overflow-hidden"
+            style={{
+              borderRadius: 26, border: "5px solid #1b1f27", background: "#1b1f27",
+              boxShadow: "0 14px 34px rgba(2,30,60,0.25)", height: 300,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={cur.shot} alt="" className="w-full h-full object-cover object-top" style={{ borderRadius: 21 }} />
+          </div>
+        </div>
+      ) : (
+        <div
+          className="mx-[22px] rounded-2xl flex items-center justify-center"
+          style={{ height: 174, background: cur.iconBg }}
+        >
+          <TourIcon type={cur.icon} strokeColor={cur.bg} />
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 px-[22px] pt-5 flex flex-col gap-4">
@@ -423,18 +470,25 @@ function Step0({ onNext }: { onNext: () => void }) {
 // ─── Step 1 ───────────────────────────────────────────────────────────────────
 function Step1({
   firstName, setFirstName, lastName, setLastName,
-  gender, setGender, age, setAge, region, setRegion, onNext,
+  gender, setGender, age, setAge, region, setRegion, city, setCity,
+  service, setService, discharge, setDischarge, miluim, setMiluim, onNext,
 }: {
   firstName: string; setFirstName: (v: string) => void;
   lastName: string; setLastName: (v: string) => void;
   gender: Gender; setGender: (v: Gender) => void;
   age: string; setAge: (v: string) => void;
   region: string; setRegion: (v: string) => void;
+  city: string; setCity: (v: string) => void;
+  service: string; setService: (v: string) => void;
+  discharge: string; setDischarge: (v: string) => void;
+  miluim: boolean; setMiluim: (v: boolean) => void;
   onNext: () => void;
 }) {
-  const ageNum = parseInt(age, 10);
+  const ageNum = age ? Math.floor((Date.now() - new Date(age).getTime()) / (365.25 * 24 * 3600 * 1000)) : NaN;
   const ageValid = !isNaN(ageNum) && ageNum >= 15 && ageNum <= 80;
-  const valid = firstName.trim() && lastName.trim() && gender && ageValid && region;
+  const dischargeNeeded = service === "done-army" || service === "done-national";
+  const valid = firstName.trim() && lastName.trim() && gender && ageValid && region &&
+    city.trim() && service && (!dischargeNeeded || discharge);
 
   const title = gender
     ? g(gender, "קודם כל, ספר לנו עליך", "קודם כל, ספרי לנו עליך", "קודם כל, ספר/י לנו עליך")
@@ -475,11 +529,71 @@ function Step1({
 
       {/* Age */}
       <div className="flex flex-col gap-2">
-        <label className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>גיל</label>
-        <TextInput value={age} onChange={setAge} placeholder="לדוגמה: 24" type="number" />
+        <label className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>תאריך לידה</label>
+        {/* תאריך במקום גיל (נתי 20.8): אותה שאלה אחת — הגיל נגזר, ויום ההולדת
+            נותן לרכזת נקודת מגע חמה שאי אפשר להמציא */}
+        <TextInput value={age} onChange={setAge} placeholder="" type="date" />
         {age && !ageValid && (
-          <div className="text-[12px]" style={{ color: "#c0392b" }}>גיל צריך להיות בין 15 ל-80</div>
+          <div className="text-[12px]" style={{ color: "#c0392b" }}>נראה שהתאריך לא מסתדר — גיל בין 15 ל-80</div>
         )}
+
+        {/*
+          שירות — עובדות, לא הגדרות (נתי 23.8): לא שואלים "אתה חייל משוחרר?"
+          כי אף אחד לא מכיר את ההגדרה המשפטית. שואלים מה היה ומתי השתחרר —
+          והמערכת גוזרת: זכאות האגף (5 שנים משחרור, 10 לבודדים/מילואים),
+          ייעוד 44 (שירות לאומי 12 חוד' = 50%), ומלגות המילואים.
+        */}
+        <label className="text-[13px] font-bold mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>שירות צבאי או לאומי</label>
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["done-army", "סיימתי שירות צבאי"],
+            ["done-national", "סיימתי שירות לאומי/אזרחי"],
+            ["serving", "משרת/ת עכשיו"],
+            ["none", "לא שירתתי"],
+          ].map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setService(v)}
+              className="px-3.5 py-2 rounded-xl text-[13px] font-bold"
+              style={{
+                background: service === v ? "#023e8a" : "#fff",
+                color: service === v ? "#fff" : "rgba(0,0,0,0.6)",
+                border: service === v ? "none" : "1px solid rgba(0,0,0,0.15)",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {(service === "done-army" || service === "done-national") && (
+          <>
+            <label className="text-[13px] font-bold mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>
+              מתי השתחררת? (חודש ושנה בערך)
+            </label>
+            <TextInput value={discharge} onChange={setDischarge} placeholder="" type="month" />
+            <div className="text-[11px] -mt-1" style={{ color: "rgba(0,0,0,0.4)" }}>
+              רוב המימון למשוחררים תקף חמש שנים מהשחרור — התאריך עוזר לנו לראות כמה זמן נשאר לך.
+            </div>
+            <button
+              type="button"
+              onClick={() => setMiluim(!miluim)}
+              className="flex items-center gap-2 text-[13px] font-bold text-right"
+              style={{ color: miluim ? "#023e8a" : "rgba(0,0,0,0.55)" }}
+            >
+              <span className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[12px]"
+                style={{ background: miluim ? "#023e8a" : "rgba(0,0,0,0.15)" }}>{miluim ? "✓" : ""}</span>
+              יש לי תעודת משרת/ת מילואים פעיל/ה
+            </button>
+            {miluim && (
+              <div className="text-[11px] -mt-1" style={{ color: "rgba(0,0,0,0.4)" }}>
+                מעולה — זה מאריך זכאויות ופותח מלגות ייעודיות. נסמן את זה לרכזת.
+              </div>
+            )}
+          </>
+        )}
+
       </div>
 
       {/* Region */}
@@ -489,6 +603,16 @@ function Step1({
           {REGION_OPTIONS.map((opt) => (
             <Chip key={opt} label={opt} selected={region === opt} onClick={() => setRegion(opt)} />
           ))}
+        </div>
+
+        {/* היישוב המדויק פותח את מלגת פריפריה 45 — שנקבעת לפי כתובת המגורים
+            (5 מתוך 6 השנים האחרונות), לא לפי מקום הלימודים */}
+        <label className="text-[13px] font-bold mt-1" style={{ color: "rgba(0,0,0,0.55)" }}>
+          באיזה יישוב גרת רוב שש השנים האחרונות?
+        </label>
+        <TextInput value={city} onChange={setCity} placeholder="לדוגמה: קריית מלאכי" />
+        <div className="text-[11px] -mt-1" style={{ color: "rgba(0,0,0,0.4)" }}>
+          למה זה חשוב: יש מלגה ששווה שנת לימודים שלמה ונקבעת לפי היישוב שגרים בו.
         </div>
       </div>
 
@@ -659,14 +783,27 @@ export default function OnboardingPage() {
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState<Gender>("");
   const [age, setAge] = useState("");
+  // שירות — עובדות שגוזרות זכאות: סוג, תאריך שחרור, מילואים פעיל (נתי 23.8)
+  const [service, setService] = useState("");
+  const [discharge, setDischarge] = useState("");
+  const [miluim, setMiluim] = useState(false);
+  // היישוב המדויק — פותח את פריפריה 45 (נקבעת לפי כתובת מגורים)
+  const [city, setCity] = useState("");
   const [region, setRegion] = useState("");
   const [score, setScore] = useState(5);
   const [blockers, setBlockers] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (new URLSearchParams(window.location.search).get("reset") === "1") {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get("reset") === "1") {
         localStorage.removeItem("onboarding-done");
+        return;
+      }
+      // קפיצה ישירה למסך לבדיקה — ?step=5 מגיע ישר לסיור (כמו ?demo בשאר המסכים)
+      const jump = Number(q.get("step"));
+      if (jump >= 0 && jump <= 5) {
+        setStep(jump as Step);
         return;
       }
       if (localStorage.getItem("onboarding-done")) {
@@ -678,16 +815,28 @@ export default function OnboardingPage() {
   function handleDone() {
     localStorage.setItem("onboarding-done", "1");
     localStorage.setItem("user-name", firstName.trim());
+    const derivedAge = Math.floor((Date.now() - new Date(age).getTime()) / (365.25 * 24 * 3600 * 1000));
+    try {
+      localStorage.setItem("birth-date", age);
+      localStorage.setItem("service-status", service);
+      localStorage.setItem("home-city", city.trim());
+      if (discharge) localStorage.setItem("discharge-date", discharge);
+      localStorage.setItem("miluim-active", miluim ? "1" : "0");
+    } catch { /* ignore */ }
+    // צד שרת בלי מיגרציה: האירוע נושא הכל, ומסך הרכזת גוזר משם
+    logEvent("profile", { birthDate: age, service, city: city.trim(), discharge, miluim: miluim ? "1" : "0" });
     saveOnboarding({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       gender: gender || "other",
-      age: parseInt(age, 10),
+      age: derivedAge,
       region,
       techInterestScore: score,
       blockers,
     });
-    router.push("/dashboard");
+    // ישר לקביעת הפגישה — לא לדשבורד. שיא המוטיבציה הוא רגע הבקשה הנכון,
+    // והדשבורד הוא מסך של מי שכבר יש לו מסע (החלטת נתי 20.8)
+    router.push("/contact?m=1&welcome=1");
   }
 
   function goBack() {
@@ -706,6 +855,10 @@ export default function OnboardingPage() {
           gender={gender} setGender={setGender}
           age={age} setAge={setAge}
           region={region} setRegion={setRegion}
+          city={city} setCity={setCity}
+          service={service} setService={setService}
+          discharge={discharge} setDischarge={setDischarge}
+          miluim={miluim} setMiluim={setMiluim}
           onNext={() => setStep(2)}
         />
       )}

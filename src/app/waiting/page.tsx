@@ -18,19 +18,24 @@
  *    אמת נכונה שאפשר לפספס. בשלב הזה אין רכזת ואין כלי עיבוד — מי שייתקע
  *    יסיק "אני לא בנוי לזה", וזה ההפך הגמור מהמטרה.
  *
- * 3. **טעימה אחת, אותה אחת לכולם.** לא בחירה מבין שבעה. בחירה היא כבר החלטה
- *    קטנה שמעגנת, וסימולציית ה-AI נבנתה בדיוק לתפקיד: שתי דקות, אפס ידע
- *    מוקדם, ואפס אפשרות כישלון. שבעת התחומים נפתחים בשלב 3, במקומם.
+ * 3. **מבוא על העולם, לא על תחום** (נתי 24.8): סימולציית ה-AI הוחלפה במבוא
+ *    לעולם ההייטק. היא נבנתה כשלא היה תחום AI בחקר; היום יש טעימת AI מלאה,
+ *    והגרסה הקטנה כאן גנבה את רגע הגילוי של שלב 3. המבוא מדבר על העולם —
+ *    כמה גדול, כמה משתלם (עם שורת אמת על הממוצע), אילו תפקידים, מה AI שינה,
+ *    ומי כמוך כבר שם. **כל מספר מאומת** (רשות החדשנות 2026 / למ"ס 2025) —
+ *    מספר בלי מקור לא נכנס. העומק על כל תחום נשאר בטעימות.
  *
  * הקצה של הציר משתנה: לפני קביעת פגישה הוא **קריאה לקבוע** — וזו הפעולה
  * החשובה במסך, לא הטעימה. אחרי הקביעה הוא כרטיס הפגישה.
  */
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { track as trackEvent } from "@vercel/analytics";
 import { coordinatorFor } from "@/data/meetings";
 import { logEvent } from "@/lib/candidate";
+import BottomNav from "@/components/ui/BottomNav";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -43,96 +48,50 @@ const FAINT = "#8a919d";
 const HEEBO = { fontFamily: "'Heebo', sans-serif" };
 
 type Screen = "home" | "taste" | "prep";
-type Phase = "frame" | "label" | "test" | "done";
 
-// ─── היצורים ─────────────────────────────────────────────────────────────────
+// ─── תוכן המבוא — כל מספר עם מקור, אומת 24.8.2026 ────────────────────────────
+// מקורות: רשות החדשנות — דוח מצב ההייטק 2026 (innovationisrael.org.il, חלק 1
+// תעסוקה, נשלף ואומת ישירות) · למ"ס דרך bizportal 10.2025 · ynet · כלכליסט.
 
-type Size = "big" | "small";
-type Color = "warm" | "cool";
-type Fill = "solid" | "ring";
-type Creature = { id: string; size: Size; color: Color; fill: Fill };
-
-const TRAIN: Creature[] = [
-  { id: "t1", size: "big",   color: "warm", fill: "solid" },
-  { id: "t2", size: "small", color: "cool", fill: "solid" },
-  { id: "t3", size: "big",   color: "cool", fill: "ring" },
-  { id: "t4", size: "small", color: "warm", fill: "ring" },
-  { id: "t5", size: "big",   color: "warm", fill: "ring" },
-  { id: "t6", size: "small", color: "cool", fill: "ring" },
+/** כתבות 2026 — אומתו בפתיחה ישירה; תמונות הורדו ל-public/articles */
+const INTRO_ARTICLES = [
+  {
+    img: "/articles/intro-ai-jobs.jpg",
+    summary: "אל תספידו את ההייטק: כך ה-AI ייצור אלפי משרות חדשות",
+    source: "כלכליסט · 2.2026",
+    href: "https://www.calcalist.co.il/calcalistech/article/ryy4o11q0011g",
+  },
+  {
+    img: "/articles/intro-salary.jpg",
+    summary: "השכר הממוצע בהייטק ממשיך לטפס — הנתונים החדשים",
+    source: "גיקטיים · 1.2026",
+    href: "https://www.geektime.co.il/tech-salary-survey-jan-2026/",
+  },
+  {
+    img: "/articles/intro-stocks.jpg",
+    summary: "שיא העושר: עובדי ההייטק מימשו ב-2025 מניות ב-50 מיליארד שקל",
+    source: "כלכליסט · 1.2026",
+    href: "https://www.calcalist.co.il/calcalistech/article/hy00wiukvwl",
+  },
 ];
 
-const TEST: Creature[] = [
-  { id: "x1", size: "big",   color: "cool", fill: "solid" },
-  { id: "x2", size: "small", color: "warm", fill: "solid" },
-  { id: "x3", size: "big",   color: "warm", fill: "solid" },
-];
-
-const VALUE_WORD: Record<string, string> = {
-  big: "לגדולים", small: "לקטנים",
-  warm: "לכתומים", cool: "לכחולים",
-  solid: "למלאים", ring: "לחלולים",
-};
-
-type Rule = { attr: "size" | "color" | "fill"; yes: string } | null;
-
-/**
- * מסיק את הכלל מהתיוגים של המשתמש עצמו.
- *
- * לכל תכונה: מקבצים לפי ערך, וסופרים לכל ערך את הרוב (כן או לא). סכום הרוב
- * חלקי מספר התיוגים הוא "ציון הטוהר" של התכונה — כמה עקבי המשתמש היה לגביה.
- * התכונה הטהורה ביותר מנצחת.
- *
- * **אם לא סומן אף "כן" — אין כלל, והמערכת מנחשת "כן" תמיד.** בשום מצב אין
- * מסלול שבו המשתמש נכשל או מקבל הודעת שגיאה.
- */
-function inferRule(labels: Record<string, boolean>): Rule {
-  const tagged = TRAIN.filter(c => c.id in labels);
-  if (tagged.length === 0) return null;
-
-  let best: Rule = null;
-  let bestScore = -1;
-
-  for (const attr of ["size", "color", "fill"] as const) {
-    const byValue = new Map<string, { yes: number; no: number }>();
-    for (const c of tagged) {
-      const v = c[attr];
-      const acc = byValue.get(v) ?? { yes: 0, no: 0 };
-      labels[c.id] ? acc.yes++ : acc.no++;
-      byValue.set(v, acc);
-    }
-    const purity = [...byValue.values()].reduce((s, v) => s + Math.max(v.yes, v.no), 0) / tagged.length;
-    const yesValue = [...byValue.entries()].sort((a, b) => (b[1].yes - b[1].no) - (a[1].yes - a[1].no))[0];
-    if (purity > bestScore && yesValue && yesValue[1].yes > 0) {
-      bestScore = purity;
-      best = { attr, yes: yesValue[0] };
-    }
-  }
-  return best;
-}
-
-function guess(rule: Rule, c: Creature): boolean {
-  if (!rule) return true;
-  return c[rule.attr] === rule.yes;
-}
+const INTRO_TOTAL = 7;
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function WaitingPage() {
   const [screen, setScreen] = useState<Screen>("home");
-  const [phase, setPhase] = useState<Phase>("frame");
-  const [labels, setLabels] = useState<Record<string, boolean>>({});
-  const [hint, setHint] = useState(false);
-  const [testIdx, setTestIdx] = useState(0);
-  const [hits, setHits] = useState(0);
+  /** 0..INTRO_TOTAL-1 — הכרטיס הנוכחי במבוא; INTRO_TOTAL = מסך הסיום */
+  const [introIdx, setIntroIdx] = useState(0);
   const [tasteDone, setTasteDone] = useState(false);
   const [booked, setBooked] = useState(false);
   const [name, setName] = useState("");
   /** null = הפגישה עוד לא סומנה · "yes" = התקיימה · "missed" = לא הגיע */
+  const router = useRouter();
   const [attended, setAttended] = useState<"yes" | "missed" | null>(null);
   /** האם המועד כבר עבר. כשאין מועד שמור — נשאר false, ומוצע קישור יזום */
   const [passed, setPassed] = useState(false);
   const [hasDate, setHasDate] = useState(false);
-  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const coordinator = coordinatorFor();
   const who = coordinator.firstName;
@@ -165,57 +124,44 @@ export default function WaitingPage() {
     if (v === "missed") {
       // הסיגנל החזק ביותר ל-At Risk בכל הפאנל, ואין דרך אחרת להשיג אותו
       localStorage.setItem("at-risk", "missed-meeting-1");
+      return;
     }
+    // "היה טוב" ← ישר לטעימות. המסך הבא הוא הפעולה הבאה, לא כרטיס
+    // שמכריז שהיא נפתחה (אותו עיקרון כמו סוף האונבורדינג — נתי 20.8)
+    router.push("/explore");
   }
 
-  useEffect(() => { window.scrollTo(0, 0); }, [screen, phase]);
+  useEffect(() => { window.scrollTo(0, 0); }, [screen, introIdx]);
 
   // מחסום. אין דרך להגיע לשתי הדקות בלי פגישה קבועה — גם לא בקישור ישיר
   useEffect(() => { if (screen === "taste" && !booked) setScreen("home"); }, [screen, booked]);
 
-  // רמז אחרי 12 שניות בלי תיוג — כדי שאף אחד לא יישאר תקוע מול מסך ריק
-  useEffect(() => {
-    if (phase !== "label") return;
-    if (Object.keys(labels).length > 0) { setHint(false); return; }
-    hintTimer.current = setTimeout(() => setHint(true), 12000);
-    return () => { if (hintTimer.current) clearTimeout(hintTimer.current); };
-  }, [phase, labels]);
-
-  const rule = useMemo(() => inferRule(labels), [labels]);
-  const count = Object.keys(labels).length;
-
-  const label = (id: string, val: boolean) => setLabels({ ...labels, [id]: val });
-
-  function answerTest(correct: boolean) {
-    const nextHits = hits + (correct ? 1 : 0);
-    setHits(nextHits);
-    if (testIdx < TEST.length - 1) {
-      setTestIdx(testIdx + 1);
-    } else {
-      /* התוצאה נאספת לרכזת — כדי שהיא לא תצטרך לשאול, והוא לא לזכור */
-      const result = {
-        rule: rule ? `${rule.attr}=${rule.yes}` : "none",
-        ruleWord: rule ? VALUE_WORD[rule.yes] : null,
-        labeled: count,
-        hits: nextHits,
-        at: new Date().toISOString(),
-      };
-      localStorage.setItem("waiting-taste", JSON.stringify(result));
-      trackEvent("waiting_taste_done", { hits: nextHits, labeled: count });
+  /** צעד במבוא — נטישה מוסקת מ"הגיע לכרטיס N ולא ל-N+1", כרגיל */
+  function introNext() {
+    const next = introIdx + 1;
+    logEvent("intro_step", { n: String(next + 1) });
+    if (next >= INTRO_TOTAL) {
+      // אותו מפתח כמו קודם — הדשבורד וה-reset כבר קוראים אותו
+      localStorage.setItem("waiting-taste", JSON.stringify({ intro: true, at: new Date().toISOString() }));
+      trackEvent("intro_done");
+      logEvent("intro_done", {});
       setTasteDone(true);
-      setPhase("done");
     }
+    setIntroIdx(Math.min(next, INTRO_TOTAL));
   }
 
   return (
     <div dir="rtl" style={{ minHeight: "100vh", background: CREAM, ...HEEBO }}>
-      <div style={{ maxWidth: 430, margin: "0 auto", padding: "28px 20px 36px" }}>
+      <div style={{ maxWidth: 430, margin: "0 auto", padding: "28px 20px 110px" }}>
         {screen === "home" && (
           <Home
             name={name} who={who} booked={booked} tasteDone={tasteDone}
             attended={attended} passed={passed} hasDate={hasDate}
             onAttendance={markAttendance}
-            onTaste={() => { setScreen("taste"); setPhase("frame"); trackEvent("waiting_taste_start"); }}
+            onTaste={() => {
+              setScreen("taste"); setIntroIdx(0);
+              trackEvent("intro_start"); logEvent("intro_step", { n: "1" });
+            }}
             onPrep={() => { setScreen("prep"); trackEvent("waiting_prep_open"); }}
             onAlreadyBooked={() => {
               localStorage.setItem("meeting-1-booked", "true");
@@ -227,29 +173,11 @@ export default function WaitingPage() {
 
         {screen === "taste" && (
           <>
-            <Back onClick={() => (phase === "frame" ? setScreen("home") : setPhase("frame"))} />
-
-            {phase === "frame" && <Frame who={who} onStart={() => setPhase("label")} />}
-
-            {phase === "label" && (
-              <LabelPhase
-                labels={labels} count={count} rule={rule} hint={hint}
-                onLabel={label} onNext={() => setPhase("test")}
-              />
-            )}
-
-            {phase === "test" && (
-              <TestPhase
-                creature={TEST[testIdx]} idx={testIdx} rule={rule} onAnswer={answerTest}
-              />
-            )}
-
-            {phase === "done" && (
-              <Done
-                hits={hits} rule={rule} who={who}
-                onPrep={() => setScreen("prep")}
-                onHome={() => setScreen("home")}
-              />
+            <Back onClick={() => (introIdx === 0 ? setScreen("home") : setIntroIdx(introIdx - 1))} />
+            {introIdx < INTRO_TOTAL ? (
+              <IntroCard idx={introIdx} who={who} onNext={introNext} />
+            ) : (
+              <IntroDone who={who} onPrep={() => setScreen("prep")} onHome={() => setScreen("home")} />
             )}
           </>
         )}
@@ -261,6 +189,7 @@ export default function WaitingPage() {
           </>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }
@@ -304,14 +233,14 @@ function Home({
           */}
           <Card dim={!booked}>
             <CardHead dot={booked ? ORANGE : "#cfd6e2"}>
-              שתי דקות — איך חושבים בהייטק
+              שבע דקות — העולם שאתה נכנס אליו
             </CardHead>
             <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
               {tasteDone
-                ? "כבר עשית את זה. אפשר לחזור מתי שבא לך."
+                ? "כבר עברת על זה. אפשר לחזור מתי שבא לך."
                 : booked
-                  ? "לא תחום ולא בחירה — רעיון אחד שחוזר בכל ההייטק. אין ציון ואי אפשר להיכשל."
-                  : "נפתח אחרי שתקבע את הפגישה. שתי דקות, בלי ציון ובלי מה להתכונן."}
+                  ? "כמה גדול ההייטק, כמה משלמים בו באמת, ואילו תפקידים יש בו חוץ ממתכנתים. מספרים אמיתיים, בלי מבחן."
+                  : "נפתח אחרי שתקבע את הפגישה. שבע דקות קריאה — תגיע לפגישה כשאתה כבר מכיר את העולם."}
             </p>
             {booked ? (
               <button
@@ -535,228 +464,522 @@ function Back({ onClick }: { onClick: () => void }) {
   );
 }
 
-// ─── מסגור ───────────────────────────────────────────────────────────────────
+// ─── כרטיסי המבוא ────────────────────────────────────────────────────────────
+// v2 (24.8): ניחוש-לפני-חשיפה במקום קריאה פסיבית. מי שניחש קודם — זוכר
+// את המספר ומופתע ממנו. אין ניחוש שגוי שמעניש: טעות מקבלת "רוב האנשים
+// מנחשים ככה" והחשיפה עושה את העבודה. כמו תמיד כאן — אי אפשר להיכשל.
 
-function Frame({ who, onStart }: { who: string; onStart: () => void }) {
+/** מספר גדול + שורת מקור. המקור מוצג — מספר בלי מקור נקרא כפרסומת */
+function BigStat({ kicker, stat, sub, source }: { kicker: string; stat: string; sub: string; source: string }) {
+  return (
+    <div style={{ background: "#fff", borderRadius: 24, padding: 22, marginTop: 14 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00" }}>{kicker}</div>
+      <div style={{ fontSize: 40, fontWeight: 800, color: NAVY, marginTop: 4, letterSpacing: "-0.02em" }}>{stat}</div>
+      <div style={{ fontSize: 16, color: "#1b1f27", lineHeight: 1.55, marginTop: 6 }}>{sub}</div>
+      <div style={{ fontSize: 12.5, color: FAINT, marginTop: 10 }}>{source}</div>
+    </div>
+  );
+}
+
+function IntroKicker({ n, children }: { n: number; children: React.ReactNode }) {
   return (
     <>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00", marginTop: 18 }}>בינה מלאכותית</div>
-      <h1 style={{ fontSize: 27, fontWeight: 800, lineHeight: 1.3, letterSpacing: "-0.02em", marginTop: 4, color: "#1b1f27" }}>
-        תלמד מערכת להבדיל בין שני דברים
-      </h1>
-
-      <div style={{ background: "#fff", borderRadius: 24, padding: 20, marginTop: 18, display: "flex", flexDirection: "column", gap: 14 }}>
-        {[
-          "שתי דקות. אין ציון, אין תשובה נכונה, ואי אפשר להיכשל.",
-          "המטרה היא להרגיש איך העולם הזה נראה מבפנים. לא לגלות מה מתאים לך.",
-          `מה שתשים לב אליו, תוכל לספר ל${who} בפגישה.`,
-        ].map(t => (
-          <div key={t} style={{ fontSize: 16, lineHeight: 1.6, color: "#1b1f27" }}>{t}</div>
-        ))}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 18 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00" }}>העולם שאתה נכנס אליו</div>
+        <div style={{ display: "flex", gap: 4 }}>
+          {Array.from({ length: INTRO_TOTAL }, (_, i) => (
+            <span key={i} style={{
+              width: i === n - 1 ? 16 : 6, height: 6, borderRadius: 999,
+              background: i < n ? ORANGE : "#e3ddd2", transition: "all .25s",
+            }} />
+          ))}
+        </div>
       </div>
-
-      <button onClick={onStart} style={btnPrimary}>יאללה, מתחילים</button>
+      <h1 style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.3, marginTop: 6, color: "#1b1f27" }}>{children}</h1>
     </>
   );
 }
 
-// ─── שלב התיוג ───────────────────────────────────────────────────────────────
+/** צ'יפ ניחוש — אחרי בחירה הצ'יפים קופאים והחשיפה מופיעה */
+function GuessChips({ options, picked, onPick }: { options: string[]; picked: string | null; onPick: (v: string) => void }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+      {options.map(o => (
+        <button
+          key={o}
+          onClick={() => !picked && onPick(o)}
+          style={{
+            padding: "13px 16px", borderRadius: 16, textAlign: "right", cursor: picked ? "default" : "pointer",
+            fontSize: 16, fontWeight: 700, ...HEEBO, transition: "all .2s",
+            background: picked === o ? NAVY : "#fff",
+            color: picked === o ? "#fff" : "#1b1f27",
+            border: picked === o ? "none" : "1.5px solid #e3ddd2",
+            opacity: picked && picked !== o ? 0.45 : 1,
+          }}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  );
+}
 
-function LabelPhase({
-  labels, count, rule, hint, onLabel, onNext,
-}: {
-  labels: Record<string, boolean>; count: number; rule: Rule; hint: boolean;
-  onLabel: (id: string, v: boolean) => void; onNext: () => void;
-}) {
+const introNextBtn = (onNext: () => void, label = "הבנתי, הלאה ←") => (
+  <button onClick={onNext} style={btnPrimary}>{label}</button>
+);
+
+// כרטיס 1 — כמה גדול: ניחוש ← חשיפה
+function IntroSize({ onNext }: { onNext: () => void }) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const RIGHT = "יותר מ-400 אלף";
   return (
     <>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00", marginTop: 18 }}>
-        בינה מלאכותית · שלב 1 מתוך 2
-      </div>
-      <h1 style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.3, marginTop: 4, color: "#1b1f27" }}>
-        תלמד את המערכת מה זה &quot;כן&quot;
-      </h1>
-      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
-        עבור על היצורים וסמן. אתה מחליט מה כן ומה לא — אין תשובה נכונה.
-      </p>
-
-      {/* רמז נגד תקיעות. מופיע רק אם עברו 12 שניות בלי אף תיוג */}
-      {hint && count === 0 && (
-        <div style={{ background: "#fff3e2", color: "#7a4100", borderRadius: 20, padding: 16, marginTop: 14, fontSize: 15, lineHeight: 1.6 }}>
-          אין פה טעות. תבחר משהו שמושך אותך — למשל כל הגדולים — ותסמן לפיו.
-        </div>
+      <IntroKicker n={1}>נחש: כמה אנשים עובדים בהייטק הישראלי?</IntroKicker>
+      <GuessChips options={["בערך 40 אלף", "בערך 150 אלף", RIGHT]} picked={picked} onPick={setPicked} />
+      {picked && (
+        <>
+          <div style={{ fontSize: 15, fontWeight: 700, color: picked === RIGHT ? "#046c4e" : "#b35e00", marginTop: 14 }}>
+            {picked === RIGHT ? "בול 🎯 רוב האנשים מנחשים הרבה פחות." : "רוב האנשים מנחשים ככה — והאמת מפתיעה:"}
+          </div>
+          <BigStat
+            kicker="עובדים בהייטק הישראלי"
+            stat="+400,000"
+            sub="בערך אחד מכל תשעה עובדים במשק. זו לא נישה של מעטים — זו תעשייה שלמה, והיא כל הזמן מחפשת אנשים חדשים."
+            source="רשות החדשנות, דוח מצב ההייטק 2026 — 11.4% מהמועסקים ב-2025"
+          />
+          {introNextBtn(onNext)}
+        </>
       )}
+    </>
+  );
+}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
-        {TRAIN.map(c => {
-          const v = labels[c.id];
-          const border = v === undefined ? "#f0ebe2" : v ? GREEN : "#cfd6e2";
+// כרטיס 2 — כמה משלמים: ניחוש ← עמודות שגדלות מול העיניים
+function IntroSalary({ onNext }: { onNext: () => void }) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const [grow, setGrow] = useState(false);
+  useEffect(() => {
+    if (picked) { const t = setTimeout(() => setGrow(true), 150); return () => clearTimeout(t); }
+  }, [picked]);
+  const RIGHT = "יותר מ-30 אלף";
+  return (
+    <>
+      <IntroKicker n={2}>ונחש: כמה מרוויחים שם בממוצע בחודש?</IntroKicker>
+      <GuessChips options={["בערך 15 אלף ₪", "בערך 22 אלף ₪", RIGHT + " ₪"]} picked={picked} onPick={setPicked} />
+      {picked && (
+        <>
+          <div style={{ fontSize: 15, fontWeight: 700, color: picked.startsWith(RIGHT) ? "#046c4e" : "#b35e00", marginTop: 14 }}>
+            {picked.startsWith(RIGHT) ? "בדיוק 🎯" : "גבוה ממה שנדמה:"}
+          </div>
+          <div style={{ background: "#fff", borderRadius: 24, padding: 20, marginTop: 10 }}>
+            {[
+              ["הייטק", "כ-32,000 ₪", 100, NAVY],
+              ["שאר המשק", "כ-13,600 ₪", 42, "#b9c3d4"],
+            ].map(([label, val, w, color]) => (
+              <div key={label as string} style={{ marginTop: label === "הייטק" ? 0 : 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14.5, fontWeight: 700, color: "#1b1f27" }}>
+                  <span>{label}</span><span style={{ color: color as string }}>{val}</span>
+                </div>
+                <div style={{ height: 14, borderRadius: 999, background: "#f0ede6", marginTop: 6, overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%", borderRadius: 999, background: color as string,
+                    width: grow ? `${w}%` : "4%", transition: "width .9s cubic-bezier(.2,.8,.2,1)",
+                  }} />
+                </div>
+              </div>
+            ))}
+            <div style={{ fontSize: 12.5, color: FAINT, marginTop: 12 }}>נתוני הלמ״ס, סוף 2025 — יותר מפי שניים</div>
+          </div>
+          {/* שורת האמת — בלעדיה המספר מרחיק ("לא בשבילי") או מייצר ציפייה שגויה */}
+          <div style={{ background: "#fff3e2", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: "#7a4100" }}>
+            <b>חשוב לקרוא את המספר נכון:</b> זה ממוצע על כולם — כולל אנשים עם 15
+            שנות ניסיון. מתחילים נמוך מזה, ועולים מהר יותר מכמעט כל מקצוע אחר.
+          </div>
+          {introNextBtn(onNext)}
+        </>
+      )}
+    </>
+  );
+}
+
+// כרטיס 3 — מי עובד בהייטק: הופכים כרטיסים, מגלים שכולם
+function IntroWho({ onNext }: { onNext: () => void }) {
+  const [flipped, setFlipped] = useState<Record<string, boolean>>({});
+  const PEOPLE: [string, string, string][] = [
+    ["🎨", "מעצבת", "מעצבת את המסכים של האפליקציה"],
+    ["🗣️", "איש מכירות", "מוכר את המוצר לחברות בחו״ל"],
+    ["📊", "אנליסטית", "מנתחת מה המשתמשים באמת עושים"],
+    ["🧭", "מנהל מוצר", "מחליט מה בונים ולמה"],
+    ["💻", "מתכנתת", "כותבת את הקוד"],
+    ["🔍", "בודק תוכנה", "מוצא את התקלות לפני הלקוחות"],
+  ];
+  const count = Object.keys(flipped).length;
+  return (
+    <>
+      <IntroKicker n={3}>מי מהאנשים האלה עובד בהייטק?</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 6 }}>לחץ על כל אחד כדי לגלות.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+        {PEOPLE.map(([e, role, what]) => {
+          const on = flipped[role];
           return (
-            <div key={c.id} style={{
-              display: "flex", alignItems: "center", gap: 10, background: "#fff",
-              borderRadius: 20, padding: "12px 16px", border: `2px solid ${border}`,
-              transition: "border-color .2s",
-            }}>
-              <div style={{ width: 64, display: "flex", justifyContent: "center", flexShrink: 0 }}>
-                <Blob c={c} />
+            <button
+              key={role}
+              onClick={() => setFlipped({ ...flipped, [role]: true })}
+              style={{
+                borderRadius: 18, padding: "14px 12px", textAlign: "center", cursor: on ? "default" : "pointer",
+                background: on ? "#e7f6f0" : "#fff", border: on ? "1.5px solid #a7dcc8" : "1.5px solid #e3ddd2",
+                transition: "all .25s", ...HEEBO,
+              }}
+            >
+              <div style={{ fontSize: 24 }}>{e}</div>
+              <div style={{ fontSize: 14.5, fontWeight: 800, color: "#1b1f27", marginTop: 4 }}>{role}</div>
+              <div style={{ fontSize: 12, lineHeight: 1.45, marginTop: 4, color: on ? "#046c4e" : FAINT, fontWeight: on ? 700 : 500 }}>
+                {on ? `✓ בהייטק — ${what}` : "לחץ לגילוי"}
               </div>
-              <div style={{ display: "flex", gap: 8, marginRight: "auto" }}>
-                <Pill on={v === true} onClick={() => onLabel(c.id, true)}
-                  bgOn={GREEN} fgOn="#fff" bgOff="#e7f6f0" fgOff="#046c4e">כן</Pill>
-                <Pill on={v === false} onClick={() => onLabel(c.id, false)}
-                  bgOn="#5c6473" fgOn="#fff" bgOff="#f0f1f4" fgOff="#5c6473">לא</Pill>
-              </div>
-            </div>
+            </button>
           );
         })}
       </div>
-
-      {/* משוב חי — המערכת "חושבת בקול" מהתיוגים שלו, וזה מה שהופך את זה למוחשי */}
-      {count >= 2 && rule && (
-        <div style={{ background: "#eaf0f9", borderRadius: 20, padding: 16, marginTop: 14, fontSize: 16, fontWeight: 500, color: NAVY, lineHeight: 1.6 }}>
-          אני מתחילה להבין. נראה שאתה אומר כן {VALUE_WORD[rule.yes]}.
-        </div>
-      )}
-
-      {count >= 4 && (
-        <button onClick={onNext} style={btnPrimary}>עכשיו תן לה לנחש</button>
+      {count >= 3 && (
+        <>
+          <BigStat
+            kicker="התשובה: כולם"
+            stat="בערך חצי"
+            sub="מעובדי ההייטק בכלל לא כותבים קוד — מוצר, עיצוב, נתונים, שיווק, מכירות, בדיקות ותמיכה."
+            source="רשות החדשנות 2026 — 49% במשרות מו״פ, 110 אלף במשרות מוצר"
+          />
+          {introNextBtn(onNext)}
+        </>
       )}
     </>
   );
 }
 
-function Pill({
-  on, onClick, bgOn, fgOn, bgOff, fgOff, children,
-}: {
-  on: boolean; onClick: () => void; bgOn: string; fgOn: string; bgOff: string; fgOff: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: "10px 20px", borderRadius: 999, border: "none", cursor: "pointer",
-        fontSize: 15, fontWeight: 700, ...HEEBO,
-        background: on ? bgOn : bgOff, color: on ? fgOn : fgOff,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Blob({ c, scale = 1 }: { c: Creature; scale?: number }) {
-  const size = (c.size === "big" ? 54 : 30) * scale;
-  const col = c.color === "warm" ? ORANGE : NAVY;
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: 999,
-      background: c.fill === "solid" ? col : "transparent",
-      border: c.fill === "ring" ? `${5 * scale}px solid ${col}` : "none",
-      transition: "all .2s",
-    }} />
-  );
-}
-
-// ─── שלב הניחוש ──────────────────────────────────────────────────────────────
-
-function TestPhase({
-  creature, idx, rule, onAnswer,
-}: {
-  creature: Creature; idx: number; rule: Rule; onAnswer: (correct: boolean) => void;
-}) {
-  const g = guess(rule, creature);
+// כרטיס 4 — שני עולמות: בחירה בלי תשובה נכונה
+function IntroWhere({ onNext }: { onNext: () => void }) {
+  const [picked, setPicked] = useState<string | null>(null);
   return (
     <>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00", marginTop: 18 }}>
-        בינה מלאכותית · שלב 2 מתוך 2
-      </div>
-      <h1 style={{ fontSize: 27, fontWeight: 800, marginTop: 4, color: "#1b1f27" }}>עכשיו תורה</h1>
-      <p style={{ fontSize: 15, color: MUTED, marginTop: 8 }}>
-        יצור חדש שהיא לא ראתה. {idx + 1} מתוך {TEST.length}
+      <IntroKicker n={4}>איפה היית רוצה לעבוד?</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 6 }}>
+        אנשי טכנולוגיה עובדים גם בבנקים, בקופות חולים ובממשלה — לא רק בחברות הייטק. בחר מה מדבר אליך:
       </p>
-
-      <div style={{
-        background: "#fff", borderRadius: 26, padding: 26, marginTop: 18,
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 20,
-      }}>
-        <Blob c={creature} scale={1.5} />
-        <div style={{ fontSize: 18, fontWeight: 700, color: "#1b1f27" }}>
-          היא מנחשת: {g ? "כן" : "לא"}. צדקה?
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+        {([
+          ["🚀", "בחברת הייטק", "הטכנולוגיה היא המוצר עצמו. בדרך כלל שכר גבוה יותר וקצב למידה מהיר יותר.", ["google|גוגל", "intel|אינטל", "wix|Wix", "mobileye|מובילאיי", "checkpoint|צ'ק פוינט"]],
+          ["🏦", "בארגון גדול ויציב", "הטכנולוגיה משרתת את העסק — בנק, קופת חולים, ממשלה. לרוב יציב יותר, ולפעמים קל יותר להתקבל למשרה ראשונה.", ["hapoalim|בנק הפועלים", "clalit|כללית", "iec|חברת חשמל", "elal|אל על"]],
+        ] as [string, string, string, string[]][]).map(([e, t, d, firms]) => {
+          const on = picked === t;
+          return (
+            <button
+              key={t}
+              onClick={() => setPicked(t as string)}
+              style={{
+                textAlign: "right", borderRadius: 20, padding: 16, cursor: "pointer", ...HEEBO,
+                background: on ? "#eaf0f9" : "#fff",
+                border: on ? `1.5px solid ${NAVY}` : "1.5px solid #e3ddd2",
+                transition: "all .2s",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#1b1f27" }}>{e} {t}</div>
+              <div style={{ fontSize: 14, lineHeight: 1.6, color: MUTED, marginTop: 4 }}>{d}</div>
+              {/* לוגו + שם (נתי 25.8). קובץ חסר ב-public/logos → נשאר שם בלבד */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 9 }}>
+                {firms.map(f => {
+                  const [id, label] = f.split("|");
+                  return (
+                    <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: on ? "#fff" : "#f4f5f7", borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: NAVY }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/logos/${id}.png`} alt="" style={{ width: 15, height: 15, objectFit: "contain" }}
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      {label}
+                    </span>
+                  );
+                })}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      {picked === "בחברת הייטק" && (
+        <div style={{ background: "#fff", borderRadius: 20, padding: 16, marginTop: 12 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 800, color: "#1b1f27", marginBottom: 10 }}>
+            ובתוך ההייטק עצמו יש שני עולמות:
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ background: "#fff7ec", borderRadius: 14, padding: 12, fontSize: 13.5, lineHeight: 1.6, color: "#1b1f27" }}>
+              <b>🌱 סטארטאפ</b> — חברה קטנה שבונה משהו חדש. לומדים המון ומהר,
+              נוגעים בהכל — אבל פחות יציב, וסטארטאפים גם נסגרים.
+            </div>
+            <div style={{ background: "#eaf0f9", borderRadius: 14, padding: 12, fontSize: 13.5, lineHeight: 1.6, color: "#1b1f27" }}>
+              <b>🏢 חברה גדולה / תאגיד</b> — כמו גוגל או אינטל. מסודר, יציב,
+              יש ממי ללמוד ומסלולי קידום — אבל התפקיד ממוקד יותר והקצב רגוע יותר.
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-        <button
-          onClick={() => onAnswer(false)}
-          style={{ flex: 1, padding: 15, borderRadius: 999, background: "#fff", color: NAVY, border: "1px solid #cfd6e2", fontSize: 16, fontWeight: 700, cursor: "pointer", ...HEEBO }}
-        >
-          פספסה
-        </button>
-        <button
-          onClick={() => onAnswer(true)}
-          style={{ flex: 1, padding: 15, borderRadius: 999, background: GREEN, color: "#fff", border: "none", fontSize: 16, fontWeight: 700, cursor: "pointer", ...HEEBO }}
-        >
-          קלעה
-        </button>
-      </div>
-
-      <div style={{ textAlign: "center", fontSize: 14, color: FAINT, marginTop: 12 }}>
-        גם כשהיא טועה זה בסדר. ככה מערכות לומדות.
-      </div>
+      )}
+      {picked && (
+        <>
+          <div style={{ background: "#e7f6f0", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: "#046c4e" }}>
+            <b>בחירה טובה — ואין פה תשובה נכונה.</b> שני העולמות פתוחים לך,
+            והדרך אליהם עוברת דרך אותם לימודים. את הבחירה האמיתית תעשה
+            בהמשך המסע, עם הרבה יותר מידע.
+          </div>
+          {introNextBtn(onNext)}
+        </>
+      )}
     </>
   );
 }
 
-// ─── סיום ────────────────────────────────────────────────────────────────────
+// כרטיס 5 — שרשרת המוצר דרך אפליקציה שכולם מכירים (נתי 24.8: עוגן קונקרטי).
+// Waze: ישראלית, בשימוש יומיומי אצל קהל היעד, וכל תפקיד מקבל דוגמה מוחשית.
+function IntroChain({ onNext }: { onNext: () => void }) {
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const CHAIN: [string, string, string][] = [
+    ["💡", "מנהל/ת מוצר", "החליט/ה ש-Waze תזהיר על ניידת משטרה — כי זה מה שנהגים באמת רוצים"],
+    ["🎨", "מעצב/ת UX", "עיצב/ה מסך שמבינים במבט אחד — גם כשנוהגים ב-90 קמ״ש"],
+    ["💻", "מפתחים/ות", "כתבו את הקוד שמחשב לך מסלול מחדש תוך שניות כשפספסת יציאה"],
+    ["📊", "אנשי דאטה", "הפקקים שאתה רואה מגיעים מהנתונים של הנהגים עצמם — מישהו בנה את זה"],
+    ["🔍", "QA", "בדקו מה קורה כשה-GPS נעלם באמצע מנהרה"],
+    ["🛡️", "סייבר", "דואגים שאף אחד לא יוכל לעקוב אחרי המיקום שלך"],
+    ["🔌", "רשתות וחומרה", "השרתים שעונים למיליוני נהגים בו-זמנית בשעת פקק"],
+    ["📣", "שיווק", "הפכו אפליקציה ישראלית קטנה לשם עולמי"],
+  ];
+  return (
+    <>
+      <IntroKicker n={5}>מי בנה את Waze?</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 6 }}>
+        האפליקציה שמנווטת אותך כל יום נבנתה בישראל — על ידי שרשרת של אנשים,
+        וכל חוליה בה היא מקצוע. לחץ על תחנה כדי לראות מה עשו שם:
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+        {CHAIN.map(([e, role, what], i) => {
+          const on = open[role];
+          return (
+            <button
+              key={role}
+              onClick={() => setOpen({ ...open, [role]: !on })}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, textAlign: "right",
+                background: on ? "#eaf0f9" : "#fff", borderRadius: 16, padding: "12px 14px",
+                border: "none", cursor: "pointer", transition: "background .2s", ...HEEBO,
+              }}
+            >
+              <span style={{
+                width: 24, height: 24, borderRadius: 999, background: on ? NAVY : "#f0ede6",
+                color: on ? "#fff" : FAINT, fontSize: 12.5, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>{i + 1}</span>
+              <span style={{ fontSize: 20, flexShrink: 0 }}>{e}</span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: "#1b1f27" }}>{role}</span>
+                {on && <span style={{ display: "block", fontSize: 13.5, color: NAVY, lineHeight: 1.5, marginTop: 2, fontWeight: 600 }}>{what}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {/* עוגן ה-wow: עובדה ציבורית מאומתת (2013) שממחישה לאן שרשרת כזאת מגיעה */}
+      <div style={{ background: "#fff", borderRadius: 18, padding: 14, marginTop: 12, fontSize: 14.5, lineHeight: 1.65, color: "#1b1f27" }}>
+        💰 בסוף, גוגל קנתה את Waze ביותר מ<b>מיליארד דולר</b> — אפליקציה
+        שהתחילה מכמה ישראלים עם רעיון.
+      </div>
+      <div style={{ background: "#eaf0f9", borderRadius: 18, padding: 14, marginTop: 10, fontSize: 14.5, lineHeight: 1.6, color: NAVY, fontWeight: 600 }}>
+        אחרי הפגישה תתנסה בכמה מהתפקידים האלה בעצמך — ותרגיש מה מדבר אליך.
+      </div>
+      {introNextBtn(onNext)}
+    </>
+  );
+}
 
-function Done({
-  hits, rule, who, onPrep, onHome,
-}: {
-  hits: number; rule: Rule; who: string; onPrep: () => void; onHome: () => void;
-}) {
+// כרטיס 6 — AI על כל התעשייה: בחר תפקיד ← ראה מה השתנה בו (נתי 24.8)
+function IntroAI({ onNext }: { onNext: () => void }) {
+  const [seen, setSeen] = useState<Record<string, boolean>>({});
+  const [active, setActive] = useState<string | null>(null);
+  const ROLES: [string, string, string][] = [
+    ["💻", "מפתחים", "כלי AI כותבים חלק מהקוד. המפתח הפך למי שמכוון, בודק ומאמת — פחות להקליד, יותר להחליט."],
+    ["📣", "שיווק", "טקסטים, תמונות וקמפיינים נוצרים בעזרת AI ברגעים — והמשווק מתפנה לאסטרטגיה: למי, מתי ולמה."],
+    ["🎨", "עיצוב", "סקיצות ראשונות מיוצרות בשניות. המעצב מתמקד בשאלה הקשה באמת — מה המשתמש צריך."],
+    ["📊", "דאטה", "ה-AI מנתח מהר — אבל מישהו צריך לשאול את השאלות הנכונות, ולתפוס אותו כשהוא ממציא."],
+    ["🎧", "תמיכה ושירות", "צ'אטבוטים עונים על הפשוטות — האנשים מטפלים בבעיות המורכבות, ומלמדים את הבוט."],
+    ["🔍", "QA", "ה-AI מייצר בדיקות אוטומטיות — והבודק מתכנן מה בכלל צריך לבדוק ואיפה זה יישבר."],
+  ];
+  const count = Object.keys(seen).length;
+  return (
+    <>
+      <IntroKicker n={6}>ומה עם כל ה-AI הזה?</IntroKicker>
+      <p style={{ fontSize: 15, color: "#1b1f27", lineHeight: 1.65, marginTop: 6 }}>
+        בלי לייפות: ה-AI באמת משנה את התעשייה — <b>את כולה, לא רק את המתכנתים.</b>{" "}
+        לחץ על תפקיד כדי לראות מה השתנה בו:
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 12 }}>
+        {ROLES.map(([e, role]) => {
+          const on = active === role;
+          const was = seen[role];
+          return (
+            <button
+              key={role}
+              onClick={() => { setActive(role); setSeen({ ...seen, [role]: true }); }}
+              style={{
+                borderRadius: 999, padding: "9px 14px", fontSize: 14, fontWeight: 700, cursor: "pointer", ...HEEBO,
+                background: on ? NAVY : "#fff", color: on ? "#fff" : was ? "#046c4e" : "#1b1f27",
+                border: on ? "none" : was ? "1.5px solid #a7dcc8" : "1.5px solid #e3ddd2",
+                transition: "all .2s",
+              }}
+            >
+              {e} {role}{was && !on ? " ✓" : ""}
+            </button>
+          );
+        })}
+      </div>
+      {active && (
+        <div style={{ background: "#fff", borderRadius: 20, padding: 18, marginTop: 12, fontSize: 15, lineHeight: 1.7, color: "#1b1f27" }}>
+          {ROLES.find(r => r[1] === active)?.[2]}
+        </div>
+      )}
+      {count >= 2 && (
+        <>
+          <div style={{ background: "#eaf0f9", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: NAVY }}>
+            <b>ונולדו גם תפקידים חדשים לגמרי:</b> מיישמי AI בעסקים, בוני
+            סוכנים חכמים, מנהלי מוצר AI — תפקידים שלפני שלוש שנים לא היו קיימים.
+          </div>
+          <div style={{ background: "#fff", borderRadius: 20, padding: 16, marginTop: 10 }}>
+            <div style={{ fontSize: 15, lineHeight: 1.65, color: "#1b1f27" }}>
+              והמספרים? התמהיל משתנה — פחות משרות של כתיבת קוד טהורה, יותר משרות
+              מוצר ועבודה עם AI. אבל הביקוש לא נעלם: מספר המשרות הפנויות בהייטק{" "}
+              <b>עלה ב-12% ב-2025.</b>
+            </div>
+            <div style={{ fontSize: 12.5, color: FAINT, marginTop: 8 }}>רשות החדשנות, דוח 2026 — משרות פנויות +12.1%</div>
+          </div>
+          <div style={{ background: "#e7f6f0", borderRadius: 20, padding: 16, marginTop: 10, fontSize: 15, lineHeight: 1.6, color: "#046c4e", fontWeight: 600 }}>
+            השורה התחתונה: מי שנכנס לתעשייה עכשיו לומד לעבוד עם AI מהיום
+            הראשון — וזה בדיוק היתרון שלך על מי שכבר בפנים.
+          </div>
+          {introNextBtn(onNext)}
+        </>
+      )}
+    </>
+  );
+}
+
+// כרטיס 7 — ייצוג: סיפורים אמיתיים, לא סטטיסטיקה
+function IntroPeople({ who, onNext }: { who: string; onNext: () => void }) {
+  return (
+    <>
+      <IntroKicker n={7}>אנשים כמוך כבר שם</IntroKicker>
+      <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
+        לא סטטיסטיקה — אנשים אמיתיים שעברו בדיוק את הדרך שאתה מתחיל עכשיו:
+      </p>
+      {/* פורמט כרטיסי הכתבות מדפי התחומים (נתי 25.8): תמונת הפרומו של
+          הכתבה עצמה — רק כשהיא קיימת. לכתבה הישנה של יהונתן אין תמונת
+          פרומו, ולא ממציאים לו אחת */}
+      {[
+        {
+          name: "עמנואל — בודק תוכנה (QA) בחברת הייטק תל-אביבית",
+          story: "עלה מאתיופיה בגיל צעיר — ותוך שנים ספורות כבר עבד בהייטק.",
+          source: "ynet · 2023",
+          href: "https://www.ynet.co.il/activism/article/rjhmifnqn",
+          img: "/articles/story-emanuel.jpg",
+        },
+        {
+          name: "יהונתן — מהשמירה בכניסה לבניין, אל ההייטק שבתוכו",
+          story: "עבד כמאבטח בחברת הייטק. אחרי הכשרה בטק-קריירה חזר לאותו בניין — הפעם כאיש הייטק.",
+          source: "ynet · 2019",
+          href: "https://www.ynet.co.il/articles/0,7340,L-5456028,00.html",
+          img: null as string | null,
+        },
+      ].map(x => (
+        <a key={x.href} href={x.href} target="_blank" rel="noopener noreferrer"
+          style={{ display: "block", background: "#fff", borderRadius: 20, overflow: "hidden", marginTop: 12, textDecoration: "none", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          {x.img && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={x.img} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          )}
+          <div style={{ padding: "13px 16px" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.08em", color: "rgba(0,0,0,0.38)", textTransform: "uppercase" }}>{x.source}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, lineHeight: 1.45, marginTop: 4 }}>{x.name}</div>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: "#5c6473", marginTop: 4 }}>{x.story}</p>
+            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginTop: 6 }}>לכתבה המלאה ↗</div>
+          </div>
+        </a>
+      ))}
+      <p style={{ fontSize: 14.5, color: MUTED, lineHeight: 1.6, marginTop: 12 }}>
+        {who} ליוותה אנשים כאלה בדיוק — וזה מה שמחכה לך בפגישה.
+      </p>
+      {introNextBtn(onNext, "סיימתי את המבוא ✓")}
+    </>
+  );
+}
+
+function IntroCard({ idx, who, onNext }: { idx: number; who: string; onNext: () => void }) {
+  switch (idx) {
+    case 0: return <IntroSize onNext={onNext} />;
+    case 1: return <IntroSalary onNext={onNext} />;
+    case 2: return <IntroWho onNext={onNext} />;
+    case 3: return <IntroWhere onNext={onNext} />;
+    case 4: return <IntroChain onNext={onNext} />;
+    case 5: return <IntroAI onNext={onNext} />;
+    default: return <IntroPeople who={who} onNext={onNext} />;
+  }
+}
+
+// ─── סיום המבוא ──────────────────────────────────────────────────────────────
+
+function IntroDone({ who, onPrep, onHome }: { who: string; onPrep: () => void; onHome: () => void }) {
   return (
     <>
       <h1 style={{ fontSize: 27, fontWeight: 800, lineHeight: 1.3, marginTop: 18, color: "#1b1f27" }}>
-        לימדת מערכת כלל.
+        עכשיו יש לך את התמונה.
       </h1>
       <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
-        בלי שורת קוד אחת.
-        <br />
-        {hits === TEST.length ? "היא קלעה בכל שלוש." : `היא קלעה ב-${hits} מתוך ${TEST.length}. גם ככה לומדים.`}
+        תעשייה של יותר מ-400 אלף איש, עם עשרות סוגי תפקידים — ואנשים
+        שהתחילו בדיוק מאיפה שאתה. את השאר תעשה עם {who}.
       </p>
 
-      <div style={{ background: "#fff", borderRadius: 24, padding: 20, marginTop: 18 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00" }}>מה שעשית נקרא</div>
-        <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4, color: "#1b1f27" }}>לימוד מכונה מדוגמאות</div>
-        <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
-          נתת דוגמאות, המערכת מצאה את הכלל, ואז ניחשה על משהו חדש.
-          {rule && <> הכלל שהיא מצאה אצלך: <b>כן {VALUE_WORD[rule.yes]}</b>.</>}
-        </p>
-      </div>
-
-      {/* הגנת פיזור — אין להסיר. היא מונעת ממנו לצאת מכאן עם "אז זה AI".
-          מפזרת בפועל ולא רק מסתייגת */}
-      <div style={{ background: "#eaf0f9", borderRadius: 24, padding: 20, marginTop: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: NAVY }}>אותו רעיון עובד גם ב־</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-          {["דאטה ואנליטיקס", "סייבר", "שיווק דיגיטלי"].map(t => (
-            <span key={t} style={{ background: "#fff", borderRadius: 999, padding: "6px 12px", fontSize: 13, fontWeight: 600, color: NAVY }}>
-              {t}
-            </span>
-          ))}
-        </div>
-        <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 12 }}>
-          רוב הדברים בהייטק נוגעים זה בזה. אף אחד לא בוחר עכשיו.
-        </p>
-      </div>
-
-      <div style={{ background: "#fff3e2", borderRadius: 24, padding: 20, marginTop: 12 }}>
+      <div style={{ background: "#fff3e2", borderRadius: 24, padding: 20, marginTop: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: "#7a4100" }}>שווה להביא לפגישה</div>
         <p style={{ fontSize: 15, color: "#7a4100", lineHeight: 1.6, marginTop: 6 }}>
-          מה שמת לב שאתה עושה כדי להחליט? {who} תדע לקחת את זה הלאה.
+          מה הפתיע אותך מכל מה שראית? תגיד את זה ל{who} — זו פתיחה מצוינת לשיחה.
         </p>
       </div>
+
+      {/* כתבות טריות — למי שרוצה עוד. כולן נפתחו ואומתו */}
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#b35e00", marginBottom: 8 }}>מה כותבים העיתונים בחודשים האחרונים</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {INTRO_ARTICLES.map(a => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              style={{ display: "flex", gap: 12, background: "#fff", borderRadius: 18, overflow: "hidden", textDecoration: "none", alignItems: "stretch" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={a.img} alt="" style={{ width: 96, objectFit: "cover", flexShrink: 0 }}
+                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              <div style={{ padding: "10px 12px 10px 4px" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#1b1f27", lineHeight: 1.45 }}>{a.summary}</div>
+                <div style={{ fontSize: 12, color: FAINT, marginTop: 4 }}>{a.source}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* צלילה למי שרוצה — פרק מלא, עם תווית אורך כנה. ירד מכרטיס 6 בכוונה:
+          21 דקות בתוך מבוא של 7 גונבות את הקצב; כאן זה מתנה, לא מטלה */}
+      <a
+        href="https://www.youtube.com/watch?v=qo0iIqyYc_k"
+        target="_blank" rel="noopener noreferrer"
+        style={{ display: "flex", gap: 12, background: "#fff", borderRadius: 18, overflow: "hidden", textDecoration: "none", marginTop: 16, alignItems: "stretch" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="https://i.ytimg.com/vi/qo0iIqyYc_k/hqdefault.jpg" alt="" style={{ width: 96, objectFit: "cover", flexShrink: 0 }} />
+        <div style={{ padding: "10px 12px 10px 4px" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#1b1f27", lineHeight: 1.45 }}>
+            ▶ רוצה לצלול? "האם ללמוד תכנות בעידן ה-AI" — שיחה מלאה בעברית
+          </div>
+          <div style={{ fontSize: 12, color: FAINT, marginTop: 4 }}>TechMonster · פרק פודקאסט מלא (21 דק׳) · יוטיוב</div>
+        </div>
+      </a>
 
       <button onClick={onPrep} style={{ ...btnPrimary, background: NAVY }}>להכנה לפגישה</button>
       <button

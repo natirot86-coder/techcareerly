@@ -2,11 +2,150 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { JOURNEY } from "@/data/journey";
+
+/**
+ * מגירת המסע (נתי 25.8) — טאב "המסע" פותח מגירת שלבים במקום לנווט לדשבורד:
+ * שישה שלבים, שהושלם נפתח לתחנות שכבר עבר (חזרה-לאחור שמכבדת את הנעילות
+ * מעצם המבנה), הנוכחי מוביל לפעולה הבאה, והעתידי נעול עם מנעול נראה.
+ * גזירת השלב זהה לדשבורד — ממה שקרה, לא ממה שהוצהר.
+ */
+function deriveStage(): number {
+  const flag = (k: string) => localStorage.getItem(k) === "true";
+  const has = (k: string) => !!localStorage.getItem(k);
+  return has("enrollment-doc-path") ? 6
+    : has("plan-tasks") || has("plan-intro-seen") ? 5
+    : has("paths-quiz") || has("paths-journey") ? 4
+    : has("waiting-taste") && flag("meeting-1-attended") ? 3
+    : flag("meeting-1-booked") ? 2
+    : 1;
+}
+
+/** התחנות שנפתחות בכל שלב שהושלם — רק מקומות שהוא באמת עבר בהם */
+const STAGE_LINKS: Record<number, { label: string; href: string }[]> = {
+  1: [{ label: "הפרטים שמילאת", href: "/onboarding" }],
+  2: [
+    { label: "מרחב ההמתנה והמבוא להייטק", href: "/waiting" },
+    { label: "הכנה לפגישה", href: "/waiting" },
+  ],
+  3: [
+    { label: "הטעימות — כל 9 התחומים", href: "/explore" },
+    { label: "סיכום הטעימות שלך", href: "/explore/results" },
+  ],
+  4: [{ label: "המסלול, המוסדות והחסמים", href: "/paths" }],
+  5: [
+    { label: "המשימות שלך", href: "/plan" },
+    { label: "החשבון — כמה זה באמת עולה", href: "/plan?view=money" },
+    { label: "אישור הלימודים", href: "/enroll" },
+  ],
+  6: [{ label: "האישור שלך", href: "/enroll" }],
+};
+
+/** הפעולה הבאה של השלב הנוכחי — המסך הבא הוא הפעולה הבאה, גם כאן */
+const STAGE_CTA: Record<number, { label: string; href: string }> = {
+  1: { label: "להשלמת הפתיחה ←", href: "/onboarding" },
+  2: { label: "למרחב ההמתנה ←", href: "/waiting" },
+  3: { label: "לטעימות ←", href: "/explore" },
+  4: { label: "לבחירת המסלול ←", href: "/paths" },
+  5: { label: "לתוכנית שלך ←", href: "/plan" },
+  6: { label: "למסך הסטודנט ←", href: "/enroll" },
+};
+
+function JourneyDrawer({ onClose }: { onClose: () => void }) {
+  const [stageNow, setStageNow] = useState(1);
+  const [open, setOpen] = useState<number | null>(null);
+  useEffect(() => { try { setStageNow(deriveStage()); } catch { /* ignore */ } }, []);
+  return (
+    <div className="fixed inset-0 z-[60]" onClick={onClose}>
+      <div className="absolute inset-0" style={{ background: "rgba(2,20,40,0.45)" }} />
+      <div
+        dir="rtl"
+        onClick={e => e.stopPropagation()}
+        className="absolute bottom-0 inset-x-0 md:top-14 md:bottom-auto md:right-6 md:left-auto md:w-[380px] rounded-t-3xl md:rounded-2xl p-5 pb-8 max-h-[80vh] overflow-y-auto"
+        style={{ background: "#fbf9f5", fontFamily: "'Heebo', sans-serif" }}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[17px] font-black" style={{ color: "#023e8a" }}>המסע שלך</div>
+          <button onClick={onClose} className="text-[14px] font-bold px-2" style={{ color: "rgba(0,0,0,0.4)" }}>✕ סגירה</button>
+        </div>
+        {/* התקדמות במבט אחד (נתי 25.8) — הישג לפני רשימה */}
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="flex gap-1.5">
+            {JOURNEY.map(st => (
+              <span key={st.n} style={{
+                width: st.n === stageNow ? 18 : 8, height: 8, borderRadius: 999,
+                background: st.n < stageNow ? "#059669" : st.n === stageNow ? "#fb8500" : "rgba(0,0,0,0.12)",
+                transition: "all .25s",
+              }} />
+            ))}
+          </div>
+          <span className="text-[12px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>
+            {stageNow > 1 ? `${stageNow - 1} מתוך 6 כבר מאחוריך` : "מתחילים — 6 שלבים לפניך"}
+          </span>
+        </div>
+        <div className="flex flex-col gap-2">
+          {JOURNEY.map(s => {
+            const done = s.n < stageNow;
+            const current = s.n === stageNow;
+            const expanded = open === s.n;
+            return (
+              <div key={s.n} className="rounded-2xl overflow-hidden"
+                style={{ background: "#fff", border: current ? "1.5px solid #fb8500" : "1px solid rgba(0,0,0,0.08)", opacity: !done && !current ? 0.55 : 1 }}>
+                <button
+                  onClick={() => (done ? setOpen(expanded ? null : s.n) : undefined)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-right"
+                  style={{ cursor: done ? "pointer" : "default" }}
+                >
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0"
+                    style={{ background: done ? "#059669" : current ? "#fb8500" : "rgba(0,0,0,0.08)", color: done || current ? "#fff" : "rgba(0,0,0,0.35)" }}>
+                    {done ? "✓" : s.n}
+                  </span>
+                  <span className="flex-1 text-[14.5px] font-bold" style={{ color: done || current ? "#023e8a" : "rgba(0,0,0,0.45)" }}>
+                    {s.candidate}
+                    {current && <span className="text-[10.5px] font-black mr-2 px-1.5 py-0.5 rounded-full" style={{ background: "rgba(251,133,0,0.12)", color: "#b35e00" }}>את/ה כאן</span>}
+                  </span>
+                  <span className="text-[13px]" style={{ color: "rgba(0,0,0,0.3)" }}>
+                    {done ? (expanded ? "−" : "+") : current ? "" : "🔒"}
+                  </span>
+                </button>
+                {expanded && done && (
+                  <div className="px-4 pb-3 flex flex-col gap-1.5">
+                    {(STAGE_LINKS[s.n] ?? []).map(l => (
+                      <Link key={l.label} href={l.href} onClick={onClose}
+                        className="text-[13px] font-bold rounded-xl px-3 py-2.5"
+                        style={{ background: "rgba(2,62,138,0.05)", color: "#023e8a" }}>
+                        {l.label} ←
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                {current && (
+                  <div className="px-4 pb-3.5">
+                    <Link href={STAGE_CTA[s.n].href} onClick={onClose}
+                      className="block text-center text-[14px] font-black rounded-xl py-2.5 text-white"
+                      style={{ background: "#fb8500" }}>
+                      {STAGE_CTA[s.n].label}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="text-[11.5px] text-center mt-3" style={{ color: "rgba(0,0,0,0.35)" }}>
+          שלבים שעברת נפתחים לחזרה · הבאים נפתחים כשמגיעים אליהם
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const TABS = [
   { href: "/dashboard", label: "המסע", icon: "⊞" },
   { href: "/explore", label: "חקר", icon: "⊙" },
-  { href: "/chat", label: "Co-pilot", icon: "◎" },
+  /* הצ'אט ירד (נתי 25.8): ייעוץ מגיע מהרכזת, לא ממודל בלי שליטה.
+     במקומו — שאלות ותשובות סגורות על התהליך, שכל מילה בהן נכתבה ידנית */
+  { href: "/faq", label: "שאלות", icon: "?" },
   { href: "/squad", label: "קהילה", icon: "◈" },
   { href: "/contact", label: "רכזת", icon: "◉" },
 ];
@@ -14,6 +153,7 @@ const TABS = [
 export default function BottomNav() {
   const path = usePathname();
   const [exploreHref, setExploreHref] = useState("/explore");
+  const [journeyOpen, setJourneyOpen] = useState(false);
 
   useEffect(() => {
     // הטאב "חקר" מוביל למקום שבו המשתמש באמת נמצא במסע, ולא לדף קבוע.
@@ -34,7 +174,16 @@ export default function BottomNav() {
     else if (met1) setExploreHref("/waiting");
   }, []);
 
+  /* התווית מתחלפת עם היעד (נתי 25.8): "חקר" שמוביל לתוכנית שלב 5 היא
+     תווית שמשקרת. הטאב תמיד אומר מה באמת מחכה מאחוריו */
+  const exploreLabel =
+    exploreHref === "/plan" ? "תוכנית"
+    : exploreHref === "/paths" ? "מסלול"
+    : exploreHref === "/waiting" ? "הכנה"
+    : "חקר";
+
   const hrefFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreHref : t.href);
+  const labelFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreLabel : t.label);
   const isActive = (href: string) =>
     path.startsWith(href) ||
     ((href === "/paths" || href === "/plan" || href === "/waiting") && path.startsWith("/explore"));
@@ -46,25 +195,31 @@ export default function BottomNav() {
       כלומר בדסקטופ לא היה ניווט בכלל — וגם הלוגו נעלם איתו.
     */}
     <header className="hidden md:flex fixed top-0 inset-x-0 z-50 items-center gap-6 px-8 py-2.5 bg-card border-b border-[rgba(2,62,138,0.1)]">
-      <Link href="/dashboard" className="shrink-0">
+      <Link href="/" className="shrink-0">
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "34px" }} />
       </Link>
       <nav className="flex items-center gap-1">
         {TABS.map(tab => {
           const href = hrefFor(tab);
           const active = isActive(href);
+          const style = {
+            color: active ? "#023e8a" : "rgba(0,0,0,0.45)",
+            background: active ? "rgba(2,62,138,0.07)" : "transparent",
+          };
+          const cls = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors";
+          /* "המסע" פותח את מגירת השלבים — לא מנווט (נתי 25.8) */
+          if (tab.href === "/dashboard") {
+            return (
+              <button key={tab.href} onClick={() => setJourneyOpen(true)} className={cls} style={style}>
+                <span className="text-[14px]">{tab.icon}</span>
+                {labelFor(tab)}
+              </button>
+            );
+          }
           return (
-            <Link
-              key={tab.href}
-              href={href}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-bold transition-colors"
-              style={{
-                color: active ? "#023e8a" : "rgba(0,0,0,0.45)",
-                background: active ? "rgba(2,62,138,0.07)" : "transparent",
-              }}
-            >
+            <Link key={tab.href} href={href} className={cls} style={style}>
               <span className="text-[14px]">{tab.icon}</span>
-              {tab.label}
+              {labelFor(tab)}
             </Link>
           );
         })}
@@ -76,18 +231,14 @@ export default function BottomNav() {
 
     <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden flex border-t border-[rgba(2,62,138,0.1)] bg-card" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       {/* Logo */}
-      <Link href="/dashboard" className="flex flex-col items-center justify-center py-2 px-2 shrink-0" style={{ width: "52px" }}>
+      <Link href="/" className="flex flex-col items-center justify-center py-2 px-2 shrink-0" style={{ width: "52px" }}>
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "30px" }} />
       </Link>
       {TABS.map((tab) => {
         const href = hrefFor(tab);
         const active = isActive(href);
-        return (
-          <Link
-            key={tab.href}
-            href={href}
-            className="flex-1 flex flex-col items-center py-3 gap-[3px]"
-          >
+        const inner = (
+          <>
             <span
               className="text-[18px]"
               style={{ color: active ? "#023e8a" : "rgba(0,0,0,0.3)" }}
@@ -98,12 +249,76 @@ export default function BottomNav() {
               className="text-[10.5px] font-bold"
               style={{ color: active ? "#023e8a" : "rgba(0,0,0,0.35)" }}
             >
-              {tab.label}
+              {labelFor(tab)}
             </span>
+          </>
+        );
+        if (tab.href === "/dashboard") {
+          return (
+            <button key={tab.href} onClick={() => setJourneyOpen(true)} className="flex-1 flex flex-col items-center py-3 gap-[3px]">
+              {inner}
+            </button>
+          );
+        }
+        return (
+          <Link
+            key={tab.href}
+            href={href}
+            className="flex-1 flex flex-col items-center py-3 gap-[3px]"
+          >
+            {inner}
           </Link>
         );
       })}
     </nav>
+    {journeyOpen && <JourneyDrawer onClose={() => setJourneyOpen(false)} />}
+
+    {/* הפס הצדי — רק במסכים רחבים באמת, כדי לא לדחוק את התוכן */}
+    <JourneyRail />
     </>
+  );
+}
+
+function JourneyRail() {
+  const [stageNow, setStageNow] = useState(0);
+  useEffect(() => { try { setStageNow(deriveStage()); } catch { /* ignore */ } }, []);
+  if (!stageNow) return null;
+  return (
+    <aside
+      dir="rtl"
+      className="journey-rail hidden min-[1200px]:flex fixed right-0 top-14 bottom-0 w-[225px] flex-col gap-1.5 p-5 overflow-y-auto z-40"
+      style={{ background: "linear-gradient(180deg, #023e8a 0%, #03318f 100%)", fontFamily: "'Heebo', sans-serif" }}
+    >
+      <div className="text-[11px] font-black tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.6)" }}>
+        המסע שלך · {stageNow > 1 ? `${stageNow - 1} מתוך 6 מאחוריך` : "6 שלבים"}
+      </div>
+      {JOURNEY.map(st => {
+        const done = st.n < stageNow;
+        const current = st.n === stageNow;
+        return (
+          <div key={st.n} className="flex items-center gap-2.5 rounded-xl px-2.5 py-2"
+            style={{ background: current ? "rgba(251,133,0,0.18)" : "transparent", opacity: done || current ? 1 : 0.45 }}>
+            <span className="w-[24px] h-[24px] rounded-full flex items-center justify-center text-[11px] font-black shrink-0"
+              style={{ background: done ? "#fff" : current ? "#fb8500" : "rgba(255,255,255,0.25)", color: done ? "#023e8a" : "#fff" }}>
+              {done ? "✓" : st.n}
+            </span>
+            <span className="text-[12.5px] font-bold" style={{ color: "#fff" }}>
+              {st.candidate}
+            </span>
+            {!done && !current && <span className="mr-auto text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>🔒</span>}
+          </div>
+        );
+      })}
+      <Link
+        href={STAGE_CTA[stageNow]?.href ?? "/"}
+        className="mt-3 text-center text-[13px] font-black rounded-xl py-2.5"
+        style={{ background: "#fb8500", color: "#fff" }}
+      >
+        {STAGE_CTA[stageNow]?.label ?? "להמשיך ←"}
+      </Link>
+      <div className="mt-auto text-[10.5px] leading-[1.6] pt-3" style={{ color: "rgba(255,255,255,0.45)" }}>
+        שלבים שעברת נשארים פתוחים — לוחצים על "המסע" למעלה כדי לחזור אליהם
+      </div>
+    </aside>
   );
 }

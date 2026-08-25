@@ -198,6 +198,37 @@ export const FUNDING: Funding[] = [
     verified: "11.8.2026",
   },
   {
+    id: "tnufa-colman",
+    name: "תנופה להצלחה — המכללה למנהל",
+    kind: "scholarship",
+    what: "ליוצאי אתיופיה במכללה למנהל: 15,000 ₪ לכל שנת תואר. נצברת עם מרום — יחד 25,000 ₪ בשנה.",
+    catch: "בגרות 85+ (או מכינה 85), עד גיל 30, בלי תואר קודם, 4 יח׳ אנגלית. כלל הכפל: מותרות לצידה רק מרום ומינהל הסטודנטים — כל מימון אחר פוסל.",
+    amount: 15000,
+    amountNote: "לשנה, לפי שנות התואר הרשמיות. הגשה לתשפ״ז: 1.3–31.8.2026",
+    closesAt: { d: 31, m: 8 },
+    institutions: ["colman"],
+    tracks: ["degree"],
+    blocks: ["perach", "yeud44", "peripheria45", "yeud46"],
+    status: "active",
+    docs: ["id", "grades", "income", "enrollment"],
+    verified: "20.8.2026 — colman.ac.il + חוברת התאחדות הסטודנטים",
+  },
+  {
+    id: "olim-beyahad-colman",
+    name: "עולים ביחד — המכללה למנהל",
+    kind: "scholarship",
+    what: "שכר לימוד מלא (למעט מקדמה שנתית) ליוצאי אתיופיה — במדעי המחשב, מערכות מידע וכלכלה בלבד.",
+    catch: "הדלת הצרה והשווה יותר: בגרות 90+, עד גיל 30, 4 יח׳ אנגלית. מותרות לצידה רק מרום ומינהל הסטודנטים.",
+    amountNote: "שכר לימוד מלא — במכללה פרטית זה שווה יותר מ-30,000 ₪ לשנה; הסכום המדויק לא אומת",
+    closesAt: { d: 31, m: 8 },
+    institutions: ["colman"],
+    tracks: ["degree"],
+    blocks: ["perach", "yeud44", "peripheria45", "yeud46"],
+    status: "active",
+    docs: ["id", "grades", "income", "enrollment"],
+    verified: "20.8.2026 — colman.ac.il, בשיתוף עמותת עולים ביחד",
+  },
+  {
     id: "yeud46",
     name: "ייעוד 46 — בוגרי מכינה",
     kind: "scholarship",
@@ -273,7 +304,7 @@ export const FUNDING: Funding[] = [
     name: "גרים בפריפריה 45",
     kind: "scholarship",
     what:
-      "מימון מלא של שנה א׳ בתואר — עד 12,017 ₪ — לתושבי אזורי עדיפות לאומית. המלגה מועברת לפיקדון האישי.",
+      "מימון מלא של שנה א׳ בתואר — כ-12,200 ₪ (בדף האגף עדיין רשום 12,017) — לתושבי אזורי עדיפות לאומית. המלגה מועברת לפיקדון האישי.",
     catch:
       "אין כפל בין מלגות הפריפריה של האגף — מממשים רק אחת מ-44/45/46. הזכאות דורשת כתובת רשומה בפריפריה בחמש מתוך שש השנים שלפני הלימודים. ולוחמי מילואים עם 100% מימון ממלגת מילואים אינם זכאים.",
     who:
@@ -419,7 +450,7 @@ export const FUNDING: Funding[] = [
       "תמיכה רגשית",
     ],
     // ארבעה מוסדות במכינה; בתואר נוספים עוד ארבעה
-    institutions: ["bgu", "huji", "technion", "bar-ilan", "haifa", "ariel", "sce"],
+    institutions: ["bgu", "huji", "technion", "bar-ilan", "haifa", "ariel", "sce-beersheva", "sce-ashdod"],
     tracks: ["degree"],
     link: "https://www.techleaders.org.il/",
     status: "needs-check",
@@ -825,6 +856,7 @@ export function programsFor(track: Track): { funding: Funding; score: Score }[] 
 }
 
 export const TRACK_TITLE: Record<Track, string> = {
+  prep: "מסלולי הכנה — מכינות והשלמות",
   degree: "תואר אקדמי",
   mahat: "מה״ט — הנדסאים",
   bootcamp: "הכשרה מקצועית",

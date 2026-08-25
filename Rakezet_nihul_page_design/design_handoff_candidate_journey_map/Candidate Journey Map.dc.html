@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&display=swap">
+  <style>
+    body { margin:0; background:#fbf9f5; }
+    a { color:#023e8a; } a:hover { color:#fb8500; }
+    @keyframes tcPulse { 0% { box-shadow:0 0 0 0 rgba(251,133,0,.45); } 70% { box-shadow:0 0 0 14px rgba(251,133,0,0); } 100% { box-shadow:0 0 0 0 rgba(251,133,0,0); } }
+  </style>
+</helmet>
+<div dir="rtl" style="font-family:'Heebo',sans-serif;background:#fbf9f5;min-height:100vh;color:#23211c;padding:28px 32px 48px">
+  <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <a href="#" style="text-decoration:none;font-weight:500;font-size:14px;display:flex;align-items:center;gap:6px">← חזרה לרשימת המשתתפים</a>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12.5px;color:#8d867a;font-weight:500">דמו — החלפת מועמד:</span>
+        <div style="display:flex;gap:6px;background:#f0ece2;border-radius:999px;padding:4px">
+          <button onClick="{{ pickDaniel }}" style="{{ tabDanielStyle }}" style-hover="opacity:.85">דניאל · זורם</button>
+          <button onClick="{{ pickMekdes }}" style="{{ tabMekdesStyle }}" style-hover="opacity:.85">מקדס · תקועה</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- כרטיס פרסונה -->
+    <div style="background:#fff;border-radius:18px;box-shadow:0 2px 10px rgba(2,62,138,.06);padding:24px 28px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:260px">
+          <div style="display:flex;align-items:baseline;gap:12px">
+            <h1 style="margin:0;font-size:30px;font-weight:900;color:#023e8a;line-height:1.1">{{ p.name }}</h1>
+            <span style="font-size:14px;color:#8d867a;font-weight:500">{{ p.meta }}</span>
+          </div>
+          <div style="font-size:13.5px;color:#8d867a;display:flex;align-items:center;gap:6px">
+            נראה/תה לאחרונה: <strong style="color:#5b5648;font-weight:700">{{ p.lastSeen }}</strong>
+            <sc-if value="{{ p.lastSeenNote }}" hint-placeholder-val="{{ false }}">
+              <span style="background:#fff7ed;border:1.5px solid #fb8500;color:#9a3412;font-weight:700;font-size:12px;border-radius:999px;padding:2px 10px">{{ p.lastSeenNote }}</span>
+            </sc-if>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:8px">
+          <div style="{{ statusPillStyle }}">{{ statusIcon }}<span>{{ statusText }}</span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ signals }}" as="sig" hint-placeholder-count="1">
+              <span style="display:inline-flex;align-items:center;gap:6px;background:#fef2f2;border:1.5px solid #dc2626;color:#dc2626;font-weight:700;font-size:12.5px;border-radius:999px;padding:4px 12px;white-space:nowrap">{{ sig.icon }}{{ sig.text }}</span>
+            </sc-for>
+            <sc-if value="{{ noSignals }}" hint-placeholder-val="{{ false }}">
+              <span style="display:inline-flex;align-items:center;gap:6px;background:#ecfdf5;color:#059669;font-weight:700;font-size:12.5px;border-radius:999px;padding:4px 12px">אין סיגנלים פעילים</span>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;border-top:1px solid #f0ece2;padding-top:16px">
+        <sc-for list="{{ fields }}" as="f" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:11.5px;color:#a8a195;font-weight:700;letter-spacing:.02em">{{ f.label }}</span>
+            <span style="font-size:14.5px;font-weight:700;color:#23211c">{{ f.value }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- מפת המסע -->
+    <div style="background:#fff;border-radius:18px;box-shadow:0 2px 10px rgba(2,62,138,.06);padding:24px 28px 8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px">
+        <h2 style="margin:0;font-size:19px;font-weight:900;color:#023e8a">מפת המסע</h2>
+        <sc-if value="{{ showLegend }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#5b5648;font-weight:500">
+            <span style="display:inline-flex;align-items:center;gap:5px"><i style="width:11px;height:11px;border-radius:99px;background:#059669;display:inline-block"></i>הושלם</span>
+            <span style="display:inline-flex;align-items:center;gap:5px"><i style="width:11px;height:11px;border-radius:99px;background:#fb8500;display:inline-block"></i>כאן עכשיו</span>
+            <span style="display:inline-flex;align-items:center;gap:5px"><i style="width:11px;height:11px;border-radius:99px;background:#fff;border:2.5px solid #fb8500;display:inline-block;box-sizing:border-box"></i>עצר/ה כאן</span>
+            <span style="display:inline-flex;align-items:center;gap:5px"><i style="width:11px;height:11px;border-radius:99px;background:#fbf9f5;border:2px solid #d8d2c7;display:inline-block;box-sizing:border-box"></i>עוד לא הגיע/ה</span>
+            <span style="display:inline-flex;align-items:center;gap:5px"><i style="width:11px;height:11px;border-radius:99px;background:#dc2626;display:inline-block"></i>סיגנל פעיל</span>
+          </div>
+        </sc-if>
+      </div>
+      <div style="overflow-x:auto;overflow-y:hidden;padding-bottom:16px">
+        <div style="position:relative;min-width:1000px;padding:4px 16px 0">
+          <sc-for list="{{ connectors }}" as="c" hint-placeholder-count="2">
+            <div style="{{ c.style }}"></div>
+          </sc-for>
+          <sc-for list="{{ rows }}" as="row" hint-placeholder-count="3">
+            <div style="{{ row.style }}">
+              <div style="{{ row.lineStyle }}"></div>
+              <sc-for list="{{ row.stations }}" as="st" hint-placeholder-count="4">
+                <div onClick="{{ st.onClick }}" style="flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:34px;min-width:0;cursor:pointer" style-hover="transform:translateY(-2px)">
+                  <sc-if value="{{ st.stageLabel }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;top:0;font-size:12px;font-weight:900;color:#023e8a;background:#eef3fa;border-radius:999px;padding:3px 12px;white-space:nowrap">{{ st.stageLabel }}</div>
+                  </sc-if>
+                  <div style="{{ st.nodeStyle }}">{{ st.iconEl }}{{ st.badgeEl }}</div>
+                  <sc-if value="{{ st.flag }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:8px;font-size:12.5px;font-weight:900;color:#fff;background:#fb8500;border-radius:999px;padding:3px 12px;white-space:nowrap;box-shadow:0 2px 8px rgba(251,133,0,.4)">{{ st.flag }}</div>
+                  </sc-if>
+                  <div style="{{ st.titleStyle }}">{{ st.title }}</div>
+                  <sc-if value="{{ st.date }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:11.5px;color:#a8a195;font-weight:500;margin-top:2px">{{ st.date }}</div>
+                  </sc-if>
+                  <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px;align-items:center">
+                    <sc-for list="{{ st.chips }}" as="chip" hint-placeholder-count="0">
+                      <span style="{{ chip.style }}">{{ chip.text }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- פירוט תחנה (נפתח בלחיצה) -->
+      <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ detailStyle }}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;row-gap:6px">
+              <h3 style="margin:0;font-size:16.5px;font-weight:900;color:#023e8a;white-space:nowrap">{{ detail.title }}</h3>
+              <span style="{{ detail.stateStyle }}">{{ detail.stateText }}</span>
+            </div>
+            <button onClick="{{ closeDetail }}" style="border:none;background:#f0ece2;color:#5b5648;border-radius:999px;width:28px;height:28px;font-size:15px;font-weight:700;cursor:pointer;line-height:1" style-hover="background:#e2ddd3">✕</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+            <sc-for list="{{ detail.events }}" as="ev" hint-placeholder-count="3">
+              <div style="display:flex;gap:12px;align-items:baseline;font-size:14px">
+                <span style="font-weight:700;color:#8d867a;font-size:12.5px;min-width:52px">{{ ev.d }}</span>
+                <span style="color:#23211c;font-weight:500">{{ ev.t }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ detail.action }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:14px;background:#023e8a;color:#fff;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:700;display:flex;gap:8px;align-items:baseline">
+              <span style="font-size:11.5px;font-weight:900;letter-spacing:.04em;opacity:.75;white-space:nowrap">הפעולה שלך</span>
+              <span>{{ detail.action }}</span>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+      <div style="height:16px"></div>
+    </div>
+
+    <!-- ציר ביקורים -->
+    <sc-if value="{{ showVisits }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+          <h2 style="margin:0;font-size:17px;font-weight:900;color:#023e8a;white-space:nowrap">ציר הביקורים</h2>
+          <span style="font-size:12.5px;color:#a8a195;font-weight:500">המפה היא הסיכום — כאן הזום־אין</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+          <sc-for list="{{ visits }}" as="v" hint-placeholder-count="3">
+            <div style="background:#fff;border-radius:14px;box-shadow:0 1px 6px rgba(2,62,138,.05);padding:14px 18px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <span style="font-weight:900;font-size:13.5px;color:#023e8a;white-space:nowrap;line-height:1.6">{{ v.when }}</span>
+                <span style="font-size:12px;font-weight:700;color:#8d867a;background:#f6f2ea;border-radius:999px;padding:2px 10px;white-space:nowrap">{{ v.dur }}</span>
+              </div>
+              <div style="font-size:13.5px;color:#5b5648;font-weight:500;line-height:1.45">{{ v.what }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showVisits&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;תצוגה&quot;},&quot;showLegend&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;תצוגה&quot;}}">
+class Component extends DCLogic {
+  state = { cand: 'daniel', open: null };
+
+  icon(name, size, color, sw) {
+    const P = {
+      clipboard: ['M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1', 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2', 'm9 13 2 2 4-4'],
+      calendar: ['M8 2v4', 'M16 2v4', 'M3 10h18', 'M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2'],
+      flask: ['M10 2v7.5L4.5 20a1 1 0 0 0 .9 1.5h13.2a1 1 0 0 0 .9-1.5L14 9.5V2', 'M8.5 2h7', 'M7 16h10'],
+      signpost: ['M4 6h12l3 3-3 3H4z', 'M12 12v9', 'M12 3v3', 'M9 21h6'],
+      sliders: ['M4 21v-7', 'M4 10V3', 'M12 21v-9', 'M12 8V3', 'M20 21v-5', 'M20 12V3', 'M2 14h4', 'M10 8h4', 'M18 16h4'],
+      list: ['M8 6h13', 'M8 12h13', 'M8 18h13', 'M3 6h.01', 'M3 12h.01', 'M3 18h.01'],
+      landmark: ['M3 22h18', 'M6 18v-7', 'M10 18v-7', 'M14 18v-7', 'M18 18v-7', 'M12 2 3 8h18z'],
+      coins: ['M8 14a6 6 0 1 0 0-12 6 6 0 0 0 0 12', 'M18.09 10.37A6 6 0 1 1 10.34 18', 'M7 6h1v4'],
+      flag: ['M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z', 'M4 22v-7'],
+      grad: ['M22 10 12 5 2 10l10 5 10-5', 'M6 12.5V17c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5'],
+      check: ['M20 6 9 17l-5-5'],
+      pause: ['M10 15V9', 'M14 15V9'],
+      alert: ['M12 9v4', 'M12 17h.01', 'm21.7 18.3-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-2.7'],
+      run: ['M13 5a1 1 0 1 0 0-2 1 1 0 0 0 0 2', 'M6 21l3-6 3 2 2 4', 'M9 12l2-4 4 1 3 3', 'M14 9l-1 4'],
+      upload: ['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z', 'M14 2v5h5', 'm9 15 2 2 4-4']
+    };
+    return React.createElement('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: sw || 2.5, strokeLinecap: 'round', strokeLinejoin: 'round' },
+      (P[name] || []).map((d, i) => React.createElement('path', { d, key: i })));
+  }
+
+  static STATIONS = [
+    { id: 'signup', stage: 'פתיחת חשבון', title: 'נרשם/ה ומילא/ה שאלון בסיס', icon: 'clipboard' },
+    { id: 'meet1', stage: 'היכרות', title: 'פגישה 1 — נקבעה והתקיימה', icon: 'calendar' },
+    { id: 'tastes', stage: 'טעימות הייטק', title: 'טעימות תחומים', icon: 'flask' },
+    { id: 'meet2', stage: 'מסלול לימודים', title: 'פגישה 2', icon: 'calendar' },
+    { id: 'direction', title: 'בחירת כיוון', icon: 'signpost' },
+    { id: 'constraints', title: 'שאלון אילוצים', icon: 'sliders' },
+    { id: 'institutions', title: 'רשימת מוסדות', icon: 'list' },
+    { id: 'meet3', stage: 'מלגות והרשמה', title: 'פגישה 3', icon: 'calendar' },
+    { id: 'institution', title: 'בחירת מוסד + גיבוי', icon: 'landmark' },
+    { id: 'scholarships', title: 'מלגות שנבחרו', icon: 'coins' },
+    { id: 'enroll', title: 'משימת העוגן: ההרשמה', icon: 'flag' },
+    { id: 'student', stage: 'סטודנט/ית', title: 'אישור לימודים אומת', icon: 'grad' }
+  ];
+
+  static DATA = {
+    daniel: {
+      name: 'דניאל טספאי', meta: '24 · קריית מלאכי · סיים שירות',
+      lastSeen: 'היום 09:40', lastSeenNote: null,
+      status: { kind: 'now', text: 'כאן עכשיו: טעימות הייטק · בתנועה' },
+      signals: [],
+      fields: [
+        { label: 'תחומים שבחר', value: 'עדיין בטעימות' },
+        { label: 'מוסד + גיבוי', value: 'טרם נבחר' },
+        { label: 'רכזת מלווה', value: 'שרה אדנה' },
+        { label: 'סטטוס שירות', value: 'סיים שירות מלא' }
+      ],
+      defaultOpen: null,
+      st: {
+        signup: { state: 'done', date: '02.07', events: [{ d: '02.07', t: 'נרשם לפלטפורמה' }, { d: '02.07', t: 'השלים שאלון בסיס' }] },
+        meet1: { state: 'done', date: '09.07', chips: [{ kind: 'good', text: '"היה טוב"' }], events: [{ d: '03.07', t: 'קבע פגישת היכרות' }, { d: '09.07', t: 'הפגישה התקיימה · 45 דק׳' }, { d: '09.07', t: 'משוב: "היה טוב"' }] },
+        tastes: {
+          state: 'now',
+          chips: [{ kind: 'info', text: 'טעם: דאטה, סייבר, QA' }, { kind: 'talk', text: '💬 דאטה: עניין גבוה, מסוגלות נמוכה — שיחה מחזקת' }],
+          events: [{ d: '14.07', t: 'טעימת QA — עצר באמצע' }, { d: '28.07', t: 'טעימת דאטה הושלמה · עניין גבוה, מסוגלות נמוכה' }, { d: 'אתמול', t: 'טעימת סייבר הושלמה · עניין ומסוגלות גבוהים' }],
+          action: 'בפגישה הבאה: שיחה מחזקת על פער הדאטה — עניין גבוה, מסוגלות נמוכה.'
+        }
+      },
+      visits: [
+        { when: 'היום 09:40', dur: '12 דק׳', what: 'צפה בטעימת דאטה וסימן עניין גבוה' },
+        { when: 'אתמול 20:15', dur: '25 דק׳', what: 'השלים את טעימת הסייבר ואת שאלון המסוגלות' },
+        { when: '14.07', dur: '8 דק׳', what: 'התחיל טעימת QA — עצר באמצע' }
+      ]
+    },
+    mekdes: {
+      name: 'מקדס וורקנה', meta: '22 · חדרה · סיימה שירות',
+      lastSeen: 'אתמול 21:40', lastSeenNote: 'נכנסת — ולא מתקדמת',
+      status: { kind: 'stuck', text: 'עצרה כאן: בחירת כיוון · 12 ימים' },
+      signals: [{ text: 'פספסה פגישת מעקב · 11.08' }],
+      fields: [
+        { label: 'תחומים שבחרה', value: 'טרם נבחרו' },
+        { label: 'מוסד + גיבוי', value: 'טרם נבחר' },
+        { label: 'רכזת מלווה', value: 'שרה אדנה' },
+        { label: 'סטטוס שירות', value: 'סיימה שירות מלא' }
+      ],
+      defaultOpen: 'direction',
+      st: {
+        signup: { state: 'done', date: '15.05', events: [{ d: '15.05', t: 'נרשמה לפלטפורמה' }, { d: '15.05', t: 'השלימה שאלון בסיס' }] },
+        meet1: { state: 'done', date: '22.05', chips: [{ kind: 'good', text: '"היה טוב"' }], events: [{ d: '18.05', t: 'קבעה פגישת היכרות' }, { d: '22.05', t: 'הפגישה התקיימה · 50 דק׳' }] },
+        tastes: { state: 'done', date: '05.06', chips: [{ kind: 'info', text: 'טעמה: דאטה, פיתוח, סייבר' }], events: [{ d: '28.05', t: 'טעימת דאטה הושלמה · עניין ומסוגלות גבוהים' }, { d: '02.06', t: 'טעימת פיתוח הושלמה · עניין גבוה' }, { d: '05.06', t: 'טעימת סייבר הושלמה · עניין נמוך' }] },
+        meet2: { state: 'done', date: '19.06', events: [{ d: '19.06', t: 'פגישה 2 התקיימה — סוכם: בחירת כיוון עד 26.06' }] },
+        direction: {
+          state: 'stuck', stuckDays: 12, signal: true,
+          chips: [{ kind: 'stuck', text: '⏸ 12 ימים מול בחירת הכיוון' }, { kind: 'alert', text: 'פספסה פגישת מעקב · 11.08' }],
+          events: [
+            { d: '19.06', t: 'פגישה 2 התקיימה — סוכם: בחירת כיוון עד 26.06' },
+            { d: '30.07', t: 'נכנסה למסך בחירת הכיוון — יצאה בלי לבחור' },
+            { d: '04.08', t: 'כניסה חוזרת למסך הבחירה — שוב בלי בחירה' },
+            { d: '11.08', t: 'פספסה פגישת מעקב שנקבעה' }
+          ],
+          action: 'שיחה יזומה היום: מה עוצר בבחירה בין דאטה לפיתוח? לשקף את תוצאות הטעימות.'
+        }
+      },
+      visits: [
+        { when: 'אתמול 21:40', dur: '6 דק׳', what: 'נכנסה למסך בחירת הכיוון — יצאה בלי לבחור' },
+        { when: 'לפני 3 ימים', dur: '4 דק׳', what: 'עיינה שוב בסיכום הטעימות שלה' },
+        { when: '11.08', dur: '—', what: 'לא הגיעה לפגישת המעקב שנקבעה' }
+      ]
+    }
+  };
+
+  pick(cand) { this.setState({ cand, open: Component.DATA[cand].defaultOpen }); }
+
+  componentDidMount() { if (this.state.open === null && Component.DATA[this.state.cand].defaultOpen) this.setState({ open: Component.DATA[this.state.cand].defaultOpen }); }
+
+  chipStyle(kind) {
+    const base = 'display:inline-block;font-size:11.5px;border-radius:999px;padding:3px 10px;max-width:190px;line-height:1.35;';
+    if (kind === 'good') return base + 'background:#ecfdf5;color:#059669;font-weight:700';
+    if (kind === 'talk') return base + 'background:#eef3fa;color:#023e8a;font-weight:700';
+    if (kind === 'alert') return base + 'background:#fef2f2;border:1.5px solid #dc2626;color:#dc2626;font-weight:700';
+    if (kind === 'stuck') return base + 'background:#fff7ed;border:2px solid #fb8500;color:#9a3412;font-weight:900;font-size:12.5px';
+    return base + 'background:#f6f2ea;color:#5b5648;font-weight:500';
+  }
+
+  renderVals() {
+    const d = Component.DATA[this.state.cand];
+    const open = this.state.open;
+    const nodeBase = 'position:relative;z-index:2;width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;';
+    const ROWH = 262, LINEY = 62;
+    const stations = Component.STATIONS.map((s) => {
+      const o = d.st[s.id] || {};
+      const state = o.state || 'future';
+      let nodeStyle, iconColor, titleColor = '#23211c', titleWeight = 700;
+      if (state === 'done') { nodeStyle = nodeBase + 'background:#059669;box-shadow:0 2px 8px rgba(5,150,105,.25)'; iconColor = '#fff'; }
+      else if (state === 'now') { nodeStyle = nodeBase + 'background:#fb8500;animation:tcPulse 2s infinite;box-shadow:0 3px 12px rgba(251,133,0,.4)'; iconColor = '#fff'; titleColor = '#023e8a'; titleWeight = 900; }
+      else if (state === 'stuck') { nodeStyle = nodeBase + 'background:#fff7ed;border:3px solid #fb8500;box-shadow:0 0 0 6px rgba(251,133,0,.14)'; iconColor = '#9a3412'; titleColor = '#9a3412'; titleWeight = 900; }
+      else { nodeStyle = nodeBase + 'background:#fbf9f5;border:2px solid #e2ddd3'; iconColor = '#b8b1a4'; titleColor = '#a8a195'; titleWeight = 500; }
+      let badgeEl = React.createElement('span', { key: 'none' });
+      if (state === 'done') badgeEl = React.createElement('span', { key: 'done', style: { position: 'absolute', bottom: -3, left: -3, width: 20, height: 20, borderRadius: 99, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,.15)' } }, this.icon('check', 12, '#059669', 3.5));
+      if (state === 'stuck') badgeEl = React.createElement('span', { key: 'stuck', style: { position: 'absolute', bottom: -3, left: -3, width: 22, height: 22, borderRadius: 99, background: '#fb8500', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, this.icon('pause', 13, '#fff', 3.5));
+      if (o.signal) badgeEl = [badgeEl, React.createElement('span', { key: 'sig', style: { position: 'absolute', top: -5, right: -5, width: 22, height: 22, borderRadius: 99, background: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px rgba(220,38,38,.4)' } }, this.icon('alert', 13, '#fff', 2.8))];
+      return {
+        id: s.id, title: s.title,
+        stageLabel: s.stage || false,
+        flag: state === 'now' ? 'כאן עכשיו' : false,
+        date: o.date || false,
+        chips: (o.chips || []).map(c => ({ text: c.text, style: this.chipStyle(c.kind) })),
+        nodeStyle,
+        iconEl: this.icon(s.icon, 26, iconColor, 2.4),
+        titleStyle: `margin-top:8px;font-size:13.5px;font-weight:${titleWeight};color:${titleColor};line-height:1.3;max-width:170px`,
+        onClick: () => this.setState({ open: this.state.open === s.id ? null : s.id })
+      };
+    });
+    const rows = [0, 1, 2].map(i => ({
+      style: `display:flex;flex-direction:${i === 1 ? 'row-reverse' : 'row'};position:relative;height:${ROWH}px`,
+      lineStyle: `position:absolute;top:${LINEY - 1}px;left:6%;right:6%;border-top:3px dashed #ddd6c9;z-index:1`,
+      stations: stations.slice(i * 4, i * 4 + 4)
+    }));
+    const connectors = [0, 1].map(i => {
+      const side = i === 0 ? 'left' : 'right';
+      const radius = i === 0 ? '999px 0 0 999px' : '0 999px 999px 0';
+      const borders = i === 0 ? 'border-right:none' : 'border-left:none';
+      return { style: `position:absolute;${side}:calc(6% - 46px);width:46px;top:${4 + LINEY - 1 + i * ROWH}px;height:${ROWH + 3}px;border:3px dashed #ddd6c9;${borders};border-radius:${radius};box-sizing:border-box;z-index:1` };
+    });
+    const st = d.status;
+    const statusPillStyle = st.kind === 'now'
+      ? 'display:inline-flex;align-items:center;gap:8px;background:#fb8500;color:#fff;font-weight:900;font-size:15px;border-radius:999px;padding:8px 18px;box-shadow:0 2px 10px rgba(251,133,0,.35)'
+      : 'display:inline-flex;align-items:center;gap:8px;background:#fff7ed;border:2.5px solid #fb8500;color:#9a3412;font-weight:900;font-size:15px;border-radius:999px;padding:7px 18px';
+    const openMeta = open ? Component.STATIONS.find(s => s.id === open) : null;
+    const openData = open ? (d.st[open] || {}) : {};
+    const stateLabels = { done: ['הושלם', 'background:#ecfdf5;color:#059669'], now: ['כאן עכשיו', 'background:#fb8500;color:#fff'], stuck: [`עצרה כאן · ${openData.stuckDays || ''} ימים`, 'white-space:nowrap;background:#fff7ed;border:1.5px solid #fb8500;color:#9a3412'], future: ['עוד לא הגיע/ה', 'background:#f6f2ea;color:#8d867a'] };
+    const sl = stateLabels[openData.state || 'future'];
+    const detail = openMeta ? {
+      title: openMeta.title,
+      stateText: sl[0],
+      stateStyle: 'font-size:12px;font-weight:900;border-radius:999px;padding:3px 12px;' + sl[1],
+      events: openData.events || [{ d: '—', t: 'אין אירועים בתחנה זו עדיין' }],
+      action: openData.action || false
+    } : { title: '', stateText: '', stateStyle: '', events: [], action: false };
+    return {
+      p: d, fields: d.fields,
+      signals: d.signals.map(s => ({ text: s.text, icon: this.icon('alert', 13, '#dc2626', 2.8) })),
+      noSignals: d.signals.length === 0,
+      statusText: st.text,
+      statusIcon: st.kind === 'now' ? this.icon('run', 18, '#fff', 2.6) : this.icon('pause', 18, '#9a3412', 3.2),
+      statusPillStyle,
+      rows, connectors,
+      hasDetail: !!openMeta,
+      detail,
+      detailStyle: (openData.state === 'stuck' ? 'border:2px solid #fb8500;background:#fffdf8;' : 'border:1.5px solid #eee9dd;background:#fdfcf9;') + 'border-radius:14px;padding:18px 22px;margin-top:10px',
+      closeDetail: () => this.setState({ open: null }),
+      pickDaniel: () => this.pick('daniel'),
+      pickMekdes: () => this.pick('mekdes'),
+      tabDanielStyle: this.tabStyle(this.state.cand === 'daniel'),
+      tabMekdesStyle: this.tabStyle(this.state.cand === 'mekdes'),
+      visits: d.visits,
+      showVisits: this.props.showVisits ?? true,
+      showLegend: this.props.showLegend ?? true
+    };
+  }
+
+  tabStyle(active) {
+    return `border:none;cursor:pointer;font-family:'Heebo',sans-serif;font-size:13px;font-weight:700;border-radius:999px;padding:6px 16px;${active ? 'background:#023e8a;color:#fff' : 'background:transparent;color:#5b5648'}`;
+  }
+}
+</script>
+</body>
+</html>

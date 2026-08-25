@@ -5,7 +5,7 @@ import Cal, { getCalApi } from "@calcom/embed-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Link from "next/link";
 import { calLinkFor, currentMeeting, MEETING_META, type MeetingNum } from "@/data/meetings";
-import { logEvent } from "@/lib/candidate";
+import { logEvent, myCoordinator } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -39,6 +39,12 @@ export default function ContactPage() {
   const router = useRouter();
   /** null עד שיודעים — כדי לא לטעון את היומן של הפגישה הלא נכונה ואז להחליף */
   const [meeting, setMeeting] = useState<MeetingNum | null>(null);
+  /**
+   * היומן של הרכזת המשויכת (מהסגל ב-DB). null = עוד בודקים, "" = אין לה
+   * קישור משלה — נופלים לברירת המחדל מ-meetings.ts. הרינדור מחכה לבדיקה
+   * כדי לא לטעון יומן של רכזת אחת ואז להחליף לשנייה מול העיניים.
+   */
+  const [assignedCal, setAssignedCal] = useState<string | null>(null);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get("m");
@@ -46,6 +52,12 @@ export default function ContactPage() {
       ? (Number(param) as MeetingNum)
       : currentMeeting(localStorage);
     setMeeting(n);
+    myCoordinator()
+      .then(c => {
+        setAssignedCal(c?.calLinks[n] ?? "");
+        if (c?.phone) setCoord({ name: c.name, phone: c.phone });
+      })
+      .catch(() => setAssignedCal(""));
   }, []);
 
   useEffect(() => {
@@ -150,6 +162,21 @@ export default function ContactPage() {
 
   const meta = meeting ? MEETING_META[meeting] : null;
 
+  /*
+   * welcome=1 — הגעה ישירה מסוף האונבורדינג. המשפט האישי הוא כל המעבר:
+   * בלי מסך ביניים, בלי מפה — רק מי אתה ומה הצעד. השם מ-localStorage.
+   */
+  const [welcomeName, setWelcomeName] = useState<string | null>(null);
+  /** הרכזת המשויכת מהסגל — כפתור הוואטסאפ מופיע רק כשיש לה טלפון */
+  const [coord, setCoord] = useState<{ name: string; phone: string } | null>(null);
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("welcome") === "1") {
+        setWelcomeName(localStorage.getItem("user-name") || "");
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
       {/* Header */}
@@ -170,6 +197,50 @@ export default function ContactPage() {
         </div>
       </div>
 
+      {welcomeName !== null && (
+        <div className="max-w-[900px] mx-auto w-full px-[22px] md:px-12 pt-5">
+          <div
+            className="rounded-xl px-4 py-3.5 text-[13px] leading-[1.75]"
+            style={{ background: "rgba(251,133,0,0.08)", border: "1px solid rgba(251,133,0,0.2)", color: "rgba(0,0,0,0.65)" }}
+          >
+            <span className="font-black" style={{ color: "#92400e" }}>
+              {welcomeName ? `נעים להכיר, ${welcomeName} 👋` : "נעים להכיר 👋"}
+            </span>{" "}
+            סיימת את הצעד הראשון. עכשיו הדבר היחיד שנשאר כדי לצאת לדרך —
+            לבחור מועד לפגישת ההיכרות עם הרכזת.
+          </div>
+        </div>
+      )}
+
+      {/* וואטסאפ לרכזת (נתי 25.8) — שאלה מהירה לא צריכה לחכות לפגישה.
+          מופיע רק כשיש טלפון בסגל; ההודעה הפותחת מוכנה כדי להוריד את
+          מחסום "מה כותבים" */}
+      {coord && (
+        <div className="max-w-[900px] mx-auto w-full px-[22px] md:px-12 pt-5">
+          <a
+            href={`https://wa.me/${coord.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`היי ${coord.name.split(" ")[0]}, זו שאלה מהאפליקציה 🙂 `)}`}
+            target="_blank" rel="noopener noreferrer"
+            onClick={() => logEvent("wa_click", {})}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3.5"
+            style={{ background: "#e7f6f0", border: "1.5px solid rgba(37,211,102,0.45)", textDecoration: "none" }}
+          >
+            <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
+              <circle cx="16" cy="16" r="16" fill="#25D366" />
+              <path fill="#fff" d="M23.1 8.9A9.9 9.9 0 0 0 6.5 20.6L5.1 26l5.5-1.4a9.9 9.9 0 0 0 12.5-15.7zm-7.1 15a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3a8.2 8.2 0 1 1 7 3.8zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.7.8-.8 1-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.4 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.5 3.9 1.7.7 2.3.8 3.1.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.4-.3z" />
+            </svg>
+            <div>
+              <div className="text-[14px] font-black" style={{ color: "#04543a" }}>
+                שאלה מהירה? {coord.name.split(" ")[0]} בוואטסאפ
+              </div>
+              <div className="text-[12px]" style={{ color: "rgba(0,0,0,0.5)" }}>
+                לא צריך לחכות לפגישה — אפשר פשוט לכתוב
+              </div>
+            </div>
+            <span className="mr-auto text-[16px]" style={{ color: "#25D366" }}>←</span>
+          </a>
+        </div>
+      )}
+
       {/* מה קורה בפגישה, ומה להביא אליה */}
       {meta && (
         <div className="max-w-[900px] mx-auto w-full px-[22px] md:px-12 pt-5 pb-3">
@@ -186,10 +257,10 @@ export default function ContactPage() {
 
       {/* Cal.com embed */}
       <div className="flex-1 max-w-[900px] mx-auto w-full px-4 md:px-12 pb-24">
-        {meeting && (
+        {meeting && assignedCal !== null && (
           <Cal
             namespace="contact"
-            calLink={calLinkFor(meeting)}
+            calLink={assignedCal || calLinkFor(meeting)}
             style={{ width: "100%", minHeight: "600px", borderRadius: "16px", overflow: "hidden" }}
             config={{ layout: "month_view", theme: "light" }}
           />

@@ -106,6 +106,109 @@ function SalaryCard({ min, max }: { min: number; max: number }) {
   );
 }
 
+/**
+ * מפת המסע הנעולה של תחום — הסטנדרט מ-28.7: השלבים נפתחים בהדרגה
+ * (sim → day → mystery → experience). ההתקדמות נקראת מ-`${id}-journey`,
+ * שכל דף כותב אליו בסיומו (הסימולציה הדינמית כותבת sim בעצמה).
+ * תבנית משותפת לתחומים החדשים (ai/ux/marketing) — בוותיקים המפה עדיין inline.
+ */
+function TasteJourney({ id, color, title, steps }: {
+  id: string;
+  color: string;
+  title: string;
+  steps: { emoji: string; title: string; sub: string; href: string; doneKey: string; lockedBy: string | null }[];
+}) {
+  const [journey, setJourney] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`${id}-journey`);
+      if (saved) setJourney(JSON.parse(saved));
+    } catch {/* ignore */}
+  }, [id]);
+
+  const rgb = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16)).join(",");
+  const tint = (a: number) => `rgba(${rgb},${a})`;
+
+  return (
+    <div className="mb-7">
+      <Label text={title} />
+      <div className="flex flex-col gap-2">
+        {steps.map((step, i, arr) => {
+          const isDone = !!journey[step.doneKey];
+          const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
+          const highlight = i === 0 && !journey["sim"];
+
+          return (
+            <div key={step.doneKey}>
+              <Link href={isLocked ? "#" : step.href} className="block" onClick={isLocked ? (e) => e.preventDefault() : undefined}>
+                <div className="rounded-2xl p-4 flex items-center gap-3 transition-all"
+                  style={{
+                    background: isDone ? tint(0.06) : highlight ? color : "#fff",
+                    border: isDone ? `1.5px solid ${tint(0.2)}` : isLocked ? "1px solid rgba(0,0,0,0.06)" : highlight ? "none" : "1px solid rgba(0,0,0,0.08)",
+                    opacity: isLocked ? 0.55 : 1,
+                    boxShadow: highlight ? `0 4px 20px ${tint(0.25)}` : "none",
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[12px] font-black"
+                    style={{ background: isDone ? color : highlight ? "rgba(255,255,255,0.25)" : tint(0.1), color: isDone || highlight ? "#fff" : color }}>
+                    {isDone ? "✓" : i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px]">{isLocked ? "🔒" : step.emoji}</span>
+                      <span className="text-[12.5px] font-bold"
+                        style={{ color: isDone ? color : highlight ? "#fff" : "#023e8a" }}>
+                        {step.title}
+                      </span>
+                      {highlight && (
+                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                      )}
+                    </div>
+                    <div className="mt-0.5">
+                      {isLocked ? (
+                        <span className="text-[11px]" style={{ color: "rgba(0,0,0,0.4)" }}>
+                          זמין אחרי שלב {i}
+                        </span>
+                      ) : (() => {
+                        const parts = step.sub.split(/ · (~\d+.*)$/);
+                        return (
+                          <>
+                            <div className="text-[11px]" dir="rtl"
+                              style={{ color: highlight ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.4)" }}>
+                              {parts[0]}
+                            </div>
+                            {parts[1] && (
+                              <div className="text-[10px] mt-0.5 font-bold" dir="rtl"
+                                style={{ color: highlight ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.28)" }}>
+                                ⏱ {parts[1]}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <span className="text-[16px] font-bold shrink-0"
+                    style={{ color: isDone ? color : highlight ? "#fff" : isLocked ? "rgba(0,0,0,0.2)" : color }}>
+                    {isLocked ? "🔒" : "←"}
+                  </span>
+                </div>
+              </Link>
+              {i < arr.length - 1 && (
+                <div className="flex justify-center my-1">
+                  <div className="w-[1.5px] h-3"
+                    style={{ background: isDone ? tint(0.4) : tint(0.2) }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── CODE ────────────────────────────────────────────────────────────────────
 function CodeContent() {
   const [ran, setRan] = useState(false);
@@ -822,9 +925,63 @@ function AIContent() {
         color="#7c3aed"
       />
 
+      {/* כתבות מאומתות (23.8, סוכן אימות — URL + תאריך + og:image).
+          מדורי תוכן שיווקי מסומנים בשדה המקור — לא מסתירים. */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על AI בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/ai-salary.jpg",
+              summary: "עובדים עם התמחות AI משתכרים כ-43,000 ₪ — פער של 9% מעל שאר ההייטק",
+              source: "Geektime · 7.2026",
+              href: "https://www.geektime.co.il/israel-tech-salary-report-q1-2026/",
+            },
+            {
+              img: "/articles/ai-roles.jpg",
+              summary: "תפקידי ה-AI החדשים: איך מתקבלים — ומה השכר",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/h1pjlbofzg",
+            },
+            {
+              img: "/articles/ai-hiring.jpg",
+              summary: "לא עוצרות: החברות האלה מגייסות עכשיו לתפקידי AI",
+              source: "Geektime · 3.2026",
+              href: "https://www.geektime.co.il/ai-dev-job-offers-326/",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.09)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <SimTeaser
         emoji="🤖"
         challenge="בטעימה: תקבלי 500 ביקורות לקוחות מעורבבות. המשימה — ללמד מודל להבדיל חיובי משלילי. כמה דוגמאות תצטרכי?"
+      />
+
+      <TasteJourney
+        id="ai"
+        color="#7c3aed"
+        title="המסלול שלך ב-AI"
+        steps={[
+          { emoji: "🤖", title: "טעימה — אמני מודל בעצמך", sub: "ללמד מודל להבדיל ביקורת חיובית משלילית · ~10 דק'", href: "/explore/ai/sim", doneKey: "sim", lockedBy: null },
+          { emoji: "🥐", title: "יום בחיי מיישמ/ת AI", sub: "הצ'אטבוט של המאפייה — תדריך, הזיות, גדרות · ~15 דק'", href: "/explore/ai/learn/day", doneKey: "day", lockedBy: "sim" },
+          { emoji: "🛠️", title: "מיני-פרויקט — העוזר של המרפאה", sub: "שלוש הגדרות שהופכות AI כללי לעוזר אמיתי · ~20 דק'", href: "/explore/ai/learn/mystery", doneKey: "mystery", lockedBy: "day" },
+          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/ai/experience", doneKey: "experience", lockedBy: "mystery" },
+        ]}
       />
 
       <SalaryCard min={18000} max={35000} />
@@ -905,9 +1062,63 @@ function UXContent() {
         color="#db2777"
       />
 
+      {/* כתבות מאומתות (23.8, סוכן אימות — URL + תאריך + og:image).
+          מדורי תוכן שיווקי מסומנים בשדה המקור — לא מסתירים. */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על עיצוב מוצר בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/ux-figma.jpg",
+              summary: "ענקית העיצוב פיגמה רוכשת סטארטאפ ישראלי צעיר ב-200 מיליון דולר",
+              source: "Geektime · 10.2025",
+              href: "https://www.geektime.co.il/figma-acquires-israeli-startup-weavy/",
+            },
+            {
+              img: "/articles/ux-product.jpg",
+              summary: "עידן חדש לאנשי מוצר: ה-AI פותח ביקוש למי שמקימים מוצרים שלמים",
+              source: "TheMarker · תוכן שיווקי",
+              href: "https://www.themarker.com/labels/technologies/2026-02-16/ty-article-labels/0000019c-647b-d631-a3de-7dffb03d0000",
+            },
+            {
+              img: "/articles/ux-triolla.jpg",
+              summary: "מי הן חברות עיצוב ה-UX/UI המובילות בישראל?",
+              source: "כלכליסט · תוכן שיווקי",
+              href: "https://www.calcalist.co.il/article/h1cu4k5nlx",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.09)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <SimTeaser
         emoji="🎨"
         challenge="בטעימה: תקבלי wireframe גרוע של אפליקציית זימון תורים. המשימה — לזהות 3 בעיות UX ולהציע כל אחת כיצד לתקן."
+      />
+
+      <TasteJourney
+        id="ux"
+        color="#db2777"
+        title="המסלול שלך ב-UX/UI"
+        steps={[
+          { emoji: "🎨", title: "טעימה — תקני את ה-wireframe", sub: "שלוש בעיות UX באפליקציית זימון תורים · ~10 דק'", href: "/explore/ux/sim", doneKey: "sim", lockedBy: null },
+          { emoji: "🛒", title: "יום בחיי מעצב/ת מוצר", sub: "60% נוטשים בשדה הטלפון — למצוא למה ולתקן · ~15 דק'", href: "/explore/ux/learn/day", doneKey: "day", lockedBy: "sim" },
+          { emoji: "🛠️", title: "מיני-פרויקט — עצבי את מסך הקבלה", sub: "מסך לגמ\"ח שכונתי שגם רחל בת ה-72 מבינה · ~20 דק'", href: "/explore/ux/learn/mystery", doneKey: "mystery", lockedBy: "day" },
+          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/ux/experience", doneKey: "experience", lockedBy: "mystery" },
+        ]}
       />
 
       <SalaryCard min={10000} max={22000} />
@@ -1034,12 +1245,52 @@ function DataContent() {
         color={TEAL}
       />
 
+      {/* כתבות מאומתות (20.8, סוכן אימות — URL + תאריך + og:image) */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על עולם הדאטה בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/data-salary-2026.jpg",
+              summary: "דוח חדש: דאטה אנליסט זינק 14% ל-31,000 ₪ — מהמרוויחים הגדולים של גל ה-AI",
+              source: "Geektime · 7.2026",
+              href: "https://www.geektime.co.il/israel-tech-salary-report-q1-2026/",
+            },
+            {
+              img: "/articles/data-analyst-vs.jpg",
+              summary: "הקרב על הנתונים: האם כדאי להיות דאטה סיינטיסט או אנליסט",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/bkcl0eza1e",
+            },
+            {
+              img: "/articles/data-salary-2025.jpg",
+              summary: "Data Engineer בצד המנצח: ביקוש לתשתיות דאטה ל-AI מזניק את השכר",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/israeli-tech-salary-2025/",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(13,148,136,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
       <JobMarketBlock
         color={TEAL}
         demand="אחד הכותרים הנפוצים ביותר בישראל — ביקוש גבוה ויציב"
-        hitech="Product Analyst · Growth Analyst · BI Developer"
+        hitech="אנליסט/ית מוצר · אנליסט/ית דאטה · בונה דוחות (BI)"
         nonHitech="בנקים (ניהול סיכון) · ביטוח · קמעונאות · בריאות · ממשלה"
-        ai="AI מאיץ — לא מחליף. אנליסטים שעובדים עם AI מוציאים פי שניים עד שלושה יותר. הביקוש לאנליסטים דווקא גדל: יותר חברות יכולות עכשיו להרשות לעצמן data work."
+        ai="ה-AI לא מחליף אנליסטים — הוא עוזר להם להספיק פי שניים-שלושה. ולכן הביקוש דווקא עולה: גם חברות קטנות יכולות עכשיו להרשות לעצמן איש דאטה."
       />
 
       {/* Video — מה זה דאטה אנליסט */}
@@ -1074,17 +1325,10 @@ function DataContent() {
               doneKey: "sim" as const,
               lockedBy: null,
             },
+            /* מרכז הלמידה ירד מהשרשרת (נתי 24.8) — הזרימה ישרה: sim ←
+               אנליטיקה ← תעלומה. שבעת המודולים נשארים נגישים מהמפה כרשות */
             {
               num: "2",
-              emoji: "🎯",
-              title: "מרכז למידה — 7 מודולים",
-              sub: "חקירה · גרפים שבורים · חיזויים · החלטות עסקיות · ~20 דק'",
-              href: "/explore/data/learn",
-              doneKey: null,
-              lockedBy: null,
-            },
-            {
-              num: "3",
               emoji: "🔬",
               title: "אנליטיקה בשטח — 5 שלבים",
               sub: "שאלת מחקר · ניקוי נתונים · AI Prompting · המנכ\"ל · ~15 דק'",
@@ -1093,7 +1337,7 @@ function DataContent() {
               lockedBy: "sim" as const,
             },
             {
-              num: "4",
+              num: "3",
               emoji: "🕵️",
               title: "תעלומת SQL — מתקדם",
               sub: "חקירת הדלפה בסטארטאפ · כתיבת שאילתות אמיתיות · ~15 דק'",
@@ -1102,7 +1346,7 @@ function DataContent() {
               lockedBy: "analytics" as const,
             },
             {
-              num: "5",
+              num: "4",
               emoji: "💭",
               title: "כלי עיבוד החוויה",
               sub: "6 שאלות קצרות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
@@ -1288,9 +1532,63 @@ function MarketingContent() {
         color="#f97316"
       />
 
+      {/* כתבות מאומתות (23.8, סוכן אימות — URL + תאריך + og:image).
+          מדורי תוכן שיווקי מסומנים בשדה המקור — לא מסתירים. */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על שיווק בהייטק</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/mkt-trends.jpg",
+              summary: "2026 מסמנת נקודת מפנה בעולם השיווק — 5 המגמות שיובילו",
+              source: "גלובס · 1.2026",
+              href: "https://www.globes.co.il/news/article.aspx?did=1001531113",
+            },
+            {
+              img: "/articles/mkt-ai.jpg",
+              summary: "איך מנהלי שיווק הולכים לעבוד עם AI ב-2026?",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/ai-in-marketing-event-231225/",
+            },
+            {
+              img: "/articles/mkt-secure.jpg",
+              summary: "בכירי השיווק לא חוששים שה-AI תגזול את תפקידם — והם צודקים",
+              source: "גלובס",
+              href: "https://www.globes.co.il/news/article.aspx?did=1001497446",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.09)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <SimTeaser
         emoji="📢"
         challenge="בטעימה: תקציב ₪2,000 לחודש, 3 ערוצים. המשימה — להחליט כיצד לפצל כדי להגיע ל-500 לידים. לכל החלטה יש מחיר."
+      />
+
+      <TasteJourney
+        id="marketing"
+        color="#f97316"
+        title="המסלול שלך בשיווק דיגיטלי"
+        steps={[
+          { emoji: "📢", title: "טעימה — פצלי את התקציב", sub: "2,000 ₪ · שלושה ערוצים · יעד 500 לידים · ~10 דק'", href: "/explore/marketing/sim", doneKey: "sim", lockedBy: null },
+          { emoji: "🏋️", title: "יום בחיי מנהל/ת שיווק", sub: "הסטודיו של מיכל — 667 ₪ לפנייה, ואיך מורידים ל-91 · ~15 דק'", href: "/explore/marketing/learn/day", doneKey: "day", lockedBy: "sim" },
+          { emoji: "🛠️", title: "מיני-פרויקט — קמפיין ב-300 ₪", sub: "המספרה של יוסי — קהל, מסר, תמונה, ואיטרציה · ~20 דק'", href: "/explore/marketing/learn/mystery", doneKey: "mystery", lockedBy: "day" },
+          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/marketing/experience", doneKey: "experience", lockedBy: "mystery" },
+        ]}
       />
 
       <SalaryCard min={9000} max={20000} />
@@ -1545,6 +1843,46 @@ function NetworksContent() {
         </div>
       </div>
 
+      {/* כתבות מאומתות (20.8, סוכן אימות — URL + תאריך + og:image) */}
+      <div className="mb-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1" style={{ color: "rgba(0,0,0,0.3)" }}>מה אומרים עליהם</div>
+        <div className="text-[14px] font-bold mb-3" style={{ color: "#023e8a" }}>כתבות אחרונות על תשתיות ורשתות בישראל</div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              img: "/articles/net-datacenters.jpg",
+              summary: "פעילות הדאטה סנטרס בישראל צפויה להכפיל את עצמה תוך חמש שנים",
+              source: "TheMarker · 1.2026",
+              href: "https://www.themarker.com/markets/2026-01-15/ty-article/.premium/0000019b-bda3-decf-a99f-bffbaea40000",
+            },
+            {
+              img: "/articles/net-power.jpg",
+              summary: "40+ דאטה סנטרים בדרך: האם ישראל הופכת למעצמת תשתיות?",
+              source: "Geektime",
+              href: "https://www.geektime.co.il/can-israel-become-a-data-center-powerhouse/",
+            },
+            {
+              img: "/articles/net-nvidia.jpg",
+              summary: "עם 10,000 עובדים: הקמפוס הענק של אנבידיה נבנה סביב לב הרשתות שלה",
+              source: "כלכליסט",
+              href: "https://www.calcalist.co.il/calcalistech/article/sj11wgxxze",
+            },
+          ].map((a) => (
+            <a key={a.href} href={a.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
+              style={{ background: "#fff", border: "1px solid rgba(37,99,235,0.2)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}>
+              <div className="overflow-hidden flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(0,0,0,0.04)" }}>
+                <img src={a.img} alt={a.summary} className="w-full h-full object-cover object-top"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
+              <div className="p-3 flex flex-col flex-1">
+                <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>{a.source}</div>
+                <div className="text-[12px] font-bold leading-[1.4] flex-1" style={{ color: "#023e8a" }}>{a.summary}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
       <SimTeaser
         emoji="🌐"
         challenge="בטעימה תשלחי בקשה לשרת של גוגל ותראי בדיוק מה קורה בין הרגע שלחצת Enter לרגע שהדף נפתח — DNS, Routing, TCP/IP, HTTP — אחד אחד"

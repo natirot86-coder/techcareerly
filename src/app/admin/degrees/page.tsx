@@ -24,7 +24,7 @@ const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 const STORE_KEY = "admin-degrees-draft";
 
-const DOMAINS: Domain[] = ["data", "code", "cyber", "networks", "ai", "ux", "marketing", "qa"];
+const DOMAINS: Domain[] = ["data", "code", "cyber", "networks", "hardware", "ai", "ux", "marketing", "qa"];
 
 function AdminDegreesPage() {
   const [items, setItems] = useState<Degree[]>(DEGREES);
@@ -36,7 +36,21 @@ function AdminDegreesPage() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORE_KEY);
-      if (saved) { setItems(JSON.parse(saved)); setDirty(true); }
+      if (saved) {
+        /*
+         * מיזוג, לא החלפה — אותו תיקון כמו בלוח המוסדות (20.8): טיוטה ישנה
+         * דרסה את רשימת הקוד, ולכן תואר חדש שנכנס בקוד לא הופיע למי שערך פעם.
+         * הבסיס תמיד הקוד הטרי; עריכות מקומיות יושבות עליו לפי id.
+         */
+        const stored: Degree[] = JSON.parse(saved);
+        const editedById = new Map(stored.map(d => [d.id, d]));
+        const codeIds = new Set(DEGREES.map(d => d.id));
+        setItems([
+          ...DEGREES.map(d => editedById.get(d.id) ?? d),
+          ...stored.filter(d => !codeIds.has(d.id)),
+        ]);
+        setDirty(true);
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -221,6 +235,7 @@ function AdminDegreesPage() {
 // ─── רמה 3 — מוסדות ותוכניות של תואר נבחר (handoff 1a) ──────────────────────
 
 const DOMAIN_COLOR: Record<Domain, string> = {
+  hardware: "#7c2d12",
   data: "#0d9488", code: "#3b82f6", cyber: "#dc2626", networks: "#2563eb",
   ai: "#7c3aed", ux: "#db2777", marketing: "#f97316", qa: "#d97706",
 };

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap');
+    body { margin: 0; background: #eee9df; font-family: 'Heebo', sans-serif; }
+    a { color: #023e8a; } a:hover { color: #fb8500; }
+  </style>
+</helmet>
+<section dir="rtl" style="padding:40px;display:flex;flex-direction:column;gap:26px;font-family:'Heebo',sans-serif">
+  <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    <div style="font-size:20px;font-weight:800;color:#023e8a">Techcareerly · שלב 4 — "המסלול שמתאים לך" · שלוש חלופות</div>
+    <div style="display:flex;gap:4px;background:#ffffff;border:1px solid #e3ddd0;border-radius:999px;padding:4px">
+      <button onClick="{{ pickDegree }}" style="{{ degBtnStyle }}">דמו: המלצת תואר</button>
+      <button onClick="{{ pickBootcamp }}" style="{{ bootBtnStyle }}">דמו: המלצת הכשרה</button>
+    </div>
+    <div style="font-size:13px;color:#6d675c">הנימוק האישי, הכתר וסדר הכרטיסים מתעדכנים לפי המשתמש · קפיצה: <a href="#1a">1a</a> · <a href="#1b">1b</a> · <a href="#1c">1c</a></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:64px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:14px;width:1200px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="background:#023e8a;color:#ffffff;font-size:13px;font-weight:800;padding:4px 10px;border-radius:8px">1a</span>
+        <span style="font-size:17px;font-weight:800;color:#1e2f42">חלופה א — רשת שוויונית עם כתר</span>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#94908a">דסקטופ</div>
+      <div data-screen-label="1a דסקטופ" style="background:#fbf9f5;border:1px solid #e3ddd0;border-radius:18px;padding:28px 32px;box-shadow:0 3px 16px rgba(30,25,15,0.06);display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-size:12px;font-weight:800;color:#fb8500">שלב 4 · תוצאת השאלון</div>
+          <div style="font-size:27px;font-weight:800;color:#023e8a;line-height:1.15">המסלול שמתאים לך</div>
+          <div style="font-size:14px;color:#5d6b7a">על סמך 8 התשובות שלך — המלצה אחת, ושני מסלולים נוספים להשוואה מהירה</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch">
+          <sc-for list="{{ aCards }}" as="c" hint-placeholder-count="3">
+            <dc-import name="TrackCard" track="{{ c.t }}" rec="{{ c.rec }}" reason="{{ c.reason }}" style="height:100%" hint-size="100%,840px"></dc-import>
+          </sc-for>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#94908a">מובייל · 390px</div>
+      <div data-screen-label="1a מובייל" style="width:390px;background:#fbf9f5;border:1px solid #e3ddd0;border-radius:22px;padding:18px 16px;box-shadow:0 3px 16px rgba(30,25,15,0.06);display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:11px;font-weight:800;color:#fb8500">שלב 4 · תוצאת השאלון</div>
+          <div style="font-size:22px;font-weight:800;color:#023e8a;line-height:1.2">המסלול שמתאים לך</div>
+          <div style="font-size:13px;color:#5d6b7a">על סמך 8 התשובות שלך — המומלץ קודם, והשאר כאן להשוואה</div>
+        </div>
+        <sc-for list="{{ aMobile }}" as="c" hint-placeholder-count="3">
+          <dc-import name="TrackCard" track="{{ c.t }}" rec="{{ c.rec }}" reason="{{ c.reason }}" hint-size="100%,780px"></dc-import>
+        </sc-for>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#94908a">מובייל · 390px — "שלושתם במסך אחד" (טבלת פתיחה, לפני הכרטיסים)</div>
+      <div data-screen-label="1a מובייל השוואה" style="width:390px;background:#fbf9f5;border:1px solid #e3ddd0;border-radius:22px;padding:18px 16px;box-shadow:0 3px 16px rgba(30,25,15,0.06);display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:11px;font-weight:800;color:#fb8500">שלב 4 · תוצאת השאלון</div>
+          <div style="font-size:22px;font-weight:800;color:#023e8a;line-height:1.2">המסלול שמתאים לך</div>
+          <div style="font-size:13px;color:#5d6b7a">כל שלושת המסלולים במבט אחד — ההמלצה שלך מודגשת</div>
+        </div>
+        <div style="background:#ffffff;border:1px solid #fdd9ae;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.6;color:#7a3c00;font-weight:500">{{ reasonText }}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;align-items:stretch">
+          <sc-for list="{{ aCompare }}" as="col" hint-placeholder-count="3">
+            <div style="background:{{ col.colBg }};border:2px solid {{ col.colBorder }};border-radius:14px;overflow:hidden;display:flex;flex-direction:column">
+              <div style="background:{{ col.headBg }};color:{{ col.headColor }};padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center">
+                <sc-if value="{{ col.rec }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:800">👑 ההמלצה</span></sc-if>
+                <span style="font-size:18px" aria-hidden="true">{{ col.icon }}</span>
+                <span style="font-size:12.5px;font-weight:800;line-height:1.25">{{ col.name }}</span>
+                <span style="font-size:10.5px;font-weight:600;opacity:0.85">{{ col.duration }}</span>
+              </div>
+              <div style="padding:9px 8px;display:flex;flex-direction:column;gap:9px;flex:1">
+                <div style="display:flex;flex-direction:column;gap:1px;text-align:center">
+                  <span style="font-size:13px" aria-hidden="true">⏳</span>
+                  <span style="font-size:11.5px;line-height:1.45;color:#1e2f42">{{ col.incomeShort }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:1px;text-align:center">
+                  <span style="font-size:13px" aria-hidden="true">💰</span>
+                  <span style="font-size:11.5px;line-height:1.45;color:#1e2f42;font-weight:700">{{ col.costShort }}</span>
+                  <span style="font-size:10px;color:#94908a">לשנה</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:1px;text-align:center">
+                  <span style="font-size:13px" aria-hidden="true">🚪</span>
+                  <span style="font-size:11.5px;line-height:1.45;color:#1e2f42">{{ col.entryShort }}</span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:11.5px;color:#94908a;text-align:center">לחיצה על מסלול פותחת את הכרטיס המלא — עם היתרון, החסם ומה שמקטין אותו</div>
+        <button style="background:#fb8500;border:none;color:#ffffff;border-radius:14px;padding:13px;font-family:inherit;font-weight:800;font-size:15.5px;cursor:pointer;width:100%" style-hover="background:#e07600">נמשיך עם {{ recName }} ←</button>
+        <button style="background:transparent;border:1.5px solid #023e8a;color:#023e8a;border-radius:14px;padding:11px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;width:100%" style-hover="background:#eef3fb">להשוואה המלאה — כרטיס אחר כרטיס</button>
+      </div>
+    </div>
+
+    <div id="1b" style="display:flex;flex-direction:column;gap:14px;width:1080px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="background:#023e8a;color:#ffffff;font-size:13px;font-weight:800;padding:4px 10px;border-radius:8px">1b</span>
+        <span style="font-size:17px;font-weight:800;color:#1e2f42">חלופה ב — היררכיה מפורשת</span>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#94908a">דסקטופ</div>
+      <div data-screen-label="1b דסקטופ" style="background:#fbf9f5;border:1px solid #e3ddd0;border-radius:18px;padding:28px 32px;box-shadow:0 3px 16px rgba(30,25,15,0.06);display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-size:12px;font-weight:800;color:#fb8500">שלב 4 · תוצאת השאלון</div>
+          <div style="font-size:27px;font-weight:800;color:#023e8a;line-height:1.15">המסלול שמתאים לך</div>
+          <div style="font-size:14px;color:#5d6b7a">על סמך 8 התשובות שלך — המלצה אחת, ושני מסלולים נוספים להשוואה מהירה</div>
+        </div>
+        <div style="max-width:640px;width:100%;margin:0 auto">
+          <dc-import name="TrackCard" track="{{ bBigTrack }}" rec="{{ true }}" reason="{{ reasonText }}" hint-size="100%,860px"></dc-import>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px;margin:0 auto;width:100%;align-items:start">
+          <sc-for list="{{ bCompact }}" as="c" hint-placeholder-count="2">
+            <dc-import name="TrackCard" track="{{ c.t }}" rec="{{ false }}" full="{{ c.full }}" on-toggle="{{ c.onToggle }}" hint-size="100%,380px"></dc-import>
+          </sc-for>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#94908a">מובייל · 390px</div>
+      <div data-screen-label="1b מובייל" style="width:390px;background:#fbf9f5;border:1px solid #e3ddd0;border-radius:22px;padding:18px 16px;box-shadow:0 3px 16px rgba(30,25,15,0.06);display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:11px;font-weight:800;color:#fb8500">שלב 4 · תוצאת השאלון</div>
+          <div style="font-size:22px;font-weight:800;color:#023e8a;line-height:1.2">המסלול שמתאים לך</div>
+          <div style="font-size:13px;color:#5d6b7a">קודם ההמלצה שלך, ואז השניים האחרים — בקצרה, עם אפשרות להרחיב</div>
+        </div>
+        <dc-import name="TrackCard" track="{{ bBigTrack }}" rec="{{ true }}" reason="{{ reasonText }}" hint-size="100%,860px"></dc-import>
+        <sc-for list="{{ bCompact }}" as="c" hint-placeholder-count="2">
+          <dc-import name="TrackCard" track="{{ c.t }}" rec="{{ false }}" full="{{ c.full }}" on-toggle="{{ c.onToggle }}" hint-size="100%,380px"></dc-import>
+        </sc-for>
+      </div>
+    </div>
+
+    <div id="1c" style="display:flex;flex-direction:column;gap:14px;width:1240px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="background:#023e8a;color:#ffffff;font-size:13px;font-weight:800;padding:4px 10px;border-radius:8px">1c</span>
+        <span style="font-size:17px;font-weight:800;color:#1e2f42">חלופה ג — ציר חיים משווה</span>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#94908a">דסקטופ</div>
+      <div data-screen-label="1c דסקטופ" style="background:#fbf9f5;border:1px solid #e3ddd0;border-radius:18px;padding:28px 32px;box-shadow:0 3px 16px rgba(30,25,15,0.06);display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font-size:12px;font-weight:800;color:#fb8500">שלב 4 · תוצאת השאלון</div>
+          <div style="font-size:27px;font-weight:800;color:#023e8a;line-height:1.15">המסלול שמתאים לך</div>
+          <div style="font-size:14px;color:#5d6b7a">שלושת המסלולים על ציר אחד: היום ← הכנסה ראשונה ← יציבות</div>
+        </div>
+        <div style="background:#ffffff;border:2px solid #fb8500;border-radius:16px;overflow:hidden">
+          <div style="background:#fb8500;color:#ffffff;font-size:13px;font-weight:700;padding:8px 18px;display:flex;gap:7px;align-items:center"><span aria-hidden="true">👑</span><span>ההמלצה שלנו בשבילך: {{ recName }}</span></div>
+          <div style="padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1;min-width:260px;font-size:14.5px;font-weight:500;line-height:1.6;color:#7a3c00">{{ reasonText }}</div>
+            <button style="background:#fb8500;border:none;color:#ffffff;border-radius:14px;padding:12px 22px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer" style-hover="background:#e07600">נמשיך עם זה ←</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:190px 1fr;gap:0 8px;padding:0 18px">
+          <div></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+            <div style="text-align:center;font-size:12px;font-weight:800;color:#94908a">🚪 היום</div>
+            <div style="text-align:center;font-size:12px;font-weight:800;color:#94908a">💰 בזמן המסלול</div>
+            <div style="text-align:center;font-size:12px;font-weight:800;color:#94908a">⏳ הכנסה ראשונה</div>
+            <div style="text-align:center;font-size:12px;font-weight:800;color:#94908a">יציבות</div>
+          </div>
+        </div>
+        <sc-for list="{{ cTracks }}" as="tr" hint-placeholder-count="3">
+          <div style="background:{{ tr.rowBg }};border:2px solid {{ tr.rowBorder }};border-radius:16px;padding:16px">
+            <div style="display:grid;grid-template-columns:190px 1fr;gap:0 8px;align-items:start">
+              <div style="display:flex;flex-direction:column;gap:7px;padding-left:8px">
+                <sc-if value="{{ tr.rec }}" hint-placeholder-val="{{ false }}"><span style="align-self:flex-start;background:#fb8500;color:#ffffff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px">👑 ההמלצה</span></sc-if>
+                <div style="font-size:16px;font-weight:800;color:#023e8a">{{ tr.icon }} {{ tr.name }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                  <span style="background:#eef3fb;color:#023e8a;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px">{{ tr.duration }}</span>
+                  <span style="border:1px solid #d8dfe9;color:#3f4f63;font-size:11.5px;font-weight:600;padding:1px 9px;border-radius:999px">{{ tr.nature }}</span>
+                </div>
+              </div>
+              <div style="position:relative">
+                <div style="position:absolute;top:11px;right:12.5%;left:12.5%;height:3px;border-radius:2px;background:{{ tr.lineColor }}"></div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 8px">
+                    <div style="width:13px;height:13px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }};position:relative;z-index:1;margin-top:3px"></div>
+                    <div style="font-size:12.5px;line-height:1.5;color:#1e2f42;text-align:center">{{ tr.entry }}</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 8px">
+                    <div style="width:13px;height:13px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }};position:relative;z-index:1;margin-top:3px"></div>
+                    <div style="font-size:12.5px;line-height:1.5;color:#1e2f42;text-align:center">{{ tr.cost }}</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 8px">
+                    <div style="width:13px;height:13px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }};position:relative;z-index:1;margin-top:3px"></div>
+                    <div style="font-size:12.5px;line-height:1.5;color:#1e2f42;text-align:center">{{ tr.income }}</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 8px">
+                    <div style="width:13px;height:13px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }};position:relative;z-index:1;margin-top:3px"></div>
+                    <div style="font-size:12.5px;line-height:1.5;color:#1e2f42;text-align:center">{{ tr.stability }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+              <span style="background:#e8f6ef;color:#04543a;border-radius:10px;padding:6px 10px;font-size:12px;line-height:1.45;max-width:340px">✓ {{ tr.pro }}</span>
+              <span style="background:#fdeede;color:#8a4a09;border-radius:10px;padding:6px 10px;font-size:12px;line-height:1.45;max-width:420px">✕ {{ tr.con }}</span>
+              <span style="font-size:12px;color:#6d675c">{{ tr.fit }}</span>
+              <sc-if value="{{ tr.notRec }}" hint-placeholder-val="{{ true }}">
+                <button style="margin-inline-start:auto;background:transparent;border:1.5px solid #023e8a;color:#023e8a;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer" style-hover="background:#eef3fb">להכיר את המסלול הזה</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#94908a">מובייל · 390px</div>
+      <div data-screen-label="1c מובייל" style="width:390px;background:#fbf9f5;border:1px solid #e3ddd0;border-radius:22px;padding:18px 16px;box-shadow:0 3px 16px rgba(30,25,15,0.06);display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:11px;font-weight:800;color:#fb8500">שלב 4 · תוצאת השאלון</div>
+          <div style="font-size:22px;font-weight:800;color:#023e8a;line-height:1.2">המסלול שמתאים לך</div>
+          <div style="font-size:13px;color:#5d6b7a">כל מסלול כציר: היום ← הכנסה ראשונה ← יציבות</div>
+        </div>
+        <div style="background:#ffffff;border:2px solid #fb8500;border-radius:16px;overflow:hidden">
+          <div style="background:#fb8500;color:#ffffff;font-size:12px;font-weight:700;padding:7px 14px;display:flex;gap:6px;align-items:center"><span aria-hidden="true">👑</span><span>ההמלצה שלנו בשבילך: {{ recName }}</span></div>
+          <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:13.5px;font-weight:500;line-height:1.6;color:#7a3c00">{{ reasonText }}</div>
+            <button style="background:#fb8500;border:none;color:#ffffff;border-radius:14px;padding:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer" style-hover="background:#e07600">נמשיך עם זה ←</button>
+          </div>
+        </div>
+        <sc-for list="{{ cMobile }}" as="tr" hint-placeholder-count="3">
+          <div style="background:{{ tr.rowBg }};border:2px solid {{ tr.rowBorder }};border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <sc-if value="{{ tr.rec }}" hint-placeholder-val="{{ false }}"><span style="align-self:flex-start;background:#fb8500;color:#ffffff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px">👑 ההמלצה</span></sc-if>
+              <div style="font-size:16px;font-weight:800;color:#023e8a">{{ tr.icon }} {{ tr.name }}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px">
+                <span style="background:#eef3fb;color:#023e8a;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px">{{ tr.duration }}</span>
+                <span style="border:1px solid #d8dfe9;color:#3f4f63;font-size:11.5px;font-weight:600;padding:1px 9px;border-radius:999px">{{ tr.nature }}</span>
+              </div>
+            </div>
+            <div style="position:relative;padding-right:24px;display:flex;flex-direction:column;gap:14px">
+              <div style="position:absolute;top:8px;bottom:8px;right:6px;width:3px;border-radius:2px;background:{{ tr.lineColor }}"></div>
+              <div style="position:relative">
+                <div style="position:absolute;top:2px;right:-22px;width:12px;height:12px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }}"></div>
+                <div style="font-size:11px;font-weight:800;color:#94908a">🚪 היום</div>
+                <div style="font-size:13px;color:#1e2f42;line-height:1.5">{{ tr.entry }}</div>
+              </div>
+              <div style="position:relative">
+                <div style="position:absolute;top:2px;right:-22px;width:12px;height:12px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }}"></div>
+                <div style="font-size:11px;font-weight:800;color:#94908a">💰 בזמן המסלול</div>
+                <div style="font-size:13px;color:#1e2f42;line-height:1.5">{{ tr.cost }}</div>
+              </div>
+              <div style="position:relative">
+                <div style="position:absolute;top:2px;right:-22px;width:12px;height:12px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }}"></div>
+                <div style="font-size:11px;font-weight:800;color:#94908a">⏳ הכנסה ראשונה</div>
+                <div style="font-size:13px;color:#1e2f42;line-height:1.5">{{ tr.income }}</div>
+              </div>
+              <div style="position:relative">
+                <div style="position:absolute;top:2px;right:-22px;width:12px;height:12px;border-radius:50%;background:{{ tr.dotColor }};border:3px solid #ffffff;box-shadow:0 0 0 1px {{ tr.lineColor }}"></div>
+                <div style="font-size:11px;font-weight:800;color:#94908a">יציבות</div>
+                <div style="font-size:13px;color:#1e2f42;line-height:1.5">{{ tr.stability }}</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="background:#e8f6ef;color:#04543a;border-radius:10px;padding:7px 11px;font-size:12.5px;line-height:1.5">✓ {{ tr.pro }}</span>
+              <span style="background:#fdeede;color:#8a4a09;border-radius:10px;padding:7px 11px;font-size:12.5px;line-height:1.5">✕ {{ tr.con }}</span>
+              <span style="font-size:12px;color:#6d675c">{{ tr.fit }}</span>
+              <sc-if value="{{ tr.notRec }}" hint-placeholder-val="{{ true }}">
+                <button style="background:transparent;border:1.5px solid #023e8a;color:#023e8a;border-radius:14px;padding:11px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#eef3fb">להכיר את המסלול הזה</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;demoUser&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;תואר&quot;,&quot;options&quot;:[&quot;תואר&quot;,&quot;הכשרה&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;דמו&quot;}}">
+class Component extends DCLogic {
+  state = { user: null, expB: {} };
+  renderVals() {
+    const TRACKS = [
+      { id: 'degree', icon: '🎓', name: 'תואר אקדמי', duration: '3–4 שנים', nature: 'משרה מלאה',
+        income: 'משרת סטודנט מסוף שנה א׳',
+        cost: '12,203 ₪ (מפוקח) — ורוב המלגות בנויות סביבו',
+        entry: 'בגרות מלאה; יש מסלולים בלי פסיכומטרי',
+        stability: 'תואר ביד אחרי 3–4 שנים — נקודת הפתיחה החזקה ביותר, לכל הקריירה',
+        pro: 'מעלה משמעותית את הסיכוי להיכנס להייטק עצמו — לחברות הטכנולוגיה, ולא רק לתפקידים טכנולוגיים בבנקים וארגונים אחרים',
+        con: 'שלוש שנים בלי משכורת מלאה — אבל משרת סטודנט ומלגות סוגרות חלק גדול',
+        fit: 'מתאים למי שיכול להשקיע עכשיו — זו ההשקעה שמחזירה הכי הרבה לאורך זמן' },
+      { id: 'bootcamp', icon: '💻', name: 'הכשרה טכנולוגית', duration: '6–12 חודשים', nature: 'אינטנסיבי קצר',
+        income: "ג'וניור מיד בסיום, והתחרות על המשרה הראשונה אמיתית",
+        cost: '980–6,000 ₪ במסלולים שאנחנו מציגים',
+        entry: 'ברוב המסלולים בלי דרישות קדם',
+        stability: 'התבססות דרך המשרה הראשונה — ורבים משלימים תואר בהמשך, תוך כדי עבודה',
+        pro: 'הדרך הקצרה ביותר למשרה ראשונה בהייטק',
+        con: 'התחרות על המשרה הראשונה אמיתית — אבל ליווי השמה ותיק עבודות טוב מקטינים את הפער',
+        fit: 'מתאים למי שחייב להגיע מהר לשוק עכשיו — ותואר יכול לחכות ולהגיע אחר כך' },
+      { id: 'mahat', icon: '⚙️', name: 'הנדסאי (מה"ט)', duration: '2–3 שנים', nature: 'משלב עבודה — ערב',
+        income: 'עבודה במקביל ללימודי ערב',
+        cost: 'כ-8,900–10,900 ₪, ולחיילים משוחררים האגף מממן 90%',
+        entry: 'בגרות חלקית מספיקה, בלי פסיכומטרי',
+        stability: 'הנדסאי מוסמך אחרי 2–3 שנים, עם אופציה להשלים לתואר',
+        pro: 'ממשיכים לעבוד ולהתפרנס לאורך כל הלימודים',
+        con: 'מוכר פחות מתואר אקדמי אצל חלק מהמעסיקים — אבל אפשר להשלים ממנו לתואר בהמשך',
+        fit: 'מתאים למי שחייב הכנסה שוטפת ומעדיף קצב יציב' }
+    ].map(t => ({ ...t, rows: [
+      { emoji: '⏳', label: 'מתי מתחילה הכנסה', value: t.income },
+      { emoji: '💰', label: 'כמה עולה בשנה', value: t.cost },
+      { emoji: '🚪', label: 'מה צריך כדי להיכנס', value: t.entry }
+    ] }));
+    const USERS = {
+      degree: { rec: 'degree', reason: 'בגלל שאמרת שיש לך בגרות מלאה, שהזמן שלך פנוי יחסית ושחשוב לך אופק ארוך — תואר אקדמי הוא נקודת הפתיחה החזקה ביותר בשבילך, וזה בדיוק הרגע לנצל אותה.' },
+      bootcamp: { rec: 'bootcamp', reason: 'בגלל שאמרת שיש לך ילדים קטנים ושחשוב לך להתחיל לעבוד מהר — הכשרה טכנולוגית ממוקדת היא הדרך הקצרה ביותר שלך למשרה ראשונה.' }
+    };
+    const userKey = this.state.user || (this.props.demoUser === 'הכשרה' ? 'bootcamp' : 'degree');
+    const u = USERS[userKey];
+    const tracks = TRACKS.map(t => ({ ...t, rec: t.id === u.rec }));
+    const rec = tracks.find(t => t.rec);
+    const others = tracks.filter(t => !t.rec);
+    const mkCard = t => ({ t, rec: t.rec, reason: t.rec ? u.reason : null });
+    const mkC = t => ({ ...t, notRec: !t.rec,
+      rowBg: t.rec ? '#fff8ee' : '#ffffff',
+      rowBorder: t.rec ? '#fb8500' : '#ece5d8',
+      lineColor: t.rec ? '#fdc98a' : '#dde4ec',
+      dotColor: t.rec ? '#fb8500' : '#023e8a' });
+    const segBase = { border: 'none', borderRadius: '999px', padding: '8px 16px', fontFamily: 'inherit', fontWeight: 700, fontSize: '13.5px', cursor: 'pointer' };
+    return {
+      reasonText: u.reason, recName: rec.name,
+      aCards: tracks.map(mkCard),
+      aCompare: [rec, ...others].map(t => ({
+        name: t.name, icon: t.icon, rec: t.rec,
+        colBg: t.rec ? '#fff8ee' : '#ffffff',
+        colBorder: t.rec ? '#fb8500' : '#ece5d8',
+        headBg: t.rec ? '#fb8500' : '#eef3fb',
+        headColor: t.rec ? '#ffffff' : '#023e8a',
+        duration: t.duration,
+        incomeShort: t.id === 'degree' ? 'משרת סטודנט מסוף שנה א׳' : t.id === 'bootcamp' ? "ג'וניור מיד בסיום" : 'עבודה במקביל ללימודים',
+        costShort: t.id === 'degree' ? '12,203 ₪' : t.id === 'bootcamp' ? '980–6,000 ₪' : '8,900–10,900 ₪',
+        entryShort: t.id === 'degree' ? 'בגרות מלאה' : t.id === 'bootcamp' ? 'בלי דרישות קדם' : 'בגרות חלקית'
+      })),
+      aMobile: [rec, ...others].map(mkCard),
+      bBigTrack: rec,
+      bCompact: others.map(t => ({ t, full: !!this.state.expB[t.id],
+        onToggle: () => this.setState(s => ({ expB: { ...s.expB, [t.id]: !s.expB[t.id] } })) })),
+      cTracks: tracks.map(mkC),
+      cMobile: [rec, ...others].map(mkC),
+      pickDegree: () => this.setState({ user: 'degree' }),
+      pickBootcamp: () => this.setState({ user: 'bootcamp' }),
+      degBtnStyle: { ...segBase, background: userKey === 'degree' ? '#023e8a' : 'transparent', color: userKey === 'degree' ? '#ffffff' : '#023e8a' },
+      bootBtnStyle: { ...segBase, background: userKey === 'bootcamp' ? '#023e8a' : 'transparent', color: userKey === 'bootcamp' ? '#ffffff' : '#023e8a' }
+    };
+  }
+}
+</script>
+</body>
+</html>

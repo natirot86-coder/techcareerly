@@ -3491,6 +3491,309 @@ const QA8: ChoiceStep = {
 const STEPS_QA: Step[] = [QA0, QA1, QA2, QA3, QA4, QA5, QA6, QA7, QA8];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// STEPS — hardware  (חומרה ואלקטרוניקה)
+// טעימה בסגנון triage: פס ייצור מדווח על 3% לוחות שנכשלים — קוראים פלט,
+// מבודדים אצוות רכיבים, ומחליטים מה עושים. בלי מספרי שכר — הם בשלב 4.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HW0: ChoiceStep = {
+  kind: "choice",
+  tag: "נקודת פתיחה",
+  concept: "מהו מקצוע החומרה?",
+  context: (
+    <div>
+      <div
+        className="rounded-2xl p-4 mb-5 flex gap-4 items-start"
+        style={{ background: "rgba(124,45,18,0.07)", border: "1px solid rgba(124,45,18,0.18)" }}
+      >
+        <div
+          className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-[22px] font-black text-white"
+          style={{ background: "#7c2d12", ...HEEBO }}
+        >
+          א
+        </div>
+        <div>
+          <div className="text-[13px] font-bold" style={{ color: "#7c2d12" }}>אביחי, 29, מנתיבות</div>
+          <div className="text-[12.5px] mt-1 leading-[1.6]" style={{ color: "rgba(0,0,0,0.6)" }}>
+            "עבדתי כחשמלאי רכב. למדתי הנדסאות אלקטרוניקה במה״ט. היום אני במעבדת בדיקות של חברת מכשור רפואי — הלוחות שאני מאשר יוצאים לבתי חולים."
+          </div>
+        </div>
+      </div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        חומרה = לא רק לתכנן שבבים. חלק גדול מהעבודה הוא{" "}
+        <span className="font-bold" style={{ color: "#7c2d12" }}>לוודא שכל לוח שיוצא מהמפעל באמת עובד</span>{" "}
+        — ולתפוס את התקלות לפני הלקוחות.
+      </p>
+      <div
+        className="rounded-xl px-4 py-3"
+        style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.1)" }}
+      >
+        <div className="text-[12px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.65)" }}>
+          🚰 <span className="font-bold" style={{ color: "#023e8a" }}>בלי רקע? מצוין.</span>{" "}
+          כל מושג יוסבר רגע לפני שנשתמש בו — עם דימוי אחד שילווה אותנו לכל האורך:{" "}
+          <strong>חשמל בלוח מתנהג כמו מים בצנרת.</strong>
+        </div>
+      </div>
+    </div>
+  ),
+  question: "מה עושה מהנדסת בדיקות חומרה בפס ייצור?",
+  options: [
+    "מרכיבה את הלוחות ביד, אחד-אחד",
+    "מנתחת את תוצאות בדיקות הלוחות — מזהה דפוסי כשל ומוצאת את הגורם",
+    "כותבת את האפליקציות שירוצו על הלוחות",
+  ],
+  correct: 1,
+  okMsg: "בדיוק! הרובוטים מרכיבים והתוכנה נכתבת בצוות אחר — מהנדסת הבדיקות היא הבלשית: היא קוראת את נתוני הכשל ומוצאת למה לוחות נכשלים.",
+  errMsg: "הרכבה נעשית במכונות, והאפליקציות הן צוות תוכנה. מהנדסת בדיקות חומרה מנתחת את תוצאות הבדיקות — מזהה דפוס ומוצאת את הגורם.",
+  learned: "מהנדסת בדיקות = בלשית של פס הייצור",
+};
+
+const HW1: ChoiceStep = {
+  kind: "choice",
+  tag: "קריאת פלט",
+  concept: "מתח = לחץ המים · הכשל משאיר דפוס",
+  context: (
+    <div>
+      {/* מושגים לפני השאלה — בשפת המים */}
+      <div
+        className="rounded-xl p-4 mb-4"
+        style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
+      >
+        <div className="text-[12.5px] font-bold mb-2" style={{ color: "#023e8a" }}>🚰 רגע — שלושה מושגים, בעזרת מים:</div>
+        <div className="text-[12px] leading-[1.85]" style={{ color: "rgba(0,0,0,0.65)" }}>
+          לוח אלקטרוני הוא כמו בית עם צנרת מים:<br />
+          💧 <strong>מתח</strong> = לחץ המים בצינור (נמדד ביחידה שנקראת וולט — V)<br />
+          🌊 <strong>זרם</strong> = כמות המים שזורמת בפועל<br />
+          🚿 <strong>פס מתח 3.3V</strong> = צינור ראשי שאמור לתת לחץ קבוע של 3.3 לשבבים — ה"ברזים" של הלוח.<br />
+          אם הלחץ בצינור יורד — הברזים מפסיקים לעבוד, והלוח נכשל בבדיקה.
+        </div>
+      </div>
+      <div
+        className="rounded-xl px-4 py-3 mb-4 flex items-start gap-3"
+        style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)" }}
+      >
+        <span className="text-[20px] shrink-0">🚨</span>
+        <div>
+          <div className="text-[12.5px] font-bold" style={{ color: "#b91c1c" }}>דיווח מפס הייצור — 07:45</div>
+          <div className="text-[12px] mt-[2px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.58)" }}>
+            3% מהלוחות שיוצאים מהקו נכשלים בעמדת הבדיקה. אתמול: 0.2%. משהו השתנה.
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl overflow-hidden mb-3" style={{ border: "1px solid rgba(0,0,0,0.15)" }}>
+        <div className="px-3 py-2 font-mono text-[10px]" style={{ background: "#1a120a", color: "#a8a29e" }} dir="ltr">
+          TEST STATION 3 — failed boards, last hour
+        </div>
+        <div className="p-3 font-mono text-[11.5px] leading-[1.9]" style={{ background: "#0f172a" }} dir="ltr">
+          <div style={{ color: "#f87171" }}>#B-2201  FAIL  test 4/12: 3.3V rail = 2.9V</div>
+          <div style={{ color: "#f87171" }}>#B-2214  FAIL  test 4/12: 3.3V rail = 2.8V</div>
+          <div style={{ color: "#f87171" }}>#B-2229  FAIL  test 4/12: 3.3V rail = 3.0V</div>
+          <div style={{ color: "#22c55e" }}>#B-2230  PASS  all 12 tests</div>
+        </div>
+      </div>
+      {/* תרגום השורה — כדי שאף אחד לא יצטרך לנחש */}
+      <div
+        className="rounded-xl px-3 py-2.5 mb-4"
+        style={{ background: "rgba(124,45,18,0.05)", border: "1px solid rgba(124,45,18,0.13)" }}
+      >
+        <div className="text-[11.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
+          <strong style={{ color: "#7c2d12" }}>תרגום השורה הראשונה:</strong>{" "}
+          לוח מספר B-2201 נכשל בבדיקה 4 מתוך 12 — הצינור שאמור לתת לחץ 3.3, נותן רק 2.9.
+        </div>
+      </div>
+      <p className="text-[13px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.62)" }}>
+        קראי את ארבע השורות. הלוחות שנכשלו — <span className="font-bold" style={{ color: "#7c2d12" }}>מה משותף להם?</span>
+      </p>
+    </div>
+  ),
+  question: "מה הדפוס בפלט עמדת הבדיקה?",
+  options: [
+    "כל לוח נכשל בבדיקה אחרת — אין דפוס משותף",
+    "כולם נכשלו באותה בדיקה בדיוק: הלחץ (המתח) בצינור ה-3.3 נמוך מדי",
+    "עמדת הבדיקה עצמה מקולקלת — היא מכשילה לוחות סתם",
+  ],
+  correct: 1,
+  okMsg: "מצוין! שלושת הלוחות נכשלו באותה בדיקה, עם אותה בעיה: לחץ נמוך באותו צינור. כשל זהה שחוזר = גורם אחד משותף — וזה מצמצם את החיפוש דרמטית.",
+  errMsg: "הסתכלי שוב: שלושת הכשלים הם באותה בדיקה (4 מתוך 12) ועם אותה בעיה — לחץ נמוך בצינור ה-3.3. ואם העמדה הייתה מקולקלת, גם B-2230 היה נכשל — אבל הוא עבר.",
+  learned: "כשל זהה שחוזר = גורם אחד משותף",
+};
+
+const HW2: SequenceStep = {
+  kind: "sequence",
+  tag: "בידוד הגורם",
+  concept: "מהדפוס אל האשם — בסדר הנכון",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        כשפס ייצור מתחיל להוציא לוחות פגומים — יש סדר עבודה. מי שמדלגת על שלב
+        מוצאת את עצמה מחליפה רכיבים בניחוש:
+      </p>
+      <div
+        className="rounded-xl p-4 mb-4"
+        style={{ background: "rgba(124,45,18,0.05)", border: "1px solid rgba(124,45,18,0.13)" }}
+      >
+        <div className="text-[12px] font-bold mb-2" style={{ color: "#7c2d12" }}>העיקרון: מהרחב אל הצר</div>
+        <div className="text-[11.5px] leading-[1.9]" style={{ color: "rgba(0,0,0,0.6)" }}>
+          קודם מסתכלים על כל הנתונים ומזהים דפוס.<br />
+          אחר כך שואלים: מה השתנה בקו מאז אתמול?<br />
+          רק אז לוקחים לוח כושל אחד למעבדה ומודדים.<br />
+          ובסוף — מחליטים מה עושים עם הייצור.
+        </div>
+      </div>
+    </div>
+  ),
+  instruction: "סדרי את שלבי הבידוד — לחצי לפי הסדר הנכון:",
+  items: [
+    "מדידה במעבדה: לוקחים לוח כושל ומודדים סביב פס ה-3.3V",
+    "זיהוי הדפוס: כל הכשלים באותה בדיקה ובאותו פס מתח",
+    "החלטת ייצור: מה עושים עם הקו ועם הלוחות שכבר יוצרו",
+    "השוואת נתוני ייצור: מה השתנה בקו מאז אתמול?",
+  ],
+  correctOrder: [1, 3, 0, 2],
+  okMsg: "מעולה! דפוס → מה השתנה → מדידה → החלטה. ככה מגיעים לגורם בשעות במקום בימים — ובלי להחליף רכיבים בניחוש.",
+  errMsg: "הסדר: קודם מזהים דפוס בנתונים ← בודקים מה השתנה בקו ← מודדים לוח כושל במעבדה ← ורק בסוף מחליטים על הייצור.",
+  learned: "דפוס → מה השתנה → מדידה → החלטה",
+};
+
+const HW3: ChoiceStep = {
+  kind: "choice",
+  tag: "בידוד אצווה",
+  concept: "קבל = מיכל רזרבה · רכיבים מגיעים באצוות",
+  context: (
+    <div>
+      {/* מושג חדש לפני שרואים אותו בטבלה */}
+      <div
+        className="rounded-xl p-4 mb-4"
+        style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
+      >
+        <div className="text-[12.5px] font-bold mb-2" style={{ color: "#023e8a" }}>🫙 מושג חדש: קבל — בעזרת מים:</div>
+        <div className="text-[12px] leading-[1.85]" style={{ color: "rgba(0,0,0,0.65)" }}>
+          <strong>קבל</strong> = מיכל קטן ליד הברז ששומר רזרבת מים ומחליק שינויים פתאומיים בלחץ.
+          בלוח יש עשרות כאלה — רכיבים קטנים ששומרים שהלחץ (המתח) יישאר חלק ויציב.<br />
+          <strong>קבל פגום</strong> = מיכל סדוק: הלחץ קופץ ונופל — בדיוק מה שעמדת הבדיקה מצאה בצינור ה-3.3.<br /><br />
+          <span style={{ color: "rgba(0,0,0,0.5)" }}>
+            ולמה זה לא <strong>קצר</strong>? קצר = פיצוץ בצינור שמנקז את כל הלחץ לאפס בבת אחת.
+            אצלנו הלחץ ירד ל-2.9 — לא נעלם. אז לא פיצוץ, אלא משהו שלא שומר על הלחץ.
+          </span>
+        </div>
+      </div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        שאלת "מה השתנה?" הובילה לתשובה: הבוקר הקו התחיל להשתמש
+        באצוות רכיבים חדשות (אצווה = משלוח של אלפי רכיבים זהים מאותו ייצור).
+        הצלבת את הלוחות הכושלים מול האצוות:
+      </p>
+      <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1px solid rgba(0,0,0,0.12)" }}>
+        <div className="px-3 py-2 text-[10px] font-bold" style={{ background: "rgba(124,45,18,0.08)", color: "#7c2d12" }}>
+          הצלבה: אצוות רכיבים × תוצאות בדיקה (200 לוחות מהבוקר)
+        </div>
+        {[
+          { comp: "שבב בקר — אצווה U-118", boards: "בכל 200 הלוחות", fails: "6 כשלים", bad: false },
+          { comp: "נגדים — אצווה R-502", boards: "בכל 200 הלוחות", fails: "6 כשלים", bad: false },
+          { comp: "קבלים — אצווה C-4471 (חדשה!)", boards: "רק ב-40 לוחות", fails: "כל 6 הכשלים", bad: true },
+        ].map((r, i, arr) => (
+          <div key={i} className="flex items-center gap-2 px-3 py-2.5 text-[11px]"
+            style={{
+              background: r.bad ? "rgba(220,38,38,0.06)" : "#fff",
+              borderBottom: i < arr.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
+            }}>
+            <span className="flex-1 font-bold" style={{ color: r.bad ? "#b91c1c" : "#023e8a" }}>{r.comp}</span>
+            <span style={{ color: "rgba(0,0,0,0.45)" }}>{r.boards}</span>
+            <span className="font-bold px-2 py-0.5 rounded"
+              style={{ background: r.bad ? "rgba(220,38,38,0.12)" : "rgba(0,0,0,0.05)", color: r.bad ? "#dc2626" : "rgba(0,0,0,0.5)" }}>
+              {r.fails}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
+  question: "איזו אצווה חשודה — ולמה?",
+  options: [
+    "שבב הבקר U-118 — הוא הרכיב הכי מורכב על הלוח",
+    "אצוות הקבלים C-4471 — כל הכשלים נמצאים רק בלוחות שקיבלו ממנה",
+    "אי אפשר לדעת — צריך לפרק את כל 200 הלוחות",
+  ],
+  correct: 1,
+  okMsg: "בול! שבב הבקר נמצא בכל 200 הלוחות — אם הוא היה אשם, כולם היו נכשלים. אצוות הקבלים נמצאת רק ב-40 לוחות, וכל 6 הכשלים בדיוק ביניהם. מיכלים סדוקים מאצווה פגומה — הלחץ לא נשמר.",
+  errMsg: "מורכבות ≠ אשמה. שבב הבקר נמצא בכל 200 הלוחות אבל רק 6 נכשלו. אצוות הקבלים C-4471 נמצאת רק ב-40 לוחות — וכל הכשלים בדיוק שם. שם האשם.",
+  learned: "בידוד אצווה: הכשלים מתרכזים איפה שהרכיב החשוד נמצא",
+};
+
+const HW4: MatchStep = {
+  kind: "match",
+  tag: "כלי המעבדה",
+  concept: "לכל שאלה — הכלי שעונה עליה",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
+        לפני אישור סופי — לוקחים לוח כושל אחד למעבדה, לאמת שהקבל באמת אשם.
+        במעבדת חומרה יש ארבעה כלים בסיסיים,{" "}
+        <span className="font-bold" style={{ color: "#7c2d12" }}>וכל אחד עונה על שאלה אחרת.</span>{" "}
+        בשפת המים שלנו:
+      </p>
+      <div
+        className="rounded-xl px-4 py-3 mb-4"
+        style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.1)" }}
+      >
+        <div className="text-[12px] leading-[1.8]" style={{ color: "rgba(0,0,0,0.65)" }}>
+          📟 <strong>מולטימטר</strong> — כמו מד לחץ שמצמידים לצינור<br />
+          📈 <strong>אוסצילוסקופ</strong> — כמו סרט שמצלם את מד הלחץ לאורך זמן<br />
+          🔎 <strong>בדיקה חזותית</strong> — פשוט להסתכל: מיכל תפוח? חיבור סדוק?<br />
+          🔧 <strong>החלפת רכיב מבוקרת</strong> — מחליפים רק את החשוד ובודקים שוב
+        </div>
+      </div>
+    </div>
+  ),
+  instruction: "התאימי כל כלי לשאלה שהוא עונה עליה:",
+  pairs: [
+    { left: "מולטימטר", right: "כמה לחץ (מתח) יש בנקודה הזו ברגע זה?" },
+    { left: "אוסצילוסקופ", right: "איך הלחץ מתנהג לאורך זמן — יציב או קופץ?" },
+    { left: "בדיקה חזותית", right: "האם רואים בעין מיכל (קבל) תפוח או חיבור סדוק?" },
+    { left: "החלפת רכיב מבוקרת", right: "אם מחליפים רק את החשוד — התקלה נעלמת?" },
+  ],
+  okMsg: "מושלם! ובמעבדה זה בדיוק מה שקרה: הקבל מהאצווה החשודה הוחלף בקבל תקין — והלוח עבר את כל 12 הבדיקות. המיכל הסדוק היה האשם — מאומת.",
+  errMsg: "כמעט — מולטימטר = מד לחץ (מספר רגעי), אוסצילוסקופ = סרט הלחץ לאורך זמן, העיניים מוצאות נזק שרואים, וההחלפה המבוקרת היא ההוכחה הסופית.",
+  learned: "מד לחץ | סרט לאורך זמן | נזק שרואים | הוכחה בהחלפה",
+};
+
+const HW5: ChoiceStep = {
+  kind: "choice",
+  tag: "החלטת ייצור",
+  concept: "מה עושים עם קו שמייצר פגומים?",
+  context: (
+    <div>
+      <div
+        className="rounded-xl px-4 py-3 mb-4"
+        style={{ background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.2)" }}
+      >
+        <div className="text-[12.5px] font-bold mb-1" style={{ color: "#15803d" }}>✓ האבחון הושלם</div>
+        <div className="text-[12px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.6)" }}>
+          אצוות קבלים C-4471 פגומה. 40 לוחות כבר יוצרו איתה, הקו ממשיך לרוץ,
+          ובמחסן נשארו עוד אלפי קבלים מהאצווה.
+        </div>
+      </div>
+      <p className="text-[13px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.62)" }}>
+        עכשיו החלק שמבדיל מהנדסת מסתם מודדת:{" "}
+        <span className="font-bold" style={{ color: "#7c2d12" }}>ההחלטה.</span>{" "}
+        לעצור קו ייצור עולה כסף — אבל לשלוח לוח פגום ללקוח עולה יותר.
+      </p>
+    </div>
+  ),
+  question: "מה ההחלטה הנכונה?",
+  options: [
+    "להמשיך לייצר — רק 3% נכשלים, זה מעט",
+    "להקפיא את אצוות C-4471 במחסן, לעכב את 40 הלוחות לבדיקה חוזרת, ולפתוח דיווח לספק הקבלים",
+    "לזרוק את כל הלוחות שיוצרו היום ולהחליף ספק לצמיתות",
+  ],
+  correct: 1,
+  okMsg: "החלטה של מקצוענית! חוסמים את המקור (האצווה), בודקים את מה שכבר יוצר, ומדווחים לספק כדי שיתקן. הקו חוזר לרוץ עם אצווה תקינה — בלי לזרוק כלום סתם.",
+  errMsg: "3% שיוצאים ללקוחות = החזרות, מוניטין וכסף. ומצד שני — לזרוק הכל זה בזבוז: רוב הלוחות תקינים. מקפיאים את האצווה, בודקים את ה-40, מדווחים לספק.",
+  learned: "הקפאת אצווה + בדיקה חוזרת + דיווח לספק — לא פאניקה ולא התעלמות",
+};
+
+const STEPS_HARDWARE: Step[] = [HW0, HW1, HW2, HW3, HW4, HW5];
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEQUENCE INTERACTION
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -4018,6 +4321,18 @@ const DOMAIN_META: Record<string, {
     careerText: "כל מה שבדקת היום — QA Engineers ב-Wix, Monday.com, Fiverr ו-Riskified עושות גרסאות מתקדמות שלו כל יום. הדס עברה מהוראה ל-QA אחרי קורס בן 4 חודשים — ואחרי חצי שנה קיבלה עבודה.",
     missionTitle: "ה-release יוצא הערב. כל שלב שאת עוברת — עוד פריט ברשימת הבדיקה שמאושר לפני שהוא יוצא.",
   },
+  hardware: {
+    simTitle: "טעימה — חומרה",
+    heroTexts: ["חשבת כמו מהנדסת חומרה!", "בדרך הנכונה למעבדה!", "ניצחת את השלב הראשון!"],
+    skills: [
+      { label: "קריאת פלט בדיקה", val: 78 },
+      { label: "זיהוי דפוסי כשל", val: 74 },
+      { label: "בידוד אצוות", val: 70 },
+      { label: "הכרת כלי מעבדה", val: 68 },
+      { label: "החלטות ייצור", val: 65 },
+    ],
+    careerText: "כל מה שעשית היום — קריאת פלט בדיקות, בידוד אצווה, החלטת ייצור — מהנדסות ומהנדסי חומרה ב-Intel, Nvidia ומובילאיי עושים גרסאות מתקדמות שלו כל יום. אביחי התחיל כחשמלאי רכב, עבר דרך מסלול הנדסאים — והיום הלוחות שהוא מאשר יוצאים לבתי חולים.",
+  },
 };
 
 function getSteps(domain: string): Step[] {
@@ -4027,6 +4342,7 @@ function getSteps(domain: string): Step[] {
   if (domain === "cyber") return STEPS_CYBER;
   if (domain === "ux") return STEPS_UX;
   if (domain === "qa") return STEPS_QA;
+  if (domain === "hardware") return STEPS_HARDWARE;
   return STEPS_CODE; // default (code)
 }
 
@@ -4545,7 +4861,7 @@ function getNextDomain(currentDomain: string): string | null {
   }
 }
 
-const IMPLEMENTED_DOMAINS = new Set(["code", "data", "marketing", "ai", "cyber", "ux", "qa"]);
+const IMPLEMENTED_DOMAINS = new Set(["code", "data", "marketing", "ai", "cyber", "ux", "qa", "hardware"]);
 
 export default function SimPage() {
   const { domain } = useParams();

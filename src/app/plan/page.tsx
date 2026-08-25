@@ -24,13 +24,16 @@ import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import { track as trackEvent } from "@vercel/analytics";
-import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent } from "@/lib/candidate";
+import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl, myCoordinator } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
 import {
   BUDGETED_TUITION, SCHOLARSHIPS, RECOMMENDED_STACK, DOC_CATALOG,
   AREA_LABEL, buildPlan, monthKey, monthLabel, dueText, daysUntil,
-  nextOccurrence, type PlanTask, type TaskArea,
+  nextOccurrence, EXCLUSIONS, type PlanTask, type TaskArea, type Scholarship,
 } from "@/data/plan";
+import { INSTITUTIONS } from "@/data/institutions";
+
+import { coordinatorProfileFor } from "@/data/coordinators";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -72,6 +75,62 @@ function read<T>(key: string, fallback: T): T {
 
 export default function PlanPage() {
   const [view, setView] = useState<View>("plan");
+  /*
+   * שער המוסד (נתי 20.8): פגישה 3 היא נעילת מסלול — התוצר שלה הוא מוסד.
+   * מוסד אחד + גיבוי אופציונלי, לא שניים שקולים: שניים שקולים = החלטה
+   * שלא התקבלה, וכל מהות השלב היא צמצום.
+   */
+  const [instMain, setInstMain] = useState<string | null>(null);
+  const [instBackup, setInstBackup] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const m0 = localStorage.getItem("plan-inst-main");
+      setInstMain(m0);
+      setInstBackup(localStorage.getItem("plan-inst-backup"));
+      // ריפוי לאחור: מי שבחר מוסד לפני התיקון מקבל את משימת העוגן עכשיו
+      if (m0) setTimeout(() => ensureAnchorTasks(m0, localStorage.getItem("plan-inst-backup")), 0);
+    } catch { /* ignore */ }
+  }, []);
+  function commitInstitution(main: string, backup: string | null) {
+    setInstMain(main);
+    setInstBackup(backup);
+    localStorage.setItem("plan-inst-main", main);
+    if (backup) localStorage.setItem("plan-inst-backup", backup);
+    else localStorage.removeItem("plan-inst-backup");
+    logEvent("institution_committed", backup ? { main, backup } : { main });
+    ensureAnchorTasks(main, backup);
+  }
+
+  /*
+   * משימת העוגן נוצרת מהשער עצמו (נתי 23.8): קודם היא נוצרה רק למוסדות
+   * מהשורטליסט של שלב 4 — מי שבחר בשער מוסד אחר נשאר בלי משימת הרשמה,
+   * והעוגן נפל לדדליין של מלגה. הבחירה בשער מולידה את המשימה.
+   */
+  function ensureAnchorTasks(main: string, backup: string | null) {
+    setTasks(prev => {
+      const next = [...prev];
+      const shortOf = (n: string) => n.split(" — ")[0];
+      const addIfMissing = (inst: string, isBackup: boolean) => {
+        const short = shortOf(inst);
+        if (next.some(t => t.area === "registration" && t.title.includes(short))) return;
+        next.unshift({
+          id: `r-register-${inst}`,
+          title: isBackup ? `${short} (גיבוי) — לבדוק תאריך אחרון להרשמה` : `להירשם ל${short} — זו המשימה שהכול תלוי בה`,
+          note: "שיחה אחת ליחידת התמיכה, לא למדור רישום. וגם אם המועד הרשמי עבר — כמעט תמיד שווה לבדוק: במוסדות רבים יש רשימות המתנה ומחזורים נוספים.",
+          area: "registration",
+          due: null,
+          status: "open",
+          openCount: 0,
+          doneAt: null,
+        } as PlanTask);
+      };
+      if (backup) addIfMissing(backup, true);
+      addIfMissing(main, false);
+      localStorage.setItem(LS.tasks, JSON.stringify(next));
+      syncPlanTasks(next);
+      return next;
+    });
+  }
   const [ready, setReady] = useState(false);
   const [tasks, setTasks] = useState<PlanTask[]>([]);
   const [docs, setDocs] = useState<PlanDoc[]>([]);
@@ -127,11 +186,19 @@ export default function PlanPage() {
   const open = tasks.filter(t => t.status === "open");
   const done = tasks.filter(t => t.status === "done");
 
-  /** הפעולה הדחופה: הדדליין הקרוב ביותר. אם אין — הבאה בתור. הכרטיס לא נעלם */
+  /**
+   * העוגן: קודם ההרשמה עצמה למוסד שנבחר — היא תנאי מקדים לרוב המשימות
+   * המתוארכות (מלגות דורשות אישור קבלה). רק אחריה, הדדליין הקרוב.
+   */
   const anchor = useMemo(() => {
+    if (instMain) {
+      const short = instMain.split(" — ")[0];
+      const reg = open.find(t => t.area === "registration" && t.title.includes(short));
+      if (reg) return reg;
+    }
     const withDue = open.filter(t => t.due).sort((a, b) => (a.due! < b.due! ? -1 : 1));
     return withDue[0] ?? open[0] ?? null;
-  }, [open]);
+  }, [open, instMain]);
 
   const toggle = (id: string) =>
     saveTasks(tasks.map(t => {
@@ -225,7 +292,8 @@ export default function PlanPage() {
       </div>
 
       <div className="max-w-[560px] w-full mx-auto flex-1 pb-28">
-        {view === "plan" && (
+        {view === "plan" && !instMain && <InstGate onCommit={commitInstitution} />}
+        {view === "plan" && instMain && (
           <PlanView
             anchor={anchor}
             open={open}
@@ -309,6 +377,22 @@ export default function PlanPage() {
         />
       )}
 
+      {/*
+        קו הסיום — נוכחות קבועה אבל מודעת-שלב (נתי 25.8): מופיע רק אחרי
+        שער המוסד ורק כל עוד האישור לא הועלה. לא צועקים על מי שזה עוד
+        לא רלוונטי לו — פעולה אחת לכל מסך.
+      */}
+      {instMain && typeof window !== "undefined" && !localStorage.getItem("enrollment-doc-path") && (
+        <Link
+          href="/enroll"
+          className="fixed bottom-[76px] right-4 left-4 max-w-[560px] mx-auto flex items-center justify-between gap-3 rounded-2xl px-4 py-3 z-40"
+          style={{ background: NAVY, color: "#fff", boxShadow: "0 6px 24px rgba(2,62,138,0.35)" }}
+        >
+          <span className="text-[13.5px] font-bold leading-snug">נרשמת ללימודים? עדכן אותנו — ועבור/י לשלב 6 🎓</span>
+          <span className="text-[16px] shrink-0">←</span>
+        </Link>
+      )}
+
       <BottomNav />
     </div>
   );
@@ -385,6 +469,128 @@ function Intro({ onStart }: { onStart: () => void }) {
 
 // ─── 2b — התוכנית שלי ─────────────────────────────────────────────────────────
 
+/**
+ * שער המוסד — תחילת שלב 5 (נתי 20.8).
+ *
+ * פגישה 3 היא נעילת מסלול; השער מתעד את התוצר שלה: מוסד אחד, וגיבוי
+ * אופציונלי שמסומן ככזה. אין כאן "עוד לא החלטתי" — מי שמגיע לשער בלי
+ * החלטה נמדד (plan_inst_gate בלי institution_committed) ועולה לרכזת:
+ * יציאה מפגישת נעילה בלי מוסד היא אולי הסיגנל החזק במערכת.
+ */
+function InstGate({ onCommit }: { onCommit: (main: string, backup: string | null) => void }) {
+  const [shortnames, setShortnames] = useState<string[]>([]);
+  const [main, setMain] = useState<string | null>(null);
+  const [backup, setBackup] = useState<string | null>(null);
+  const [pickingBackup, setPickingBackup] = useState(false);
+  const [q, setQ] = useState("");
+
+  useEffect(() => {
+    logEvent("plan_inst_gate", {});
+    try {
+      const sl = JSON.parse(localStorage.getItem("paths-shortlist") ?? "[]") as { name: string }[];
+      setShortnames(sl.map(x => x.name));
+    } catch { /* ignore */ }
+  }, []);
+
+  const allNames = INSTITUTIONS.filter(i => i.status !== "hidden").map(i => i.name);
+  const hits = q.trim().length >= 2
+    ? allNames.filter(n => n.includes(q.trim()) && n !== main && n !== backup).slice(0, 6)
+    : [];
+
+  const choose = (name: string) => {
+    if (pickingBackup) { setBackup(name); setPickingBackup(false); }
+    else setMain(name);
+    setQ("");
+  };
+
+  const Chip = ({ name, fromList }: { name: string; fromList?: boolean }) => (
+    <button
+      onClick={() => choose(name)}
+      className="w-full rounded-xl px-4 py-3 text-right"
+      style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.14)" }}
+    >
+      <span className="text-[13.5px] font-bold" style={{ color: NAVY }}>{name}</span>
+      {fromList && (
+        <span className="text-[10.5px] font-bold mr-2 px-2 py-0.5 rounded-full" style={{ background: "rgba(251,133,0,0.12)", color: "#92400e" }}>
+          מהרשימה שלך
+        </span>
+      )}
+    </button>
+  );
+
+  const options = (exclude: (string | null)[]) => (
+    <>
+      {shortnames.filter(n => !exclude.includes(n)).map(n => <Chip key={n} name={n} fromList />)}
+      <input
+        value={q}
+        onChange={e => setQ(e.target.value)}
+        placeholder="או חיפוש בכל המוסדות…"
+        className="w-full rounded-xl px-4 py-3 text-[13.5px]"
+        style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.12)" }}
+      />
+      {hits.map(n => <Chip key={n} name={n} />)}
+    </>
+  );
+
+  return (
+    <div className="pt-4 px-4 pb-6 flex flex-col gap-4">
+      <div className="px-1">
+        <h1 className="text-[22px] font-extrabold" style={{ color: NAVY }}>עם מה יוצאים לדרך?</h1>
+        <p className="text-[15px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.6 }}>
+          יצאת מפגישת הנעילה עם מוסד — נסמן אותו, וכל התוכנית תיבנה סביבו:
+          ההרשמה, המלגות והחשבון.
+        </p>
+      </div>
+
+      {!main ? (
+        <div className="flex flex-col gap-2.5">{options([])}</div>
+      ) : (
+        <div className="p-4 rounded-[14px]" style={{ background: "rgba(2,62,138,0.05)", border: "1.5px solid rgba(2,62,138,0.2)" }}>
+          <div className="text-[11px] font-black mb-1" style={{ color: "#8a8377" }}>המוסד שלי</div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[15px] font-extrabold" style={{ color: NAVY }}>{main}</span>
+            <button onClick={() => { setMain(null); setBackup(null); }} className="text-[11.5px] font-bold" style={{ color: "rgba(0,0,0,0.4)" }}>החלפה</button>
+          </div>
+        </div>
+      )}
+
+      {main && !backup && !pickingBackup && (
+        <button onClick={() => setPickingBackup(true)} className="text-[12.5px] font-bold text-right px-1" style={{ color: NAVY, opacity: 0.75 }}>
+          + יש גם מוסד גיבוי? (לא חובה — יקבל רק את משימת ההרשמה)
+        </button>
+      )}
+      {pickingBackup && (
+        <div className="flex flex-col gap-2.5">
+          <div className="text-[12px] font-bold px-1" style={{ color: "#8a8377" }}>גיבוי — אם משהו לא מסתדר עם הראשון</div>
+          {options([main])}
+          <button onClick={() => setPickingBackup(false)} className="text-[12px] font-bold" style={{ color: "rgba(0,0,0,0.4)" }}>בעצם לא צריך</button>
+        </div>
+      )}
+      {backup && (
+        <div className="p-4 rounded-[14px]" style={{ background: "#fff", border: "1px dashed rgba(0,0,0,0.18)" }}>
+          <div className="text-[11px] font-black mb-1" style={{ color: "#8a8377" }}>גיבוי</div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[14px] font-bold" style={{ color: "#5c574e" }}>{backup}</span>
+            <button onClick={() => setBackup(null)} className="text-[11.5px] font-bold" style={{ color: "rgba(0,0,0,0.4)" }}>הסרה</button>
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={() => main && onCommit(main, backup)}
+        disabled={!main}
+        className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+        style={{ background: main ? ORANGE : "rgba(0,0,0,0.15)" }}
+      >
+        נבנה את התוכנית סביב זה ←
+      </button>
+      <div className="text-[12px] text-center" style={{ color: "rgba(0,0,0,0.4)" }}>
+        הדדליינים של המלגות לא מחכים — טאב ״החשבון״ פתוח גם עכשיו
+      </div>
+    </div>
+  );
+}
+
 function PlanView({
   anchor, open, done, openMonths, setOpenMonths, showDone, setShowDone,
   onToggle, onOpen, onRemove, onSnooze, onMoney, onAdd, onIntro,
@@ -409,8 +615,11 @@ function PlanView({
 
   /** קיבוץ לפי חודש, ולא לפי תחום — כדי שתחום בלי משימות החודש לא יופיע כשורה ריקה */
   const groups = useMemo(() => {
-    const withDue = open.filter(t => t.due);
-    const noDue = open.filter(t => !t.due);
+    /* ההרשמה תמיד למעלה: תנאי מקדים, לא "משימה בלי תאריך" (נתי 20.8) */
+    const pinned = open.filter(t => t.area === "registration");
+    const rest = open.filter(t => t.area !== "registration");
+    const withDue = rest.filter(t => t.due);
+    const noDue = rest.filter(t => !t.due);
     const map = new Map<string, PlanTask[]>();
     for (const t of withDue) {
       const k = monthKey(t.due!);
@@ -418,6 +627,7 @@ function PlanView({
     }
     const sorted = [...map.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
     if (noDue.length) sorted.push(["none", noDue]);
+    if (pinned.length) sorted.unshift(["pinned", pinned]);
     return sorted;
   }, [open]);
 
@@ -444,7 +654,9 @@ function PlanView({
                 {dueText(anchor.due)}
               </span>
             )}
-            <span className="text-[12px]" style={{ color: "#b9cdea" }}>הכי דחוף</span>
+            <span className="text-[12px]" style={{ color: "#b9cdea" }}>
+              {anchor.area === "registration" ? "העוגן — הכול תלוי בזה" : "הכי דחוף"}
+            </span>
           </div>
           <div className="text-[21px] font-extrabold" style={{ lineHeight: 1.3 }}>{anchor.title}</div>
           {anchor.note && (
@@ -485,6 +697,7 @@ function PlanView({
         {groups.map(([key, items]) => {
           const isNow = key === todayKey;
           const isNone = key === "none";
+          const isPinned = key === "pinned";
           const far = !isNow && !isNone && key > todayKey && items.length > 0 && openMonths[key] !== true
             && [...groups].findIndex(g => g[0] === key) > 1;
 
@@ -494,14 +707,14 @@ function PlanView({
                 <div
                   style={{
                     width: 10, height: 10, borderRadius: 999,
-                    background: isNone ? "#cfc9bd" : isNow ? RED : "#fb8500",
+                    background: isPinned ? NAVY : isNone ? "#cfc9bd" : isNow ? RED : "#fb8500",
                   }}
                 />
                 <div className="text-[17px] font-extrabold" style={{ color: "#1c1a16" }}>
-                  {isNone ? "בלי תאריך" : monthLabel(key)}
+                  {isPinned ? "העוגן — ההרשמה עצמה" : isNone ? "בלי תאריך" : monthLabel(key)}
                 </div>
                 <div className="text-[13px]" style={{ color: "#8a8377" }}>
-                  {isNow ? "החודש" : isNone ? "מתי שנוח" : ""}
+                  {isPinned ? "תנאי לכל השאר" : isNow ? "החודש" : isNone ? "מתי שנוח" : ""}
                 </div>
               </div>
 
@@ -704,7 +917,7 @@ function MoneyOnce() {
  * ההשוואה נעשית מול מה שהוא **עצמו** אמר בשאלון שלב 4 על שעות פנויות,
  * כי סף כללי היה שרירותי. אותו עיקרון של מסך הכסף: מספר, לא הרגעה.
  */
-function HoursAccount() {
+function HoursAccount({ picked }: { picked: string[] }) {
   const [apps, setApps] = useState<Record<string, string>>({});
   const [freeHours, setFreeHours] = useState<number | null>(null);
 
@@ -717,9 +930,13 @@ function HoursAccount() {
     } catch { /* ignore */ }
   }, []);
 
-  const active = Object.entries(apps)
-    .filter(([, st]) => st !== "rejected")
-    .map(([id]) => SCHOLARSHIPS.find(s => s.id === id))
+  /* גם מה שהוגש וגם מה שנבחר בחשבון — ההתחייבות נספרת מרגע הכוונה */
+  const ids = new Set([
+    ...Object.entries(apps).filter(([, st]) => st !== "rejected").map(([id]) => id),
+    ...picked,
+  ]);
+  const active = [...ids]
+    .map(id => SCHOLARSHIPS.find(f => f.id === id))
     .filter((f): f is NonNullable<typeof f> => !!f && !!f.annualHours);
 
   if (active.length === 0) return null;
@@ -750,89 +967,349 @@ function HoursAccount() {
 }
 
 function MoneyView() {
-  const perach = SCHOLARSHIPS.find(s => s.id === "perach")!;
-  const gap = BUDGETED_TUITION - (perach.amount ?? 0);
+  /*
+   * החשבון מותאם למוסד שנבחר בשער (נתי 20.8): שכר הלימוד לפי סוג המוסד,
+   * המלגות מסוננות לרלוונטיות, ולחיצה על מלגה מורידה אותה מהחשבון —
+   * כולל שעות ההתנדבות המצטברות והתנגשויות שמחייבות ויתור.
+   */
+  const [instMain, setInstMain] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
+  /** הערכת מגורים חודשית — קלט של המשתמש, לא מספר שלנו. null = גר/ה בבית */
+  const [housing, setHousingState] = useState<number | null>(null);
+  const setHousing = (v: number | null) => {
+    setHousingState(v);
+    try {
+      if (v === null) localStorage.removeItem("plan-housing-monthly");
+      else localStorage.setItem("plan-housing-monthly", String(v));
+    } catch { /* ignore */ }
+    logEvent("plan_housing_est", { monthly: String(v ?? 0) });
+  };
+
+  useEffect(() => {
+    try {
+      setInstMain(localStorage.getItem("plan-inst-main"));
+      setPicked(JSON.parse(localStorage.getItem("plan-picked") ?? "[]"));
+      const h = localStorage.getItem("plan-housing-monthly");
+      if (h) setHousingState(Number(h));
+    } catch { /* ignore */ }
+  }, []);
+
+  const inst = instMain ? INSTITUTIONS.find(i => i.name === instMain) ?? null : null;
+  const track = inst?.track ?? "degree";
+
+  const base = track === "degree" ? BUDGETED_TUITION : track === "mahat" ? 10900 : 0;
+  const baseLabel =
+    track === "degree" ? "שכר לימוד לשנה, במוסד מתוקצב"
+    : track === "mahat" ? "שכר לימוד הנדסאים לשנה (יסוד + נלווים)"
+    : "עלות ההכשרה";
+
+  const savePicked = (next: string[]) => {
+    setPicked(next);
+    localStorage.setItem("plan-picked", JSON.stringify(next));
+  };
+  const togglePick = (id: string) => {
+    const on = !picked.includes(id);
+    savePicked(on ? [...picked, id] : picked.filter(x => x !== id));
+    logEvent("plan_scholarship_pick", { id, on: String(on) });
+  };
+
+  /* רלוונטיות: לפי מסלול המוסד, ולפי רשימת המוסדות של המלגה אם הוצהרה */
+  const relevantTo = (f: Scholarship): boolean => {
+    if (f.tracks && !f.tracks.includes(track)) return false;
+    if (inst && f.institutions && f.institutions.length > 0 && !f.institutions.includes(inst.id)) return false;
+    return true;
+  };
+  const relevant = SCHOLARSHIPS.filter(relevantTo);
+  const others = SCHOLARSHIPS.filter(f => !relevantTo(f));
+
+  const pickedItems = picked
+    .map(id => SCHOLARSHIPS.find(f => f.id === id))
+    .filter((f): f is Scholarship => !!f);
+  const covered = pickedItems.reduce((sum, f) => sum + (f.amount ?? 0), 0);
+  const unknownAmount = pickedItems.filter(f => !f.amount);
+  const gap = Math.max(0, base - covered);
+
+  const conflicts = EXCLUSIONS.filter(e => picked.includes(e.a) && picked.includes(e.b));
+  const nameOf = (id: string) => SCHOLARSHIPS.find(f => f.id === id)?.name.split(" — ")[0] ?? id;
+
+  const Card = (f: Scholarship, dimmed: boolean) => {
+    const closes = f.closesAt ? nextOccurrence(f.closesAt.d, f.closesAt.m) : null;
+    const d = closes ? daysUntil(closes) : null;
+    const on = picked.includes(f.id);
+    return (
+      <div
+        key={f.id}
+        onClick={() => !dimmed && togglePick(f.id)}
+        className="p-4 rounded-[14px] cursor-pointer select-none"
+        style={{
+          background: on ? "rgba(5,150,105,0.05)" : "#fff",
+          border: on ? "1.5px solid rgba(5,150,105,0.45)" : `1px solid ${d !== null && d <= 14 ? "#f3d2d2" : BORDER}`,
+          opacity: dimmed ? 0.55 : 1,
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-[16px] font-bold" style={{ color: "#1c1a16" }}>
+            {on ? "✓ " : ""}{f.name}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {on && (
+              <span className="px-2 py-1 rounded-full text-[11.5px] font-black" style={{ background: GREEN, color: "#fff" }}>
+                {f.amount ? `− ${f.amount.toLocaleString("he-IL")} ₪` : "סכום יפורסם"}
+              </span>
+            )}
+            {closes ? (
+              <span
+                className="px-2.5 py-1 rounded-full text-[11.5px] font-bold"
+                style={{
+                  background: d !== null && d <= 14 ? RED : "#f4f1ea",
+                  color: d !== null && d <= 14 ? "#fff" : "#7a746a",
+                }}
+              >
+                {dueText(closes.toISOString())}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="text-[13.5px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>{f.what}</div>
+        {f.windowNote && <div className="text-[13px] mt-1.5" style={{ color: "#8a8377" }}>{f.windowNote}</div>}
+        {f.catch && !dimmed && (
+          <div className="text-[13.5px] mt-2 p-2.5 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.55 }}>
+            {f.catch}
+          </div>
+        )}
+        {f.status === "needs-check" && (
+          <div className="text-[12.5px] mt-2" style={{ color: "#8a8377" }}>⚠︎ הפרטים לא אומתו מול הגוף עצמו — לשאול את הרכזת</div>
+        )}
+        {!on && !dimmed && (
+          <div className="text-[11.5px] mt-2 font-bold" style={{ color: NAVY, opacity: 0.6 }}>לחיצה מוסיפה לחשבון +</div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="pt-4 px-4 pb-6 flex flex-col gap-4">
       <div className="px-1">
         <h1 className="text-[22px] font-extrabold" style={{ color: NAVY }}>כמה זה באמת עולה</h1>
         <p className="text-[15px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>
-          המספרים כאן הם מה שאומת מול הגופים עצמם. מה שלא פורסם — כתוב שלא פורסם.
+          {inst
+            ? `החשבון של ${inst.name.split(" — ")[0]}. `
+            : "המספרים כאן הם מה שאומת מול הגופים עצמם. "}
+          לחצו על מלגה כדי לראות איך הפער יורד.
         </p>
       </div>
 
-      <HoursAccount />
-
       <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${BORDER}` }}>
-        <Row label="שכר לימוד לשנה, במוסד מתוקצב" value={`${BUDGETED_TUITION.toLocaleString("he-IL")} ₪`} />
-        <div style={{ height: 1, background: BORDER, margin: "12px 0" }} />
-        <Row label="פר״ח מכסה עד" value={`${perach.amount!.toLocaleString("he-IL")} ₪`} tone={GREEN} />
-        <div className="text-[12.5px] mt-1" style={{ color: "#8a8377" }}>{perach.amountNote}</div>
-        <div style={{ height: 1, background: BORDER, margin: "12px 0" }} />
-        <Row label="נשאר" value={`${gap.toLocaleString("he-IL")} ₪`} bold />
-        <div className="text-[13.5px] mt-2.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>
-          וזה עוד לפני מרום, שנוספת על פר״ח. מרום מחשבת אחוז משכר הלימוד לפי דירוג
-          המקצוע — <b>הסכום לתשפ״ז יפורסם בספטמבר</b>, ולכן לא כתוב כאן מספר.
-        </div>
+        {track === "bootcamp" ? (
+          <div className="text-[14px]" style={{ color: "#5c574e", lineHeight: 1.7 }}>
+            בהכשרות העלות משתנה לפי קורס — רוב ההכשרות שאנחנו מציגים מסובסדות
+            עמוק (980–6,000 ₪, חלקן מהפיקדון). המספר המדויק נמצא בכרטיס הקורס.
+          </div>
+        ) : (
+          <>
+            <Row label={baseLabel} value={`${base.toLocaleString("he-IL")} ₪`} />
+            {pickedItems.filter(f => f.amount).map(f => (
+              <div key={f.id}>
+                <div style={{ height: 1, background: BORDER, margin: "10px 0" }} />
+                <Row label={`${f.name.split(" — ")[0]} מכסה עד`} value={`− ${f.amount!.toLocaleString("he-IL")} ₪`} tone={GREEN} />
+              </div>
+            ))}
+            <div style={{ height: 1, background: BORDER, margin: "12px 0" }} />
+            <Row label="נשאר" value={`${gap.toLocaleString("he-IL")} ₪`} bold />
+            {unknownAmount.length > 0 && (
+              <div className="text-[12.5px] mt-2" style={{ color: "#8a8377", lineHeight: 1.6 }}>
+                ועוד {unknownAmount.map(f => f.name.split(" — ")[0]).join(" · ")} — הסכום יפורסם, ולכן לא בחשבון.
+              </div>
+            )}
+            {pickedItems.length === 0 && (
+              <div className="text-[13px] mt-2.5" style={{ color: "#8a8377" }}>
+                עוד לא בחרת מלגות — לחצו על מלגה ברשימה למטה והחשבון יתעדכן.
+              </div>
+            )}
+            {inst && inst.tuition && !inst.tuition.includes("מתוקצב") && (
+              <div className="text-[12.5px] mt-2.5 p-2.5 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.6 }}>
+                שים/י לב: {inst.name.split(" — ")[0]} אינה מוסד מתוקצב — שכר הלימוד בפועל
+                גבוה מהמספר המפוקח שמוצג כאן. המספר המדויק בכרטיס המוסד, וזו שאלה לרכזת.
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      {conflicts.map(e => (
+        <div key={`${e.a}-${e.b}`} className="p-[18px] rounded-[18px]" style={{ background: "rgba(220,38,38,0.05)", border: "1.5px solid rgba(220,38,38,0.3)" }}>
+          <div className="text-[15px] font-extrabold mb-1" style={{ color: "#b91c1c" }}>
+            {nameOf(e.a)} ו{nameOf(e.b)} לא עובדות יחד
+          </div>
+          <div className="text-[13.5px] mb-3" style={{ color: "#4b4740", lineHeight: 1.6 }}>{e.why}. על מה מוותרים?</div>
+          <div className="flex gap-2">
+            {[e.a, e.b].map(id => (
+              <button
+                key={id}
+                onClick={() => savePicked(picked.filter(x => x !== id))}
+                className="flex-1 py-2.5 rounded-xl text-[12.5px] font-bold"
+                style={{ background: "#fff", border: "1px solid rgba(220,38,38,0.3)", color: "#b91c1c" }}
+              >
+                מוותר/ת על {nameOf(id)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <HousingCard inst={inst} onMonthly={setHousing} monthly={housing} />
+      <MonthSim gap={gap} track={track} housing={housing} />
+
+      <HoursAccount picked={picked} />
 
       <div className="p-[18px] rounded-[18px]" style={{ background: "#fff7ec", border: "1px solid #f5dcb8" }}>
         <div className="text-[15px] font-extrabold mb-1.5" style={{ color: "#b35f00" }}>
           המלגות לא מתחברות אוטומטית
         </div>
         <div className="text-[14px]" style={{ color: "#4b4740", lineHeight: 1.6 }}>
-          חלק מהן חוסמות אחת את השנייה, וזה לא כתוב במקום אחד. הצירוף שעובד למועמד
-          טיפוסי: <b>{RECOMMENDED_STACK.map(id => SCHOLARSHIPS.find(s => s.id === id)?.name).join(" ← ")}</b>.
+          חלק מהן חוסמות אחת את השנייה — אם תבחרו שתיים כאלה, נגיד לכם. הצירוף
+          שעובד למועמד טיפוסי: <b>{RECOMMENDED_STACK.map(id => SCHOLARSHIPS.find(f => f.id === id)?.name).join(" ← ")}</b>.
         </div>
       </div>
 
       <div className="text-[13px] font-bold px-1" style={{ color: "#8a8377", letterSpacing: "0.04em" }}>
-        כל המלגות, לפי סדר הסגירה
+        {inst ? `רלוונטיות ל${inst.name.split(" — ")[0]}, לפי סדר הסגירה` : "כל המלגות, לפי סדר הסגירה"}
       </div>
+      <div className="flex flex-col gap-2.5">{relevant.map(f => Card(f, false))}</div>
 
-      <div className="flex flex-col gap-2.5">
-        {SCHOLARSHIPS.map(s => {
-          const closes = s.closesAt ? nextOccurrence(s.closesAt.d, s.closesAt.m) : null;
-          const d = closes ? daysUntil(closes) : null;
-          return (
-            <div key={s.id} className="p-4 rounded-[14px]" style={{ background: "#fff", border: `1px solid ${d !== null && d <= 14 ? "#f3d2d2" : BORDER}` }}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="text-[16px] font-bold" style={{ color: "#1c1a16" }}>{s.name}</div>
-                {closes ? (
-                  <span
-                    className="px-2.5 py-1 rounded-full text-[11.5px] font-bold shrink-0"
-                    style={{
-                      background: d !== null && d <= 14 ? RED : "#f4f1ea",
-                      color: d !== null && d <= 14 ? "#fff" : "#7a746a",
-                    }}
-                  >
-                    {dueText(closes.toISOString())}
-                  </span>
-                ) : null}
-              </div>
-              <div className="text-[13.5px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>{s.what}</div>
-              {s.windowNote && (
-                <div className="text-[13px] mt-1.5" style={{ color: "#8a8377" }}>{s.windowNote}</div>
-              )}
-              {s.catch && (
-                <div className="text-[13.5px] mt-2 p-2.5 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.55 }}>
-                  {s.catch}
-                </div>
-              )}
-              {s.status === "needs-check" && (
-                <div className="text-[12.5px] mt-2" style={{ color: "#8a8377" }}>
-                  ⚠︎ הפרטים לא אומתו מול הגוף עצמו — לשאול את הרכזת
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {others.length > 0 && (
+        <>
+          <div className="text-[13px] font-bold px-1 mt-2" style={{ color: "#b3ada2", letterSpacing: "0.04em" }}>
+            פחות רלוונטיות למסלול שבחרת
+          </div>
+          <div className="flex flex-col gap-2.5">{others.map(f => Card(f, true))}</div>
+        </>
+      )}
 
       <div className="p-4 rounded-[14px] text-[13px]" style={{ background: "#f6f3ec", border: `1px solid ${BORDER}`, color: "#5c574e", lineHeight: 1.6 }}>
         הרשימה הזו חלקית — יש מלגות שלא מצאנו, ותנאים משתנים משנה לשנה. אם שמעת על
         מלגה שלא מופיעה כאן, זה לא אומר שהיא לא קיימת. שווה לשאול את הרכזת.
+      </div>
+    </div>
+  );
+}
+
+/**
+ * מגורים (נתי 25.8) — לא מסך נפרד אלא סעיף בחשבון, ורק למי שזה רלוונטי לו:
+ * המוסד בעיר אחרת מהיישוב שלו (שני הנתונים כבר אצלנו). אין לנו מחירי
+ * מעונות מאומתים — ולכן אין כאן מספר שלנו: יש שאלות נכונות, וההערכה
+ * היא של המשתמש ומזינה את התזרים.
+ */
+function HousingCard({ inst, monthly, onMonthly }: {
+  inst: { name: string; city?: string } | null;
+  monthly: number | null;
+  onMonthly: (v: number | null) => void;
+}) {
+  const [homeCity, setHomeCity] = useState("");
+  useEffect(() => {
+    try { setHomeCity((localStorage.getItem("home-city") ?? "").trim()); } catch { /* ignore */ }
+  }, []);
+  if (!inst?.city) return null;
+  const far = !homeCity || homeCity !== inst.city.trim();
+  if (!far) return null;
+  const short = inst.name.split(" — ")[0];
+  const OPTIONS: [string, number | null][] = [["גר/ה בבית ונוסע/ת", null], ["מעונות (הערכה שלי)", 1200], ["שכירות (הערכה שלי)", 2500]];
+  return (
+    <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${BORDER}` }}>
+      <div className="text-[16px] font-extrabold mb-1" style={{ color: NAVY }}>🏠 מגורים — ההחלטה השנייה בגודלה</div>
+      <p className="text-[13.5px] mb-3" style={{ color: "#5c574e", lineHeight: 1.65 }}>
+        {short} נמצא ב{inst.city}{homeCity ? ` ואת/ה מ${homeCity}` : ""} — אז מגורים הם חלק מהחשבון.
+        אין לנו מחיר מעונות מאומת ל{short}, ולכן זו <b>שאלה מצוינת לרכזת וליום הפתוח</b>:
+        כמה עולים המעונות, ומה עדיפות הקבלה אליהם. חלק מהמלגות (כמו יואל בבר-אילן) כוללות סיוע במגורים.
+      </p>
+      <div className="text-[12.5px] font-bold mb-2" style={{ color: "#8a8377" }}>מה התכנון שלך? (אפשר לשנות בכל רגע)</div>
+      <div className="flex flex-col gap-2">
+        {OPTIONS.map(([label, def]) => {
+          const on = def === null ? monthly === null || monthly === 0 : monthly !== null && monthly > 0 && (label.includes("מעונות") ? monthly <= 1800 : monthly > 1800);
+          return (
+            <button key={label} onClick={() => onMonthly(def)} className="py-2.5 px-3 rounded-xl text-[13.5px] font-bold text-right"
+              style={{ background: on ? "rgba(2,62,138,0.07)" : "#fff", border: on ? `1.5px solid ${NAVY}` : `1px solid ${BORDER}`, color: on ? NAVY : "#5c574e" }}>
+              {label}{def ? ` — כ-${def.toLocaleString("he-IL")} ₪ לחודש` : ""}
+            </button>
+          );
+        })}
+      </div>
+      {monthly !== null && monthly > 0 && (
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[12.5px] font-bold" style={{ color: "#5c574e" }}>ההערכה שלי לחודש:</span>
+          <input
+            type="number" value={monthly} min={0} max={6000} step={100}
+            onChange={e => onMonthly(Math.max(0, Number(e.target.value)))}
+            className="w-24 px-2 py-1.5 rounded-lg text-[14px] font-bold"
+            style={{ border: `1px solid ${BORDER}`, direction: "ltr" }}
+          />
+          <span className="text-[13px]" style={{ color: "#8a8377" }}>₪</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * "החודש שלי כסטודנט" (נתי 25.8) — תזרים גס מהמספרים שהוא עצמו בחר:
+ * שכ"ל אחרי מלגות חלקי 10 חודשים + הערכת המגורים שלו + הערכת מחיה שלו.
+ * חשבון במקום הרגעה — והמטרה המוצהרת: להגיע לפגישה עם השאלות הנכונות.
+ */
+function MonthSim({ gap, track, housing }: { gap: number; track: string; housing: number | null }) {
+  const [living, setLiving] = useState<number>(0);
+  const [income, setIncome] = useState<number>(0);
+  useEffect(() => {
+    try {
+      setLiving(Number(localStorage.getItem("plan-living-monthly") ?? 0));
+      setIncome(Number(localStorage.getItem("plan-income-monthly") ?? 0));
+    } catch { /* ignore */ }
+  }, []);
+  const save = (k: string, v: number, set: (n: number) => void) => {
+    set(v);
+    try { localStorage.setItem(k, String(v)); } catch { /* ignore */ }
+  };
+  if (track === "bootcamp") return null;
+  const tuitionMonthly = Math.round(gap / 10);
+  const out = tuitionMonthly + (housing ?? 0) + living;
+  const net = income - out;
+  const Chips = ({ value, onPick, opts }: { value: number; onPick: (v: number) => void; opts: [string, number][] }) => (
+    <div className="flex flex-wrap gap-1.5">
+      {opts.map(([l, v]) => (
+        <button key={l} onClick={() => onPick(v)} className="px-2.5 py-1.5 rounded-full text-[12px] font-bold"
+          style={{ background: value === v ? NAVY : "#fff", color: value === v ? "#fff" : "#5c574e", border: value === v ? "none" : `1px solid ${BORDER}` }}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+  return (
+    <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${BORDER}` }}>
+      <div className="text-[16px] font-extrabold mb-1" style={{ color: NAVY }}>📅 החודש שלי כסטודנט/ית</div>
+      <p className="text-[13px] mb-3" style={{ color: "#8a8377", lineHeight: 1.6 }}>
+        חשבון גס, מההערכות שלך — כדי שתגיע/י לפגישה עם השאלות הנכונות, לא כדי להפחיד.
+      </p>
+      <div className="flex flex-col gap-3">
+        <div>
+          <div className="text-[12.5px] font-bold mb-1.5" style={{ color: "#5c574e" }}>הוצאות מחיה חוץ ממגורים (ההערכה שלך)</div>
+          <Chips value={living} onPick={v => save("plan-living-monthly", v, setLiving)}
+            opts={[["מינימלי · 1,000", 1000], ["בינוני · 2,000", 2000], ["מרווח · 3,000", 3000]]} />
+        </div>
+        <div>
+          <div className="text-[12.5px] font-bold mb-1.5" style={{ color: "#5c574e" }}>הכנסה חודשית צפויה (עבודה בזמן הלימודים)</div>
+          <Chips value={income} onPick={v => save("plan-income-monthly", v, setIncome)}
+            opts={[["בלי עבודה · 0", 0], ["חלקי · 3,000", 3000], ["משרת סטודנט · 6,000", 6000]]} />
+          <div className="text-[11.5px] mt-1.5" style={{ color: "#8a8377" }}>משרת סטודנט נפתחת בדרך כלל מסוף שנה א׳ — בשנה הראשונה כדאי לחשב בלעדיה.</div>
+        </div>
+        <div style={{ height: 1, background: BORDER }} />
+        <Row label="שכר לימוד אחרי המלגות שבחרת (÷10 חודשים)" value={`${tuitionMonthly.toLocaleString("he-IL")} ₪`} />
+        {(housing ?? 0) > 0 && <Row label="מגורים (ההערכה שלך)" value={`${(housing ?? 0).toLocaleString("he-IL")} ₪`} />}
+        {living > 0 && <Row label="מחיה (ההערכה שלך)" value={`${living.toLocaleString("he-IL")} ₪`} />}
+        {income > 0 && <Row label="הכנסה" value={`− ${income.toLocaleString("he-IL")} ₪`} tone={GREEN} />}
+        <Row label={net < 0 ? "הפער החודשי לכסות" : "נשאר ביד"} value={`${Math.abs(net).toLocaleString("he-IL")} ₪`} bold tone={net < 0 ? "#b91c1c" : GREEN} />
+        <div className="text-[12.5px] p-2.5 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.65 }}>
+          פער זה לא סוף הדרך — זו רשימת השאלות לפגישה: אילו מלגות קיום קיימות,
+          מה מותר לממן מהפיקדון האישי, ואיזו עבודה מסתדרת עם המערכת. הרכזת עוברת על זה כל יום.
+        </div>
       </div>
     </div>
   );
@@ -854,6 +1331,62 @@ function Row({ label, value, tone, bold }: { label: string; value: string; tone?
 
 // ─── 3 — ארון המסמכים ─────────────────────────────────────────────────────────
 
+/**
+ * העלאת אישור הלימודים — החריג היחיד ל"הארון לא שומר קבצים" (נתי 20.8):
+ * זו האסמכתא שמשרד העבודה, שמממן את התוכנית, דורש. מסמך אחד, תיקייה
+ * אישית, וכפתור צפייה קבוע כדי שיהיה קל לחזור אליו.
+ */
+function EnrollmentUpload() {
+  const [state, setState] = useState<"none" | "uploading" | "done" | "error">("none");
+
+  useEffect(() => {
+    try { if (localStorage.getItem("enrollment-doc-path")) setState("done"); } catch { /* ignore */ }
+  }, []);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setState("uploading");
+    const path = await uploadEnrollmentDoc(file);
+    setState(path ? "done" : "error");
+  }
+
+  async function view() {
+    const url = await enrollmentDocUrl();
+    if (url) window.open(url, "_blank");
+  }
+
+  return (
+    <div className="p-[18px] rounded-[18px]" style={{ background: state === "done" ? "#eef8f3" : "#fff", border: state === "done" ? "1px solid #cfe9dd" : `1px solid ${BORDER}` }}>
+      <div className="text-[16px] font-extrabold mb-1" style={{ color: state === "done" ? "#08694c" : NAVY }}>
+        {state === "done" ? "✓ אישור הלימודים שלך שמור" : "אישור לימודים / הרשמה"}
+      </div>
+      <p className="text-[13.5px] mb-3" style={{ color: "#5c574e", lineHeight: 1.6 }}>
+        {state === "done"
+          ? "אפשר לפתוח אותו מכאן בכל רגע — או להחליף בגרסה עדכנית."
+          : "זה המסמך היחיד שכן מעלים לכאן: משרד העבודה, שמלווה את התוכנית, צריך את האסמכתא. צילום או PDF."}
+      </p>
+      <div className="flex gap-2">
+        {state === "done" && (
+          <button onClick={view} className="flex-1 py-3 rounded-xl text-[14px] font-bold text-white" style={{ background: GREEN }}>
+            לפתוח את האישור
+          </button>
+        )}
+        <label className="flex-1 py-3 rounded-xl text-[14px] font-bold text-center cursor-pointer"
+          style={{ background: state === "done" ? "rgba(0,0,0,0.05)" : ORANGE, color: state === "done" ? "#5c574e" : "#fff" }}>
+          {state === "uploading" ? "מעלה…" : state === "done" ? "החלפה" : "העלאת האישור"}
+          <input type="file" accept="image/*,.pdf" onChange={onFile} className="hidden" />
+        </label>
+      </div>
+      {state === "error" && (
+        <div className="text-[12px] mt-2 font-bold" style={{ color: "#b91c1c" }}>
+          ההעלאה נכשלה — ייתכן שהאחסון עוד לא הופעל (SQL אצל נתי). המסמך לא אבד לך.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DocsView({
   docs, onOpenSheet, onRemove,
 }: {
@@ -866,9 +1399,12 @@ function DocsView({
       <div className="px-1">
         <h1 className="text-[22px] font-extrabold" style={{ color: NAVY }}>ארון המסמכים</h1>
         <p className="text-[15px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>
-          כאן אתה מסמן אילו מסמכים כבר יש לך ואיפה הם שמורים.
+          כלי עזר, לא מבחן: רוב המלגות מבקשות את אותם מסמכים, ומי שמסמן כאן
+          מה כבר יש לו — לא מחפש הכל בלחץ ברגע האחרון. שום דבר כאן לא חוסם אותך.
         </p>
       </div>
+
+      <EnrollmentUpload />
 
       {docs.length === 0 ? (
         <>
@@ -1073,6 +1609,35 @@ function CoordView({
   const [excluded, setExcluded] = useState<string[]>([]);
   const lines = useMemo(() => {
     const out: { id: string; text: string }[] = [];
+    /*
+     * השורה הראשונה שהרכזת צריכה: מצב ההרשמה עצמה — משימת העוגן.
+     * וגם המלגות שנבחרו בחשבון והתנגשויות פתוחות — זה בדיוק מה שרכזת מכריעה.
+     */
+    try {
+      const main = localStorage.getItem("plan-inst-main");
+      if (main) {
+        const short = main.split(" — ")[0];
+        const reg = tasks.find(t => t.area === "registration" && t.title.includes(short));
+        out.push({
+          id: "inst",
+          text: reg?.status === "done"
+            ? `✓ ההרשמה ל${short} — בוצעה`
+            : `☐ ההרשמה ל${short} — עוד לא בוצעה (זו המשימה המרכזית שלי)`,
+        });
+      }
+      const picked: string[] = JSON.parse(localStorage.getItem("plan-picked") ?? "[]");
+      if (picked.length) {
+        const names = picked.map(id => SCHOLARSHIPS.find(x => x.id === id)?.name.split(" — ")[0] ?? id);
+        out.push({ id: "picked", text: `המלגות שבחרתי בחשבון: ${names.join(" · ")}` });
+        for (const e of EXCLUSIONS) {
+          if (picked.includes(e.a) && picked.includes(e.b)) {
+            const an = SCHOLARSHIPS.find(x => x.id === e.a)?.name.split(" — ")[0] ?? e.a;
+            const bn = SCHOLARSHIPS.find(x => x.id === e.b)?.name.split(" — ")[0] ?? e.b;
+            out.push({ id: `x-${e.a}-${e.b}`, text: `צריך הכרעה: ${an} מול ${bn} — הן לא עובדות יחד` });
+          }
+        }
+      }
+    } catch { /* ignore */ }
     done.forEach(t => out.push({ id: t.id, text: `✓ ${t.title}` }));
     Object.entries(apps).forEach(([id, s]) => {
       const name = SCHOLARSHIPS.find(x => x.id === id)?.name ?? id;
@@ -1089,7 +1654,20 @@ function CoordView({
 
   const included = lines.filter(l => !excluded.includes(l.id));
   const message = `עדכון מהאפליקציה:\n\n${included.map(l => l.text).join("\n")}`;
-  const waLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
+  /*
+   * ישירות לרכזת — המספר נמשך מסגל הרכזות לפי השיוך של המועמד במסד
+   * (coordinator_id, מיגרציה 003). בלי שיוך — הרכזת הפעילה הראשונה.
+   */
+  const [coordPhone, setCoordPhone] = useState(coordinatorProfileFor().phone);
+  useEffect(() => {
+    // המספר האמיתי מגיע מטבלת הרכזות ב-DB, לפי השיוך של המועמד
+    myCoordinator()
+      .then(c => { if (c?.phone) setCoordPhone(c.phone); })
+      .catch(() => { /* ignore */ });
+  }, []);
+  const waLink = coordPhone
+    ? `https://wa.me/${coordPhone}?text=${encodeURIComponent(message)}`
+    : `https://wa.me/?text=${encodeURIComponent(message)}`;
 
   return (
     <div className="pt-4 px-4 pb-6 flex flex-col gap-4">

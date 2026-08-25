@@ -2,21 +2,31 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
-import { visibleByTrack, INSTITUTIONS } from "@/data/institutions";
+import { visibleByTrack, visibleFor, INSTITUTIONS } from "@/data/institutions";
 import { track as trackEvent } from "@vercel/analytics";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import AllPaths from "@/components/ui/AllPaths";
 import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
-import { savePathsAnswers, logEvent } from "@/lib/candidate";
+import { savePathsAnswers, saveChosenDomains, logEvent } from "@/lib/candidate";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
-import GeoView from "@/components/ui/GeoView";
+import dynamic from "next/dynamic";
+import InstitutionCard from "@/components/ui/InstitutionCard";
+const DegreeMap = dynamic(() => import("@/components/ui/DegreeMap"), {
+  ssr: false,
+  loading: () => <div style={{ height: 260, borderRadius: 12, background: "rgba(2,62,138,0.04)" }} />,
+});
+const PinMap = dynamic(() => import("@/components/ui/PinMap"), {
+  ssr: false,
+  loading: () => <div style={{ height: 420, borderRadius: 16, background: "rgba(2,62,138,0.04)" }} />,
+});
 import { regionsForAnswer } from "@/data/regions";
 
 /** שם התת-שלב שמוצג בפס ההתקדמות */
 const PHASE_LABEL: Record<string, string> = {
+  domain: "בוחרים כיוון",
   intro: "מבינים מה עומד על הפרק",
   quiz: "עונים על 6 שאלות",
   result: "המסלול שמתאים לך",
@@ -32,7 +42,7 @@ const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 
-type Phase = "intro" | "quiz" | "result" | "routes" | "blockers" | "institutions" | "prep" | "research" | "done";
+type Phase = "domain" | "intro" | "quiz" | "result" | "routes" | "blockers" | "institutions" | "prep" | "research" | "done";
 
 /** תשובות מהחקר העצמי מול המוסדות */
 type Answer = "yes" | "no" | "unknown";
@@ -195,7 +205,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
     cost: "מ-980 ₪ ועד כ-6,000 — וחלק חינם",
     entry: "מבחן מיון וראיון. בחלק מהמסלולים אפשר בלי בגרות מלאה",
     pros: [
-      "טק-קריירה: כ-4,000 ₪ בלבד, עם מלגת קיום ומגורים — ו-88–90 אחוזי השמה, בוגרים בצ׳ק פוינט, Wix, אינטל ובזק",
+      "טק-קריירה: עלות סמלית שנגבית מהפיקדון, עם מלגת קיום ומגורים — ו-88 אחוזי השמה, בוגרים בצ׳ק פוינט, Wix, אינטל ובזק",
       "נכנסים לשוק תוך פחות משנה ומתחילים להרוויח, במקום לחכות שלוש שנים",
       "ברשתות, בתשתיות ובסייבר ההסמכות המקצועיות — CCNA, AWS — שוקלות אצל מעסיקים לא פחות מתעודה. וזה בדיוק מה שקורס טוב נותן",
       "שוברי הכשרה מקצועית: יוצאי אתיופיה בקבוצת הזכאות הגבוהה ביותר — סבסוד של עד 90 אחוז",
@@ -212,7 +222,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
     emoji: "🏫",
     label: "מה\"ט / הנדסאי",
     duration: "2–3 שנים, לרוב בערב",
-    cost: "כ-9,300–11,100 ₪ לשנה",
+    cost: "כ-9,300–11,100 ₪ לשנה (יסוד + נלווים, לפי המאומת אצלנו)",
     entry: "בגרות מלאה עם מתמטיקה — כמעט מה שתואר דורש",
     pros: [
       "אם שירתת — האגף לחיילים משוחררים מממן 90 אחוז משכר הלימוד בלימודי הנדסאי במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים. זו ההטבה הגדולה ביותר במסלול הזה",
@@ -233,7 +243,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
     emoji: "🎓",
     label: "תואר אקדמי",
     duration: "3–4 שנים · משרת סטודנט משנה ב׳",
-    cost: "12,017 ₪ לשנה — מחיר מפוקח",
+    cost: "12,203 ₪ לשנה — מחיר מפוקח (תשפ״ז)",
     entry: "בגרות + פסיכומטרי — בחלק מהמכללות יש קבלה ללא פסיכומטרי",
     pros: [
       "משרת סטודנט נפתחת כבר בסוף שנה א׳ — לא צריך לחכות לסיום התואר כדי להתחיל להרוויח ולצבור ניסיון",
@@ -259,6 +269,51 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
  * equal pillar.
  */
 const TRACK_ORDER: Track[] = ["degree", "bootcamp", "mahat"];
+
+/**
+ * מסך התוצאה (1a — "רשת שוויונית עם כתר", handoff 24.8): שלושה כרטיסים
+ * שווי-גודל, ההמלצה מסומנת בכתר במקומה הקבוע. התוכן verbatim מה-handoff
+ * המאושר, למעט מחיר מה"ט שתוקן למאומת (9,300–11,100 — בעיצוב היה מספר
+ * שלא נמצא לו מקור). בדיוק שלוש שורות השוואה — לא להוסיף.
+ */
+const RESULT_CARD: Record<Track, {
+  emoji: string; label: string; tagA: string; tagB: string;
+  income: string; cost: string; entry: string;
+  plus: string; minus: string; fit: string;
+  mini: { income: string; cost: string; entry: string };
+}> = {
+  degree: {
+    emoji: "🎓", label: "תואר אקדמי", tagA: "3–4 שנים", tagB: "משרה מלאה",
+    income: "משרת סטודנט מסוף שנה א׳",
+    cost: "12,203 ₪ (מפוקח) — ורוב המלגות בנויות סביבו",
+    entry: "בגרות מלאה; יש מסלולים בלי פסיכומטרי",
+    plus: "מעלה משמעותית את הסיכוי להיכנס להייטק עצמו — לחברות הטכנולוגיה, ולא רק לתפקידים טכנולוגיים בבנקים וארגונים אחרים",
+    minus: "שלוש שנים בלי משכורת מלאה — אבל משרת סטודנט ומלגות סוגרות חלק גדול",
+    fit: "מתאים למי שיכול להשקיע עכשיו — זו ההשקעה שמחזירה הכי הרבה לאורך זמן",
+    mini: { income: "משרת סטודנט מסוף שנה א׳", cost: "12,203 ₪", entry: "בגרות מלאה" },
+  },
+  bootcamp: {
+    emoji: "💻", label: "הכשרה טכנולוגית", tagA: "6–12 חודשים", tagB: "אינטנסיבי קצר",
+    income: "ג'וניור מיד בסיום, והתחרות על המשרה הראשונה אמיתית",
+    cost: "980–6,000 ₪ במסלולים שאנחנו מציגים",
+    entry: "ברוב המסלולים בלי דרישות קדם",
+    plus: "הדרך הקצרה ביותר למשרה ראשונה בהייטק",
+    minus: "התחרות על המשרה הראשונה אמיתית — אבל ליווי השמה ותיק עבודות טוב מקטינים את הפער",
+    fit: "מתאים למי שחייב להגיע מהר לשוק עכשיו — ותואר יכול לחכות ולהגיע אחר כך",
+    mini: { income: "ג'וניור מיד בסיום", cost: "980–6,000 ₪", entry: "בלי דרישות קדם" },
+  },
+  mahat: {
+    emoji: "⚙️", label: "הנדסאי (מה\"ט)", tagA: "2–3 שנים", tagB: "משלב עבודה — ערב",
+    income: "עבודה במקביל ללימודי ערב",
+    cost: "כ-9,300–11,100 ₪, ולחיילים משוחררים האגף מממן 90%",
+    entry: "בגרות חלקית מספיקה, בלי פסיכומטרי",
+    plus: "ממשיכים לעבוד ולהתפרנס לאורך כל הלימודים",
+    minus: "מוכר פחות מתואר אקדמי אצל חלק מהמעסיקים — אבל אפשר להשלים ממנו לתואר בהמשך",
+    // המסגור הקבוע של מה"ט (11.8) חי כאן: קריירה ביטחונית/ממשלתית/חומרה
+    fit: "מתאים למי שמכוון לקריירה ביטחונית, ממשלתית או לחומרה — וחייב הכנסה שוטפת בקצב יציב",
+    mini: { income: "עבודה במקביל ללימודים", cost: "9,300–11,100 ₪", entry: "בגרות חלקית" },
+  },
+};
 
 // ─── Deadlines ────────────────────────────────────────────────────────────────
 // ⚠️ תחזוקה שנתית: התאריכים חוזרים כל שנה אך משתנים מדי פעם. לאמת לפני כל שנת לימודים.
@@ -318,7 +373,7 @@ function isUrgent(a: AnnualDate): boolean {
 // ─── Blockers ─────────────────────────────────────────────────────────────────
 // כל חסם שהמשתמש הודה בו מקבל כאן פתרון קונקרטי עם שם ותאריך — לא רשימה גנרית.
 
-type Solution = { name: string; detail: string; link?: string; date?: AnnualDate };
+type Solution = { name: string; detail: string; link?: string; date?: AnnualDate; group?: string };
 type Blocker = {
   id: string;
   applies: (q: QuizAnswers) => boolean;
@@ -336,6 +391,8 @@ const BLOCKERS: Blocker[] = [
     heading: "זה חוסם את התואר היום — ולא לתמיד",
     lead: "מכינה קדם-אקדמית היא שנה אחת שסוגרת בדיוק את הפער, ולרוב היא מסובסדת מאוד או חינמית. בחלק מהמקומות היא גם מחליפה את הפסיכומטרי.",
     solutions: [
+      { name: "מכינה קדם-אקדמית במימון מלא — האגף לחיילים משוחררים", detail: "שכר לימוד מלא + דמי קיום למכינה שסוגרת את פער הבגרות — לא יורד מהפיקדון, ויוצאי אתיופיה באוכלוסיות המועדפות. תנאי: 80 אחוז נוכחות. ואם הזכאות נגמרת באמצע — ממשיכים לממן עד סוף המכינה.", link: "https://www.hachvana.mod.gov.il/MainEducation/TwelveYearsStudies/Pages/PreAcademic.aspx" },
+      { name: "מכינת בראודה — כמעט חינם, ופטור מפסיכומטרי ב-85+", detail: "כל הרשמה היא גם בקשת מלגה (משרד החינוך + הקרן), ובוגרים בממוצע 85+ מתקבלים לתואר הנדסי בלי פסיכומטרי. יש גם מסלול מואץ של 4.5 חודשים.", link: "https://w3.braude.ac.il/department/mechina/" },
       { name: "מלגת פריפריה — האגף לחיילים משוחררים (ייעוד 44)", detail: "שכר לימוד מלא לשנה א׳ למשוחררים שלומדים באזור עדיפות לאומית, בלי שום שעות התנדבות. שימו לב: לא נרשמים — המוסד מדווח עליכם, ואתם רק חותמים על כתב התחייבות באזור האישי. בלי החתימה לא משולם כלום.", link: "https://www.hachvana.mod.gov.il/MainEducation/HachvanaScholarship/Pages/Perypheria44.aspx", date: { m: 8, d: 15, label: "החתימה נסגרת" } },
       { name: "עתידים לתעשייה והייטק", detail: "המעטפת הגדולה ביותר שמצאנו — כ-77,000 ₪ לאורך התואר: שכר לימוד מדורג, מלגת קיום חודשית ומחשב. להנדסה, מדעי המחשב ופיזיקה בממוצע 75 ומעלה, עם עדיפות מפורשת לבני הקהילה ולפריפריה. רק כ-150 מתקבלים.", link: "https://www.atidimtaasya.com/", date: { m: 8, d: 31, label: "ההגשה נסגרת" } },
       { name: "מושל (Moshal)", detail: "שכר לימוד מלא ועוד דמי קיום של 58,500 עד 78,000 ₪ לכל התואר, עם ליווי קריירה ואנגלית עסקית. לדור ראשון להשכלה גבוהה בשנה א׳. הקריטריון כלכלי ולא עדתי — ומאשרת במפורש הגשה במקביל לכל מלגה אחרת.", link: "https://moshalprogram.org.il/candidates/", date: { m: 9, d: 10, label: "ההגשה נסגרת" } },
@@ -344,7 +401,7 @@ const BLOCKERS: Blocker[] = [
       { name: "מלגת פריפריה לבוגרי מכינה (ייעוד 46)", detail: "עד 50% שכר לימוד לשלוש שנות התואר, לבוגרי מכינה קדם-אקדמית ממומנת שמתגוררים באזור עדיפות. אפשר לקבל רק מלגת פריפריה אחת — או 44 או 46.", link: "https://www.hachvana.mod.gov.il/MainEducation/HachvanaScholarship/Pages/Perypheria46.aspx", date: { m: 8, d: 3, label: "ההגשה נפתחה", closeM: 10, closeD: 31 } },
       { name: "קרן גרוס", detail: "עד 10,000 ₪ בשנה למשוחררים עד חמש שנים, ויוצאי אתיופיה מצוינים אצלה כאוכלוסיית יעד. שימו לב: היא לא מתאפשרת יחד עם מלגה אחרת מעל 5,000 ₪ — זו בחירה, לא תוספת.", link: "https://www.gruss.org.il/blank", date: { m: 9, d: 15, label: "ההגשה נפתחת", closeM: 12, closeD: 15 } },
       { name: "קרן חנן עינור", detail: "2,000 עד 7,000 ₪ ליוצאי אתיופיה, בלי התנדבות. חשוב במיוחד: היא מכסה גם לימודי הנדסאי ולימודי תעודה, ולא רק תואר.", date: { m: 11, d: 1, label: "חלון ההגשה נפתח", closeM: 11, closeD: 22 } },
-      { name: "האגף לחיילים משוחררים — מסלול הנדסאים", detail: "90% משכר הלימוד ללימודי הנדסאי וטכנאי, כולל מכינה. נרשמים דרך המכללה לאורך כל השנה, בלי טופס נפרד. שנה ג׳ אינה ממומנת.", },
+      { name: "האגף לחיילים משוחררים — מסלול הנדסאים", detail: "90% משכר הלימוד ללימודי הנדסאי וטכנאי, כולל מכינה. נרשמים דרך המכללה לאורך כל השנה, בלי טופס נפרד. שנה ג׳ אינה ממומנת.", link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx" },
       { name: "הישגים (אלומה)", detail: "לא מלגה אלא ייעוץ וליווי אישיים בחינם — בחירת מוסד, תנאי קבלה, פסיכומטרי ומימון. ערוץ טוב להתחיל בו כשלא ברור מאיפה מתחילים.", link: "https://hesegim.org.il/" },
     ],
   },
@@ -353,13 +410,13 @@ const BLOCKERS: Blocker[] = [
     applies: q => q.budget === "A" || q.budget === "B",
     said: "בלי מלגה זה לא מציאותי עבורי",
     heading: "כמעט אף אחד לא משלם את המחיר המלא",
-    lead: "יש הרבה יותר כסף לתארים מאשר לקורסים. הרבה יותר. וחלק מהמלגות אפשר לצבור יחד — מרום ופר״ח למשל תוכננו במפורש להשתלב. אלה התוכניות שרלוונטיות לך, עם התאריכים.",
+    lead: "יש הרבה יותר כסף לתארים מאשר לקורסים. הרבה יותר. וחלק מהמלגות אפשר לצבור יחד — מרום ופר״ח למשל תוכננו במפורש להשתלב. חילקנו לפי מסלול — כדי שתראה/י ישר את מה שרלוונטי לכיוון שלך.",
     solutions: [
-      { name: "מלגת מרום", detail: "ליוצאי אתיופיה שבארץ 15+ שנים או ילידי הארץ. מדעי המחשב נמצאים בקבוצת העדיפות העליונה שלה. מתשפ״ז בוטלה חובת ההתנדבות — אפשר לצבור אותה יחד עם מלגות אחרות.", link: "https://che.org.il/scholarships/marom/", date: { m: 9, d: 9, label: "ההרשמה נפתחת", closeM: 11, closeD: 10 } },
-      { name: "עתידים לתעשייה והייטק", detail: "מלגת קיום חודשית, מחשב נייד, סיוע בשכר לימוד — והשמה בתעשייה כבר מהסמסטר השלישי. עדיפות לפריפריה ולקהילות מיוצגות-חסר. ההרשמה פתוחה.", link: "https://www.atidimtaasya.com/" },
-      { name: "המינהל לסטודנטים עולים", detail: "למי שבארץ פחות מ-15 שנה: מימון שכר לימוד, שיעורי עזר, חונך אישי ומלגת קיום חודשית. זה המסלול המשלים למרום — לא מקבלים את שניהם.", date: { m: 11, d: 1, label: "מועד לסמסטר א׳" } },
-      { name: "שוברים להכשרה מקצועית", detail: "יוצאי אתיופיה נמצאים בקבוצת הזכאות הגבוהה ביותר — סבסוד של עד 90% מעלות הקורס ועוד מענק השמה. נדרשת הפניה ממרכז הכוון או שירות התעסוקה." },
-      { name: "האגף לחיילים משוחררים", detail: "אם שירתת ואת/ה שוקל/ת מסלול הנדסאי — האגף מממן 90% משכר הלימוד במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים.", link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx" },
+      { group: "לתואר", name: "מלגת מרום", detail: "ליוצאי אתיופיה שבארץ 15+ שנים או ילידי הארץ. מדעי המחשב נמצאים בקבוצת העדיפות העליונה שלה. מתשפ״ז בוטלה חובת ההתנדבות — אפשר לצבור אותה יחד עם מלגות אחרות.", link: "https://che.org.il/scholarships/marom/", date: { m: 9, d: 9, label: "ההרשמה נפתחת", closeM: 11, closeD: 10 } },
+      { group: "לתואר", name: "עתידים לתעשייה והייטק", detail: "מלגת קיום חודשית, מחשב נייד, סיוע בשכר לימוד — והשמה בתעשייה כבר מהסמסטר השלישי. עדיפות לפריפריה ולקהילות מיוצגות-חסר. ההרשמה פתוחה.", link: "https://www.atidimtaasya.com/" },
+      { group: "לתואר", name: "המינהל לסטודנטים עולים", detail: "למי שבארץ פחות מ-15 שנה: מימון שכר לימוד, שיעורי עזר, חונך אישי ומלגת קיום חודשית. זה המסלול המשלים למרום — לא מקבלים את שניהם.", date: { m: 11, d: 1, label: "מועד לסמסטר א׳" } },
+      { group: "להכשרה מקצועית", name: "שוברים להכשרה מקצועית", detail: "יוצאי אתיופיה נמצאים בקבוצת הזכאות הגבוהה ביותר — סבסוד של עד 90% מעלות הקורס ועוד מענק השמה. נדרשת הפניה ממרכז הכוון או שירות התעסוקה.", link: "https://www.gov.il/he/service/vouchers-for-professional-training" },
+      { group: "להנדסאים (מה״ט)", name: "האגף לחיילים משוחררים", detail: "אם שירתת ואת/ה שוקל/ת מסלול הנדסאי — האגף מממן 90% משכר הלימוד במכללות שמה״ט מכיר. עד 5 שנים מהשחרור, ועד 10 שנים לחיילים בודדים ולמשרתי מילואים פעילים.", link: "https://www.hachvana.mod.gov.il/MainEducation/PracticalEngineer/Pages/PracticalEngScholarship.aspx" },
     ],
   },
   {
@@ -397,7 +454,7 @@ const BLOCKERS: Blocker[] = [
       {
         name: "מלגת פריפריה 45 — שנה א׳ במימון מלא",
         detail:
-          "עד 12,017 ₪, כל שכר הלימוד של שנה ראשונה. הזכאות נקבעת לפי **כתובת המגורים שלך** — חמש מתוך שש השנים שלפני תחילת הלימודים באזור עדיפות לאומית, ולא לפי איפה תלמד. **זו שאלה אחת לרכזת: האם היישוב שלך ברשימה.** שים/י לב: אין כפל בין 44, 45 ו-46 — מממשים אחת.",
+          "כל שכר הלימוד של שנה ראשונה (כ-12,200 ₪; בדף האגף עדיין רשומה התקרה הקודמת 12,017). הזכאות נקבעת לפי **כתובת המגורים שלך** — חמש מתוך שש השנים שלפני תחילת הלימודים באזור עדיפות לאומית, ולא לפי איפה תלמד. **זו שאלה אחת לרכזת: האם היישוב שלך ברשימה.** שים/י לב: אין כפל בין 44, 45 ו-46 — מממשים אחת.",
         link: "https://www.hachvana.mod.gov.il/MainEducation/HachvanaScholarship/Pages/Perypheria45.aspx",
         date: { m: 10, d: 31, label: "ההגשה נסגרת" },
       },
@@ -427,10 +484,12 @@ const BLOCKERS: Blocker[] = [
     heading: "יש היום יותר דרכים לעקוף אותו מאי פעם",
     lead: "הפסיכומטרי כבר לא השער היחיד. אלה מסלולים אמיתיים שקיימים היום — רובם לא מוכרים מספיק.",
     solutions: [
-      { name: "סף ייעודי לקהילה", detail: "באוניברסיטת חיפה: פסיכומטרי 400 בתוספת ראיון אישי — הסף הנמוך בארץ. בבן-גוריון, תוכנית סיקט שוקלת ציון של עד 100 נקודות מתחת לסף הרגיל." },
-      { name: "קבלה על בסיס בגרות בלבד", detail: "אפקה, ספיר (ממוצע 95), אשקלון (ממוצע 85) ו-HIT (ממוצע 102) מקבלים בלי פסיכומטרי בכלל." },
+      { name: "סף ייעודי לקהילה", detail: "באוניברסיטת חיפה: פסיכומטרי 400 בתוספת ראיון אישי — הסף הנמוך בארץ. בבן-גוריון, תוכנית סיקט שוקלת ציון של עד 100 נקודות מתחת לסף הרגיל.", link: "https://dekanat.haifa.ac.il/student-services/academic-excellence/students-from-the-ethiopian-community/" },
+      { name: "מכינת חיפה — אפיק מעבר בלי פסיכומטרי בכלל", detail: "בוגרי המכינה האוניברסיטאית בחיפה מתקבלים לתואר לפי ממוצע המכינה — בלי מבחן פסיכומטרי (קמפוס חיפה, לפי ספים לכל חוג). לוחמים פטורים משכר הלימוד של המכינה.", link: "https://mechina.haifa.ac.il/" },
+      { name: "הפסיכומטרי של המדינה — קורס הכנה חינם", detail: "קורס מלא של המדינה בשיתוף מאל״ו (מחברת הבחינה): 3 חודשים, סימולציות אמיתיות, בחינם. מי שבכל זאת ניגש לפסיכומטרי — שלא ישלם אלפי שקלים על קורס.", link: "https://campus.gov.il/course/mse-gov-psychometry-he/" },
+      { name: "קבלה על בסיס בגרות בלבד", detail: "אפקה, ספיר (ממוצע 95), אשקלון (ממוצע 95) ו-HIT (ממוצע 102) מקבלים בלי פסיכומטרי בכלל. שימו לב: בכולם יש תנאי מתמטיקה נלווה." },
       { name: "קרן אור — רייכמן", detail: "מדעי המחשב ללא פסיכומטרי, בלי צורך בציוני בגרות גבוהים, ובמימון כמעט מלא. הקריטריון הוא כלכלי-חברתי.", link: "https://www.runi.ac.il/admissions/undergraduate/scholarships/keren-or" },
-      { name: "ראויים לקידום", detail: "מנגנון העדפה מתקנת שמוסיף עד 60 נקודות לפי אזור מגורים, בית ספר והשכלת ההורים. פועל מול שש האוניברסיטאות. חשוב: הטיפול לוקח כחודשיים — צריך להגיש מוקדם.", link: "https://kidum-edu.org.il/reuim-lekidum/" },
+      { name: "ראויים לקידום", detail: "האגודה קובעת ציון זכאות של עד 60 נקודות לפי אזור מגורים, בית ספר והשכלת ההורים — ומ-30 ומעלה כל אחת משש האוניברסיטאות נותנת הקלה משלה בתנאי הקבלה. הטיפול לוקח כחודשיים — צריך להגיש מוקדם.", link: "https://kidum-edu.org.il/reuim-lekidum/" },
     ],
   },
   {
@@ -479,7 +538,7 @@ const WEIGHTS: Partial<Record<keyof QuizAnswers, Record<string, Partial<Record<T
   // תקציב — חסם רך יותר ממה שהוא נראה: תשתית המלגות לתארים היא הרחבה ביותר
   budget: {
     // "כמעט כלום" היה דוחף להכשרה — וזה הפוך מהמציאות:
-    // שכר הלימוד המפוקח הוא 12,017 ₪, וכל מערך המלגות בנוי סביב התואר
+    // שכר הלימוד המפוקח הוא 12,203 ₪ בתשפ״ז, וכל מערך המלגות בנוי סביב התואר
     A: { degree: 1 },
     B: { degree: 1, mahat: 1 },
     C: { degree: 2 },
@@ -588,6 +647,84 @@ function generateQuestions(q: QuizAnswers, shortlist: ShortlistItem[], track: Tr
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+/** שומר את סדר ההופעה — הסדר בדאטה הוא הסדר למשתמש */
+function groupSolutions(solutions: Solution[]): [string, Solution[]][] {
+  const out: [string, Solution[]][] = [];
+  for (const sol of solutions) {
+    const g = sol.group ?? "";
+    const found = out.find(([k]) => k === g);
+    if (found) found[1].push(sol);
+    else out.push([g, [sol]]);
+  }
+  return out;
+}
+
+/**
+ * אריח פתרון מכווץ — שם ותאריך בלבד, והפירוט נפתח בלחיצה.
+ *
+ * המסך הכיל עד עשרה פתרונות פתוחים ברצף והפך לגלילה אינסופית;
+ * שניים בשורה מקצרים אותו בלי לוותר על מילה מהפירוט.
+ * בונוס מדידה: הפתיחה עצמה היא סיגנל עניין שקודם לא היה קיים.
+ */
+function SolutionTile({ s, blockerId }: { s: Solution; blockerId: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => {
+        if (!open) logEvent("paths_solution_open", { blocker: blockerId, solution: s.name });
+        setOpen(o => !o);
+      }}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(o => !o); } }}
+      className="rounded-xl px-3 py-2.5 cursor-pointer select-none"
+      style={{
+        gridColumn: open ? "1 / -1" : undefined,
+        background: open ? "rgba(251,133,0,0.09)" : "rgba(251,133,0,0.05)",
+        border: "1px solid rgba(251,133,0,0.15)",
+      }}
+    >
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="text-[11.5px] font-black leading-[1.45]" style={{ color: "#92400e" }}>{s.name}</div>
+        <span className="text-[13px] font-black shrink-0" style={{ color: "#92400e", opacity: 0.55 }}>
+          {open ? "סגירה ✕" : "+"}
+        </span>
+      </div>
+      {s.date && (
+        <span
+          className="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+          style={{
+            background: isUrgent(s.date) ? ORANGE : "rgba(0,0,0,0.08)",
+            color: isUrgent(s.date) ? "#fff" : "rgba(0,0,0,0.5)",
+          }}
+        >
+          {whenText(s.date)}
+        </span>
+      )}
+      {open && (
+        <>
+          <div className="text-[11.5px] leading-[1.65] mt-2" style={{ color: "rgba(0,0,0,0.62)" }}>{s.detail}</div>
+          {s.link && (
+            <a
+              href={s.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => {
+                e.stopPropagation();
+                logEvent("paths_solution_click", { blocker: blockerId, solution: s.name });
+              }}
+              className="inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-lg"
+              style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}
+            >
+              לפרטים ↗
+            </a>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function RevealCard({ emoji, title, children }: { emoji: string; title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -617,13 +754,15 @@ export default function PathsPage() {
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [chips, setChips] = useState<string[]>([]);
   const [activeTrack, setActiveTrack] = useState<Track>("bootcamp");
+  /** מסך התוצאה (1a): איזה כרטיס פתוח במצב פירוט ("להכיר את המסלול הזה") */
+  const [detailTrack, setDetailTrack] = useState<Track | null>(null);
   /*
    * במסלול האקדמי הקטלוג המלא מקופל כברירת מחדל: קודם בוחרים תואר, והמוסדות
    * נפתחים בתוך התואר. רשימה שטוחה של כל המוסדות לצד רשימת התארים הייתה שתי
    * רשימות מוערמות בלי קשר ביניהן — וזה מה שהיה כאן קודם.
    */
   const [showAllInst, setShowAllInst] = useState(false);
-  const [geoView, setGeoView] = useState(false);
+  const [view2, setView2] = useState<"list" | "map">("list");
   const [quizStarted, setQuizStarted] = useState(false);
   const [research, setResearch] = useState<Record<string, ResearchEntry>>({});
   const [meetingBooked, setMeetingBooked] = useState(false);
@@ -631,6 +770,15 @@ export default function PathsPage() {
   const [domainInterest, setDomainInterest] = useState<Partial<Record<Domain, number>>>({});
   const [domainChoice, setDomainChoice] = useState<"one" | "two" | "open" | null>(null);
   const [chosenDomain, setChosenDomain] = useState<Domain | null>(null);
+  // הבחירה המפורשת מהשער — עד שניים. מקור האמת החדש; השדות הוותיקים נשמרים כגישור
+  const [pickedDomains, setPickedDomains] = useState<Domain[]>([]);
+  /*
+   * מצב הכנה — לפני שפגישה 2 התקיימה (נתי 20.8): השאלון והיכרות עם שלוש
+   * הדרכים פתוחים, כי אילוצי חיים ואוריינות מסלולים לא תלויים בתחום.
+   * בחירת התחום, המוסדות והחסמים נעולים — זו העבודה של הפגישה עם הרכזת.
+   * "התקיימה" נגזרת מהמועד שנשמר בקביעה, לא מלחיצת כפתור.
+   */
+  const [prepMode, setPrepMode] = useState(false);
   /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
   const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
   /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
@@ -653,7 +801,7 @@ export default function PathsPage() {
 
       // ?reset=1 — מנקה את ההתקדמות ומתחיל מאפס. שימושי לבדיקות.
       if (params.has("reset")) {
-        ["paths-quiz", "paths-shortlist", "paths-phase", "paths-journey", "paths-research"].forEach(k => localStorage.removeItem(k));
+        ["paths-quiz", "paths-shortlist", "paths-phase", "paths-journey", "paths-research", "paths-domains", "paths-domain", "paths-domain-choice"].forEach(k => localStorage.removeItem(k));
         window.history.replaceState({}, "", "/paths");
         return;
       }
@@ -697,7 +845,12 @@ export default function PathsPage() {
       if (savedS) setShortlist(JSON.parse(savedS));
       const savedR = localStorage.getItem("paths-research");
       if (savedR) setResearch(JSON.parse(savedR));
-      setMeetingBooked(localStorage.getItem("meeting-booked") === "true");
+      /*
+       * דווקא המפתח הספציפי של פגישה 3. הדגל הכללי meeting-booked נדלק
+       * בכל קביעה שהיא — וגרם למסך הסיום להכריז שפגישה 3 קבועה
+       * למי שקבע רק את פגישה 1 (הבאג שישראל תפס, 20.8).
+       */
+      setMeetingBooked(localStorage.getItem("meeting-3-booked") === "true");
 
       // ציוני העניין משלב 3 — מה שכלי עיבוד החוויה שמר לכל תחום
       const interest: Partial<Record<Domain, number>> = {};
@@ -715,10 +868,56 @@ export default function PathsPage() {
       if (savedChoice === "one" || savedChoice === "two" || savedChoice === "open") setDomainChoice(savedChoice);
       const savedDomain = localStorage.getItem("paths-domain") as Domain | null;
       if (savedDomain) setChosenDomain(savedDomain);
+      let picked: Domain[] = [];
+      try { picked = JSON.parse(localStorage.getItem("paths-domains") ?? "[]"); } catch { }
+      if (picked.length) setPickedDomains(picked);
       const savedPhase = localStorage.getItem("paths-phase") as Phase | null;
       if (savedPhase) setPhase(savedPhase);
+      /*
+       * פגישה 2 "התקיימה" = שעה אחרי המועד שנשמר בקביעה. מי שכבר בחר תחומים
+       * נשאר פתוח גם בלי מועד (לא נועלים אחורה), ודמו עוקף את הנעילה.
+       */
+      let m2Done = picked.length > 0 || !!savedChoice;
+      try {
+        const at = localStorage.getItem("meeting-2-at");
+        if (at && Date.now() > new Date(at).getTime() + 60 * 60 * 1000) m2Done = true;
+      } catch { }
+      if (params.has("demo")) m2Done = true;
+      setPrepMode(!m2Done);
+
+      /*
+       * השער: מי שטרם בחר כיוון מתחיל בבחירה. זו החלטה מכוונת (נתי, 20.8) —
+       * בחירת התחום היא שער משמעותי ולא העשרה. אין בו "עוד לא סגור":
+       * מי שעוצר מולו נמדד (paths_domain_gate בלי domain_committed) ומגיע לרכזת.
+       * ובמצב הכנה השער לא מוצג בכלל — בחירת התחום שייכת לפגישה.
+       */
+      if (m2Done && !picked.length && !savedChoice && (!savedPhase || savedPhase === "intro")) setPhase("domain");
     } catch { /* ignore */ }
   }, []);
+
+  // מדידת השער: הגעה בלי בחירה היא הסיגנל שמחליף את האופציה שהוסרה
+  useEffect(() => {
+    if (phase === "domain") {
+      trackEvent("paths_domain_gate");
+      logEvent("paths_domain_gate", {});
+    }
+  }, [phase]);
+
+  function commitDomains(list: Domain[]) {
+    if (!list.length) return;
+    setPickedDomains(list);
+    localStorage.setItem("paths-domains", JSON.stringify(list));
+    // גישור לשדות הוותיקים שכל שאר המסכים נשענים עליהם
+    const legacy = list.length === 1 ? "one" : "two";
+    setDomainChoice(legacy);
+    localStorage.setItem("paths-domain-choice", legacy);
+    setChosenDomain(list[0]);
+    localStorage.setItem("paths-domain", list[0]);
+    saveChosenDomains(list);
+    trackEvent("domain_committed", { domains: list.join(",") });
+    logEvent("domain_committed", { domains: list.join(",") });
+    goToPhase("intro");
+  }
 
   const recommended = recommendTrack(answers);
   const reason = buildReason(answers, recommended);
@@ -803,7 +1002,7 @@ export default function PathsPage() {
     }
   }
 
-  const PHASE_ORDER: Phase[] = ["intro", "quiz", "result", "routes", "blockers", "institutions", "prep", "research", "done"];
+  const PHASE_ORDER: Phase[] = ["domain", "intro", "quiz", "result", "routes", "blockers", "institutions", "prep", "research", "done"];
   const phaseIndex = PHASE_ORDER.indexOf(phase);
 
   /**
@@ -813,6 +1012,9 @@ export default function PathsPage() {
    * תחושת המסוגלות נמוכה באופן שיטתי ולא מוצדק.
    */
   const topDomains: { id: Domain; interest: number }[] = (() => {
+    if (pickedDomains.length) {
+      return pickedDomains.map(d => ({ id: d, interest: domainInterest[d] ?? 0 }));
+    }
     if (domainChoice === "one" && chosenDomain) {
       return [{ id: chosenDomain, interest: domainInterest[chosenDomain] ?? 0 }];
     }
@@ -827,9 +1029,11 @@ export default function PathsPage() {
   const shown = topDomains.find(d => d.id === activeDomain) ?? topDomains[0] ?? null;
 
   /** התחומים שמנחים את שכבת ההצעות: הנבחר אם יש, אחרת המובילים מהחקר */
-  const chosenDomains: Domain[] = chosenDomain
-    ? [chosenDomain]
-    : topDomains.slice(0, 3).map(d => d.id);
+  const chosenDomains: Domain[] = pickedDomains.length
+    ? pickedDomains
+    : chosenDomain
+      ? [chosenDomain]
+      : topDomains.slice(0, 3).map(d => d.id);
 
   const Header = (
     <div className="text-white px-[22px] pt-[26px] pb-[30px] shrink-0" style={{ background: NAVY }}>
@@ -840,6 +1044,119 @@ export default function PathsPage() {
       </div>
     </div>
   );
+
+  // ── Prep lock — לפני פגישה 2 החלקים תלויי-התחום נעולים ─────────────────
+  if (prepMode && ["domain", "blockers", "institutions", "prep", "research"].includes(phase)) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <JourneyStrip current={4} phaseLabel="הכנה לפגישה" phaseIndex={0} phaseTotal={7} />
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-8 pb-32">
+          <div className="text-[34px] mb-3">🔒</div>
+          <div className="text-[20px] leading-[1.4] mb-2" style={{ ...HEEBO, color: NAVY }}>
+            החלק הזה נפתח אחרי הפגישה
+          </div>
+          <div className="text-[13px] leading-[1.85] mb-6" style={{ color: "rgba(0,0,0,0.58)" }}>
+            את התחום בוחרים <b>יחד עם הרכזת</b> בפגישה — ומשם נפתחים המוסדות,
+            החסמים וההכנה לפגישה השלישית.
+            <br />
+            מה שכן פתוח כבר עכשיו: השאלון והיכרות עם שלוש הדרכים — ככה מגיעים
+            לפגישה עם תמונה מלאה.
+          </div>
+          <button
+            onClick={() => goToPhase("intro")}
+            className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+            style={{ background: ORANGE, ...HEEBO }}
+          >
+            להכנה — השאלון ושלוש הדרכים ←
+          </button>
+          <Link
+            href="/explore"
+            className="block text-center w-full mt-3 text-[12px] font-bold"
+            style={{ color: "rgba(0,0,0,0.4)" }}
+          >
+            רוצה לטעום עוד תחום לפני הפגישה? ←
+          </Link>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // ── Domain gate — שער בחירת הכיוון (נתי 20.8: שער מפורש, בלי מילוט) ──────
+  if (phase === "domain") {
+    const tasted = (Object.keys(DOMAIN_LABEL) as Domain[])
+      .filter(d => domainInterest[d] !== undefined)
+      .sort((a, b) => (domainInterest[b] ?? 0) - (domainInterest[a] ?? 0));
+    const untasted = (Object.keys(DOMAIN_LABEL) as Domain[]).filter(d => !tasted.includes(d));
+    const allDomains = [...tasted, ...untasted];
+    const toggle = (d: Domain) =>
+      setPickedDomains(prev =>
+        prev.includes(d) ? prev.filter(x => x !== d) : prev.length >= 2 ? prev : [...prev, d]);
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <JourneyStrip current={4} phaseLabel={PHASE_LABEL.domain} phaseIndex={0} phaseTotal={8} />
+        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-7 pb-32">
+          <div className="text-[22px] leading-[1.35] mb-2" style={{ ...HEEBO, color: NAVY }}>
+            חקר התחומים מאחוריך — מכאן מתחילים לבנות את הדרך
+          </div>
+          <div className="text-[13px] leading-[1.8] mb-6" style={{ color: "rgba(0,0,0,0.58)" }}>
+            לאיזה תחום נחפש לך מסלול לימודים? <b>אפשר לבחור עד שניים.</b>
+          </div>
+
+          <div className="flex flex-col gap-2.5 mb-6">
+            {allDomains.map(d => {
+              const on = pickedDomains.includes(d);
+              const seen = domainInterest[d] !== undefined;
+              return (
+                <button
+                  key={d}
+                  onClick={() => toggle(d)}
+                  className="w-full rounded-xl px-4 py-3.5 text-right transition-all"
+                  style={{
+                    background: on ? "rgba(2,62,138,0.07)" : "#fff",
+                    border: on ? `2px solid ${NAVY}` : "1px solid rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[14px] font-black" style={{ color: on ? NAVY : "rgba(0,0,0,0.7)" }}>
+                      {DOMAIN_LABEL[d]}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {seen && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                          style={{ background: `${ORANGE}15`, color: "#92400e" }}>
+                          טעמת ✓
+                        </span>
+                      )}
+                      <span
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[11px] font-black shrink-0"
+                        style={{ background: on ? NAVY : "rgba(0,0,0,0.12)" }}
+                      >{on ? "✓" : ""}</span>
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => commitDomains(pickedDomains)}
+            disabled={pickedDomains.length === 0}
+            className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+            style={{ background: pickedDomains.length ? ORANGE : "rgba(0,0,0,0.15)", ...HEEBO }}
+          >
+            נבנה את הדרך ←
+          </button>
+          <div className="text-[11px] text-center mt-3" style={{ color: "rgba(0,0,0,0.4)" }}>
+            הבחירה מלווה אותך בהמשך השלב — ואפשר לחזור ולשנות אותה
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   // ── Intro ──────────────────────────────────────────────────────────────────
   if (phase === "intro") {
@@ -855,6 +1172,16 @@ export default function PathsPage() {
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.intro} phaseIndex={0} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+
+          {prepMode && (
+            <div
+              className="rounded-xl px-4 py-3 mb-4 text-[12.5px] leading-[1.7]"
+              style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)", color: "rgba(0,0,0,0.6)" }}
+            >
+              <b style={{ color: NAVY }}>את בחירת התחום תעשו יחד בפגישה.</b>{" "}
+              כאן בונים את התמונה — האילוצים שלך ושלוש הדרכים להייטק.
+            </div>
+          )}
 
           {/* Where you are in the journey */}
           <div
@@ -1051,24 +1378,75 @@ export default function PathsPage() {
 
   // ── Result ─────────────────────────────────────────────────────────────────
   if (phase === "result") {
-    const meta = TRACK_META[recommended];
+    /*
+     * מסך התוצאה בעיצוב 1a — "רשת שוויונית עם כתר" (handoff מאושר 24.8):
+     * שלושה כרטיסים שווי-גודל בסדר קבוע (תואר · הכשרה · מה"ט), ההמלצה
+     * מקבלת כתר + נימוק אישי + CTA מלא — במקומה, בלי לשנות סדר. בחירה
+     * במסלול לא-מומלץ לגיטימית ובלי חיכוך, אבל נמדדת (track_choice) —
+     * סיגנל לרכזת לפני פגישה 3.
+     */
+    const chooseTrack = (t: Track) => {
+      setActiveTrack(t);
+      logEvent("track_choice", { track: t, followed: t === recommended ? "recommended" : "other" });
+      trackEvent("track_choice", { track: t });
+      goToPhase("routes");
+    };
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.result} phaseIndex={2} phaseTotal={7} />
-        <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+        <div className="flex-1 max-w-[1060px] mx-auto w-full px-[22px] pt-6 pb-32">
 
-          {/* Recommendation card */}
-          <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(251,133,0,0.07)", border: "1.5px solid rgba(251,133,0,0.3)" }}>
-            <div className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "#92400e" }}>המסלול המומלץ לך</div>
-            <div className="text-[22px] mb-1" style={HEEBO}>{meta.emoji} {meta.label}</div>
-            <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>{reason}</div>
-            <div className="flex flex-wrap gap-3 mt-3">
-              <span className="text-[11.5px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(251,133,0,0.15)", color: "#92400e" }}>⏱ {meta.duration}</span>
-              <span className="text-[11.5px] font-bold px-3 py-1 rounded-full" style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>💰 {meta.cost}</span>
+          {/* Header */}
+          <div className="mb-5">
+            <div className="text-[12px] font-black mb-1" style={{ color: ORANGE }}>שלב 4 · תוצאת השאלון</div>
+            <div className="text-[27px] leading-tight" style={{ ...HEEBO, color: NAVY }}>המסלול שמתאים לך</div>
+            <div className="text-[14px] mt-1" style={{ color: "#5d6b7a" }}>
+              על סמך התשובות שלך — המלצה אחת, ושני מסלולים נוספים להשוואה מהירה
             </div>
-            <div className="mt-2.5 text-[11.5px]" style={{ color: "rgba(0,0,0,0.45)" }}>תנאי קבלה: {meta.entry}</div>
           </div>
+
+          {/* נימוק אישי — במובייל מעל הטבלה (בדסקטופ הוא בתוך הכרטיס המומלץ) */}
+          <div className="sm:hidden rounded-xl px-4 py-3 mb-4 text-[13px] leading-[1.6]"
+            style={{ background: "#fff", border: "1px solid #fdd9ae", color: "#7a3c00" }}>
+            {reason}
+          </div>
+
+          {/* מובייל: שלושתם במסך אחד — לחיצה קופצת לכרטיס המלא */}
+          <div className="sm:hidden grid grid-cols-3 gap-[7px] mb-5" dir="rtl">
+            {TRACK_ORDER.map(t => {
+              const c = RESULT_CARD[t];
+              const isRec = t === recommended;
+              return (
+                <button
+                  key={t}
+                  onClick={() => document.getElementById(`track-card-${t}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  className="rounded-xl overflow-hidden text-right flex flex-col"
+                  style={{ background: "#fff", border: isRec ? "2px solid #fb8500" : "2px solid #ece5d8" }}
+                >
+                  <div className="px-2 py-1.5 text-[10.5px] font-black text-center"
+                    style={{ background: isRec ? "#fb8500" : "#eef3fb", color: isRec ? "#fff" : NAVY }}>
+                    {isRec ? "👑 ההמלצה" : " "}
+                  </div>
+                  <div className="px-2 pt-2 text-center text-[18px]">{c.emoji}</div>
+                  <div className="px-2 pt-1 text-center text-[12px] font-black leading-tight" style={{ color: NAVY }}>{c.label}</div>
+                  <div className="px-2 pt-0.5 pb-1.5 text-center text-[10px]" style={{ color: "#5d6b7a" }}>{c.tagA}</div>
+                  <div className="px-2 pb-2 flex flex-col gap-1 mt-auto">
+                    <div className="text-[10px] leading-snug" style={{ color: "#3f4f63" }}>⏳ {c.mini.income}</div>
+                    <div className="text-[10px] leading-snug" style={{ color: "#3f4f63" }}>💰 {c.mini.cost} לשנה</div>
+                    <div className="text-[10px] leading-snug" style={{ color: "#3f4f63" }}>🚪 {c.mini.entry}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => chooseTrack(recommended)}
+            className="sm:hidden w-full py-3.5 rounded-2xl text-white text-[15px] font-black mb-6 active:scale-[0.98] transition-transform"
+            style={{ background: ORANGE, ...HEEBO }}
+          >
+            נמשיך עם {RESULT_CARD[recommended].label} ←
+          </button>
 
           {/* Bagrut gateway — the honest first step when the degree door is closed */}
           {answers.education === "A" && (
@@ -1114,47 +1492,117 @@ export default function PathsPage() {
             </div>
           )}
 
-          {/* 3 path comparison */}
-          <div className="text-[13px] font-black mb-3" style={{ color: NAVY }}>השוואת שלושת המסלולים</div>
-
-          {TRACK_ORDER.map(track => {
-            const m = TRACK_META[track];
-            const isRec = track === recommended;
-            return (
-              <RevealCard key={track} emoji={m.emoji} title={`${m.label}${isRec ? " ✦ מומלץ לך" : ""}`}>
-                <div className="pt-2">
-                  {track === "mahat" && (
-                    <div className="rounded-xl px-3.5 py-3 mb-3 text-[12px] leading-[1.7]"
-                      style={{ background: "rgba(2,62,138,0.05)", color: "rgba(0,0,0,0.62)" }}>
-                      <span className="font-bold">שווה לדעת לפני שקוראים:</span> מה״ט מתאים בעיקר לסוג קריירה מסוים —
-                      גופים ביטחוניים וממשלתיים, חומרה ואלקטרוניקה. אם היעד שלך הוא חברת תוכנה או סטארטאפ,
-                      תואר או הכשרה טכנולוגית כמעט תמיד יתאימו לך יותר.
+          {/* שלושת הכרטיסים — רשת בדסקטופ, ערימה במובייל (המומלץ ראשון) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+            {TRACK_ORDER.map(track => {
+              const c = RESULT_CARD[track];
+              const m = TRACK_META[track];
+              const isRec = track === recommended;
+              const detailOpen = detailTrack === track;
+              return (
+                <div
+                  key={track}
+                  id={`track-card-${track}`}
+                  className={`rounded-2xl overflow-hidden flex flex-col bg-white ${isRec ? "order-first sm:order-none" : ""}`}
+                  style={{
+                    border: isRec ? "2px solid #fb8500" : "2px solid #ece5d8",
+                    boxShadow: "0 2px 10px rgba(30,25,15,0.05)",
+                    scrollMarginTop: 80,
+                  }}
+                >
+                  {isRec && (
+                    <div className="px-4 py-[7px] text-[12.5px] font-black text-white" style={{ background: ORANGE }}>
+                      👑 ההמלצה שלנו בשבילך
                     </div>
                   )}
-                  <div className="flex gap-3 mb-3 flex-wrap">
-                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold" style={{ background: "rgba(0,0,0,0.05)" }}>⏱ {m.duration}</span>
-                    <span className="text-[11px] px-2.5 py-1 rounded-full font-bold" style={{ background: "rgba(0,0,0,0.05)" }}>💰 {m.cost}</span>
-                  </div>
-                  <div className="mb-3">
-                    <div className="text-[11px] font-black mb-1.5" style={{ color: "#059669" }}>✅ יתרונות</div>
-                    {m.pros.map((p, i) => <div key={i} className="text-[12px] mb-1">• {p}</div>)}
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-black mb-1.5" style={{ color: "#dc2626" }}>❌ חסרונות</div>
-                    {m.cons.map((c, i) => <div key={i} className="text-[12px] mb-1">• {c}</div>)}
+                  <div className="p-4 flex flex-col flex-1">
+                    {/* Header */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[24px]">{c.emoji}</span>
+                      <span className="text-[18px] font-black" style={{ color: NAVY }}>{c.label}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      <span className="text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ background: "#eef3fb", color: NAVY }}>{c.tagA}</span>
+                      <span className="text-[12px] font-semibold px-2.5 py-1 rounded-full" style={{ border: "1px solid #d8dfe9", color: "#3f4f63" }}>{c.tagB}</span>
+                    </div>
+
+                    {/* נימוק אישי — רק במומלץ */}
+                    {isRec && (
+                      <div className="rounded-xl px-3.5 py-3 mb-3 text-[13.5px] leading-[1.6] max-sm:hidden"
+                        style={{ background: "#fff8ee", border: "1px solid #fdd9ae", color: "#7a3c00" }}>
+                        {reason}
+                      </div>
+                    )}
+
+                    {/* שלוש שורות ההשוואה הקבועות — לא להוסיף רביעית */}
+                    <div className="flex flex-col gap-2.5 mb-3">
+                      {([
+                        ["⏳", "מתי מתחילה הכנסה", c.income],
+                        ["💰", "כמה עולה בשנה", c.cost],
+                        ["🚪", "מה צריך כדי להיכנס", c.entry],
+                      ] as const).map(([ic, label, val]) => (
+                        <div key={label} className="flex items-start gap-2">
+                          <span className="text-[15px] shrink-0">{ic}</span>
+                          <div>
+                            <div className="text-[11.5px] font-black" style={{ color: "#94908a" }}>{label}</div>
+                            <div className="text-[13.5px] leading-snug" style={{ color: "#1e2f42" }}>{val}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* שורת אמת: ✓ תמיד, ✕ תמיד עם המקטין שלו */}
+                    <div className="flex flex-col gap-1.5 mb-3">
+                      <div className="rounded-[10px] px-3 py-2 text-[12.5px] leading-[1.55]" style={{ background: "#e8f6ef", color: "#04543a" }}>✓ {c.plus}</div>
+                      <div className="rounded-[10px] px-3 py-2 text-[12.5px] leading-[1.55]" style={{ background: "#fdeede", color: "#8a4a09" }}>✕ {c.minus}</div>
+                    </div>
+
+                    {/* פירוט מלא — "להכיר את המסלול הזה" פותח את התוכן העמוק הקיים */}
+                    {detailOpen && (
+                      <div className="mb-3 rounded-xl p-3" style={{ background: "#fbf9f5", border: "1px solid #ece5d8" }}>
+                        <div className="text-[11px] font-black mb-1.5" style={{ color: "#059669" }}>✅ מה זה נותן</div>
+                        {m.pros.map((p, i) => <div key={i} className="text-[12px] leading-[1.6] mb-1.5" style={{ color: "#1e2f42" }}>• {p}</div>)}
+                        <div className="text-[11px] font-black mb-1.5 mt-3" style={{ color: "#8a4a09" }}>⚖️ מה חשוב לדעת</div>
+                        {m.cons.map((con, i) => <div key={i} className="text-[12px] leading-[1.6] mb-1.5" style={{ color: "#1e2f42" }}>• {con}</div>)}
+                      </div>
+                    )}
+
+                    <div className="text-[12.5px] leading-[1.55] mb-3 mt-auto" style={{ color: "#6d675c" }}>{c.fit}</div>
+
+                    {/* CTA — המומלץ מלא, האחרים בלי חיכוך ובלי אישור נוסף */}
+                    {isRec ? (
+                      <button
+                        onClick={() => chooseTrack(track)}
+                        className="w-full py-[13px] rounded-[14px] text-white text-[15.5px] font-black active:scale-[0.98] transition-transform"
+                        style={{ background: ORANGE, ...HEEBO }}
+                      >
+                        נמשיך עם זה ←
+                      </button>
+                    ) : detailOpen ? (
+                      <button
+                        onClick={() => chooseTrack(track)}
+                        className="w-full py-[12px] rounded-[14px] text-[14px] font-black active:scale-[0.98] transition-transform"
+                        style={{ background: NAVY, color: "#fff", ...HEEBO }}
+                      >
+                        נמשיך עם {c.label} ←
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setDetailTrack(track);
+                          logEvent("track_detail_open", { track });
+                        }}
+                        className="w-full py-[12px] rounded-[14px] text-[14px] font-black transition-colors"
+                        style={{ background: "#fff", border: "1.5px solid #023e8a", color: NAVY }}
+                      >
+                        להכיר את המסלול הזה
+                      </button>
+                    )}
                   </div>
                 </div>
-              </RevealCard>
-            );
-          })}
-
-          <button
-            onClick={() => goToPhase("routes")}
-            className="w-full py-4 rounded-2xl text-white text-[15px] font-black mt-2 active:scale-[0.98] transition-transform"
-            style={{ background: NAVY, ...HEEBO }}
-          >
-            איך זה נראה בתחום שלי ←
-          </button>
+              );
+            })}
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -1163,16 +1611,6 @@ export default function PathsPage() {
 
   // ── Routes to a first job ──────────────────────────────────────────────────
   if (phase === "routes") {
-    const knownDomains = (Object.keys(DOMAIN_LABEL) as Domain[]).filter(d => domainInterest[d] !== undefined);
-
-    function chooseDomain(c: "one" | "two" | "open", d?: Domain) {
-      setDomainChoice(c);
-      localStorage.setItem("paths-domain-choice", c);
-      if (d) { setChosenDomain(d); localStorage.setItem("paths-domain", d); }
-      else { setChosenDomain(null); localStorage.removeItem("paths-domain"); }
-      trackEvent("paths_domain_choice", { choice: c });
-    }
-
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         {Header}
@@ -1188,48 +1626,33 @@ export default function PathsPage() {
             הנה איך זה נראה בפועל — מהיום ועד המשכורת הראשונה.
           </div>
 
-          {/* One question, instead of guessing how settled he is */}
-          {!domainChoice && (
+          {/* השאלה הישנה ישבה כאן; הבחירה עברה לשער בכניסה לשלב (נתי 20.8) */}
+          {!domainChoice && pickedDomains.length === 0 && prepMode && (
+            <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(2,62,138,0.04)", border: "1.5px solid rgba(2,62,138,0.12)" }}>
+              <div className="text-[15px] mb-2" style={{ ...HEEBO, color: NAVY }}>עד כאן ההכנה — ואת ההמשך פותחים יחד 🎯</div>
+              <div className="text-[12.5px] leading-[1.8] mb-3" style={{ color: "rgba(0,0,0,0.6)" }}>
+                בפגישה תבחרו תחום עם הרכזת, ומיד אחריה ייפתחו כאן המוסדות, החסמים
+                וההכנה לפגישה השלישית. אתה מגיע אליה מוכן — עם האילוצים ממופים ושלוש הדרכים מוכרות.
+              </div>
+              <Link
+                href="/explore"
+                className="block text-center text-[12px] font-bold"
+                style={{ color: "rgba(0,0,0,0.4)" }}
+              >
+                רוצה לטעום עוד תחום לפני הפגישה? ←
+              </Link>
+            </div>
+          )}
+          {!domainChoice && pickedDomains.length === 0 && !prepMode && (
             <div className="rounded-2xl p-5 mb-5" style={{ background: "#fff", border: "1.5px solid rgba(2,62,138,0.15)" }}>
-              <div className="text-[16px] leading-tight mb-3" style={{ ...HEEBO, color: NAVY }}>
-                יש לך כבר תחום שאת/ה די בטוח/ה בו?
-              </div>
-              <div className="flex flex-col gap-2.5">
-                <button
-                  onClick={() => chooseDomain("two")}
-                  className="w-full rounded-xl px-4 py-3 text-right"
-                  style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
-                >
-                  <div className="text-[13px] font-bold" style={{ color: NAVY }}>מתלבט/ת בין שניים</div>
-                </button>
-                <button
-                  onClick={() => chooseDomain("open")}
-                  className="w-full rounded-xl px-4 py-3 text-right"
-                  style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)" }}
-                >
-                  <div className="text-[13px] font-bold" style={{ color: NAVY }}>עוד לא סגור/ה</div>
-                  <div className="text-[11.5px] mt-0.5" style={{ color: "rgba(0,0,0,0.45)" }}>נראה לך כמה אפשרויות</div>
-                </button>
-                {knownDomains.length > 0 && (
-                  <>
-                    <div className="text-[11.5px] font-bold mt-2 mb-0.5" style={{ color: "rgba(0,0,0,0.4)" }}>
-                      כן — והתחום הוא:
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {knownDomains.map(d => (
-                        <button
-                          key={d}
-                          onClick={() => chooseDomain("one", d)}
-                          className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
-                          style={{ background: `${ORANGE}12`, color: "#92400e", border: `1px solid ${ORANGE}35` }}
-                        >
-                          {DOMAIN_LABEL[d]}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+              <div className="text-[14px] font-bold mb-3" style={{ color: NAVY }}>עוד לא בחרת כיוון — נתחיל שם</div>
+              <button
+                onClick={() => goToPhase("domain")}
+                className="w-full py-3 rounded-xl text-white text-[13px] font-black"
+                style={{ background: NAVY }}
+              >
+                לבחירת הכיוון ←
+              </button>
             </div>
           )}
 
@@ -1343,7 +1766,11 @@ export default function PathsPage() {
                 מה עומד בדרך שלי ←
               </button>
               <button
-                onClick={() => { setDomainChoice(null); localStorage.removeItem("paths-domain-choice"); }}
+                onClick={() => {
+                  setDomainChoice(null); localStorage.removeItem("paths-domain-choice");
+                  setPickedDomains([]); localStorage.removeItem("paths-domains");
+                  goToPhase("domain");
+                }}
                 className="w-full mt-3 text-[12px] font-bold"
                 style={{ color: "rgba(0,0,0,0.35)" }}
               >
@@ -1404,38 +1831,22 @@ export default function PathsPage() {
                 {b.lead}
               </div>
 
-              {/* Concrete solutions */}
+              {/*
+                אריחים מכווצים במקום כרטיסים פתוחים — המסך התארך מדי.
+                וכשחסם חוצה מסלולים (כסף), הפתרונות מקובצים לפי מסלול —
+                מי שמכוון להכשרה לא צריך לצלול בין מלגות אקדמיה.
+              */}
               <div className="flex flex-col gap-3">
-                {b.solutions.map(s => (
-                  <div key={s.name} className="rounded-xl px-4 py-3" style={{ background: "rgba(251,133,0,0.05)", border: "1px solid rgba(251,133,0,0.15)" }}>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="text-[12.5px] font-black" style={{ color: "#92400e" }}>{s.name}</div>
-                      {s.date && (
-                        <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap"
-                          style={{
-                            background: isUrgent(s.date) ? ORANGE : "rgba(0,0,0,0.08)",
-                            color: isUrgent(s.date) ? "#fff" : "rgba(0,0,0,0.5)",
-                          }}
-                        >
-                          {whenText(s.date)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11.5px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.6)" }}>{s.detail}</div>
-                    {s.link && (
-                      <a
-                        href={s.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        // מעורבות: לא רק אילו חסמים יש להם, אלא אילו מהמענים שלנו באמת מעניינים
-                        onClick={() => logEvent("paths_solution_click", { blocker: b.id, solution: s.name })}
-                        className="inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-lg"
-                        style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}
-                      >
-                        לפרטים ↗
-                      </a>
+                {groupSolutions(b.solutions).map(([group, items]) => (
+                  <div key={group || "all"}>
+                    {group && (
+                      <div className="text-[11px] font-black mb-1.5" style={{ color: NAVY, opacity: 0.7 }}>
+                        {group}
+                      </div>
                     )}
+                    <div className="grid gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                      {items.map(sol => <SolutionTile key={sol.name} s={sol} blockerId={b.id} />)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1456,8 +1867,9 @@ export default function PathsPage() {
             </div>
           </div>
 
+          {/* לא דורסים את הבחירה ממסך התוצאה — מי שבחר מסלול לא-מומלץ ממשיך איתו */}
           <button
-            onClick={() => { setActiveTrack(recommended); goToPhase("institutions"); }}
+            onClick={() => goToPhase("institutions")}
             className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
             style={{ background: NAVY, ...HEEBO }}
           >
@@ -1484,12 +1896,55 @@ export default function PathsPage() {
       { key: "bootcamp", label: "הכשרה", emoji: "⚡" },
       { key: "mahat", label: "מה\"ט", emoji: "🏫" },
     ];
-    const list = visibleByTrack(activeTrack);
+    /*
+     * מי שבחר שני תחומים בשער רואה כאן בורר תחום — כל המסך מסונן לתחום
+     * אחד בכל רגע (נתי 20.8): תחום ← אפיק ← ובאקדמיה תואר ← מוסדות.
+     */
+    const focusDomain: Domain | null = pickedDomains.length > 1
+      ? (activeDomain && pickedDomains.includes(activeDomain) ? activeDomain : pickedDomains[0])
+      : null;
+    const instDomains: Domain[] = focusDomain ? [focusDomain] : chosenDomains;
+    const list = focusDomain ? visibleFor(activeTrack, [focusDomain]) : visibleByTrack(activeTrack);
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.institutions} phaseIndex={4} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-5 pb-32">
+
+          {/* התחום תמיד נראה למעלה (נתי 23.8): עם שניים — בורר; עם אחד — שורת הקשר */}
+          {pickedDomains.length <= 1 && chosenDomains.length > 0 && (
+            <div className="text-[12.5px] font-bold mb-3 px-1" style={{ color: "rgba(0,0,0,0.5)" }}>
+              מחפשים מסלול ל: <span style={{ color: NAVY, fontWeight: 900 }}>{chosenDomains.slice(0, 2).map(d => DOMAIN_LABEL[d]).join(" · ")}</span>
+            </div>
+          )}
+          {pickedDomains.length > 1 && (
+            <div className="flex gap-2 mb-3">
+              {pickedDomains.map(d => {
+                const on = d === focusDomain;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      if (!on) {
+                        // מדד ההתלבטות: כמה מחליפים תחום תוך כדי חקר המוסדות
+                        logEvent("domain_switch", { to: d });
+                        trackEvent("domain_switch", { to: d });
+                      }
+                      setActiveDomain(d);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-[13px] font-black transition-all"
+                    style={{
+                      background: on ? ORANGE : "#fff",
+                      color: on ? "#fff" : "#92400e",
+                      border: on ? "none" : "1.5px solid rgba(251,133,0,0.35)",
+                    }}
+                  >
+                    {DOMAIN_LABEL[d]}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Track tabs */}
           <div className="flex gap-2 mb-5">
@@ -1553,26 +2008,32 @@ export default function PathsPage() {
             תצוגת אזור — "יש משהו קרוב אליי" היא השאלה שהמסך הזה לא ענה עליה
             עד היום, למרות ששאלנו אותה בשאלון ולא עשינו עם התשובה כלום.
           */}
+          {activeTrack !== "degree" && (
           <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: "rgba(2,62,138,0.06)" }}>
-            {([["list", "רשימה"], ["geo", "לפי אזור"]] as const).map(([v, label]) => (
-              <button key={v} onClick={() => setGeoView(v === "geo")}
+            {([["list", "רשימה"], ["map", "מפה"]] as const).map(([v, label]) => (
+              <button key={v} onClick={() => setView2(v)}
                 className="flex-1 py-2 rounded-lg text-[12.5px] font-bold"
                 style={{
-                  background: (v === "geo") === geoView ? "#fff" : "transparent",
-                  color: (v === "geo") === geoView ? NAVY : "rgba(0,0,0,0.45)",
-                  boxShadow: (v === "geo") === geoView ? "0 1px 3px rgba(2,62,138,0.12)" : "none",
+                  background: view2 === v ? "#fff" : "transparent",
+                  color: view2 === v ? NAVY : "rgba(0,0,0,0.45)",
+                  boxShadow: view2 === v ? "0 1px 3px rgba(2,62,138,0.12)" : "none",
                 }}>
                 {label}
               </button>
             ))}
           </div>
+          )}
 
-          {geoView ? (
-            <GeoView track={activeTrack} myRegions={regionsForAnswer(answers.location)} />
+          {view2 === "map" && activeTrack !== "degree" ? (
+            <PinMap track={activeTrack} myRegions={regionsForAnswer(answers.location)}
+              inList={n => shortlist.some(s => s.name === n)}
+              onToggleList={(name) => shortlist.find(s => s.name === name)
+                ? removeFromShortlist(name)
+                : addToShortlist({ name, track: activeTrack })} />
           ) : (
           <>
-          {activeTrack === "bootcamp" && <WrappedCourses domains={chosenDomains} />}
-          {activeTrack === "degree" && <DegreePicker domains={chosenDomains} have={hasOf(answers)}
+          {activeTrack === "bootcamp" && <WrappedCourses domains={instDomains} />}
+          {activeTrack === "degree" && <DegreePicker domains={instDomains} have={hasOf(answers)}
             list={shortlist.map(s => s.name)}
             onToggleList={(name) => shortlist.find(s => s.name === name)
               ? removeFromShortlist(name)
@@ -2018,12 +2479,38 @@ export default function PathsPage() {
 
         {/* The decision */}
         <div className="rounded-2xl p-5 mb-4" style={{ background: "rgba(251,133,0,0.07)", border: "1.5px solid rgba(251,133,0,0.25)" }}>
-          <div className="text-[11px] font-black uppercase tracking-widest mb-1.5" style={{ color: ORANGE }}>ההחלטה שלך</div>
-          <div className="text-[18px] mb-1" style={HEEBO}>{TRACK_META[recommended].emoji} {TRACK_META[recommended].label}</div>
-          {shortlist.length > 0 && (
-            <div className="text-[12.5px] leading-[1.7] mt-2" style={{ color: "rgba(0,0,0,0.6)" }}>
-              <span className="font-bold">המוסדות שבחרת:</span> {shortlist.map(s => s.name).join(" · ")}
-            </div>
+          {/*
+            "ההחלטה שלך" מציגה את מה שהוא בחר — לא את מה שהמלצנו (נתי 20.8).
+            קודם הכרטיס שם את ההמלצה שלנו תחת הכותרת "ההחלטה שלך", והמועמד
+            היה מגיע לפגישה 3 עם החלטה שלא באמת קיבל. ההמלצה מוצגת בנפרד.
+          */}
+          {shortlist.length > 0 ? (() => {
+            const myTracks = Array.from(new Set(shortlist.map(x => x.track)));
+            const matches = myTracks.includes(recommended);
+            return (
+              <>
+                <div className="text-[11px] font-black uppercase tracking-widest mb-1.5" style={{ color: ORANGE }}>הבחירות שלך</div>
+                <div className="text-[18px] mb-1" style={HEEBO}>
+                  {myTracks.map(t => `${TRACK_META[t].emoji} ${TRACK_META[t].label}`).join(" · ")}
+                </div>
+                <div className="text-[12.5px] leading-[1.7] mt-2" style={{ color: "rgba(0,0,0,0.6)" }}>
+                  <span className="font-bold">המוסדות שבחרת:</span> {shortlist.map(x => x.name).join(" · ")}
+                </div>
+                <div className="text-[11.5px] mt-2" style={{ color: "rgba(0,0,0,0.45)" }}>
+                  {matches
+                    ? `✓ תואם את ההמלצה שלנו (${TRACK_META[recommended].label})`
+                    : `ההמלצה שלנו הייתה ${TRACK_META[recommended].label} — ההבדל הוא בדיוק שיחה לפגישה.`}
+                </div>
+              </>
+            );
+          })() : (
+            <>
+              <div className="text-[11px] font-black uppercase tracking-widest mb-1.5" style={{ color: ORANGE }}>ההמלצה שלנו</div>
+              <div className="text-[18px] mb-1" style={HEEBO}>{TRACK_META[recommended].emoji} {TRACK_META[recommended].label}</div>
+              <div className="text-[12px] mt-1" style={{ color: "rgba(0,0,0,0.5)" }}>
+                עוד לא סימנת מוסדות — אפשר לחזור ולסמן, או להשאיר את הבחירה לפגישה עצמה.
+              </div>
+            </>
           )}
           {researched > 0 && (
             <div className="text-[12px] mt-2 font-bold" style={{ color: "#047857" }}>
@@ -2359,122 +2846,13 @@ function openDoors(inst: (typeof INSTITUTIONS)[number], degreeId: string) {
     .filter(f => f.openToAllDegrees || (f.degreeIds ?? []).includes(degreeId));
 }
 
-/**
- * שורת מוסד בתוך פאנל התואר — ונפתחת.
- *
- * החזקנו על כל מוסד עשרה שדות והצגנו שם ומחיר. כל השאר — למה דווקא הוא,
- * המעטפת, מסלול הקבלה בלי פסיכומטרי, איש הקשר — היה קבור בקטלוג המקופל,
- * כלומר במקום שבו האדם כבר לא מחליט. עכשיו זה נפתח במקום.
- *
- * **איש הקשר הוא יחידת התמיכה ולא מדור הרישום** — שם עונים "אינך עומד
- * בתנאים" ולא מכירים מסלולי קבלה חלופיים, ושיחה כזו יכולה לסיים מסע.
- */
-function InstRow({ inst, star, doors, inList, onToggleList }: {
-  inst: (typeof INSTITUTIONS)[number];
-  star?: boolean;
-  doors: (typeof FUNDING)[number][];
-  inList?: boolean;
-  onToggleList?: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const many = doors.length >= 2;
-  const rows: [string, string | undefined][] = [
-    ["למה דווקא כאן", inst.why],
-    ["תנאי קבלה", inst.admission],
-    ["בלי פסיכומטרי", inst.noPsychometric],
-    ["מעטפת ותמיכה", inst.support],
-    ["קשרי תעשייה", inst.industry],
-    ["מבנה הלימודים", inst.schedule],
-    ["ימים פתוחים", inst.openDays],
-  ];
-  const contact = [inst.contactName, inst.contactRole, inst.contactPhone, inst.contactEmail]
-    .filter(Boolean).join(" · ");
-
-  return (
-    <div
-      className="rounded-xl overflow-hidden"
-      style={{
-        background: many ? "rgba(5,150,105,0.06)" : star ? "rgba(251,133,0,0.06)" : "rgba(2,62,138,0.03)",
-        border: `1px solid ${many ? "rgba(5,150,105,0.35)" : star ? "rgba(251,133,0,0.2)" : "rgba(2,62,138,0.07)"}`,
-      }}
-    >
-      <button onClick={() => setOpen(!open)} className="w-full text-right px-3 py-2.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[12.5px] font-bold" style={{ color: NAVY }}>
-            {star ? "✦ " : ""}{inst.name.split(" — ")[0]}
-          </span>
-          <span className="text-[10.5px] shrink-0" style={{ color: "rgba(0,0,0,0.35)" }}>
-            {open ? "לסגור ▲" : "עוד ▼"}
-          </span>
-        </div>
-        {doors.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-            {many && (
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: "#059669", color: "#fff" }}>
-                שתי דרכים להיכנס
-              </span>
-            )}
-            {doors.map(f => (
-              <span key={f.id} className="text-[10.5px] font-bold px-2 py-0.5 rounded-lg" style={{ background: "rgba(251,133,0,0.1)", color: "#92400e" }}>
-                דרך {f.name.split(" — ")[0]}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="text-[11px] mt-1 leading-[1.6]" style={{ color: "rgba(0,0,0,0.5)" }}>
-          {inst.address ?? inst.location}{inst.tuition ? ` · ${inst.tuition.split(".")[0]}` : ""}
-        </div>
-      </button>
-
-      {open && (
-        <div className="px-3 pb-3 flex flex-col gap-2" style={{ borderTop: "1px dashed rgba(0,0,0,0.1)", paddingTop: 10 }}>
-          {inst.warn && (
-            <div className="rounded-lg px-3 py-2 text-[11px] leading-[1.65]" style={{ background: "rgba(220,38,38,0.06)", color: "#991b1b" }}>
-              ⚠️ {inst.warn}
-            </div>
-          )}
-          {rows.filter(([, v]) => v && v.trim()).map(([k, v]) => (
-            <div key={k} className="text-[11px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
-              <b style={{ color: NAVY }}>{k}:</b> {v}
-            </div>
-          ))}
-          {contact && (
-            <div className="text-[11px] leading-[1.7] rounded-lg px-3 py-2" style={{ background: "rgba(5,150,105,0.06)", color: "#047857" }}>
-              <b>למי לפנות:</b> {contact}
-            </div>
-          )}
-          <div className="flex gap-2">
-            {inst.link && (
-              <a href={inst.link.startsWith("http") ? inst.link : `https://${inst.link}`}
-                target="_blank" rel="noopener noreferrer"
-                className="flex-1 text-[11.5px] font-bold px-3 py-2 rounded-lg text-center"
-                style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}>
-                לאתר הרשמי ↗
-              </a>
-            )}
-            {onToggleList && (
-              <button onClick={onToggleList}
-                className="flex-1 text-[11.5px] font-bold px-3 py-2 rounded-lg"
-                style={{
-                  background: inList ? `${ORANGE}18` : "rgba(0,0,0,0.04)",
-                  color: inList ? ORANGE : "rgba(0,0,0,0.5)",
-                  border: inList ? `1px solid ${ORANGE}40` : "1px solid rgba(0,0,0,0.08)",
-                }}>
-                {inList ? "✓ ברשימה שלי" : "+ הוסף לרשימה"}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /** הפאנל של תואר נבחר: מה הוא פותח, ההסתייגות, ואיפה לומדים אותו */
 function DegreeDetail({ degree: d, have, list, onToggleList }: {
   degree: Degree; have: string[]; list?: string[]; onToggleList?: (name: string) => void;
 }) {
   const [showRest, setShowRest] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const recommended = (d.recommendedAt ?? [])
     .map(id => INSTITUTIONS.find(i => i.id === id))
@@ -2494,7 +2872,7 @@ function DegreeDetail({ degree: d, have, list, onToggleList }: {
   );
 
   const Row = ({ inst, star }: { inst: (typeof INSTITUTIONS)[number]; star?: boolean }) =>
-    <InstRow inst={inst} star={star} doors={openDoors(inst, d.id)}
+    <InstitutionCard inst={inst} star={star} doors={openDoors(inst, d.id)}
       inList={list?.includes(inst.name)} onToggleList={onToggleList ? () => onToggleList(inst.name) : undefined} />;
 
   return (
@@ -2572,6 +2950,28 @@ function DegreeDetail({ degree: d, have, list, onToggleList }: {
           {" "}<b>אם אין כאן משהו באזור שלך — זה לא אומר שאין</b>, זה אומר שעוד לא בדקנו.
           הרכזת תשלים את זה בפגישה.
         </div>
+
+        {/*
+          המפה כאן ולא ברמה העליונה: במסלול התואר בוחרים קודם תואר, ומפה
+          שמציגה את כל מוסדות המסלול מתעלמת מהבחירה. כאן היא מציגה בדיוק
+          את מי שמלמד את התואר הזה.
+        */}
+        {(recommended.length + teaches.length) > 0 && (
+          <div className="mb-3">
+            <button onClick={() => setShowMap(!showMap)}
+              className="w-full py-2 rounded-xl text-[11.5px] font-bold"
+              style={{ background: "rgba(2,62,138,0.05)", color: NAVY }}>
+              {showMap ? "לסגור את המפה ▲" : "🗺 לראות על המפה איפה לומדים את התואר הזה"}
+            </button>
+            {showMap && (
+              <div className="mt-2">
+                <DegreeMap insts={[...recommended, ...teaches]}
+                  inList={n => (list ?? []).includes(n)}
+                  onToggleList={onToggleList} />
+              </div>
+            )}
+          </div>
+        )}
 
         {recommended.length === 0 && teaches.length === 0 ? (
           <div className="text-[11.5px] leading-[1.7]" style={{ color: "#92400e" }}>
