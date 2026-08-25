@@ -286,7 +286,7 @@ function JourneyRail() {
   return (
     <aside
       dir="rtl"
-      className="hidden xl:flex fixed right-0 top-14 bottom-0 w-[225px] flex-col gap-1.5 p-5 overflow-y-auto z-40"
+      className="journey-rail hidden min-[1200px]:flex fixed right-0 top-14 bottom-0 w-[225px] flex-col gap-1.5 p-5 overflow-y-auto z-40"
       style={{ background: "linear-gradient(180deg, #023e8a 0%, #03318f 100%)", fontFamily: "'Heebo', sans-serif" }}
     >
       <div className="text-[11px] font-black tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.6)" }}>

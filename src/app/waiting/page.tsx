@@ -666,8 +666,8 @@ function IntroWhere({ onNext }: { onNext: () => void }) {
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
         {([
-          ["🚀", "בחברת הייטק", "הטכנולוגיה היא המוצר עצמו. בדרך כלל שכר גבוה יותר וקצב למידה מהיר יותר.", ["גוגל", "אינטל", "Wix", "מובילאיי", "צ'ק פוינט"]],
-          ["🏦", "בארגון גדול ויציב", "הטכנולוגיה משרתת את העסק — בנק, קופת חולים, ממשלה. לרוב יציב יותר, ולפעמים קל יותר להתקבל למשרה ראשונה.", ["בנק הפועלים", "כללית", "חברת חשמל", "אל על"]],
+          ["🚀", "בחברת הייטק", "הטכנולוגיה היא המוצר עצמו. בדרך כלל שכר גבוה יותר וקצב למידה מהיר יותר.", ["google|גוגל", "intel|אינטל", "wix|Wix", "mobileye|מובילאיי", "checkpoint|צ'ק פוינט"]],
+          ["🏦", "בארגון גדול ויציב", "הטכנולוגיה משרתת את העסק — בנק, קופת חולים, ממשלה. לרוב יציב יותר, ולפעמים קל יותר להתקבל למשרה ראשונה.", ["hapoalim|בנק הפועלים", "clalit|כללית", "iec|חברת חשמל", "elal|אל על"]],
         ] as [string, string, string, string[]][]).map(([e, t, d, firms]) => {
           const on = picked === t;
           return (
@@ -683,10 +683,19 @@ function IntroWhere({ onNext }: { onNext: () => void }) {
             >
               <div style={{ fontSize: 16, fontWeight: 800, color: "#1b1f27" }}>{e} {t}</div>
               <div style={{ fontSize: 14, lineHeight: 1.6, color: MUTED, marginTop: 4 }}>{d}</div>
+              {/* לוגו + שם (נתי 25.8). קובץ חסר ב-public/logos → נשאר שם בלבד */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 9 }}>
-                {firms.map(f => (
-                  <span key={f} style={{ background: on ? "#fff" : "#f4f5f7", borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: NAVY }}>{f}</span>
-                ))}
+                {firms.map(f => {
+                  const [id, label] = f.split("|");
+                  return (
+                    <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: on ? "#fff" : "#f4f5f7", borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: NAVY }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/logos/${id}.png`} alt="" style={{ width: 15, height: 15, objectFit: "contain" }}
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      {label}
+                    </span>
+                  );
+                })}
               </div>
             </button>
           );
