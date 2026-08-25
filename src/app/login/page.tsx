@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
-import { sendPhoneOtp, verifyPhoneOtp, supabaseReady } from "@/lib/candidate";
+import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady } from "@/lib/candidate";
+import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -29,6 +30,17 @@ function TextInput({
       className="w-full border rounded-xl px-4 py-3 text-[15px] outline-none bg-white text-center tracking-wide"
       style={{ borderColor: value ? "rgba(2,62,138,0.35)" : "rgba(2,62,138,0.18)", color: "#1c1c1c" }}
     />
+  );
+}
+
+function GoogleLogo() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.87 2.7-6.62Z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.83.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18Z" />
+      <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.16.27-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33Z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97L3.95 7.3C4.66 5.17 6.65 3.58 9 3.58Z" />
+    </svg>
   );
 }
 
@@ -77,10 +89,18 @@ export default function LoginPage() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const phoneValid = phone.replace(/\D/g, "").length >= 9;
   const codeValid = code.trim().length >= 4;
+
+  // אחרי אימות מוצלח — חוזרים בדיוק לאיפה שהיו (כמו דף הבית), לא תמיד לדשבורד.
+  // מי שנזרק ל-login מסך פנימי (טוקן שפג באמצע /paths למשל) חוזר לאותו מסך.
+  function goAfterLogin() {
+    const last = localStorage.getItem(LAST_LOCATION_KEY);
+    router.push(last && last !== "/" ? last : "/dashboard");
+  }
 
   async function handleSendOtp() {
     if (toE164(phone) === TEST_PHONE) {
@@ -96,10 +116,24 @@ export default function LoginPage() {
     setStep("otp");
   }
 
+  // אותה מטרה כמו goAfterLogin, אבל כתובת מלאה — ה-redirect חוזר מגוגל כטעינת דף מחדש
+  function afterLoginUrl(): string {
+    const last = localStorage.getItem(LAST_LOCATION_KEY);
+    return `${window.location.origin}${last && last !== "/" ? last : "/dashboard"}`;
+  }
+
+  async function handleGoogleLogin() {
+    setGoogleLoading(true);
+    setError(null);
+    const err = await signInWithGoogle(afterLoginUrl());
+    if (err) { setGoogleLoading(false); setError(err); }
+    // בהצלחה — הדפדפן כבר מופנה לגוגל, אין צורך לאפס loading
+  }
+
   async function handleVerify() {
     if (toE164(phone) === TEST_PHONE) {
       if (code.trim() !== TEST_CODE) { setError("קוד שגוי"); return; }
-      router.push("/dashboard");
+      goAfterLogin();
       return;
     }
 
@@ -108,7 +142,7 @@ export default function LoginPage() {
     const err = await verifyPhoneOtp(toE164(phone), code.trim());
     setLoading(false);
     if (err) { setError(err); return; }
-    router.push("/dashboard");
+    goAfterLogin();
   }
 
   const card = (
@@ -140,6 +174,23 @@ export default function LoginPage() {
             <Button variant="orange" onClick={handleSendOtp} disabled={!phoneValid || loading || !supabaseReady}>
               {loading ? "שולח..." : "שלח קוד אימות"}
             </Button>
+
+            <div className="flex items-center gap-3 my-1">
+              <div className="flex-1 h-px" style={{ background: "rgba(0,0,0,0.1)" }} />
+              <span className="text-[12px] font-bold" style={{ color: "rgba(0,0,0,0.35)" }}>או</span>
+              <div className="flex-1 h-px" style={{ background: "rgba(0,0,0,0.1)" }} />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={googleLoading || !supabaseReady}
+              className="w-full flex items-center justify-center gap-3 rounded-xl px-4 py-3 text-[14.5px] font-bold border transition-all active:scale-[0.98] disabled:opacity-50"
+              style={{ borderColor: "rgba(0,0,0,0.15)", color: "#1c1c1c", background: "#fff" }}
+            >
+              <GoogleLogo />
+              {googleLoading ? "מעביר לגוגל..." : "המשך עם Google"}
+            </button>
           </>
         ) : (
           <>

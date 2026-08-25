@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -211,7 +211,17 @@ const PHASES_ORDER: Phase[] = ["tools", "timeline", "evidence", "cause", "postmo
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function CodeMystery() {
-  const [phase, setPhase] = useState<Phase>("intro");
+  // חוזרים בדיוק לשלב שבו נעצרנו — לא מתחילים את החקירה מחדש בכל כניסה
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (typeof window === "undefined") return "intro";
+    try {
+      const saved = localStorage.getItem("code-mystery-phase");
+      return saved ? (JSON.parse(saved) as Phase) : "intro";
+    } catch { return "intro"; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("code-mystery-phase", JSON.stringify(phase)); } catch {/* ignore */}
+  }, [phase]);
 
   // Tools phase state
   const [usedTools, setUsedTools]         = useState<Set<ToolId>>(new Set());

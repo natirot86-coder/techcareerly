@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -262,11 +262,24 @@ function PostMortemMystery({ onDone }: { onDone: () => void }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד שנצבר עד כה
+function loadSavedState(): { phase?: Phase; score?: number } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("networks-mystery-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function NetworksMysteryPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
+  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "intro");
   const [tool1Used, setTool1Used] = useState<string | null>(null);
   const [tool1Answered, setTool1Answered] = useState(false);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(() => loadSavedState().score ?? 0);
+
+  useEffect(() => {
+    try { localStorage.setItem("networks-mystery-state", JSON.stringify({ phase, score })); } catch {/* ignore */}
+  }, [phase, score]);
 
   function advance(next: Phase) {
     window.scrollTo({ top: 0, behavior: "smooth" });

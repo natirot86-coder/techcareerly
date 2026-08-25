@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -430,9 +430,22 @@ function TimelineReconstruction({ onDone }: { onDone: () => void }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד — אחרת מסך הסיכום מציג ניקוד שגוי
+function loadSavedState(): { phase?: Phase; score?: number } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("networks-day-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function DayPage() {
-  const [phase, setPhase] = useState<Phase>("career");
-  const [score, setScore] = useState(0);
+  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "career");
+  const [score, setScore] = useState(() => loadSavedState().score ?? 0);
+
+  useEffect(() => {
+    try { localStorage.setItem("networks-day-state", JSON.stringify({ phase, score })); } catch {/* ignore */}
+  }, [phase, score]);
 
   function go(next: Phase) {
     window.scrollTo({ top: 0, behavior: "smooth" });

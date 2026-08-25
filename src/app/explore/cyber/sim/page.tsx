@@ -643,13 +643,26 @@ function DonePhase({ answers }: { answers: Record<number, { verdict: Verdict; co
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לשלב שבו נעצרנו — כולל האינדקס והתשובות, כי הניקוד ב-"learned"/"done" נגזר מ-answers
+function loadSavedState(): { phase?: Phase; alertIdx?: number; answers?: Record<number, { verdict: Verdict; correct: boolean }> } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("cyber-sim-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function CyberSim() {
   // תחילת סימולציה — בלי זה אי אפשר להבדיל נטישה באמצע מאי-פתיחה
   useEffect(() => { logEvent("sim_start", { domain: "cyber" }); }, []);
 
-  const [phase, setPhase]       = useState<Phase>("intro");
-  const [alertIdx, setAlertIdx] = useState(0);
-  const [answers, setAnswers]   = useState<Record<number, { verdict: Verdict; correct: boolean }>>({});
+  const [phase, setPhase]       = useState<Phase>(() => loadSavedState().phase ?? "intro");
+  const [alertIdx, setAlertIdx] = useState(() => loadSavedState().alertIdx ?? 0);
+  const [answers, setAnswers]   = useState<Record<number, { verdict: Verdict; correct: boolean }>>(() => loadSavedState().answers ?? {});
+
+  useEffect(() => {
+    try { localStorage.setItem("cyber-sim-state", JSON.stringify({ phase, alertIdx, answers })); } catch {/* ignore */}
+  }, [phase, alertIdx, answers]);
 
   // איפה נוטשים בתוך הסימולציה — נטישה מוסקת מ"הגיע להתראה N ולא ל-N+1"
   useEffect(() => {

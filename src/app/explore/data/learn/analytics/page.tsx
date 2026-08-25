@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import {
@@ -222,9 +222,22 @@ const CHART_PREVIEW: Record<ChartType, React.ReactNode> = {
 // ═════════════════════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ═════════════════════════════════════════════════════════════════════════════
+// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד — אחרת מסך הסיכום מציג 0/5 שגוי
+function loadSavedState(): { phase?: Phase; score?: number } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("data-analytics-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function AnalyticsPage() {
-  const [phase, setPhase]   = useState<Phase>("intro");
-  const [score, setScore]   = useState(0); // out of 5
+  const [phase, setPhase]   = useState<Phase>(() => loadSavedState().phase ?? "intro");
+  const [score, setScore]   = useState(() => loadSavedState().score ?? 0); // out of 5
+
+  useEffect(() => {
+    try { localStorage.setItem("data-analytics-state", JSON.stringify({ phase, score })); } catch {/* ignore */}
+  }, [phase, score]);
 
   // Phase 1
   const [rqAnswer, setRqAnswer]           = useState<string | null>(null);

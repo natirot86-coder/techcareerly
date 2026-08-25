@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import { ExperienceCTAs } from "@/components/ui/ExperienceCTAs";
@@ -303,21 +303,21 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             {
-              emoji: "🆓",
+              img: "/courses/code-freecodecamp.png",
               platform: "freeCodeCamp",
               title: "Full Stack — תוכנית לימודים מלאה בחינם",
               lang: "אנגלית",
               href: "https://www.freecodecamp.org/learn",
             },
             {
-              emoji: "🎓",
+              img: "/courses/code-meta.jpg",
               platform: "Coursera / Meta",
               title: "Meta Front-End Developer Professional Certificate",
               lang: "אנגלית",
               href: "https://www.coursera.org/professional-certificates/meta-front-end-developer",
             },
             {
-              emoji: "🇮🇱",
+              img: "/courses/campus-gov-il.jpg",
               platform: "Campus.gov.il",
               title: "קורסי תכנות בעברית — פלטפורמת הלמידה הממשלתית",
               lang: "עברית",
@@ -332,8 +332,8 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
               className="rounded-2xl overflow-hidden flex flex-col transition-all active:scale-[0.98]"
               style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", textDecoration: "none" }}
             >
-              <div className="flex items-center justify-center" style={{ aspectRatio: "16/9", background: "rgba(59,130,246,0.08)" }}>
-                <span className="text-[36px]">{c.emoji}</span>
+              <div className="overflow-hidden" style={{ aspectRatio: "16/9" }}>
+                <img src={c.img} alt={c.title} className="w-full h-full object-cover" />
               </div>
               <div className="p-3 flex flex-col flex-1">
                 <div className="text-[9.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "rgba(0,0,0,0.35)" }}>
@@ -360,12 +360,25 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לשלב שבו נעצרנו — כולל מגדר ותשובות, לא רק השלב עצמו
+// (בלי זה: מי שחוזר ל-"done" רואה תוצאה ריקה, ומי שחוזר לשאלה רואה ניסוח בלי מגדר)
+function loadSavedState(): { phase?: Phase; gender?: Gender | null; answers?: Answers } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("code-experience-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function ExperiencePage() {
-  const [phase, setPhase]         = useState<Phase>("gender");
-  const [gender, setGender]       = useState<Gender | null>(null);
-  const [answers, setAnswers]     = useState<Answers>({});
+  const [phase, setPhase]         = useState<Phase>(() => loadSavedState().phase ?? "gender");
+  const [gender, setGender]       = useState<Gender | null>(() => loadSavedState().gender ?? null);
+  const [answers, setAnswers]     = useState<Answers>(() => loadSavedState().answers ?? {});
   const [tapped, setTapped]       = useState<number | null>(null); // scale visual feedback
 
+  useEffect(() => {
+    try { localStorage.setItem("code-experience-state", JSON.stringify({ phase, gender, answers })); } catch {/* ignore */}
+  }, [phase, gender, answers]);
 
   // ── helpers ────────────────────────────────────────────────────────────────
 

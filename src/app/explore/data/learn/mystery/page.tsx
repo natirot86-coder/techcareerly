@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -1271,7 +1271,17 @@ function RevealPhase() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function MysteryPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
+  // חוזרים בדיוק לשלב שבו נעצרנו — לא מתחילים את החקירה מחדש בכל כניסה
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (typeof window === "undefined") return "intro";
+    try {
+      const saved = localStorage.getItem("data-mystery-phase");
+      return saved ? (JSON.parse(saved) as Phase) : "intro";
+    } catch { return "intro"; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("data-mystery-phase", JSON.stringify(phase)); } catch {/* ignore */}
+  }, [phase]);
 
   return (
     <div dir="rtl" style={{ background: T.bg, minHeight: "100vh", fontFamily: "'Heebo', sans-serif" }}>

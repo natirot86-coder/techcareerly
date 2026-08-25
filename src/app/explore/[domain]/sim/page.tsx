@@ -3165,6 +3165,24 @@ const QA1: ChoiceStep = {
           </div>
         </div>
       </div>
+
+      <DeepDive title="ומה עם מקרי בדיקה שליליים — לא רק 'לוודא שזה עובד'?">
+        <p className="mb-3">
+          בודקת ב׳ כתבה שני מקרים — אחד <span className="font-bold">חיובי (Positive)</span> עם אימייל תקין, ואחד{" "}
+          <span className="font-bold">שלילי (Negative)</span> עם אימייל שגוי. זה לא מקרי: בדיקה טובה תמיד מכסה את שניהם.
+        </p>
+        <p>
+          בטופס אמיתי היו עוד מקרים שליליים ששווה לבדוק: שדה ריק, רווחים בלבד, אימייל עם תו אסור, סיסמה קצרה מדי.
+          כל אחד מהם עונה על אותה שאלה: "מה קורה כשמישהו לא עושה בדיוק מה שציפינו?"
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "GeeksforGeeks — How to Write Test Cases in Software Testing", url: "https://www.geeksforgeeks.org/software-testing/test-case/", kind: "article" },
+          { label: "וידאו: How to Write Test Cases", url: "https://www.youtube.com/watch?v=jNUbb7C7FQU", kind: "video" },
+        ]}
+      />
     </div>
   ),
   question: "מה הופך מקרה בדיקה למועיל?",
@@ -3195,6 +3213,25 @@ const QA2: SequenceStep = {
           דילוג על שלב אחד עלול לגרום לתיקון בלי בדיקה, או לבאג ש"נעלם" בלי שתוקן באמת.
         </div>
       </div>
+
+      <DeepDive title="ומה אם התיקון לא עובד? — Reopened">
+        <p className="mb-3">
+          המסלול שסידרת הוא המסלול המאושר — אבל לא היחיד האפשרי. אם בשלב ה-Verify הבודקת מגלה
+          שהכפתור עדיין לא מגיב, הבאג <span className="font-bold">לא נסגר</span> — הוא חוזר לסטטוס{" "}
+          <span className="font-mono font-bold">Reopened</span> וחוזר אל המפתחת לתיקון נוסף.
+        </p>
+        <p>
+          זו הסיבה ש-Verify חייב להיות שלב נפרד ולא אוטומטי: מפתחת שאומרת "תוקן" לא תמיד צודקת,
+          ורק בדיקה חוזרת בפועל קובעת אם הבאג באמת נעלם.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "BrowserStack — Understanding Bug Life Cycle in Software Testing", url: "https://www.browserstack.com/guide/bug-life-cycle-in-testing", kind: "article" },
+          { label: "וידאו: Defect Life Cycle Explained with Real-Time Example", url: "https://www.youtube.com/watch?v=GnnHUBgfadc", kind: "video" },
+        ]}
+      />
     </div>
   ),
   instruction: "סדרי את שלבי מחזור חיי הבאג — לחצי לפי הסדר הנכון:",
@@ -3227,6 +3264,25 @@ const QA3: ChoiceStep = {
           <div className="text-[11px] leading-[1.5]" style={{ color: "rgba(0,0,0,0.6)" }}>אף אחד לא יכול להתחבר למערכת</div>
         </div>
       </div>
+
+      <DeepDive title="מי בכלל קובע כל ציון?">
+        <p className="mb-3">
+          <span className="font-bold">Severity</span> נקבע בדרך כלל על ידי הבודקת או המפתחת — זו שאלה טכנית: כמה
+          מהמערכת נשבר, כמה משתמשים נפגעים, האם יש דרך עקיפה (workaround).
+        </p>
+        <p>
+          <span className="font-bold">Priority</span> נקבע לרוב יחד עם מוצר/עסק — זו שאלה של תזמון: מה חשוב לתקן
+          עכשיו, לעומת דברים אחרים שגם מחכים בתור. באג יכול להיות טכני חמור מאוד (Severity גבוה) אבל לא דחוף
+          (Priority נמוך) — או להיפך: קוסמטי לגמרי, אבל מנכ״ל ראה אותו לפני דמו ללקוח גדול.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "GeeksforGeeks — Severity in Testing Vs Priority in Testing", url: "https://www.geeksforgeeks.org/software-testing/severity-in-testing-vs-priority-in-testing/", kind: "article" },
+          { label: "וידאו: Severity and Priority in Software Testing", url: "https://www.youtube.com/watch?v=SdrAF8EyEQc", kind: "video" },
+        ]}
+      />
     </div>
   ),
   question: "איזה באג הוא High Severity אבל יכול להיות Low Priority?",
@@ -3257,6 +3313,24 @@ const QA4: ChoiceStep = {
       <div className="text-[11.5px]" style={{ color: "rgba(0,0,0,0.4)" }}>
         מפתח שמקבל את זה — לא יודע איפה להתחיל.
       </div>
+
+      <DeepDive title="מעבר לצעדי שחזור — מה עוד הופך דיווח למקצועי?">
+        <p className="mb-3">
+          דיווח מלא כולל גם: <span className="font-bold">Expected vs Actual</span> (מה ציפית שיקרה, מול מה שקרה
+          בפועל), <span className="font-bold">סביבה</span> (דפדפן, מערכת הפעלה, גרסה), ואם אפשר — צילום מסך או הקלטה קצרה.
+        </p>
+        <p>
+          כל פרט כזה חוסך למפתחת שאלות הבהרה — ובחברה שבה עשרות דיווחים נכנסים ביום, דיווח שאי אפשר לשחזר
+          פשוט נדחה או נשכח.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "GeeksforGeeks — How To Write A Good Bug Report", url: "https://www.geeksforgeeks.org/software-testing/how-to-write-a-good-bug-report/", kind: "article" },
+          { label: "וידאו: How to Write a Good Defect Report", url: "https://www.youtube.com/watch?v=rTmEUiWwgLs", kind: "video" },
+        ]}
+      />
     </div>
   ),
   question: "מה הכי חשוב להוסיף לדיווח הזה כדי שמפתח יוכל לפעול?",
@@ -3281,6 +3355,25 @@ const QA5: ChoiceStep = {
       <p className="text-[13.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.62)" }}>
         מפתחת הוסיפה תמיכה בקוד הנחה ל-checkout. QA בודקת גם את זרימת התשלום הרגילה — לא רק את הפיצ'ר החדש.
       </p>
+
+      <DeepDive title="אי אפשר לבדוק הכל מחדש כל פעם — אז איך בוחרים מה כן?">
+        <p className="mb-3">
+          באפליקציה גדולה יש אלפי תרחישים אפשריים — אין זמן להריץ את כולם בכל גרסה. במקום זה בוחרים לפי סיכון:
+          התהליכים הקריטיים ביותר (Smoke Tests — התחברות, checkout) נבדקים בכל גרסה, והאזורים שבאמת הושפעו
+          מהשינוי נבדקים לעומק.
+        </p>
+        <p>
+          זו הסיבה שצוותים רבים משקיעים באוטומציה דווקא כאן: בדיקות רגרסיה חוזרות על עצמן שוב ושוב, אז יש טעם
+          לתת למחשב להריץ אותן.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "GeeksforGeeks — Regression Testing", url: "https://www.geeksforgeeks.org/software-engineering/software-engineering-regression-testing/", kind: "article" },
+          { label: "וידאו: What is Regression Testing", url: "https://www.youtube.com/watch?v=xF1Jp_6ZRWw", kind: "video" },
+        ]}
+      />
     </div>
   ),
   question: "למה בודקים גם את זרימת התשלום הרגילה, לא רק את הפיצ'ר החדש?",
@@ -3312,6 +3405,25 @@ const QA6: ChoiceStep = {
           <div className="text-[11px] leading-[1.6]" style={{ color: "rgba(0,0,0,0.55)" }}>בדיקות שחוזרות בכל גרסה · יציבות לאורך זמן</div>
         </div>
       </div>
+
+      <DeepDive title="אוטומציה לא 'מחליפה' בודקת — היא כלי בידיים שלה">
+        <p className="mb-3">
+          אוטומציה לא כותבת את עצמה: מישהי צריכה להחליט מה שווה לאוטמט, לכתוב את הבדיקה (למשל עם Selenium,
+          Playwright או Cypress), ולתחזק אותה כשהאתר משתנה. וכשבדיקה אוטומטית נכשלת — עדיין צריך בן אדם שיבין
+          למה, כי לפעמים זה באג אמיתי ולפעמים סתם הבדיקה עצמה התיישנה.
+        </p>
+        <p>
+          בודקת שיודעת גם קצת קוד ויכולה לבנות אוטומציה — QA Automation Engineer / SDET — נהנית מביקוש גבוה
+          יותר ושכר גבוה יותר מבודקת ידנית בלבד.
+        </p>
+      </DeepDive>
+
+      <LearnMore
+        resources={[
+          { label: "Katalon — Manual vs Automated Regression Testing: A Practical Guide", url: "https://katalon.com/resources-center/blog/manual-vs-automated-regression-testing", kind: "article" },
+          { label: "וידאו: Manual Testing vs Automation Testing", url: "https://www.youtube.com/watch?v=Pf82oJBMn9o", kind: "video" },
+        ]}
+      />
     </div>
   ),
   question: "איזו בדיקה הכי משתלם להפוך לאוטומטית?",
@@ -3327,7 +3439,56 @@ const QA6: ChoiceStep = {
   level: 3,
 };
 
-const STEPS_QA: Step[] = [QA0, QA1, QA2, QA3, QA4, QA5, QA6];
+const QA7: ChoiceStep = {
+  kind: "choice",
+  tag: "בדיקת עשן",
+  concept: "Smoke Test — בדיקה מהירה לפני הכל",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.62)" }}>
+        גרסה חדשה בדיוק עלתה. יש עשרות מקרי בדיקה מפורטים שמחכים — אבל לפני כל זה, בודקת QA טובה עושה משהו מהיר יותר קודם.
+      </p>
+    </div>
+  ),
+  question: "לפני שמתחילים לבדוק לעומק, למה כדאי קודם לבדוק 'בדיקת עשן' קצרה?",
+  options: [
+    "כדי לחסוך זמן — לוודא שהדברים הכי בסיסיים בכלל עובדים לפני שמשקיעים בבדיקות מפורטות",
+    "כי זה חוקי לבדוק תמיד ראשון",
+    "כדי למצוא את כל הבאגים במכה אחת",
+  ],
+  correct: 0,
+  okMsg: "נכון! אם האתר בכלל לא נטען, אין טעם לבדוק לעומק כפתור ספציפי. בדיקת עשן קצרה חוסכת המון זמן.",
+  errMsg: "לא. הרעיון הוא לחסוך זמן: לוודא שהבסיס עובד (האתר נטען, ההתחברות עובדת) לפני שמשקיעים שעות בבדיקות מפורטות.",
+  learned: "Smoke test = בדיקה מהירה שהדברים הכי בסיסיים עובדים, לפני שמעמיקים",
+  level: 1,
+};
+
+const QA8: ChoiceStep = {
+  kind: "choice",
+  tag: "מתי זה 'גמור'?",
+  concept: "Acceptance Criteria — איך יודעים שפיצ'ר באמת מוכן?",
+  context: (
+    <div>
+      <p className="text-[13.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.62)" }}>
+        המפתחת כותבת בסלאק: <span className="font-bold" style={{ color: "#023e8a" }}>"הפיצ'ר מוכן!"</span>{" "}
+        לפני שסוגרים את הפינה — מה בודקים?
+      </p>
+    </div>
+  ),
+  question: "מה הכי חשוב לבדוק לפני שמסכימים שפיצ'ר באמת מוכן?",
+  options: [
+    "אם המפתחת בטוחה בעצמה מספיק",
+    "האם הפיצ'ר עומד בקריטריוני הקבלה (Acceptance Criteria) שסוכמו מראש",
+    "כמה זמן לקח לה לכתוב אותו",
+  ],
+  correct: 1,
+  okMsg: "נכון! 'מוכן' לא אמורה להיות תחושה — זו הגדרה ברורה שסוכמה מראש, שאפשר לבדוק מולה באופן אובייקטיבי.",
+  errMsg: "לא. 'מוכן' לא נמדד בביטחון עצמי או בזמן העבודה — הוא נמדד מול קריטריוני קבלה שסוכמו מראש.",
+  learned: "Acceptance Criteria = הגדרה ברורה מראש של 'מוכן', לא תחושה",
+  level: 1,
+};
+
+const STEPS_QA: Step[] = [QA0, QA1, QA2, QA3, QA4, QA5, QA6, QA7, QA8];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEQUENCE INTERACTION
@@ -4012,7 +4173,26 @@ function ResultScreen({ score, answers, nextDomain, domain }: { score: number; a
         </>
       )}
 
-      {domain !== "data" && (
+      {(domain === "qa" || domain === "code") && (
+        <>
+          <Link
+            href={`/explore/${domain}/learn/day`}
+            className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"
+            style={{ background: theme.accentGradient, color: "#fff", fontFamily: theme.fontUI }}
+          >
+            {domain === "qa" ? "ליום בחיי QA Engineer ←" : "ליום בחיי מפתחת ←"}
+          </Link>
+          <Link
+            href={`/explore/${domain}/experience`}
+            className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"
+            style={{ background: "transparent", border: `1.5px solid ${theme.accent}`, color: theme.accent, fontFamily: theme.fontUI }}
+          >
+            מיציתי את הטעימה — קדימה ←
+          </Link>
+        </>
+      )}
+
+      {domain !== "data" && domain !== "qa" && domain !== "code" && (
         <Link
           href={nextDomain ? `/explore/${nextDomain}` : "/explore"}
           className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-4"

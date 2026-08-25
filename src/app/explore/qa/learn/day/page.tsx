@@ -134,9 +134,22 @@ const PM_QUESTIONS = [
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד — אחרת מסך הסיכום מציג 0/N שגוי
+function loadSavedState(): { phase?: Phase; score?: number } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("qa-day-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function QADay() {
-  const [phase, setPhase] = useState<Phase>("career");
-  const [score, setScore] = useState(0);
+  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "career");
+  const [score, setScore] = useState(() => loadSavedState().score ?? 0);
+
+  useEffect(() => {
+    try { localStorage.setItem("qa-day-state", JSON.stringify({ phase, score })); } catch {/* ignore */}
+  }, [phase, score]);
 
   const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
   const [prioritySubmitted, setPrioritySubmitted] = useState(false);

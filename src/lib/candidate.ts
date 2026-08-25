@@ -208,6 +208,26 @@ export async function isAnonymousSession(): Promise<boolean> {
   return Boolean(session?.user?.is_anonymous);
 }
 
+/**
+ * כניסה עם Google — מפנה לגוגל ואז חוזרת ל-redirectTo כשה-session כבר מוכן.
+ * אם יש session אנונימי (המצב הרגיל לפני התחברות), מקשרים את חשבון Google
+ * אליו עם linkIdentity במקום signInWithOAuth — בדיוק כמו phone_change אצל
+ * sendPhoneOtp — כדי לשדרג את אותו משתמש בלי לאבד את ה-id והנתונים שלו.
+ */
+export async function signInWithGoogle(redirectTo: string): Promise<string | null> {
+  if (!supabase) return "Supabase לא מוגדר — חסרים משתני סביבה";
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session?.user?.is_anonymous) {
+    const { error } = await supabase.auth.linkIdentity({ provider: "google", options: { redirectTo } });
+    return error?.message ?? null;
+  }
+
+  const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
+  return error?.message ?? null;
+}
+
 export const supabaseReady = supabaseEnabled;
 
 // ─── Tasks ───────────────────────────────────────────────────────────────────

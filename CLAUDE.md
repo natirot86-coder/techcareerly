@@ -107,9 +107,15 @@
 | תחום | דף domain | סימולציה | מרכז למידה | כלי חוויה | סרטונים |
 |------|-----------|----------|------------|-----------|---------|
 | data | ✅ מלא | ✅ | ✅ analytics+mystery | ✅ | 🔄 בתהליך |
-| code | ✅ חלקי | ✅ LearnMore | ❌ | ❌ | ✅ |
+| code | ✅ מלא | ✅ Playful + DeepDive + LearnMore | ✅ day+mystery | ✅ | ✅ |
+| qa | ✅ מלא | ✅ Playful + LearnMore (24.8) | ✅ day+mystery | ✅ | ❌ |
 | cyber | ✅ מלא | ✅ alert triage | ✅ day+mystery | ✅ | ❌ |
 | networks | ✅ מלא | ✅ | ✅ day+mystery | ✅ | ✅ |
+
+**24.8.2026 — שני תיקונים ב-`/explore/[domain]/sim`:** מסך הסיכום של הסימולציה
+הציע "המשך העמקה / מיציתי" רק לתחום `data` — שאר התחומים (כולל QA וקוד) קפצו
+ישר ל"תחום הבא", גם כשה-journey flag כבר נשמר נכון. הורחב ל-qa/code. ול-QA
+נוספו `LearnMore` (וידאו + מאמר) לשישה מהשבעה שלבים — קוד כבר קיבל את זה, QA לא.
 
 ---
 
@@ -364,7 +370,8 @@ paths משחזר phase, plan זוכר טאב (`plan-last-view`).
 | בחירת מפה: `/map` · `/map/flows` · `/map/grid` | נתי |
 | טלפונים: בנתיבי אודי (חינם לעוטף?) · עתידים/עתידאים · IITC · קווליטסט · אחווה · תוכנית יואל | נתי + רכזות |
 | "תלתן" לא אותר — צריך שם מדויק או קישור | נתי |
-| תחום code — חסרים day/mystery/experience | קלוד |
+| ~~תחום code — חסרים day/mystery/experience~~ ✅ קיימים כבר מ-16.8, הטבלה למעלה לא עודכנה | — |
+| **חיבור 019sms כ-Send SMS Hook** — הקוד מוכן (`/api/auth/send-sms-hook`), חסר: Supabase Dashboard → Auth → Hooks → Send SMS hook עם ה-URL וה-secret, + `SUPABASE_AUTH_HOOK_SECRET` ו-`SMS_019_*` בוורסל | ישראל |
 
 ## 🎬 סרטוני דאטה — IDs מאושרים
 
