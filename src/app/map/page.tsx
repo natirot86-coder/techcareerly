@@ -46,7 +46,7 @@ const BASE = process.env.NODE_ENV === "development" ? "http://localhost:3000" : 
 const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────
   { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 65,  cy: 195,  w: 82,  color: "#023e8a" },
-  { id: "dashboard",  label: "דשבורד",     sub: "6 שלבים במסע",        url: `${BASE}/dashboard`,  cx: 920,  cy: 195,  w: 92, color: "#023e8a" },
+  { id: "dashboard",  label: "מגירת המסע", sub: "הדשבורד בוטל — טאב בניווט", url: `${BASE}/dashboard`,  cx: 920,  cy: 195,  w: 120, color: "#023e8a", badge: "עודכן", badgeColor: "#023e8a" },
   { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + מבוא להייטק + הכנה", url: `${BASE}/waiting`, cx: 1060, cy: 195, w: 110, color: "#0ea5e9", badge: "עודכן", badgeColor: "#0ea5e9" },
 
 
@@ -59,7 +59,7 @@ const NODES: Node[] = [
   { id: "ob-5", label: "סיור", sub: "שקופיות",       url: `${BASE}/onboarding`, cx: 790, cy: 195, w: 98, color: "#3b82f6" },
 
   // ── Bottom nav (soon) ─────────────────────────────────────────────────────
-  { id: "chat",  label: "AI Co-pilot", sub: "בקרוב", url: `${BASE}/chat`,  cx: 940, cy: 122,  w: 105, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
+  { id: "chat",  label: "שאלות ותשובות", sub: "במקום צ'אט ה-AI — תשובות שנכתבו ידנית", url: `${BASE}/faq`,  cx: 940, cy: 122,  w: 130, color: "#023e8a", badge: "חדש", badgeColor: "#023e8a" },
   { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 1075, cy: 122, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
   { id: "admin", label: "ניהול מוסדות", sub: "29 מוסדות · פנימי", url: `${BASE}/admin/institutions`, cx: 85, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-funding", label: "ניהול מלגות", sub: "17 מלגות ותוכניות · פנימי", url: `${BASE}/admin/scholarships`, cx: 250, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
@@ -176,7 +176,8 @@ const NODES: Node[] = [
   { id: "pl-plan",  label: "התוכנית",     sub: "עוגן + חודשים",        url: `${BASE}/plan?view=plan`,    cx: 350, cy: 1850, w: 130, color: "#10b981", badge: "הבית", badgeColor: "#10b981" },
   { id: "pl-money", label: "החשבון",      sub: "מספר במקום הרגעה",     url: `${BASE}/plan?view=money`,   cx: 575, cy: 1850, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
   { id: "pl-docs",  label: "ארון מסמכים", sub: "סטטוס ומיקום בלבד",    url: `${BASE}/plan?view=docs`,    cx: 800, cy: 1850, w: 140, color: "#10b981" },
-  { id: "pl-coord", label: "עדכון לרכזת", sub: "נבנה מעצמו · וואטסאפ", url: `${BASE}/plan?view=coord`,   cx: 1005, cy: 1850, w: 145, color: "#10b981", badge: "סיום", badgeColor: "#10b981" },
+  { id: "pl-coord", label: "עדכון לרכזת", sub: "נבנה מעצמו · וואטסאפ", url: `${BASE}/plan?view=coord`,   cx: 1005, cy: 1850, w: 145, color: "#10b981" },
+  { id: "enroll", label: "קו הסיום — אישור לימודים", sub: "העלאה = שלב 6 · האסמכתא למשרד העבודה", url: `${BASE}/enroll`, cx: 1180, cy: 1850, w: 175, color: "#023e8a", badge: "חדש", badgeColor: "#fb8500" },
 ];
 
 // ─── Edges ────────────────────────────────────────────────────────────────────
@@ -195,7 +196,8 @@ const EDGES: Edge[] = [
   { from: "waiting",   to: "m1",      label: "לקבוע", color: "#0ea5e9" },
 
   // Dashboard → bottom nav
-  { from: "dashboard", to: "chat",  dashed: true, color: "#6b7280" },
+  { from: "dashboard", to: "chat",  dashed: true, color: "#023e8a" },
+  { from: "plan", to: "enroll", label: "נרשמת? ←", color: "#fb8500" },
   { from: "dashboard", to: "squad", dashed: true, color: "#6b7280" },
 
   // Dashboard → explore (stage 3)
