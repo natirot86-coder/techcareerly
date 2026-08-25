@@ -184,6 +184,7 @@ export default function BottomNav() {
 
   const hrefFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreHref : t.href);
   const labelFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreLabel : t.label);
+  const visibleTabs = TABS.filter(t => !(t.href === "/explore" && exploreHref === "/waiting"));
   const isActive = (href: string) =>
     path.startsWith(href) ||
     ((href === "/paths" || href === "/plan" || href === "/waiting") && path.startsWith("/explore"));
@@ -199,7 +200,7 @@ export default function BottomNav() {
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "34px" }} />
       </Link>
       <nav className="flex items-center gap-1">
-        {TABS.map(tab => {
+        {visibleTabs.map(tab => {
           const href = hrefFor(tab);
           const active = isActive(href);
           const style = {
@@ -234,7 +235,7 @@ export default function BottomNav() {
       <Link href="/" className="flex flex-col items-center justify-center py-2 px-2 shrink-0" style={{ width: "52px" }}>
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "30px" }} />
       </Link>
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const href = hrefFor(tab);
         const active = isActive(href);
         const inner = (
