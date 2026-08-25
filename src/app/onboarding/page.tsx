@@ -204,45 +204,68 @@ type TourSlideDef = {
   icon: "meeting" | "explore" | "checklist" | "app";
   headline: string;
   body?: string;
+  /** צילום מסך אמיתי מהאפליקציה — מוצג במסגרת טלפון. מה שרואים בסיור זה מה שמקבלים */
+  shot?: string;
   appTabs?: { sym: string; label: string; desc: string }[];
 };
 
 const TOUR_SLIDES: TourSlideDef[] = [
+  /* כוכב הצפון קודם — כל שקף אחריו עונה "איך זה מקרב אותך אליו" (נתי 25.8) */
   {
-    tag: "שלב 2 — פגישת פתיחה",
+    tag: "לפני שמתחילים — בשביל מה כל זה",
     iconBg: "#023e8a",
     bg: "#dce8ff",
     icon: "meeting",
-    headline: "הצעד הבא — מפגש עם הרכזת",
-    body: "הרכזת תיצור איתך קשר לפגישת היכרות — מפגש פנים אל פנים. שיחה חופשית, לא ראיון. רק שתכירו ותצאו לדרך יחד.",
+    headline: "שתי מטרות. זהו.",
+    body: "לעזור לך לגלות איזה תחום הייטק באמת מתאים לך — ולוודא שתצא/י מפה רשומ/ה למסלול הלימודים הנכון עבורך. כל מסך באפליקציה משרת את זה, ורכזת אמיתית מלווה אותך מהפגישה הראשונה ועד האישור ביד.",
   },
   {
-    tag: "שלב 3 — טעימות הייטק",
+    tag: "טעימות הייטק — איך תדע/י מה מתאים לך",
     iconBg: "#fb8500",
     bg: "#fff3e0",
     icon: "explore",
-    headline: "לגלות מה מדליק אותך",
-    body: "קוד, סייבר, AI, עיצוב, דאטה, שיווק דיגיטלי — תנסה/י כמה כיוונים בסימולציות קצרות ותגלה/י מה קורה לך. בלי לחץ לבחור מראש.",
+    headline: "מתנסים באמת, לא מנחשים",
+    body: "9 תחומים — קוד, AI, סייבר, עיצוב, דאטה ועוד — כל אחד בסימולציה אמיתית קצרה. מגלים מה מדליק אותך מתוך עשייה.",
+    shot: "/tour/explore.png",
   },
   {
-    tag: "שלבים 4-5 — מסלול וצ׳קליסט",
+    tag: "בחירת מסלול — הדרך אל התחום שבחרת",
+    iconBg: "#023e8a",
+    bg: "#e8efff",
+    icon: "checklist",
+    headline: "רואים בדיוק מה כל מסלול נותן",
+    body: "תואר, הכשרה או הנדסאים — השוואה כנה, מספרים אמיתיים, והמלצה אישית לפי התשובות שלך. ההחלטה נשארת שלך.",
+    shot: "/tour/paths.png",
+  },
+  {
+    tag: "מלגות והרשמה — שהכסף לא יעצור אותך",
     iconBg: "#2e7d46",
     bg: "#e8f5e9",
     icon: "checklist",
-    headline: "מסלול + הכנה מלאה לרישום",
-    body: "נמצא את מסגרת הלימודים הנכונה — אקדמאית, הנדסאים, הכשרה מקצועית. ונכין יחד הכל: מימון, מלגות, דיור, פסיכומטרי, תנאי קבלה.",
+    headline: "כמה זה באמת עולה — ומי עוזר לשלם",
+    body: "חשבון אמיתי למוסד שבחרת: מלגות שמורידות מהמחיר בלחיצה, תזרים החודש שלך כסטודנט, וכל המשימות עד ההרשמה.",
+    shot: "/tour/money.png",
+  },
+  {
+    tag: "היעד — סטודנט/ית",
+    iconBg: "#023e8a",
+    bg: "#dce8ff",
+    icon: "meeting",
+    headline: "עד שהאישור ביד",
+    body: "המסע נגמר ברגע אמיתי אחד: אישור לימודים. וגם אז — הליווי ממשיך איתך לתוך הלימודים.",
+    shot: "/tour/student.png",
   },
   {
     tag: "מה יש לך כאן",
     iconBg: "#023e8a",
     bg: "#f2ede6",
     icon: "app",
-    headline: "4 כלים לאורך כל הדרך",
+    headline: "הכלים שילוו אותך",
     appTabs: [
-      { sym: "⊞", label: "המסע", desc: "מעקב אחרי השלבים שלך" },
-      { sym: "◎", label: "Co-pilot", desc: "AI שעוזר עם שאלות" },
-      { sym: "◈", label: "קהילה", desc: "סטודנטים בדרך דומה" },
-      { sym: "◉", label: "רכזת", desc: "מלווה אותך מהתחלה ועד הרשמה" },
+      { sym: "⊞", label: "המסע", desc: "לדעת בכל רגע איפה את/ה — ולחזור לכל מקום שהיית" },
+      { sym: "⊙", label: "חקר", desc: "הטעימות, המסלול והתוכנית — לפי השלב שלך" },
+      { sym: "?", label: "שאלות", desc: "תשובות ישרות על התהליך" },
+      { sym: "◉", label: "רכזת", desc: "אדם אמיתי, מהפגישה הראשונה ועד ההרשמה" },
     ],
   },
 ];
@@ -320,13 +343,28 @@ function WizardTour({ gender, onDone }: { gender: Gender; onDone: () => void }) 
         </button>
       </div>
 
-      {/* Illustration */}
-      <div
-        className="mx-[22px] rounded-2xl flex items-center justify-center"
-        style={{ height: 174, background: cur.iconBg }}
-      >
-        <TourIcon type={cur.icon} strokeColor={cur.bg} />
-      </div>
+      {/* Illustration — צילום מסך אמיתי במסגרת טלפון, או אייקון כשאין */}
+      {cur.shot ? (
+        <div className="mx-auto" style={{ width: 172 }}>
+          <div
+            className="overflow-hidden"
+            style={{
+              borderRadius: 26, border: "5px solid #1b1f27", background: "#1b1f27",
+              boxShadow: "0 14px 34px rgba(2,30,60,0.25)", height: 300,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={cur.shot} alt="" className="w-full h-full object-cover object-top" style={{ borderRadius: 21 }} />
+          </div>
+        </div>
+      ) : (
+        <div
+          className="mx-[22px] rounded-2xl flex items-center justify-center"
+          style={{ height: 174, background: cur.iconBg }}
+        >
+          <TourIcon type={cur.icon} strokeColor={cur.bg} />
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 px-[22px] pt-5 flex flex-col gap-4">
