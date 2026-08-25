@@ -838,27 +838,39 @@ function IntroPeople({ who, onNext }: { who: string; onNext: () => void }) {
       <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
         לא סטטיסטיקה — אנשים אמיתיים שעברו בדיוק את הדרך שאתה מתחיל עכשיו:
       </p>
+      {/* פורמט כרטיסי הכתבות מדפי התחומים (נתי 25.8): תמונת הפרומו של
+          הכתבה עצמה — רק כשהיא קיימת. לכתבה הישנה של יהונתן אין תמונת
+          פרומו, ולא ממציאים לו אחת */}
       {[
         {
-          name: "יהונתן",
-          story: "עבד כמאבטח בחברת הייטק. אחרי הכשרה בטק-קריירה חזר לאותו בניין — הפעם כאיש הייטק.",
-          source: "ynet, הכתבה המלאה",
-          href: "https://www.ynet.co.il/articles/0,7340,L-5456028,00.html",
+          name: "עמנואל — בודק תוכנה (QA) בחברת הייטק תל-אביבית",
+          story: "עלה מאתיופיה בגיל צעיר — ותוך שנים ספורות כבר עבד בהייטק.",
+          source: "ynet · 2023",
+          href: "https://www.ynet.co.il/activism/article/rjhmifnqn",
+          img: "/articles/story-emanuel.jpg",
         },
         {
-          name: "עמנואל",
-          story: "עלה מאתיופיה בגיל צעיר — ותוך שנים ספורות כבר עבד כבודק תוכנה (QA) בחברת הייטק תל-אביבית.",
-          source: "ynet, הכתבה המלאה",
-          href: "https://www.ynet.co.il/activism/article/rjhmifnqn",
+          name: "יהונתן — מהשמירה בכניסה לבניין, אל ההייטק שבתוכו",
+          story: "עבד כמאבטח בחברת הייטק. אחרי הכשרה בטק-קריירה חזר לאותו בניין — הפעם כאיש הייטק.",
+          source: "ynet · 2019",
+          href: "https://www.ynet.co.il/articles/0,7340,L-5456028,00.html",
+          img: null as string | null,
         },
       ].map(x => (
-        <div key={x.name} style={{ background: "#fff", borderRadius: 20, padding: 18, marginTop: 12 }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>{x.name}</div>
-          <p style={{ fontSize: 15, lineHeight: 1.65, color: "#1b1f27", marginTop: 6 }}>{x.story}</p>
-          <a href={x.href} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13.5, fontWeight: 700, color: NAVY }}>
-            {x.source} ↗
-          </a>
-        </div>
+        <a key={x.href} href={x.href} target="_blank" rel="noopener noreferrer"
+          style={{ display: "block", background: "#fff", borderRadius: 20, overflow: "hidden", marginTop: 12, textDecoration: "none", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          {x.img && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={x.img} alt="" style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", display: "block" }}
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          )}
+          <div style={{ padding: "13px 16px" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.08em", color: "rgba(0,0,0,0.38)", textTransform: "uppercase" }}>{x.source}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, lineHeight: 1.45, marginTop: 4 }}>{x.name}</div>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: "#5c6473", marginTop: 4 }}>{x.story}</p>
+            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginTop: 6 }}>לכתבה המלאה ↗</div>
+          </div>
+        </a>
       ))}
       <p style={{ fontSize: 14.5, color: MUTED, lineHeight: 1.6, marginTop: 12 }}>
         {who} ליוותה אנשים כאלה בדיוק — וזה מה שמחכה לך בפגישה.
