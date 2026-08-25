@@ -665,10 +665,10 @@ function IntroWhere({ onNext }: { onNext: () => void }) {
         אנשי טכנולוגיה עובדים גם בבנקים, בקופות חולים ובממשלה — לא רק בחברות הייטק. בחר מה מדבר אליך:
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
-        {[
-          ["🚀", "בחברת הייטק", "הטכנולוגיה היא המוצר עצמו. בדרך כלל שכר גבוה יותר וקצב למידה מהיר יותר."],
-          ["🏦", "בארגון גדול ויציב", "הטכנולוגיה משרתת את העסק — בנק, קופת חולים, ממשלה. לרוב יציב יותר, ולפעמים קל יותר להתקבל למשרה ראשונה."],
-        ].map(([e, t, d]) => {
+        {([
+          ["🚀", "בחברת הייטק", "הטכנולוגיה היא המוצר עצמו. בדרך כלל שכר גבוה יותר וקצב למידה מהיר יותר.", ["גוגל", "אינטל", "Wix", "מובילאיי", "צ'ק פוינט"]],
+          ["🏦", "בארגון גדול ויציב", "הטכנולוגיה משרתת את העסק — בנק, קופת חולים, ממשלה. לרוב יציב יותר, ולפעמים קל יותר להתקבל למשרה ראשונה.", ["בנק הפועלים", "כללית", "חברת חשמל", "אל על"]],
+        ] as [string, string, string, string[]][]).map(([e, t, d, firms]) => {
           const on = picked === t;
           return (
             <button
@@ -683,10 +683,32 @@ function IntroWhere({ onNext }: { onNext: () => void }) {
             >
               <div style={{ fontSize: 16, fontWeight: 800, color: "#1b1f27" }}>{e} {t}</div>
               <div style={{ fontSize: 14, lineHeight: 1.6, color: MUTED, marginTop: 4 }}>{d}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 9 }}>
+                {firms.map(f => (
+                  <span key={f} style={{ background: on ? "#fff" : "#f4f5f7", borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: NAVY }}>{f}</span>
+                ))}
+              </div>
             </button>
           );
         })}
       </div>
+      {picked === "בחברת הייטק" && (
+        <div style={{ background: "#fff", borderRadius: 20, padding: 16, marginTop: 12 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 800, color: "#1b1f27", marginBottom: 10 }}>
+            ובתוך ההייטק עצמו יש שני עולמות:
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ background: "#fff7ec", borderRadius: 14, padding: 12, fontSize: 13.5, lineHeight: 1.6, color: "#1b1f27" }}>
+              <b>🌱 סטארטאפ</b> — חברה קטנה שבונה משהו חדש. לומדים המון ומהר,
+              נוגעים בהכל — אבל פחות יציב, וסטארטאפים גם נסגרים.
+            </div>
+            <div style={{ background: "#eaf0f9", borderRadius: 14, padding: 12, fontSize: 13.5, lineHeight: 1.6, color: "#1b1f27" }}>
+              <b>🏢 חברה גדולה / תאגיד</b> — כמו גוגל או אינטל. מסודר, יציב,
+              יש ממי ללמוד ומסלולי קידום — אבל התפקיד ממוקד יותר והקצב רגוע יותר.
+            </div>
+          </div>
+        </div>
+      )}
       {picked && (
         <>
           <div style={{ background: "#e7f6f0", borderRadius: 20, padding: 16, marginTop: 12, fontSize: 15, lineHeight: 1.65, color: "#046c4e" }}>
