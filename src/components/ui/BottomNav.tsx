@@ -64,9 +64,24 @@ function JourneyDrawer({ onClose }: { onClose: () => void }) {
         className="absolute bottom-0 inset-x-0 md:top-14 md:bottom-auto md:right-6 md:left-auto md:w-[380px] rounded-t-3xl md:rounded-2xl p-5 pb-8 max-h-[80vh] overflow-y-auto"
         style={{ background: "#fbf9f5", fontFamily: "'Heebo', sans-serif" }}
       >
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-1">
           <div className="text-[17px] font-black" style={{ color: "#023e8a" }}>המסע שלך</div>
           <button onClick={onClose} className="text-[14px] font-bold px-2" style={{ color: "rgba(0,0,0,0.4)" }}>✕ סגירה</button>
+        </div>
+        {/* התקדמות במבט אחד (נתי 25.8) — הישג לפני רשימה */}
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="flex gap-1.5">
+            {JOURNEY.map(st => (
+              <span key={st.n} style={{
+                width: st.n === stageNow ? 18 : 8, height: 8, borderRadius: 999,
+                background: st.n < stageNow ? "#059669" : st.n === stageNow ? "#fb8500" : "rgba(0,0,0,0.12)",
+                transition: "all .25s",
+              }} />
+            ))}
+          </div>
+          <span className="text-[12px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>
+            {stageNow > 1 ? `${stageNow - 1} מתוך 6 כבר מאחוריך` : "מתחילים — 6 שלבים לפניך"}
+          </span>
         </div>
         <div className="flex flex-col gap-2">
           {JOURNEY.map(s => {

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import JourneyStrip from "@/components/ui/JourneyStrip";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const ORANGE = "#fb8500";
@@ -146,6 +147,8 @@ export default function ExplorePage() {
           </div>
         </div>
       </div>
+
+      <JourneyStrip current={3} phaseLabel="טעימות הייטק" />
 
       <div className="max-w-[900px] mx-auto w-full px-[22px] md:px-12">
 
