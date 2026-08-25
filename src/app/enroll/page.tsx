@@ -69,7 +69,7 @@ export default function EnrollPage() {
               להחליף בגרסה עדכנית
               <input type="file" accept="image/*,.pdf" onChange={onFile} className="hidden" />
             </label>
-            <Link href="/dashboard" className="w-full py-3.5 rounded-2xl text-[15px] font-black" style={{ background: ORANGE, color: "#fff" }}>
+            <Link href="/" className="w-full py-3.5 rounded-2xl text-[15px] font-black" style={{ background: ORANGE, color: "#fff" }}>
               למסע — שלב 6 ✓
             </Link>
           </div>

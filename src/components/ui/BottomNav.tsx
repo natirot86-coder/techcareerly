@@ -171,7 +171,7 @@ export default function BottomNav() {
       כלומר בדסקטופ לא היה ניווט בכלל — וגם הלוגו נעלם איתו.
     */}
     <header className="hidden md:flex fixed top-0 inset-x-0 z-50 items-center gap-6 px-8 py-2.5 bg-card border-b border-[rgba(2,62,138,0.1)]">
-      <Link href="/dashboard" className="shrink-0">
+      <Link href="/" className="shrink-0">
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "34px" }} />
       </Link>
       <nav className="flex items-center gap-1">
@@ -207,7 +207,7 @@ export default function BottomNav() {
 
     <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden flex border-t border-[rgba(2,62,138,0.1)] bg-card" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       {/* Logo */}
-      <Link href="/dashboard" className="flex flex-col items-center justify-center py-2 px-2 shrink-0" style={{ width: "52px" }}>
+      <Link href="/" className="flex flex-col items-center justify-center py-2 px-2 shrink-0" style={{ width: "52px" }}>
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "30px" }} />
       </Link>
       {TABS.map((tab) => {
