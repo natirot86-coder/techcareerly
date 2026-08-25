@@ -159,7 +159,16 @@ export default function BottomNav() {
     else if (met1) setExploreHref("/waiting");
   }, []);
 
+  /* התווית מתחלפת עם היעד (נתי 25.8): "חקר" שמוביל לתוכנית שלב 5 היא
+     תווית שמשקרת. הטאב תמיד אומר מה באמת מחכה מאחוריו */
+  const exploreLabel =
+    exploreHref === "/plan" ? "תוכנית"
+    : exploreHref === "/paths" ? "מסלול"
+    : exploreHref === "/waiting" ? "הכנה"
+    : "חקר";
+
   const hrefFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreHref : t.href);
+  const labelFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreLabel : t.label);
   const isActive = (href: string) =>
     path.startsWith(href) ||
     ((href === "/paths" || href === "/plan" || href === "/waiting") && path.startsWith("/explore"));
@@ -188,14 +197,14 @@ export default function BottomNav() {
             return (
               <button key={tab.href} onClick={() => setJourneyOpen(true)} className={cls} style={style}>
                 <span className="text-[14px]">{tab.icon}</span>
-                {tab.label}
+                {labelFor(tab)}
               </button>
             );
           }
           return (
             <Link key={tab.href} href={href} className={cls} style={style}>
               <span className="text-[14px]">{tab.icon}</span>
-              {tab.label}
+              {labelFor(tab)}
             </Link>
           );
         })}
@@ -225,7 +234,7 @@ export default function BottomNav() {
               className="text-[10.5px] font-bold"
               style={{ color: active ? "#023e8a" : "rgba(0,0,0,0.35)" }}
             >
-              {tab.label}
+              {labelFor(tab)}
             </span>
           </>
         );
