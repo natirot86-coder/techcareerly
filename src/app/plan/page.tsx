@@ -974,11 +974,23 @@ function MoneyView() {
    */
   const [instMain, setInstMain] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
+  /** הערכת מגורים חודשית — קלט של המשתמש, לא מספר שלנו. null = גר/ה בבית */
+  const [housing, setHousingState] = useState<number | null>(null);
+  const setHousing = (v: number | null) => {
+    setHousingState(v);
+    try {
+      if (v === null) localStorage.removeItem("plan-housing-monthly");
+      else localStorage.setItem("plan-housing-monthly", String(v));
+    } catch { /* ignore */ }
+    logEvent("plan_housing_est", { monthly: String(v ?? 0) });
+  };
 
   useEffect(() => {
     try {
       setInstMain(localStorage.getItem("plan-inst-main"));
       setPicked(JSON.parse(localStorage.getItem("plan-picked") ?? "[]"));
+      const h = localStorage.getItem("plan-housing-monthly");
+      if (h) setHousingState(Number(h));
     } catch { /* ignore */ }
   }, []);
 
@@ -1145,6 +1157,9 @@ function MoneyView() {
         </div>
       ))}
 
+      <HousingCard inst={inst} onMonthly={setHousing} monthly={housing} />
+      <MonthSim gap={gap} track={track} housing={housing} />
+
       <HoursAccount picked={picked} />
 
       <div className="p-[18px] rounded-[18px]" style={{ background: "#fff7ec", border: "1px solid #f5dcb8" }}>
@@ -1174,6 +1189,127 @@ function MoneyView() {
       <div className="p-4 rounded-[14px] text-[13px]" style={{ background: "#f6f3ec", border: `1px solid ${BORDER}`, color: "#5c574e", lineHeight: 1.6 }}>
         הרשימה הזו חלקית — יש מלגות שלא מצאנו, ותנאים משתנים משנה לשנה. אם שמעת על
         מלגה שלא מופיעה כאן, זה לא אומר שהיא לא קיימת. שווה לשאול את הרכזת.
+      </div>
+    </div>
+  );
+}
+
+/**
+ * מגורים (נתי 25.8) — לא מסך נפרד אלא סעיף בחשבון, ורק למי שזה רלוונטי לו:
+ * המוסד בעיר אחרת מהיישוב שלו (שני הנתונים כבר אצלנו). אין לנו מחירי
+ * מעונות מאומתים — ולכן אין כאן מספר שלנו: יש שאלות נכונות, וההערכה
+ * היא של המשתמש ומזינה את התזרים.
+ */
+function HousingCard({ inst, monthly, onMonthly }: {
+  inst: { name: string; city?: string } | null;
+  monthly: number | null;
+  onMonthly: (v: number | null) => void;
+}) {
+  const [homeCity, setHomeCity] = useState("");
+  useEffect(() => {
+    try { setHomeCity((localStorage.getItem("home-city") ?? "").trim()); } catch { /* ignore */ }
+  }, []);
+  if (!inst?.city) return null;
+  const far = !homeCity || homeCity !== inst.city.trim();
+  if (!far) return null;
+  const short = inst.name.split(" — ")[0];
+  const OPTIONS: [string, number | null][] = [["גר/ה בבית ונוסע/ת", null], ["מעונות (הערכה שלי)", 1200], ["שכירות (הערכה שלי)", 2500]];
+  return (
+    <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${BORDER}` }}>
+      <div className="text-[16px] font-extrabold mb-1" style={{ color: NAVY }}>🏠 מגורים — ההחלטה השנייה בגודלה</div>
+      <p className="text-[13.5px] mb-3" style={{ color: "#5c574e", lineHeight: 1.65 }}>
+        {short} נמצא ב{inst.city}{homeCity ? ` ואת/ה מ${homeCity}` : ""} — אז מגורים הם חלק מהחשבון.
+        אין לנו מחיר מעונות מאומת ל{short}, ולכן זו <b>שאלה מצוינת לרכזת וליום הפתוח</b>:
+        כמה עולים המעונות, ומה עדיפות הקבלה אליהם. חלק מהמלגות (כמו יואל בבר-אילן) כוללות סיוע במגורים.
+      </p>
+      <div className="text-[12.5px] font-bold mb-2" style={{ color: "#8a8377" }}>מה התכנון שלך? (אפשר לשנות בכל רגע)</div>
+      <div className="flex flex-col gap-2">
+        {OPTIONS.map(([label, def]) => {
+          const on = def === null ? monthly === null || monthly === 0 : monthly !== null && monthly > 0 && (label.includes("מעונות") ? monthly <= 1800 : monthly > 1800);
+          return (
+            <button key={label} onClick={() => onMonthly(def)} className="py-2.5 px-3 rounded-xl text-[13.5px] font-bold text-right"
+              style={{ background: on ? "rgba(2,62,138,0.07)" : "#fff", border: on ? `1.5px solid ${NAVY}` : `1px solid ${BORDER}`, color: on ? NAVY : "#5c574e" }}>
+              {label}{def ? ` — כ-${def.toLocaleString("he-IL")} ₪ לחודש` : ""}
+            </button>
+          );
+        })}
+      </div>
+      {monthly !== null && monthly > 0 && (
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[12.5px] font-bold" style={{ color: "#5c574e" }}>ההערכה שלי לחודש:</span>
+          <input
+            type="number" value={monthly} min={0} max={6000} step={100}
+            onChange={e => onMonthly(Math.max(0, Number(e.target.value)))}
+            className="w-24 px-2 py-1.5 rounded-lg text-[14px] font-bold"
+            style={{ border: `1px solid ${BORDER}`, direction: "ltr" }}
+          />
+          <span className="text-[13px]" style={{ color: "#8a8377" }}>₪</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * "החודש שלי כסטודנט" (נתי 25.8) — תזרים גס מהמספרים שהוא עצמו בחר:
+ * שכ"ל אחרי מלגות חלקי 10 חודשים + הערכת המגורים שלו + הערכת מחיה שלו.
+ * חשבון במקום הרגעה — והמטרה המוצהרת: להגיע לפגישה עם השאלות הנכונות.
+ */
+function MonthSim({ gap, track, housing }: { gap: number; track: string; housing: number | null }) {
+  const [living, setLiving] = useState<number>(0);
+  const [income, setIncome] = useState<number>(0);
+  useEffect(() => {
+    try {
+      setLiving(Number(localStorage.getItem("plan-living-monthly") ?? 0));
+      setIncome(Number(localStorage.getItem("plan-income-monthly") ?? 0));
+    } catch { /* ignore */ }
+  }, []);
+  const save = (k: string, v: number, set: (n: number) => void) => {
+    set(v);
+    try { localStorage.setItem(k, String(v)); } catch { /* ignore */ }
+  };
+  if (track === "bootcamp") return null;
+  const tuitionMonthly = Math.round(gap / 10);
+  const out = tuitionMonthly + (housing ?? 0) + living;
+  const net = income - out;
+  const Chips = ({ value, onPick, opts }: { value: number; onPick: (v: number) => void; opts: [string, number][] }) => (
+    <div className="flex flex-wrap gap-1.5">
+      {opts.map(([l, v]) => (
+        <button key={l} onClick={() => onPick(v)} className="px-2.5 py-1.5 rounded-full text-[12px] font-bold"
+          style={{ background: value === v ? NAVY : "#fff", color: value === v ? "#fff" : "#5c574e", border: value === v ? "none" : `1px solid ${BORDER}` }}>
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+  return (
+    <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${BORDER}` }}>
+      <div className="text-[16px] font-extrabold mb-1" style={{ color: NAVY }}>📅 החודש שלי כסטודנט/ית</div>
+      <p className="text-[13px] mb-3" style={{ color: "#8a8377", lineHeight: 1.6 }}>
+        חשבון גס, מההערכות שלך — כדי שתגיע/י לפגישה עם השאלות הנכונות, לא כדי להפחיד.
+      </p>
+      <div className="flex flex-col gap-3">
+        <div>
+          <div className="text-[12.5px] font-bold mb-1.5" style={{ color: "#5c574e" }}>הוצאות מחיה חוץ ממגורים (ההערכה שלך)</div>
+          <Chips value={living} onPick={v => save("plan-living-monthly", v, setLiving)}
+            opts={[["מינימלי · 1,000", 1000], ["בינוני · 2,000", 2000], ["מרווח · 3,000", 3000]]} />
+        </div>
+        <div>
+          <div className="text-[12.5px] font-bold mb-1.5" style={{ color: "#5c574e" }}>הכנסה חודשית צפויה (עבודה בזמן הלימודים)</div>
+          <Chips value={income} onPick={v => save("plan-income-monthly", v, setIncome)}
+            opts={[["בלי עבודה · 0", 0], ["חלקי · 3,000", 3000], ["משרת סטודנט · 6,000", 6000]]} />
+          <div className="text-[11.5px] mt-1.5" style={{ color: "#8a8377" }}>משרת סטודנט נפתחת בדרך כלל מסוף שנה א׳ — בשנה הראשונה כדאי לחשב בלעדיה.</div>
+        </div>
+        <div style={{ height: 1, background: BORDER }} />
+        <Row label="שכר לימוד אחרי המלגות שבחרת (÷10 חודשים)" value={`${tuitionMonthly.toLocaleString("he-IL")} ₪`} />
+        {(housing ?? 0) > 0 && <Row label="מגורים (ההערכה שלך)" value={`${(housing ?? 0).toLocaleString("he-IL")} ₪`} />}
+        {living > 0 && <Row label="מחיה (ההערכה שלך)" value={`${living.toLocaleString("he-IL")} ₪`} />}
+        {income > 0 && <Row label="הכנסה" value={`− ${income.toLocaleString("he-IL")} ₪`} tone={GREEN} />}
+        <Row label={net < 0 ? "הפער החודשי לכסות" : "נשאר ביד"} value={`${Math.abs(net).toLocaleString("he-IL")} ₪`} bold tone={net < 0 ? "#b91c1c" : GREEN} />
+        <div className="text-[12.5px] p-2.5 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.65 }}>
+          פער זה לא סוף הדרך — זו רשימת השאלות לפגישה: אילו מלגות קיום קיימות,
+          מה מותר לממן מהפיקדון האישי, ואיזו עבודה מסתדרת עם המערכת. הרכזת עוברת על זה כל יום.
+        </div>
       </div>
     </div>
   );
