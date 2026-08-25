@@ -786,8 +786,15 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (new URLSearchParams(window.location.search).get("reset") === "1") {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get("reset") === "1") {
         localStorage.removeItem("onboarding-done");
+        return;
+      }
+      // קפיצה ישירה למסך לבדיקה — ?step=5 מגיע ישר לסיור (כמו ?demo בשאר המסכים)
+      const jump = Number(q.get("step"));
+      if (jump >= 0 && jump <= 5) {
+        setStep(jump as Step);
         return;
       }
       if (localStorage.getItem("onboarding-done")) {
