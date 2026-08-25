@@ -272,6 +272,53 @@ export default function BottomNav() {
       })}
     </nav>
     {journeyOpen && <JourneyDrawer onClose={() => setJourneyOpen(false)} />}
+
+    {/* הפס הצדי — רק במסכים רחבים באמת, כדי לא לדחוק את התוכן */}
+    <JourneyRail />
     </>
+  );
+}
+
+function JourneyRail() {
+  const [stageNow, setStageNow] = useState(0);
+  useEffect(() => { try { setStageNow(deriveStage()); } catch { /* ignore */ } }, []);
+  if (!stageNow) return null;
+  return (
+    <aside
+      dir="rtl"
+      className="hidden xl:flex fixed right-0 top-14 bottom-0 w-[225px] flex-col gap-1.5 p-5 overflow-y-auto z-40"
+      style={{ background: "linear-gradient(180deg, #023e8a 0%, #03318f 100%)", fontFamily: "'Heebo', sans-serif" }}
+    >
+      <div className="text-[11px] font-black tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.6)" }}>
+        המסע שלך · {stageNow > 1 ? `${stageNow - 1} מתוך 6 מאחוריך` : "6 שלבים"}
+      </div>
+      {JOURNEY.map(st => {
+        const done = st.n < stageNow;
+        const current = st.n === stageNow;
+        return (
+          <div key={st.n} className="flex items-center gap-2.5 rounded-xl px-2.5 py-2"
+            style={{ background: current ? "rgba(251,133,0,0.18)" : "transparent", opacity: done || current ? 1 : 0.45 }}>
+            <span className="w-[24px] h-[24px] rounded-full flex items-center justify-center text-[11px] font-black shrink-0"
+              style={{ background: done ? "#fff" : current ? "#fb8500" : "rgba(255,255,255,0.25)", color: done ? "#023e8a" : "#fff" }}>
+              {done ? "✓" : st.n}
+            </span>
+            <span className="text-[12.5px] font-bold" style={{ color: "#fff" }}>
+              {st.candidate}
+            </span>
+            {!done && !current && <span className="mr-auto text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>🔒</span>}
+          </div>
+        );
+      })}
+      <Link
+        href={STAGE_CTA[stageNow]?.href ?? "/"}
+        className="mt-3 text-center text-[13px] font-black rounded-xl py-2.5"
+        style={{ background: "#fb8500", color: "#fff" }}
+      >
+        {STAGE_CTA[stageNow]?.label ?? "להמשיך ←"}
+      </Link>
+      <div className="mt-auto text-[10.5px] leading-[1.6] pt-3" style={{ color: "rgba(255,255,255,0.45)" }}>
+        שלבים שעברת נשארים פתוחים — לוחצים על "המסע" למעלה כדי לחזור אליהם
+      </div>
+    </aside>
   );
 }

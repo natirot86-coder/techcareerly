@@ -35,6 +35,7 @@ import Link from "next/link";
 import { track as trackEvent } from "@vercel/analytics";
 import { coordinatorFor } from "@/data/meetings";
 import { logEvent } from "@/lib/candidate";
+import BottomNav from "@/components/ui/BottomNav";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -151,7 +152,7 @@ export default function WaitingPage() {
 
   return (
     <div dir="rtl" style={{ minHeight: "100vh", background: CREAM, ...HEEBO }}>
-      <div style={{ maxWidth: 430, margin: "0 auto", padding: "28px 20px 36px" }}>
+      <div style={{ maxWidth: 430, margin: "0 auto", padding: "28px 20px 110px" }}>
         {screen === "home" && (
           <Home
             name={name} who={who} booked={booked} tasteDone={tasteDone}
@@ -188,6 +189,7 @@ export default function WaitingPage() {
           </>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 }
