@@ -10,7 +10,7 @@ import { JOURNEY } from "@/data/journey";
  * מעצם המבנה), הנוכחי מוביל לפעולה הבאה, והעתידי נעול עם מנעול נראה.
  * גזירת השלב זהה לדשבורד — ממה שקרה, לא ממה שהוצהר.
  */
-function deriveStage(): number {
+export function deriveStage(): number {
   const flag = (k: string) => localStorage.getItem(k) === "true";
   const has = (k: string) => !!localStorage.getItem(k);
   return has("enrollment-doc-path") ? 6
@@ -42,7 +42,7 @@ const STAGE_LINKS: Record<number, { label: string; href: string }[]> = {
 };
 
 /** הפעולה הבאה של השלב הנוכחי — המסך הבא הוא הפעולה הבאה, גם כאן */
-const STAGE_CTA: Record<number, { label: string; href: string }> = {
+export const STAGE_CTA: Record<number, { label: string; href: string }> = {
   1: { label: "להשלמת הפתיחה ←", href: "/onboarding" },
   2: { label: "למרחב ההמתנה ←", href: "/waiting" },
   3: { label: "לטעימות ←", href: "/explore" },

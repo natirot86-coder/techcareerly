@@ -54,7 +54,10 @@ export async function ensureCandidateId(): Promise<string | null> {
   const { error: ensureError } = await supabase
     .from("candidates")
     .upsert({ id: candidateId }, { onConflict: "id", ignoreDuplicates: true });
-  if (ensureError) console.error("ensureCandidateId: failed to ensure candidates row", ensureError);
+  // אובייקט גולמי מתקפל ל-{} ב-overlay של Next — מדפיסים מחרוזת כדי שהשדות תמיד יראו
+  if (ensureError) console.error(
+    `ensureCandidateId: failed to ensure candidates row — code=${ensureError.code} message=${ensureError.message} details=${ensureError.details} hint=${ensureError.hint}`
+  );
 
   return candidateId;
 }

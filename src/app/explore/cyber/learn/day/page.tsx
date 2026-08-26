@@ -145,8 +145,18 @@ const PM_QUESTIONS = [
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד — אחרת מסך הסיכום מציג 0/N שגוי
-function loadSavedState(): { phase?: Phase; score?: number } {
+// חוזרים בדיוק לאיפה שנעצרנו — לא רק לשלב, אלא גם לתשובות בכל שלב-משנה.
+// termLines/termDone מוחרגים בכוונה: זו אנימציית הקלדה חד-פעמית, לא תשובה.
+type SavedDayState = {
+  phase?: Phase; score?: number;
+  priorityOrder?: string[]; prioritySubmitted?: boolean; priorityError?: boolean;
+  selectedLogs?: number[]; logsSubmitted?: boolean;
+  toggles?: Record<string, boolean>; togglesSubmitted?: boolean;
+  termAns?: number | null;
+  pmIdx?: number; pmPicked?: number | null; pmDoneAll?: boolean;
+};
+
+function loadSavedState(): SavedDayState {
   if (typeof window === "undefined") return {};
   try {
     const saved = localStorage.getItem("cyber-day-state");
@@ -155,31 +165,45 @@ function loadSavedState(): { phase?: Phase; score?: number } {
 }
 
 export default function CyberDay() {
-  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "career");
-  const [score, setScore] = useState(() => loadSavedState().score ?? 0);
+  const savedRef = useRef<SavedDayState | null>(null);
+  if (savedRef.current === null) savedRef.current = loadSavedState();
+  const saved = savedRef.current;
 
-  useEffect(() => {
-    try { localStorage.setItem("cyber-day-state", JSON.stringify({ phase, score })); } catch {/* ignore */}
-  }, [phase, score]);
+  const [phase, setPhase] = useState<Phase>(saved.phase ?? "career");
+  const [score, setScore] = useState(saved.score ?? 0);
 
-  const [priorityOrder, setPriorityOrder] = useState<string[]>([]);
-  const [prioritySubmitted, setPrioritySubmitted] = useState(false);
-  const [priorityError, setPriorityError] = useState(false);
+  const [priorityOrder, setPriorityOrder] = useState<string[]>(saved.priorityOrder ?? []);
+  const [prioritySubmitted, setPrioritySubmitted] = useState(saved.prioritySubmitted ?? false);
+  const [priorityError, setPriorityError] = useState(saved.priorityError ?? false);
 
-  const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
-  const [logsSubmitted, setLogsSubmitted] = useState(false);
+  const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set(saved.selectedLogs ?? []));
+  const [logsSubmitted, setLogsSubmitted] = useState(saved.logsSubmitted ?? false);
 
-  const [toggles, setToggles] = useState<Record<string, boolean>>({});
-  const [togglesSubmitted, setTogglesSubmitted] = useState(false);
+  const [toggles, setToggles] = useState<Record<string, boolean>>(saved.toggles ?? {});
+  const [togglesSubmitted, setTogglesSubmitted] = useState(saved.togglesSubmitted ?? false);
 
   const [termLines, setTermLines] = useState<string[]>([]);
   const [termDone, setTermDone] = useState(false);
   const termRef = useRef(false);
-  const [termAns, setTermAns] = useState<number | null>(null);
+  const [termAns, setTermAns] = useState<number | null>(saved.termAns ?? null);
 
-  const [pmIdx, setPmIdx] = useState(0);
-  const [pmPicked, setPmPicked] = useState<number | null>(null);
-  const [pmDoneAll, setPmDoneAll] = useState(false);
+  const [pmIdx, setPmIdx] = useState(saved.pmIdx ?? 0);
+  const [pmPicked, setPmPicked] = useState<number | null>(saved.pmPicked ?? null);
+  const [pmDoneAll, setPmDoneAll] = useState(saved.pmDoneAll ?? false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("cyber-day-state", JSON.stringify({
+        phase, score,
+        priorityOrder, prioritySubmitted, priorityError,
+        selectedLogs: Array.from(selectedLogs), logsSubmitted,
+        toggles, togglesSubmitted,
+        termAns,
+        pmIdx, pmPicked, pmDoneAll,
+      } satisfies SavedDayState));
+    } catch {/* ignore */}
+  }, [phase, score, priorityOrder, prioritySubmitted, priorityError, selectedLogs, logsSubmitted,
+      toggles, togglesSubmitted, termAns, pmIdx, pmPicked, pmDoneAll]);
 
   const TERM_LINES = [
     "> isolate.sh FINANCE-PC-04",

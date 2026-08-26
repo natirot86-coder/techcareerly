@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -208,44 +208,86 @@ const PM_QUESTIONS = [
 
 const PHASES_ORDER: Phase[] = ["tools", "timeline", "evidence", "cause", "postmortem"];
 
+// ─── State persistence ────────────────────────────────────────────────────────
+
+type SavedMysteryState = {
+  phase?: Phase;
+  usedTools?: ToolId[];
+  activeToolId?: ToolId | null;
+  toolAnswers?: Record<ToolId, number | null>;
+  logSelected?: number[];
+  logSubmitted?: boolean;
+  metaPicked?: number | null;
+  timelineOrder?: string[];
+  timelineSubmitted?: boolean;
+  evidenceIdx?: number;
+  evidenceRevealed?: boolean;
+  causePicked?: string | null;
+  pmIdx?: number;
+  pmPicked?: number | null;
+  pmDoneAll?: boolean;
+};
+
+function loadSavedMysteryState(): SavedMysteryState {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("code-mystery-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function CodeMystery() {
-  // חוזרים בדיוק לשלב שבו נעצרנו — לא מתחילים את החקירה מחדש בכל כניסה
-  const [phase, setPhase] = useState<Phase>(() => {
-    if (typeof window === "undefined") return "intro";
-    try {
-      const saved = localStorage.getItem("code-mystery-phase");
-      return saved ? (JSON.parse(saved) as Phase) : "intro";
-    } catch { return "intro"; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem("code-mystery-phase", JSON.stringify(phase)); } catch {/* ignore */}
-  }, [phase]);
+  /*
+   * חוזרים בדיוק לאיפה שנעצרנו — לא רק לשלב, אלא גם לתשובות ולכלים שכבר
+   * הרצנו בו. עד עכשיו נשמר רק ה-phase, ומי שחזר באמצע שלב "כלים" נחת שוב
+   * על מסך ריק בלי הכלים שכבר הריץ — נראה כמו איפוס גם כשה-phase נכון.
+   */
+  const savedRef = useRef<SavedMysteryState | null>(null);
+  if (savedRef.current === null) savedRef.current = loadSavedMysteryState();
+  const saved = savedRef.current;
+
+  const [phase, setPhase] = useState<Phase>(saved.phase ?? "intro");
 
   // Tools phase state
-  const [usedTools, setUsedTools]         = useState<Set<ToolId>>(new Set());
-  const [activeToolId, setActiveToolId]   = useState<ToolId | null>(null);
-  const [toolAnswers, setToolAnswers]     = useState<Record<ToolId, number | null>>({ log: null, blame: null, grep: null });
-  const [logSelected, setLogSelected]     = useState<Set<number>>(new Set());
-  const [logSubmitted, setLogSubmitted]   = useState(false);
-  const [metaPicked, setMetaPicked]       = useState<number | null>(null);
+  const [usedTools, setUsedTools]         = useState<Set<ToolId>>(new Set(saved.usedTools ?? []));
+  const [activeToolId, setActiveToolId]   = useState<ToolId | null>(saved.activeToolId ?? null);
+  const [toolAnswers, setToolAnswers]     = useState<Record<ToolId, number | null>>(saved.toolAnswers ?? { log: null, blame: null, grep: null });
+  const [logSelected, setLogSelected]     = useState<Set<number>>(new Set(saved.logSelected ?? []));
+  const [logSubmitted, setLogSubmitted]   = useState(saved.logSubmitted ?? false);
+  const [metaPicked, setMetaPicked]       = useState<number | null>(saved.metaPicked ?? null);
 
   // Timeline phase state
-  const [timelineOrder, setTimelineOrder]         = useState<string[]>([]);
-  const [timelineSubmitted, setTimelineSubmitted] = useState(false);
+  const [timelineOrder, setTimelineOrder]         = useState<string[]>(saved.timelineOrder ?? []);
+  const [timelineSubmitted, setTimelineSubmitted] = useState(saved.timelineSubmitted ?? false);
 
   // Evidence phase state
-  const [evidenceIdx, setEvidenceIdx]         = useState(0);
-  const [evidenceRevealed, setEvidenceRevealed] = useState(false);
+  const [evidenceIdx, setEvidenceIdx]         = useState(saved.evidenceIdx ?? 0);
+  const [evidenceRevealed, setEvidenceRevealed] = useState(saved.evidenceRevealed ?? false);
 
   // Cause phase state
-  const [causePicked, setCausePicked] = useState<string | null>(null);
+  const [causePicked, setCausePicked] = useState<string | null>(saved.causePicked ?? null);
 
   // Postmortem phase state
-  const [pmIdx, setPmIdx]         = useState(0);
-  const [pmPicked, setPmPicked]   = useState<number | null>(null);
-  const [pmDoneAll, setPmDoneAll] = useState(false);
+  const [pmIdx, setPmIdx]         = useState(saved.pmIdx ?? 0);
+  const [pmPicked, setPmPicked]   = useState<number | null>(saved.pmPicked ?? null);
+  const [pmDoneAll, setPmDoneAll] = useState(saved.pmDoneAll ?? false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("code-mystery-state", JSON.stringify({
+        phase,
+        usedTools: Array.from(usedTools), activeToolId, toolAnswers,
+        logSelected: Array.from(logSelected), logSubmitted, metaPicked,
+        timelineOrder, timelineSubmitted,
+        evidenceIdx, evidenceRevealed,
+        causePicked,
+        pmIdx, pmPicked, pmDoneAll,
+      } satisfies SavedMysteryState));
+    } catch {/* ignore */}
+  }, [phase, usedTools, activeToolId, toolAnswers, logSelected, logSubmitted, metaPicked,
+      timelineOrder, timelineSubmitted, evidenceIdx, evidenceRevealed, causePicked, pmIdx, pmPicked, pmDoneAll]);
 
   function markDone() {
     try {

@@ -588,7 +588,7 @@ export default function MapPage() {
             { color: "#475569", label: "ניהול פנימי" },
             { color: "#6b7280", label: "בקרוב" },
           ].map(({ color, label }) => (
-            <div key={color} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(0,0,0,0.55)" }}>
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(0,0,0,0.55)" }}>
               <div style={{ width: 10, height: 10, borderRadius: 99, background: color }} />
               {label}
             </div>

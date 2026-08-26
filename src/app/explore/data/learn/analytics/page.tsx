@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import {
@@ -222,8 +222,17 @@ const CHART_PREVIEW: Record<ChartType, React.ReactNode> = {
 // ═════════════════════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ═════════════════════════════════════════════════════════════════════════════
-// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד — אחרת מסך הסיכום מציג 0/5 שגוי
-function loadSavedState(): { phase?: Phase; score?: number } {
+// חוזרים בדיוק לאיפה שנעצרנו — לא רק לשלב, אלא גם לתשובות בכל שלב-משנה
+type SavedAnalyticsState = {
+  phase?: Phase; score?: number;
+  rqAnswer?: string | null; rqSubmitted?: boolean;
+  identifiedRows?: number[]; p2Done?: boolean;
+  chartPick?: ChartType | null; previewChart?: ChartType; chartSubmitted?: boolean;
+  promptPick?: string | null; promptSubmitted?: boolean;
+  ceoPick?: string | null; ceoSubmitted?: boolean;
+};
+
+function loadSavedState(): SavedAnalyticsState {
   if (typeof window === "undefined") return {};
   try {
     const saved = localStorage.getItem("data-analytics-state");
@@ -232,33 +241,47 @@ function loadSavedState(): { phase?: Phase; score?: number } {
 }
 
 export default function AnalyticsPage() {
-  const [phase, setPhase]   = useState<Phase>(() => loadSavedState().phase ?? "intro");
-  const [score, setScore]   = useState(() => loadSavedState().score ?? 0); // out of 5
+  const savedRef = useRef<SavedAnalyticsState | null>(null);
+  if (savedRef.current === null) savedRef.current = loadSavedState();
+  const saved = savedRef.current;
 
-  useEffect(() => {
-    try { localStorage.setItem("data-analytics-state", JSON.stringify({ phase, score })); } catch {/* ignore */}
-  }, [phase, score]);
+  const [phase, setPhase]   = useState<Phase>(saved.phase ?? "intro");
+  const [score, setScore]   = useState(saved.score ?? 0); // out of 5
 
   // Phase 1
-  const [rqAnswer, setRqAnswer]           = useState<string | null>(null);
-  const [rqSubmitted, setRqSubmitted]     = useState(false);
+  const [rqAnswer, setRqAnswer]           = useState<string | null>(saved.rqAnswer ?? null);
+  const [rqSubmitted, setRqSubmitted]     = useState(saved.rqSubmitted ?? false);
 
   // Phase 2
-  const [identifiedRows, setIdentifiedRows] = useState<Set<number>>(new Set());
-  const [p2Done, setP2Done]               = useState(false);
+  const [identifiedRows, setIdentifiedRows] = useState<Set<number>>(new Set(saved.identifiedRows ?? []));
+  const [p2Done, setP2Done]               = useState(saved.p2Done ?? false);
 
   // Phase 3
-  const [chartPick, setChartPick]         = useState<ChartType | null>(null);
-  const [previewChart, setPreviewChart]   = useState<ChartType>("line");
-  const [chartSubmitted, setChartSubmitted] = useState(false);
+  const [chartPick, setChartPick]         = useState<ChartType | null>(saved.chartPick ?? null);
+  const [previewChart, setPreviewChart]   = useState<ChartType>(saved.previewChart ?? "line");
+  const [chartSubmitted, setChartSubmitted] = useState(saved.chartSubmitted ?? false);
 
   // Phase 4
-  const [promptPick, setPromptPick]       = useState<string | null>(null);
-  const [promptSubmitted, setPromptSubmitted] = useState(false);
+  const [promptPick, setPromptPick]       = useState<string | null>(saved.promptPick ?? null);
+  const [promptSubmitted, setPromptSubmitted] = useState(saved.promptSubmitted ?? false);
 
   // Phase 5
-  const [ceoPick, setCeoPick]             = useState<string | null>(null);
-  const [ceoSubmitted, setCeoSubmitted]   = useState(false);
+  const [ceoPick, setCeoPick]             = useState<string | null>(saved.ceoPick ?? null);
+  const [ceoSubmitted, setCeoSubmitted]   = useState(saved.ceoSubmitted ?? false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("data-analytics-state", JSON.stringify({
+        phase, score,
+        rqAnswer, rqSubmitted,
+        identifiedRows: Array.from(identifiedRows), p2Done,
+        chartPick, previewChart, chartSubmitted,
+        promptPick, promptSubmitted,
+        ceoPick, ceoSubmitted,
+      } satisfies SavedAnalyticsState));
+    } catch {/* ignore */}
+  }, [phase, score, rqAnswer, rqSubmitted, identifiedRows, p2Done, chartPick, previewChart, chartSubmitted,
+      promptPick, promptSubmitted, ceoPick, ceoSubmitted]);
 
   // ── helpers ────────────────────────────────────────────────────────────────
   function advanceTo(next: Phase) {

@@ -262,8 +262,8 @@ function PostMortemMystery({ onDone }: { onDone: () => void }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד שנצבר עד כה
-function loadSavedState(): { phase?: Phase; score?: number } {
+// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד והכלי שכבר הופעל — לא רק ה-phase
+function loadSavedState(): { phase?: Phase; score?: number; tool1Used?: string | null; tool1Answered?: boolean } {
   if (typeof window === "undefined") return {};
   try {
     const saved = localStorage.getItem("networks-mystery-state");
@@ -273,13 +273,13 @@ function loadSavedState(): { phase?: Phase; score?: number } {
 
 export default function NetworksMysteryPage() {
   const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "intro");
-  const [tool1Used, setTool1Used] = useState<string | null>(null);
-  const [tool1Answered, setTool1Answered] = useState(false);
+  const [tool1Used, setTool1Used] = useState<string | null>(() => loadSavedState().tool1Used ?? null);
+  const [tool1Answered, setTool1Answered] = useState(() => loadSavedState().tool1Answered ?? false);
   const [score, setScore] = useState(() => loadSavedState().score ?? 0);
 
   useEffect(() => {
-    try { localStorage.setItem("networks-mystery-state", JSON.stringify({ phase, score })); } catch {/* ignore */}
-  }, [phase, score]);
+    try { localStorage.setItem("networks-mystery-state", JSON.stringify({ phase, score, tool1Used, tool1Answered })); } catch {/* ignore */}
+  }, [phase, score, tool1Used, tool1Answered]);
 
   function advance(next: Phase) {
     window.scrollTo({ top: 0, behavior: "smooth" });
