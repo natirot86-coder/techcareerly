@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -213,11 +213,24 @@ function ServiceReport({ onDone }: { onDone: () => void }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לשלב שבו נעצרנו, כולל הניקוד והכלי שכבר הופעל — לא רק ה-phase
+function loadSavedState(): { phase?: Phase; score?: number; tool1Used?: string | null; tool1Answered?: boolean } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("hardware-mystery-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function HardwareMysteryPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [tool1Used, setTool1Used] = useState<string | null>(null);
-  const [tool1Answered, setTool1Answered] = useState(false);
-  const [score, setScore] = useState(0);
+  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "intro");
+  const [tool1Used, setTool1Used] = useState<string | null>(() => loadSavedState().tool1Used ?? null);
+  const [tool1Answered, setTool1Answered] = useState(() => loadSavedState().tool1Answered ?? false);
+  const [score, setScore] = useState(() => loadSavedState().score ?? 0);
+
+  useEffect(() => {
+    try { localStorage.setItem("hardware-mystery-state", JSON.stringify({ phase, score, tool1Used, tool1Answered })); } catch {/* ignore */}
+  }, [phase, score, tool1Used, tool1Answered]);
 
   function advance(next: Phase) {
     window.scrollTo({ top: 0, behavior: "smooth" });

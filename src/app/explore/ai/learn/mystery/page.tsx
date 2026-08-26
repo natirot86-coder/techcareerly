@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -259,10 +259,24 @@ const DECISION_ORDER: DecisionId[] = ["promises", "tone", "handoff"];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לאיפה שנעצרנו — לא רק לשלב, אלא גם להחלטות שכבר התקבלו
+type SavedMysteryState = { phase?: Phase; done?: Record<DecisionId, boolean>; score?: number };
+function loadSavedState(): SavedMysteryState {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("ai-mystery-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function AiMysteryPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [done, setDone] = useState<Record<DecisionId, boolean>>({ promises: false, tone: false, handoff: false });
-  const [score, setScore] = useState(0);
+  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "intro");
+  const [done, setDone] = useState<Record<DecisionId, boolean>>(() => loadSavedState().done ?? { promises: false, tone: false, handoff: false });
+  const [score, setScore] = useState(() => loadSavedState().score ?? 0);
+
+  useEffect(() => {
+    try { localStorage.setItem("ai-mystery-state", JSON.stringify({ phase, done, score } satisfies SavedMysteryState)); } catch {/* ignore */}
+  }, [phase, done, score]);
 
   const doneCount = DECISION_ORDER.filter(id => done[id]).length;
 

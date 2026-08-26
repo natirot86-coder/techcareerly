@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -300,14 +300,36 @@ function buildIterate(aud: AudienceId, msg: MessageId, img: ImageId): IterateCon
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לאיפה שנעצרנו — לא רק לשלב, אלא גם לבחירות הקמפיין שכבר נבחרו
+type FinalCampaignState = { aud: AudienceId; msg: MessageId; img: ImageId; bonusLeads: number };
+type SavedMysteryState = {
+  phase?: Phase; aud?: AudienceId | null; msg?: MessageId | null; img?: ImageId | null;
+  iterPicked?: number | null; iterApplied?: boolean; finalState?: FinalCampaignState | null;
+};
+function loadSavedState(): SavedMysteryState {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("marketing-mystery-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function MarketingMysteryPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [aud, setAud] = useState<AudienceId | null>(null);
-  const [msg, setMsg] = useState<MessageId | null>(null);
-  const [img, setImg] = useState<ImageId | null>(null);
-  const [iterPicked, setIterPicked] = useState<number | null>(null);
-  const [iterApplied, setIterApplied] = useState(false);
-  const [finalState, setFinalState] = useState<{ aud: AudienceId; msg: MessageId; img: ImageId; bonusLeads: number } | null>(null);
+  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "intro");
+  const [aud, setAud] = useState<AudienceId | null>(() => loadSavedState().aud ?? null);
+  const [msg, setMsg] = useState<MessageId | null>(() => loadSavedState().msg ?? null);
+  const [img, setImg] = useState<ImageId | null>(() => loadSavedState().img ?? null);
+  const [iterPicked, setIterPicked] = useState<number | null>(() => loadSavedState().iterPicked ?? null);
+  const [iterApplied, setIterApplied] = useState(() => loadSavedState().iterApplied ?? false);
+  const [finalState, setFinalState] = useState<FinalCampaignState | null>(() => loadSavedState().finalState ?? null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("marketing-mystery-state", JSON.stringify({
+        phase, aud, msg, img, iterPicked, iterApplied, finalState,
+      } satisfies SavedMysteryState));
+    } catch {/* ignore */}
+  }, [phase, aud, msg, img, iterPicked, iterApplied, finalState]);
 
   function go(next: Phase) {
     window.scrollTo({ top: 0, behavior: "smooth" });

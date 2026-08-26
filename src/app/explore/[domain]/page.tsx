@@ -136,7 +136,9 @@ function TasteJourney({ id, color, title, steps }: {
         {steps.map((step, i, arr) => {
           const isDone = !!journey[step.doneKey];
           const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
-          const highlight = i === 0 && !journey["sim"];
+          // "התחילי כאן" על השלב הבא שפתוח ועוד לא הושלם — לא רק על הראשון,
+          // אחרת ההדגשה נעלמת ברגע שהטעימה מסתיימת וזה נראה כמו איפוס התקדמות.
+          const highlight = !isDone && !isLocked;
 
           return (
             <div key={step.doneKey}>
@@ -425,8 +427,10 @@ function CodeContent() {
           ].map((step, i, arr) => {
             const isDone = !!journey[step.doneKey];
             const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
-            const isFirst = i === 0;
-            const highlight = isFirst && !journey["sim"];
+            // "התחילי כאן" — לא רק על השלב הראשון: על השלב הבא שפתוח ועוד לא הושלם.
+            // עד עכשיו ההדגשה נעלמה לגמרי אחרי שהטעימה (שלב 1) הסתיימה — נראה כאילו
+            // האפליקציה "שכחה" איפה עצרת, במקום להצביע על שלב 2.
+            const highlight = !isDone && !isLocked;
 
             return (
               <div key={step.num}>
@@ -775,8 +779,10 @@ function CyberContent() {
           ].map((step, i, arr) => {
             const isDone = !!journey[step.doneKey];
             const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
-            const isFirst = i === 0;
-            const highlight = isFirst && !journey["sim"];
+            // "התחילי כאן" — לא רק על השלב הראשון: על השלב הבא שפתוח ועוד לא הושלם.
+            // עד עכשיו ההדגשה נעלמה לגמרי אחרי שהטעימה (שלב 1) הסתיימה — נראה כאילו
+            // האפליקציה "שכחה" איפה עצרת, במקום להצביע על שלב 2.
+            const highlight = !isDone && !isLocked;
 
             return (
               <div key={step.num}>
@@ -1357,8 +1363,10 @@ function DataContent() {
           ].map((step, i, arr) => {
             const isDone = step.doneKey ? !!journey[step.doneKey] : false;
             const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
-            const isFirst = i === 0;
-            const highlight = isFirst && !journey["sim"];
+            // "התחילי כאן" — לא רק על השלב הראשון: על השלב הבא שפתוח ועוד לא הושלם.
+            // עד עכשיו ההדגשה נעלמה לגמרי אחרי שהטעימה (שלב 1) הסתיימה — נראה כאילו
+            // האפליקציה "שכחה" איפה עצרת, במקום להצביע על שלב 2.
+            const highlight = !isDone && !isLocked;
 
             return (
               <div key={step.num}>
@@ -1924,8 +1932,10 @@ function NetworksContent() {
           ].map((step, i, arr) => {
             const isDone = !!journey[step.doneKey];
             const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
-            const isFirst = i === 0;
-            const highlight = isFirst && !journey["sim"];
+            // "התחילי כאן" — לא רק על השלב הראשון: על השלב הבא שפתוח ועוד לא הושלם.
+            // עד עכשיו ההדגשה נעלמה לגמרי אחרי שהטעימה (שלב 1) הסתיימה — נראה כאילו
+            // האפליקציה "שכחה" איפה עצרת, במקום להצביע על שלב 2.
+            const highlight = !isDone && !isLocked;
 
             return (
               <div key={step.num}>
@@ -2225,8 +2235,10 @@ function QAContent() {
           ].map((step, i, arr) => {
             const isDone = !!journey[step.doneKey];
             const isLocked = step.lockedBy ? !journey[step.lockedBy] : false;
-            const isFirst = i === 0;
-            const highlight = isFirst && !journey["sim"];
+            // "התחילי כאן" — לא רק על השלב הראשון: על השלב הבא שפתוח ועוד לא הושלם.
+            // עד עכשיו ההדגשה נעלמה לגמרי אחרי שהטעימה (שלב 1) הסתיימה — נראה כאילו
+            // האפליקציה "שכחה" איפה עצרת, במקום להצביע על שלב 2.
+            const highlight = !isDone && !isLocked;
 
             return (
               <div key={step.num}>

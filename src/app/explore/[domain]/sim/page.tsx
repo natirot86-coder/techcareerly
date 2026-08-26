@@ -4575,6 +4575,14 @@ type StepResponse =
   | { kind: "match"; mistakes: number; correct: boolean }
   | { kind: "type"; value: string; correct: boolean };
 
+function loadSavedSimProgress(domain: string): { stepIndex?: number; responses?: Record<number, StepResponse> } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem(`${domain}-sim-progress`);
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 function SimFlow({
   onComplete,
   domain,
@@ -4588,10 +4596,20 @@ function SimFlow({
   const playful = PLAYFUL_DOMAINS.has(domain);
   const steps = getSteps(domain);
   const meta = getDomainMeta(domain);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [responses, setResponses] = useState<Record<number, StepResponse>>({});
+
+  /*
+   * חוזרים בדיוק לשאלה שבה נעצרנו, עם התשובות שכבר ניתנו — לא רק הסיום.
+   * עד עכשיו stepIndex/responses היו useState רגילים בלי שום שמירה, כך
+   * שמי שעצר באמצע הטעימה (השלב הראשון בכל תחום) חזר תמיד לשאלה 1.
+   */
+  const [stepIndex, setStepIndex] = useState(() => loadSavedSimProgress(domain).stepIndex ?? 0);
+  const [responses, setResponses] = useState<Record<number, StepResponse>>(() => loadSavedSimProgress(domain).responses ?? {});
   const [showMission, setShowMission] = useState(false);
   const feedbackRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    try { localStorage.setItem(`${domain}-sim-progress`, JSON.stringify({ stepIndex, responses })); } catch {/* ignore */}
+  }, [domain, stepIndex, responses]);
 
   React.useEffect(() => {
     onStepIndexChange?.(stepIndex);

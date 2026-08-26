@@ -299,11 +299,25 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לשלב שבו נעצרנו — כולל מגדר ותשובות, לא רק השלב עצמו
+// (בלי זה: מי שחוזר ל-"done" רואה תוצאה ריקה, ומי שחוזר לשאלה רואה ניסוח בלי מגדר)
+function loadSavedState(): { phase?: Phase; gender?: Gender | null; answers?: Answers } {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("hardware-experience-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function HardwareExperiencePage() {
-  const [phase, setPhase]     = useState<Phase>("gender");
-  const [gender, setGender]   = useState<Gender | null>(null);
-  const [answers, setAnswers] = useState<Answers>({});
+  const [phase, setPhase]     = useState<Phase>(() => loadSavedState().phase ?? "gender");
+  const [gender, setGender]   = useState<Gender | null>(() => loadSavedState().gender ?? null);
+  const [answers, setAnswers] = useState<Answers>(() => loadSavedState().answers ?? {});
   const [tapped, setTapped]   = useState<number | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem("hardware-experience-state", JSON.stringify({ phase, gender, answers })); } catch {/* ignore */}
+  }, [phase, gender, answers]);
 
   // איפה עוצרים בתוך הכלי — כל מעבר שאלה נרשם, כמו בשאר התחומים
   useEffect(() => {

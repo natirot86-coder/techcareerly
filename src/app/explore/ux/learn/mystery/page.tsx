@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 
@@ -196,9 +196,23 @@ function LiveScreen({ choices, big }: { choices: Choices; big?: boolean }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// חוזרים בדיוק לאיפה שנעצרנו — לא רק לשלב, אלא גם לבחירות שכבר נבחרו
+type SavedMysteryState = { phase?: Phase; choices?: Choices };
+function loadSavedState(): SavedMysteryState {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem("ux-mystery-state");
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+}
+
 export default function UxMysteryPage() {
-  const [phase, setPhase] = useState<Phase>("intro");
-  const [choices, setChoices] = useState<Choices>({ message: null, buttons: null, label: null });
+  const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "intro");
+  const [choices, setChoices] = useState<Choices>(() => loadSavedState().choices ?? { message: null, buttons: null, label: null });
+
+  useEffect(() => {
+    try { localStorage.setItem("ux-mystery-state", JSON.stringify({ phase, choices } satisfies SavedMysteryState)); } catch {/* ignore */}
+  }, [phase, choices]);
 
   function go(next: Phase) {
     window.scrollTo({ top: 0, behavior: "smooth" });
