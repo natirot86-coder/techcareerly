@@ -51,6 +51,77 @@ export const STAGE_CTA: Record<number, { label: string; href: string }> = {
   6: { label: "למסך הסטודנט ←", href: "/enroll" },
 };
 
+const DOMAIN_DOT: Record<string, string> = {
+  code: "#3b82f6", data: "#0d9488", cyber: "#dc2626", networks: "#2563eb",
+  qa: "#d97706", hardware: "#0891b2", ai: "#7c3aed", ux: "#db2777", marketing: "#f97316",
+};
+
+/** אילו תחומים המשתמש באמת טעם — מדגלי ה-journey של כל תחום */
+function tastedDomains(): string[] {
+  try {
+    return Object.keys(DOMAIN_DOT).filter(d => {
+      const j = JSON.parse(localStorage.getItem(`${d}-journey`) ?? "null");
+      return j && (j.sim || j.day || j.mystery || j.experience || j.analytics);
+    });
+  } catch { return []; }
+}
+
+/**
+ * הסרפנטינה של המשתתף (נתי 26.8): שתי שורות עם קשת מקווקה ביניהן —
+ * ובקשת, הסתעפות הטעימות: דוט צבעוני לכל תחום שטעם, מתכנס חזרה לקו.
+ * המפה אישית — כל משתמש רואה את הענפים שלו. לחיצה על תחנה שהושלמה
+ * פותחת את הקישורים שלה ברשימה שמתחת; דוט מוביל לתחום עצמו.
+ */
+function DrawerSerpentine({ stageNow, onPick, onClose }: {
+  stageNow: number; onPick: (n: number) => void; onClose: () => void;
+}) {
+  const [tasted, setTasted] = useState<string[]>([]);
+  useEffect(() => { setTasted(tastedDomains()); }, []);
+  const shown = tasted.slice(0, 5);
+  const extra = tasted.length - shown.length;
+  // תחנות: שורה עליונה ימין←שמאל, קשת, שורה תחתונה שמאל←ימין
+  const POS: [number, number][] = [[295, 50], [177, 50], [60, 50], [60, 165], [177, 165], [295, 165]];
+  const dotY = (i: number) => 76 + i * (64 / Math.max(shown.length - 1, 1));
+  return (
+    <svg viewBox="0 0 340 215" className="w-full mb-2" aria-hidden="false">
+      {/* הדרך */}
+      <path d="M 295 50 L 60 50" fill="none" stroke="#ddd6c9" strokeWidth="3" strokeDasharray="5 7" />
+      <path d="M 60 50 C 14 50, 14 165, 60 165" fill="none" stroke="#ddd6c9" strokeWidth="3" strokeDasharray="5 7" />
+      <path d="M 60 165 L 295 165" fill="none" stroke="#ddd6c9" strokeWidth="3" strokeDasharray="5 7" />
+      {/* הסתעפות הטעימות — מהתחנה השלישית, מתכנסת לרביעית */}
+      {shown.map((d, i) => (
+        <g key={d}>
+          <path d={`M 60 58 C 38 ${dotY(i) - 8}, 38 ${dotY(i) - 8}, 30 ${dotY(i)}`} fill="none" stroke={DOMAIN_DOT[d]} strokeWidth="1.5" strokeDasharray="3 4" opacity="0.55" />
+          <path d={`M 30 ${dotY(i)} C 38 ${dotY(i) + 8}, 44 157, 60 160`} fill="none" stroke={DOMAIN_DOT[d]} strokeWidth="1.5" strokeDasharray="3 4" opacity="0.55" />
+          <a href={`/explore/${d}`} onClick={onClose}>
+            <circle cx="30" cy={dotY(i)} r="6.5" fill={DOMAIN_DOT[d]} />
+          </a>
+        </g>
+      ))}
+      {extra > 0 && <text x="12" y={dotY(shown.length - 1) + 4} fontSize="8.5" fontWeight="800" fill="#8a919d">+{extra}</text>}
+      {shown.length > 0 && <text x="30" y="212" fontSize="8.5" fontWeight="700" fill="#a8a195" textAnchor="middle">הטעימות שלך</text>}
+      {/* התחנות */}
+      {JOURNEY.map((st, i) => {
+        const [x, y] = POS[i];
+        const done = st.n < stageNow;
+        const current = st.n === stageNow;
+        return (
+          <g key={st.n} onClick={() => done && onPick(st.n)} style={{ cursor: done ? "pointer" : "default" }}>
+            {current && <circle cx={x} cy={y} r="21" fill="rgba(251,133,0,0.18)" />}
+            <circle cx={x} cy={y} r="15" fill={done ? "#059669" : current ? "#fb8500" : "#eceae4"} />
+            <text x={x} y={y + 4.5} fontSize={done ? "13" : "11"} fontWeight="900" fill={done || current ? "#fff" : "#a8a195"} textAnchor="middle">
+              {done ? "✓" : current ? st.n : "🔒"}
+            </text>
+            <text x={x} y={y + 33} fontSize="10" fontWeight="800" fill={done || current ? "#023e8a" : "#a8a195"} textAnchor="middle">
+              {st.short}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 function JourneyDrawer({ onClose }: { onClose: () => void }) {
   const [stageNow, setStageNow] = useState(1);
   const [open, setOpen] = useState<number | null>(null);
@@ -68,21 +139,12 @@ function JourneyDrawer({ onClose }: { onClose: () => void }) {
           <div className="text-[17px] font-black" style={{ color: "#023e8a" }}>המסע שלך</div>
           <button onClick={onClose} className="text-[14px] font-bold px-2" style={{ color: "rgba(0,0,0,0.4)" }}>✕ סגירה</button>
         </div>
-        {/* התקדמות במבט אחד (נתי 25.8) — הישג לפני רשימה */}
-        <div className="flex items-center gap-2.5 mb-3">
-          <div className="flex gap-1.5">
-            {JOURNEY.map(st => (
-              <span key={st.n} style={{
-                width: st.n === stageNow ? 18 : 8, height: 8, borderRadius: 999,
-                background: st.n < stageNow ? "#059669" : st.n === stageNow ? "#fb8500" : "rgba(0,0,0,0.12)",
-                transition: "all .25s",
-              }} />
-            ))}
-          </div>
-          <span className="text-[12px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>
-            {stageNow > 1 ? `${stageNow - 1} מתוך 6 כבר מאחוריך` : "מתחילים — 6 שלבים לפניך"}
-          </span>
+        {/* הסרפנטינה — מפת הדרכים האישית: תחנה שהושלמה נלחצת ופותחת את
+            הקישורים שלה ברשימה; דוטים = התחומים שטעם, בצבעיהם (נתי 26.8) */}
+        <div className="text-[12px] font-bold mb-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+          {stageNow > 1 ? `${stageNow - 1} מתוך 6 כבר מאחוריך` : "מתחילים — 6 שלבים לפניך"}
         </div>
+        <DrawerSerpentine stageNow={stageNow} onPick={n => setOpen(open === n ? null : n)} onClose={onClose} />
         <div className="flex flex-col gap-2">
           {JOURNEY.map(s => {
             const done = s.n < stageNow;
@@ -184,6 +246,7 @@ export default function BottomNav() {
 
   const hrefFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreHref : t.href);
   const labelFor = (t: (typeof TABS)[number]) => (t.href === "/explore" ? exploreLabel : t.label);
+  const visibleTabs = TABS.filter(t => !(t.href === "/explore" && exploreHref === "/waiting"));
   const isActive = (href: string) =>
     path.startsWith(href) ||
     ((href === "/paths" || href === "/plan" || href === "/waiting") && path.startsWith("/explore"));
@@ -199,7 +262,7 @@ export default function BottomNav() {
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "34px" }} />
       </Link>
       <nav className="flex items-center gap-1">
-        {TABS.map(tab => {
+        {visibleTabs.map(tab => {
           const href = hrefFor(tab);
           const active = isActive(href);
           const style = {
@@ -234,7 +297,7 @@ export default function BottomNav() {
       <Link href="/" className="flex flex-col items-center justify-center py-2 px-2 shrink-0" style={{ width: "52px" }}>
         <img src="/logo_tech.png" alt="Techcareerly" className="object-contain" style={{ height: "30px" }} />
       </Link>
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const href = hrefFor(tab);
         const active = isActive(href);
         const inner = (

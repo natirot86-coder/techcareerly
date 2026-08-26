@@ -44,6 +44,10 @@ type Ev = { name: string; props: Record<string, unknown>; at: string };
 
 const s = (v: unknown) => (v === undefined || v === null ? "" : String(v));
 const dom = (v: unknown) => DOMAIN_HE[s(v)] ?? s(v);
+const DOMAIN_DOT: Record<string, string> = {
+  code: "#3b82f6", data: "#0d9488", cyber: "#dc2626", networks: "#2563eb",
+  qa: "#d97706", hardware: "#0891b2", ai: "#7c3aed", ux: "#db2777", marketing: "#f97316",
+};
 
 /**
  * אירוע → משפט בעברית.
@@ -410,6 +414,12 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
     }
     return { age, city: S(pr.city), serviceLabel, clock, miluim: S(pr.miluim) === "1", birthdaySoon };
   }, [p.timeline]);
+  /* מניפת הטעימות (נתי 26.8): התחומים שהמועמד באמת נגע בהם — מאירועי שרת */
+  const tastedD = [...new Set(p.timeline
+    .filter(e => ["sim_start", "scct_done", "taste_done"].includes(e.name))
+    .map(e => String((e.props as Record<string, unknown>)?.domain ?? ""))
+    .filter(d => d && DOMAIN_DOT[d]))];
+
   const stuck = stations.find(st => st.state === "stuck");
   const current = stuck ?? stations.find(st => st.state === "current") ?? null;
   const [openId, setOpenId] = useState<string | null>(stuck ? stuck.id : null);
@@ -534,12 +544,47 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
               <div key={ri} style={{ position: "relative", height: 196, display: "flex", flexDirection: ri === 1 ? "row-reverse" : "row", alignItems: "flex-start" }}>
                 {/* הקו המקווקו של השורה */}
                 <div style={{ position: "absolute", top: 60, right: "6%", left: "6%", borderTop: "3px dashed #ddd6c9" }} />
+                {/*
+                  הקשת המקווקה שמחברת שורה לשורה (נתי 25.8 — הייתה חסרה):
+                  הסרפנטינה זורמת ימין←שמאל←ימין, אז אחרי שורה 0 הקשת בצד
+                  שמאל, ואחרי שורה 1 בצד ימין. חצי-טבעת ב-CSS: מסגרת מקווקה
+                  בלי הצלע הפנימית, מעוגלת כלפי חוץ.
+                */}
+                {ri < rows.length - 1 && (
+                  <div style={{
+                    position: "absolute", top: 60, height: 196, width: "5.5%",
+                    ...(ri % 2 === 0
+                      ? { left: "0.5%", border: "3px dashed #ddd6c9", borderRight: "none", borderRadius: "110px 0 0 110px" }
+                      : { right: "0.5%", border: "3px dashed #ddd6c9", borderLeft: "none", borderRadius: "0 110px 110px 0" }),
+                  }} />
+                )}
                 {row.map(st => {
                   const c = NODE_COLOR[st.state];
                   const isOpen = openId === st.id;
                   return (
                     <button key={st.id} onClick={() => setOpenId(isOpen ? null : st.id)}
                       style={{ flex: 1, border: "none", background: "none", cursor: "pointer", position: "relative", paddingTop: 30, textAlign: "center", fontFamily: "'Heebo', sans-serif" }}>
+                      {/* מניפת הטעימות של המועמד — ההסתעפות מהדרך (נתי 26.8) */}
+                      {st.id === "taste" && tastedD.length > 0 && (
+                        <span style={{ position: "absolute", top: 92, right: "50%", transform: "translateX(50%)", zIndex: 2 }}>
+                          <svg width={Math.max(tastedD.length * 52, 60)} height="18" style={{ display: "block", margin: "0 auto" }}>
+                            {tastedD.slice(0, 5).map((d, i, arr) => {
+                              const w = Math.max(arr.length * 52, 60);
+                              const x = arr.length === 1 ? w / 2 : 26 + i * ((w - 52) / (arr.length - 1));
+                              return <path key={d} d={`M ${w / 2} 0 C ${w / 2} 10, ${x} 8, ${x} 18`} fill="none" stroke={DOMAIN_DOT[d]} strokeWidth="1.5" strokeDasharray="3 4" opacity="0.6" />;
+                            })}
+                          </svg>
+                          <span style={{ display: "flex", gap: 14, justifyContent: "center", marginTop: 0 }}>
+                            {tastedD.slice(0, 5).map(d => (
+                              <span key={d} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, width: 38 }}>
+                                <span style={{ width: 14, height: 14, borderRadius: 999, background: DOMAIN_DOT[d], boxShadow: "0 0 0 3px #fff" }} />
+                                <span style={{ fontSize: 10, fontWeight: 800, color: "#5b5648", whiteSpace: "nowrap" }}>{dom(d)}</span>
+                              </span>
+                            ))}
+                            {tastedD.length > 5 && <span style={{ fontSize: 10.5, fontWeight: 800, color: "#a8a195", alignSelf: "center" }}>+{tastedD.length - 5}</span>}
+                          </span>
+                        </span>
+                      )}
                       {st.stage && (
                         <span style={{ position: "absolute", top: 0, right: "50%", transform: "translateX(50%)", background: "#eef3fa", color: NAVY, fontSize: 11.5, fontWeight: 900, borderRadius: 999, padding: "3px 12px", whiteSpace: "nowrap" }}>
                           {st.stage}
