@@ -43,6 +43,11 @@ export default function ResumeTracker() {
   useEffect(() => {
     if (!pathname) return;
     if (SKIP.some(p => pathname.startsWith(p))) return;
+    /* קישור ההרשמה האישי של רכזת (נתי 27.8): ?coord=<id> בכל כניסה
+       נשמר — וההרשמה תשייך את המועמד אליה מהרגע הראשון (יומן, וואטסאפ) */
+    const coord = search.get("coord");
+    if (coord) { try { localStorage.setItem("assigned-coord", coord); } catch { /* ignore */ } }
+
     // ?reset ו-?demo הם מצבי בדיקה — לא מיקום אמיתי ולא פעילות אמיתית
     const qs = search.toString();
     if (/(^|&)(reset|demo)=/.test(qs)) return;

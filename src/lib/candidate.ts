@@ -85,8 +85,13 @@ export async function saveOnboarding(input: OnboardingInput): Promise<void> {
   const candidateId = await ensureCandidateId();
   if (!candidateId) return;
 
+  // שיוך מקישור אישי של רכזת (?coord=) — נקבע כבר בהרשמה, מאנדיי גובר בהמשך
+  let coordinatorId: string | null = null;
+  try { coordinatorId = localStorage.getItem("assigned-coord"); } catch { /* ignore */ }
+
   const { error } = await supabase.from("candidates").upsert({
     id: candidateId,
+    ...(coordinatorId ? { coordinator_id: coordinatorId } : {}),
     first_name: input.firstName,
     last_name: input.lastName,
     gender: input.gender,

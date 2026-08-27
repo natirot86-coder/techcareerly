@@ -186,6 +186,15 @@ export default function ProgramAdmin() {
                       </td>
                       <td className="px-3 py-1.5 font-black text-center" style={{ color: NAVY }}>{count}</td>
                     </tr>
+                    {/* קישור ההרשמה האישי — מועמד שנכנס דרכו משויך לרכזת מהרגע הראשון */}
+                    <tr>
+                      <td colSpan={6} className="px-3 pt-1 pb-0.5" style={{ background: "rgba(2,62,138,0.02)" }}>
+                        <span className="text-[11.5px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>קישור הזמנה אישי: </span>
+                        <code className="text-[11.5px] font-bold select-all" dir="ltr" style={{ color: NAVY, background: "#fff", padding: "2px 8px", borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)" }}>
+                          {`https://hasifaapp.vercel.app/onboarding?coord=${c.id}`}
+                        </code>
+                      </td>
+                    </tr>
                     {/* היומן האישי: כל רכזת עם חשבון Cal משלה. המייל למעלה חייב להיות
                         המייל של חשבון ה-Cal — לפיו המערכת מזהה את ההזמנות שלה */}
                     <tr>
