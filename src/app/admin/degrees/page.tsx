@@ -329,7 +329,7 @@ function Level3({ items, onToggle }: { items: Degree[]; onToggle: (degreeId: str
                     <span style={{ fontSize: 12, color: "#8a877f", fontWeight: 400 }}> {d.kind}</span>
                   </div>
                   <div style={{ fontSize: 12.5, color: "#5c5a55", marginTop: 4 }}>
-                    {d.salary ? `${(d.salary / 1000).toFixed(1)}K ₪ שכר · ` : ""}
+                    {d.salary ? `${d.salary.toLocaleString("he-IL")} ₪ שכר · ` : ""}
                     {d.inTech ? <b style={{ color: "#059669" }}>{d.inTech}% בטק</b> : null}
                   </div>
                   <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>

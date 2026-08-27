@@ -71,7 +71,7 @@ export const DEGREES: Degree[] = [
   {
     id: "info-systems-eng",
     name: "הנדסת מערכות מידע",
-    kind: "B.Sc · 4 שנים",
+    kind: "B.Sc‏ · 4 שנים",
     salary: 38700, employment: 84, inTech: 75,
     domains: ["data", "code", "cyber", "networks"],
     leadsTo: "פיתוח (מופיעה במודעות לצד מדעי המחשב!) · BI · Data · סייבר SOC · יישום",
@@ -87,7 +87,7 @@ export const DEGREES: Degree[] = [
   {
     id: "cs",
     name: "מדעי המחשב",
-    kind: "B.Sc · 3 שנים",
+    kind: "B.Sc‏ · 3 שנים",
     salary: 36000, employment: 89, inTech: 72,
     domains: ["code", "data", "ai", "cyber"],
     leadsTo: "פיתוח · אלגוריתמיקה · ML · כל תפקידי התוכנה",
@@ -102,7 +102,7 @@ export const DEGREES: Degree[] = [
   {
     id: "ai",
     name: "בינה מלאכותית",
-    kind: "B.Sc · 3 שנים",
+    kind: "B.Sc‏ · 3 שנים",
     domains: ["ai", "data", "code"],
     leadsTo: "פיתוח AI · למידת מכונה · הנדסת נתונים — התחום הצומח ביותר בהייטק",
     caveat: "תואר חדש בישראל — אין עדיין מחזורי בוגרים, ולכן אין נתוני שכר ותעסוקה מאומתים. מבחינת תוכן קרוב מאוד למדעי המחשב.",
@@ -116,7 +116,7 @@ export const DEGREES: Degree[] = [
   {
     id: "data-eng",
     name: "הנדסת נתונים",
-    kind: "B.Sc · 4 שנים",
+    kind: "B.Sc‏ · 4 שנים",
     domains: ["data", "ai"],
     leadsTo: "הנדסת דאטה · תשתיות AI · צנרות נתונים — הצד ההנדסי של עולם הדאטה",
     caveat: "תואר חדש יחסית — קיים בבן-גוריון, בטכניון (״הנדסת נתונים ומידע״) ובבר-אילן (עם AI). אין עדיין נתוני שכר נפרדים; בפועל קרוב להנדסות התוכנה והדאטה.",
@@ -130,7 +130,7 @@ export const DEGREES: Degree[] = [
   {
     id: "entrepreneurship",
     name: "יזמות (דו-חוגי)",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     domains: ["marketing", "ai"],
     leadsTo: "יזמות · ניהול מוצר · תפקידי צמיחה — בשילוב עם חוג שני (גם מדעי המחשב)",
     caveat: "קיים ברייכמן (ביה״ס אדלסון) — דו-חוגי בלבד, והערך תלוי מאוד בחוג השני. יזמות לבדה אינה מקצוע כניסה; יזמות×מדעי המחשב היא סיפור אחר.",
@@ -144,7 +144,7 @@ export const DEGREES: Degree[] = [
   {
     id: "tech-marketing",
     name: "שיווק טכנולוגי",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     domains: ["marketing"],
     leadsTo: "שיווק מוצרי טק · דיגיטל · Growth — צד השיווק של ההייטק",
     caveat: "קיים בספיר — B.A ייעודי עם AI, שיווק דיגיטלי ויזמות. תואר צעיר; אין נתוני בוגרים. השוק מעסיק גם בלי תואר ייעודי — היתרון הוא החיבור לתעשייה תוך כדי.",
@@ -158,7 +158,7 @@ export const DEGREES: Degree[] = [
   {
     id: "neuro",
     name: "מדעי המוח",
-    kind: "B.Sc · 3 שנים",
+    kind: "B.Sc‏ · 3 שנים",
     domains: ["ai", "data"],
     leadsTo: "נוירו-טק · חישוביות עצבית · מחקר — לרוב בשילוב תואר מתקדם",
     caveat: "תואר מסקרן שקיים בת״א (חדש בתשפ״ז), בר-אילן, בג״ג והעברית — אבל בכנות: משרה ראשונה בהייטק דורשת ממנו כמעט תמיד השלמה (תואר שני או הסבה לדאטה). מתאים למי שהמדע עצמו מושך אותו.",
@@ -172,7 +172,7 @@ export const DEGREES: Degree[] = [
   {
     id: "software-eng",
     name: "הנדסת תוכנה",
-    kind: "B.Sc · 4 שנים",
+    kind: "B.Sc‏ · 4 שנים",
     domains: ["code", "ai", "cyber"],
     leadsTo: "פיתוח — מופיעה במודעות לצד מדעי המחשב (״מדעי המחשב או הנדסת תוכנה — חובה״)",
     caveat: "דומה מאוד למדעי המחשב אבל 4 שנים במקום 3 — ולכן אנחנו ממליצים על מדעי המחשב קודם. אין לה נתוני שכר נפרדים מאומתים; בפועל קרובה למדמ״ח.",
@@ -186,7 +186,7 @@ export const DEGREES: Degree[] = [
   {
     id: "info-systems-ba",
     name: "ניהול מערכות מידע",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     salary: 26500, employment: 94, inTech: 62,
     domains: ["data", "networks", "qa"],
     leadsTo: "ניתוח מערכות · BI · יישום ERP · QA ידני · IT ו-NOC",
@@ -201,7 +201,7 @@ export const DEGREES: Degree[] = [
   {
     id: "industrial-eng",
     name: "הנדסת תעשייה וניהול",
-    kind: "B.Sc · 4 שנים",
+    kind: "B.Sc‏ · 4 שנים",
     salary: 27000, employment: 92, inTech: 50,
     domains: ["data", "marketing"],
     leadsTo: "BI ואנליטיקה · ניהול מוצר · תפעול. היחיד ש-GotFriends נוקבת בשמו כרקע ל-Data Analyst",
@@ -215,7 +215,7 @@ export const DEGREES: Degree[] = [
   {
     id: "ee",
     name: "הנדסת חשמל / מחשבים",
-    kind: "B.Sc · 4 שנים",
+    kind: "B.Sc‏ · 4 שנים",
     salary: 33300, employment: 84, inTech: 18,
     domains: ["networks", "cyber"],
     leadsTo: "חומרה · Embedded · VLSI · סייבר OT. הגרסה המשולבת (מחשבים-חשמל): 45,300 ₪ — השיא בטבלה",
@@ -230,7 +230,7 @@ export const DEGREES: Degree[] = [
   {
     id: "statistics",
     name: "סטטיסטיקה ומדעי הנתונים",
-    kind: "B.Sc · 3 שנים",
+    kind: "B.Sc‏ · 3 שנים",
     salary: 25400, inTech: 55,
     domains: ["data", "ai"],
     leadsTo: "Data Analyst · BI",
@@ -244,7 +244,7 @@ export const DEGREES: Degree[] = [
   {
     id: "math",
     name: "מתמטיקה",
-    kind: "B.Sc · 3 שנים",
+    kind: "B.Sc‏ · 3 שנים",
     salary: 30500, employment: 63, inTech: 41,
     domains: ["ai", "data"],
     leadsTo: "אלגוריתמיקה · ML — אבל רק בדו-חוגי עם מדעי המחשב",
@@ -258,7 +258,7 @@ export const DEGREES: Degree[] = [
   {
     id: "business-is",
     name: "מנהל עסקים עם התמחות במערכות מידע",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     salary: 19200, employment: 90, inTech: 15,
     domains: ["marketing", "data"],
     leadsTo: "ניהול מוצר · שיווק · יישום. ⚠️ רק עם ההתמחות — מודעות Log-On דורשות אותה כשורה מפורשת",
@@ -272,7 +272,7 @@ export const DEGREES: Degree[] = [
   {
     id: "psych-ux",
     name: "פסיכולוגיה / קוגניציה",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     salary: 14600, employment: 89, inTech: 18,
     domains: ["ux"],
     leadsTo: "UX Research · Product · חוקר/ת שימושיות — עם התמחות ותיק עבודות",
@@ -286,7 +286,7 @@ export const DEGREES: Degree[] = [
   {
     id: "business-accountech",
     name: "מנהל עסקים · התמחות AccounTech",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     domains: ["data"],
     leadsTo: "חשבונאות טכנולוגית · ניתוח נתונים פיננסי · תפקידי דאטה בארגונים",
     caveat:
@@ -304,7 +304,7 @@ export const DEGREES: Degree[] = [
   {
     id: "econ-data-science",
     name: "כלכלה ויזמות · התמחות Data Science",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     domains: ["data"],
     leadsTo: "אנליסט/ית · דאטה בארגונים פיננסיים · תפקידי מוצר",
     caveat:
@@ -322,7 +322,7 @@ export const DEGREES: Degree[] = [
   {
     id: "learning-tech",
     name: "טכנולוגיות למידה",
-    kind: "B.A · 3 שנים",
+    kind: "B.A‏ · 3 שנים",
     domains: ["ux", "data"],
     leadsTo:
       "עיצוב UX/UI · ניהול מוצר · עיצוב חוויות למידה · פיתוח מוצרים והדרכה ארגונית",

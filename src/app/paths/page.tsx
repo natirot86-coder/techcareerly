@@ -2929,7 +2929,7 @@ function DegreePicker({ domains, have, list, onToggleList }: {
                     {d.salary && (
                       <div className="leading-[1.25]">
                         <span className="text-[13px] font-black" style={{ color: "#1c1a16" }}>
-                          {(d.salary / 1000).toFixed(1)}K ₪
+                          {d.salary.toLocaleString("he-IL")} ₪
                         </span>
                         <span className="block text-[9.5px]" style={{ color: "rgba(0,0,0,0.42)" }}>
                           שכר חודשי, 5–6 שנים אחרי התואר
