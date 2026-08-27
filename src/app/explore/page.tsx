@@ -158,8 +158,8 @@ export default function ExplorePage() {
           className="mt-5 mb-4 rounded-2xl overflow-hidden"
           style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}
         >
-          <img src="/domains/tasting-icecream.jpeg" alt="" className="w-full object-cover"
-            style={{ aspectRatio: "16/6", objectPosition: "center 68%" }} />
+          <img src="/domains/gelateria.jpeg" alt="" className="w-full object-cover"
+            style={{ aspectRatio: "16/6", objectPosition: "center 72%" }} />
           <div className="px-4 py-3.5 text-[13px] leading-[1.75]" style={{ color: "rgba(0,0,0,0.55)" }}>
             <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}>בגלידריה חדשה — טועמים לפני שמזמינים.</span>{" "}
             קריירה? אותו דבר: כל כרטיס הוא טעימה אמיתית מהתחום (~20 דקות של עשייה, לא קריאה).
