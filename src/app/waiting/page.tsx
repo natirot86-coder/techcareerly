@@ -655,6 +655,28 @@ function IntroWho({ onNext }: { onNext: () => void }) {
   );
 }
 
+/** צ'יפ חברה: הלוגו עצמו כשקיים (בגודל קריא), שם כשאין (נתי 27.8) */
+function FirmChip({ id, label, lit }: { id: string; label: string; lit: boolean }) {
+  const [hasLogo, setHasLogo] = useState(true);
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      background: lit ? "#fff" : "#f4f5f7", borderRadius: 12,
+      padding: hasLogo ? "7px 12px" : "6px 12px", minHeight: 34,
+      border: "1px solid rgba(0,0,0,0.06)",
+    }}>
+      {hasLogo ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={`/logos/${id}.png`} alt={label} title={label}
+          style={{ height: 20, maxWidth: 84, objectFit: "contain", display: "block" }}
+          onError={() => setHasLogo(false)} />
+      ) : (
+        <span style={{ fontSize: 13, fontWeight: 800, color: NAVY }}>{label}</span>
+      )}
+    </span>
+  );
+}
+
 // כרטיס 4 — שני עולמות: בחירה בלי תשובה נכונה
 function IntroWhere({ onNext }: { onNext: () => void }) {
   const [picked, setPicked] = useState<string | null>(null);
@@ -683,18 +705,12 @@ function IntroWhere({ onNext }: { onNext: () => void }) {
             >
               <div style={{ fontSize: 16, fontWeight: 800, color: "#1b1f27" }}>{e} {t}</div>
               <div style={{ fontSize: 14, lineHeight: 1.6, color: MUTED, marginTop: 4 }}>{d}</div>
-              {/* לוגו + שם (נתי 25.8). קובץ חסר ב-public/logos → נשאר שם בלבד */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 9 }}>
+              {/* לוגואים בגודל מכובד (נתי 27.8): הלוגו הוא הצ'יפ — הטקסט
+                  מוצג רק כשאין קובץ לוגו (כללית, חברת חשמל) */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 10, alignItems: "center" }}>
                 {firms.map(f => {
                   const [id, label] = f.split("|");
-                  return (
-                    <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: on ? "#fff" : "#f4f5f7", borderRadius: 999, padding: "4px 10px", fontSize: 12, fontWeight: 700, color: NAVY }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/logos/${id}.png`} alt="" style={{ width: 15, height: 15, objectFit: "contain" }}
-                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      {label}
-                    </span>
-                  );
+                  return <FirmChip key={id} id={id} label={label} lit={on} />;
                 })}
               </div>
             </button>
