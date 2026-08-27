@@ -7,6 +7,20 @@
  */
 "use client";
 
+import { INSTITUTIONS, DOMAIN_LABEL } from "@/data/institutions";
+import { FUNDING } from "@/data/scholarships";
+import { COURSES } from "@/data/courses";
+
+/*
+  המספרים על המפה נגזרים מהנתונים ולא מוקלדים (28.8) — הם אמרו
+  "29 מוסדות" ו"17 מלגות" בזמן שבקוד היו 88 ו-39. מספר שמוקלד
+  נכון ביום שכתבו אותו ושגוי מחר, ואיש לא מרענן תווית על מפת ניווט.
+*/
+const N_INST = INSTITUTIONS.length;
+const N_FUND = FUNDING.length;
+const N_COURSE = COURSES.length;
+const N_DOMAIN = Object.keys(DOMAIN_LABEL).length;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Node = {
@@ -46,7 +60,7 @@ const BASE = process.env.NODE_ENV === "development" ? "http://localhost:3000" : 
 const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────
   { id: "login",      label: "כניסה",      sub: "SMS OTP",             url: `${BASE}/login`,      cx: 65,  cy: 195,  w: 82,  color: "#023e8a" },
-  { id: "dashboard",  label: "מגירת המסע", sub: "הדשבורד בוטל — טאב בניווט", url: `${BASE}/dashboard`,  cx: 920,  cy: 195,  w: 120, color: "#023e8a", badge: "עודכן", badgeColor: "#023e8a" },
+  { id: "dashboard",  label: "מסך המסע", sub: "סרפנטינה · תחנות שקרו באמת", url: `${BASE}/journey`,  cx: 920,  cy: 195,  w: 120, color: "#023e8a", badge: "עודכן", badgeColor: "#023e8a" },
   { id: "waiting", label: "מרחב ההמתנה", sub: "ציר + מבוא להייטק + הכנה", url: `${BASE}/waiting`, cx: 1060, cy: 195, w: 110, color: "#0ea5e9", badge: "עודכן", badgeColor: "#0ea5e9" },
 
 
@@ -60,17 +74,17 @@ const NODES: Node[] = [
 
   // ── Bottom nav (soon) ─────────────────────────────────────────────────────
   { id: "chat",  label: "שאלות ותשובות", sub: "במקום צ'אט ה-AI — תשובות שנכתבו ידנית", url: `${BASE}/faq`,  cx: 940, cy: 122,  w: 130, color: "#023e8a", badge: "חדש", badgeColor: "#023e8a" },
-  { id: "squad", label: "קהילה",       sub: "בקרוב", url: `${BASE}/squad`, cx: 1075, cy: 122, w: 110, color: "#6b7280", badge: "בקרוב", badgeColor: "#6b7280" },
-  { id: "admin", label: "ניהול מוסדות", sub: "29 מוסדות · פנימי", url: `${BASE}/admin/institutions`, cx: 85, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "admin-funding", label: "ניהול מלגות", sub: "17 מלגות ותוכניות · פנימי", url: `${BASE}/admin/scholarships`, cx: 250, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "squad", label: "קהילה",       sub: "אירועים · קבוצות · בוגר", url: `${BASE}/squad`, cx: 1075, cy: 122, w: 110, color: "#023e8a" },
+  { id: "admin", label: "ניהול מוסדות", sub: `${N_INST} מוסדות · פנימי`, url: `${BASE}/admin/institutions`, cx: 85, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-funding", label: "ניהול מלגות", sub: `${N_FUND} מלגות ותוכניות · פנימי`, url: `${BASE}/admin/scholarships`, cx: 250, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "reset", label: "בדיקה מההתחלה", sub: "מוחק הכל · פנימי", url: `${BASE}/reset`, cx: 1045, cy: 62, w: 130, color: "#dc2626", badge: "ניקוי", badgeColor: "#dc2626" },
   { id: "admin-degrees", label: "תחומים ותארים", sub: "מיפוי תואר×מוסד · פנימי", url: `${BASE}/admin/degrees`, cx: 730, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-coordinator", label: "מסך הרכזת", sub: "מי צריך אותי היום · פנימי", url: `${BASE}/admin/coordinator`, cx: 885, cy: 62, w: 135, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "admin-courses", label: "ניהול קורסים", sub: "מוסד × מעטפת · פנימי", url: `${BASE}/admin/courses`, cx: 575, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
+  { id: "admin-courses", label: "ניהול קורסים", sub: `${N_COURSE} קורסים · פנימי`, url: `${BASE}/admin/courses`, cx: 575, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-analytics", label: "אנליטיקות", sub: "מה קורה באפליקציה · פנימי", url: `${BASE}/admin/analytics`, cx: 415, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
   // ── Explore ───────────────────────────────────────────────────────────────
-  { id: "explore", label: "חקר תחומים", sub: "דירוג 9 תחומים", url: `${BASE}/explore`, cx: 575, cy: 455, w: 140, color: "#fb8500" },
+  { id: "explore", label: "חקר תחומים", sub: `דירוג ${N_DOMAIN} תחומים`, url: `${BASE}/explore`, cx: 575, cy: 455, w: 140, color: "#fb8500" },
 
   // ── Domain pages ──────────────────────────────────────────────────────────
   { id: "d-code",      label: "קוד",       url: `${BASE}/explore/code`,      cx: 70,  cy: 555, w: 72, color: "#fb8500" },
@@ -196,9 +210,9 @@ const EDGES: Edge[] = [
   { from: "waiting",   to: "m1",      label: "לקבוע", color: "#0ea5e9" },
 
   // Dashboard → bottom nav
-  { from: "dashboard", to: "chat",  dashed: true, color: "#023e8a" },
+  { from: "dashboard", to: "chat",  color: "#023e8a" },
   { from: "plan", to: "enroll", label: "נרשמת? ←", color: "#fb8500" },
-  { from: "dashboard", to: "squad", dashed: true, color: "#6b7280" },
+  { from: "dashboard", to: "squad", color: "#023e8a" },
 
   // Dashboard → explore (stage 3)
   { from: "dashboard", to: "explore", label: "נפתח אחרי הפגישה" },
@@ -586,7 +600,6 @@ export default function MapPage() {
             { color: "#7c3aed", label: "שלב 4 — מסלול לימודים" },
             { color: "#059669", label: "שלב 5 — לוגיסטיקה ומלגות" },
             { color: "#475569", label: "ניהול פנימי" },
-            { color: "#6b7280", label: "בקרוב" },
           ].map(({ color, label }) => (
             <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "rgba(0,0,0,0.55)" }}>
               <div style={{ width: 10, height: 10, borderRadius: 99, background: color }} />
