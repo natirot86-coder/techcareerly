@@ -84,6 +84,9 @@ function describe(e: Ev): string {
     case "meeting_self_declared":  return `הצהיר/ה שכבר קבע/ה את פגישה ${s(p.n)} — אין לזה אישור ביומן`;
     case "meeting_open":           return `נכנס/ה למסך תיאום פגישה ${s(p.n)}`;
     case "meeting_calendar_ready": return `היומן נטען`;
+    case "meeting2_checkin":       return s(p.result) === "yes" ? "פגישה 2 — ״היה טוב״" : "פגישה 2 — לא הצליח/ה להגיע ⚠️";
+    case "meeting3_checkin":       return s(p.result) === "yes" ? "פגישה 3 — ״היה טוב״" : "פגישה 3 — לא הצליח/ה להגיע ⚠️";
+    case "student_checkin":        return s(p.result) === "ok" ? "צ'ק-אין סטודנט/ית — מסתדר/ת 💪" : "צ'ק-אין סטודנט/ית — קשה לו/לה ⚠️ להתקשר";
     case "meeting1_checkin":       return s(p.result) === "missed" ? "סימן/ה שלא הצליח/ה להגיע לפגישה" : "סימן/ה שהפגישה הייתה טובה";
     case "sim_start":              return `נכנס/ה לסימולציית ${dom(p.domain)}`;
     case "sim_step":               return `סימולציית ${dom(p.domain)} — צעד ${s(p.i)} מתוך ${s(p.of)}${p.concept ? ` · ${s(p.concept)}` : ""}`;

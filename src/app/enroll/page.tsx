@@ -11,6 +11,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import { StudentCheckin } from "@/components/ui/MeetingCheckin";
 import { uploadEnrollmentDoc, enrollmentDocUrl, logEvent } from "@/lib/candidate";
 
 const NAVY = "#023e8a";
@@ -33,6 +34,8 @@ export default function EnrollPage() {
     if (path) {
       setState("done");
       setJustDone(true);
+      // חותמת ההעלאה — ממנה נגזר צ'ק-אין "איך החודש הראשון" (נתי 27.8)
+      try { localStorage.setItem("enrollment-doc-at", new Date().toISOString()); } catch { /* ignore */ }
       logEvent("student_stage", {});
     } else setState("error");
   }
@@ -73,6 +76,7 @@ export default function EnrollPage() {
               למסע — שלב 6 ✓
             </Link>
           </div>
+          <StudentCheckin />
         </div>
       ) : (
         <div className="max-w-[480px] mx-auto px-6 pt-12">

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import MeetingCheckin from "@/components/ui/MeetingCheckin";
 import { visibleByTrack, visibleFor, INSTITUTIONS } from "@/data/institutions";
 import { track as trackEvent } from "@vercel/analytics";
 import JourneyStrip from "@/components/ui/JourneyStrip";
@@ -1172,6 +1173,7 @@ export default function PathsPage() {
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.intro} phaseIndex={0} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
+          <MeetingCheckin n={2} title="פגישת בחירת התחום" />
 
           {prepMode && (
             <div

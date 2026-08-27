@@ -23,6 +23,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
+import MeetingCheckin from "@/components/ui/MeetingCheckin";
 import { track as trackEvent } from "@vercel/analytics";
 import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl, myCoordinator } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
@@ -270,6 +271,7 @@ export default function PlanPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: SURFACE }} dir="rtl">
       <JourneyStrip current={5} phaseLabel={VIEW_LABEL[view] ?? "לוגיסטיקה ומלגות"} />
+      <div className="px-4 pt-3"><MeetingCheckin n={3} title="פגישת בחירת המסלול" /></div>
 
       {/* ניווט פנימי — מקטעים, לא סרגל שני */}
       <div className="max-w-[560px] w-full mx-auto px-4 pt-3">
