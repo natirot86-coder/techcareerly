@@ -222,7 +222,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
   mahat: {
     emoji: "🏫",
     label: "מה\"ט / הנדסאי",
-    duration: "2–3 שנים, לרוב בערב",
+    duration: "שנתיים ביום · שלוש בערב",
     cost: "כ-9,300–11,100 ₪ לשנה (יסוד + נלווים, לפי המאומת אצלנו)",
     entry: "בגרות מלאה עם מתמטיקה — כמעט מה שתואר דורש",
     pros: [
@@ -271,6 +271,13 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
  */
 const TRACK_ORDER: Track[] = ["degree", "bootcamp", "mahat"];
 
+/** תמונות אווירה למסלולים (נתי 27.8) — לא עדויות, ולכן בלי שמות */
+const TRACK_PHOTO: Record<Track, string> = {
+  degree: "/tracks/track-degree.jpeg",
+  bootcamp: "/tracks/track-bootcamp.jpeg",
+  mahat: "/tracks/track-mahat.jpeg",
+};
+
 /**
  * מסך התוצאה (1a — "רשת שוויונית עם כתר", handoff 24.8): שלושה כרטיסים
  * שווי-גודל, ההמלצה מסומנת בכתר במקומה הקבוע. התוכן verbatim מה-handoff
@@ -304,7 +311,7 @@ const RESULT_CARD: Record<Track, {
     mini: { income: "ג'וניור מיד בסיום", cost: "980–6,000 ₪", entry: "בלי דרישות קדם" },
   },
   mahat: {
-    emoji: "⚙️", label: "הנדסאי (מה\"ט)", tagA: "2–3 שנים", tagB: "משלב עבודה — ערב",
+    emoji: "⚙️", label: "הנדסאי (מה\"ט)", tagA: "שנתיים ביום · שלוש בערב", tagB: "משלב עבודה",
     income: "עבודה במקביל ללימודי ערב",
     cost: "כ-9,300–11,100 ₪, ולחיילים משוחררים האגף מממן 90%",
     entry: "בגרות חלקית מספיקה, בלי פסיכומטרי",
@@ -1212,19 +1219,34 @@ export default function PathsPage() {
             לזמן שיש לך. לכסף. למשפחה.
           </div>
 
-          <div className="flex gap-2.5 mb-5">
+          {/*
+            שלושת הכרטיסים עם פנים (נתי 27.8): כרטיסי אייקון גנריים לא
+            אמרו כלום. תמונת אווירה של מישהו מהקהילה בכל מסלול עושה את
+            העבודה של "אנשים כמוני עושים את זה" בלי משפט אחד. אלה תמונות
+            אווירה מוצהרות ולא עדויות — ולכן אין לידן שמות (הסיפורים
+            האמיתיים עם שם וקישור נשארים במבוא בלבד).
+          */}
+          <div className="grid grid-cols-3 gap-2.5 mb-5">
             {TRACK_ORDER.map(t => (
               <div
                 key={t}
-                className="flex-1 rounded-2xl px-3 py-4 text-center"
+                className="rounded-2xl overflow-hidden flex flex-col"
                 style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.1)", boxShadow: "0 2px 10px rgba(2,62,138,0.05)" }}
               >
-                <div className="text-[24px] mb-1.5">{TRACK_META[t].emoji}</div>
-                <div className="text-[11.5px] font-bold leading-tight mb-1" style={{ color: NAVY }}>
-                  {TRACK_META[t].label}
-                </div>
-                <div className="text-[10.5px] leading-tight" style={{ color: "rgba(0,0,0,0.42)" }}>
-                  {TRACK_META[t].duration}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={TRACK_PHOTO[t]}
+                  alt=""
+                  className="w-full object-cover"
+                  style={{ aspectRatio: "4/3", objectPosition: "center 30%" }}
+                />
+                <div className="px-2.5 py-2.5 text-center flex-1 flex flex-col justify-center">
+                  <div className="text-[11.5px] font-bold leading-tight mb-0.5" style={{ color: NAVY }}>
+                    {TRACK_META[t].label}
+                  </div>
+                  <div className="text-[10.5px] leading-tight" style={{ color: "rgba(0,0,0,0.42)" }}>
+                    {TRACK_META[t].duration}
+                  </div>
                 </div>
               </div>
             ))}
