@@ -113,7 +113,9 @@ function buildStages(): { stages: Stage[]; current: number } {
  */
 function Serpentine({ stages, current }: { stages: Stage[]; current: number }) {
   const DASH = "#ddd6c9";
-  const PER_ROW = 4, W = 720, ROW_H = 132, PAD = 92;
+  const PER_ROW = 4, W = 760, ROW_H = 132;
+  const R = ROW_H / 2;          // רדיוס חצי-המעגל = חצי המרחק בין השורות
+  const PAD = R + 34;           // מקום לקשת המלאה בלי שתיחתך או תיגע בטקסט
   const STEP = (W - PAD * 2) / (PER_ROW - 1);
 
   // שיטוח: כל תחנה נושאת את שם השלב רק אם היא הראשונה בו
@@ -142,8 +144,9 @@ function Serpentine({ stages, current }: { stages: Stage[]; current: number }) {
         if (y1 === y2) {
           return <path key={i} d={`M ${x1} ${y1} L ${x2} ${y2}`} fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />;
         }
-        const out = x1 < W / 2 ? x1 - 54 : x1 + 54;
-        return <path key={i} d={`M ${x1} ${y1} C ${out} ${y1}, ${out} ${y2}, ${x2} ${y2}`} fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />;
+        // חצי-מעגל מדויק: sweep 0 בולט שמאלה, sweep 1 ימינה
+        const sweep = x1 < W / 2 ? 0 : 1;
+        return <path key={i} d={`M ${x1} ${y1} A ${R} ${R} 0 0 ${sweep} ${x2} ${y2}`} fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />;
       })}
 
       {flat.map((stop, i) => {
