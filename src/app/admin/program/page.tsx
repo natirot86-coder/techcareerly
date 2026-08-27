@@ -160,7 +160,7 @@ export default function ProgramAdmin() {
             <table className="w-full text-[12.5px]" style={{ background: "#fff" }}>
               <thead>
                 <tr style={{ background: "rgba(2,62,138,0.05)", color: NAVY }}>
-                  {["שם", "אזור", "מייל", "טלפון (9725…)", "פעילה", "משתתפים"].map(h => (
+                  {["שם", "אזור", "מייל חשבון ה-Cal (לזיהוי הזמנות!)", "טלפון (גם 05… בסדר)", "פעילה", "משתתפים"].map(h => (
                     <th key={h} className="text-right px-3 py-2.5 font-black">{h}</th>
                   ))}
                 </tr>

@@ -541,9 +541,12 @@ export async function myCoordinator(): Promise<MyCoordinator | null> {
       .maybeSingle();
     const mine = cand?.coordinator_id ? rows.find(r => r.id === cand.coordinator_id) : null;
     const row = mine ?? rows[0];
+    /* נרמול לוואטסאפ: מקבלים 050... או 972... — ומחזירים תמיד בינלאומי */
+    const digits = (row.phone ?? "").replace(/\D/g, "");
+    const phone = digits.startsWith("0") ? "972" + digits.slice(1) : digits;
     return {
       name: row.name ?? "",
-      phone: row.phone ?? "",
+      phone,
       calLinks: { 1: row.cal_m1 ?? "", 2: row.cal_m2 ?? "", 3: row.cal_m3 ?? "" },
     };
   } catch {
