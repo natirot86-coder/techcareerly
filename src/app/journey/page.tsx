@@ -81,7 +81,8 @@ function buildStages(): { stages: Stage[]; current: number } {
     {
       n: 4, title: JOURNEY[3].candidate,
       stops: [
-        { label: "נפגשתם ובחרת תחום", done: m2, meeting: true },
+        { label: "נפגשת עם הרכזת — פגישה 2", done: get("meeting-2-attended") === "yes", meeting: true },
+        { label: "בחרת את הכיוון שלך", done: has("paths-domains"), href: "/paths" },
         { label: "ענית על שאלון המסלולים", done: has("paths-quiz"), href: "/paths" },
         { label: "חקרת מוסדות ושמרת רשימה", done: has("paths-shortlist"), href: "/paths" },
         { label: "קבעת את פגישת בחירת המסלול", done: m3, href: "/contact?m=3", meeting: true },
