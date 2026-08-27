@@ -96,6 +96,12 @@ function describe(e: Ev): string {
     case "paths_quiz_done":        return `סיים/ה את השאלון — ההמלצה שיצאה: ${s(p.recommendation)}`;
     case "paths_blocker_open":     return `הוצג לו/ה החסם: ${s(p.blocker)}`;
     case "paths_solution_click":   return `פתח/ה פתרון: ${s(p.solution)}`;
+    case "paths_research_open":    return "נכנס/ה לערכת חקר המוסדות";
+    case "paths_research_done":    return `בירר/ה מול מוסד: ${s(p.institution)}`;
+    case "paths_research_remind":  return "ביקש/ה תזכורת — טרם דיבר/ה עם אף מוסד";
+    case "paths_prep_done":        return s(p.researched) === "0"
+      ? "סיים/ה את שלב המסלולים — בלי שדיבר/ה עם אף מוסד"
+      : `סיים/ה את שלב המסלולים — אחרי שבירר/ה ${s(p.researched)} מוסדות`;
     case "plan_money_opened":      return "פתח/ה את מסך החשבון";
     case "plan_task_open":         return `חזר/ה למשימה "${taskName(s(p.task))}" — פעם ${s(p.count)}`;
     case "paths_domain_gate":      return "הגיע/ה לשער בחירת הכיוון";
@@ -301,9 +307,21 @@ function buildStations(p: Person): Station[] {
     { id: "quiz", stage: "", title: "שאלון אילוצים", emoji: "📋",
       date: quizDone?.at ?? null, chips: [],
       events: [...by("paths_question"), ...by("paths_quiz_done")] },
+    /*
+      עד 28.8 התחנה הזאת נגזרה מאירועי מסך החסמים בלבד — כלומר
+      היא הדליקה גם למי שלא דיבר עם אף מוסד. השיחה עצמה היא
+      הפעולה היחידה בשלב 4 שקורית מחוץ למסך, ולכן היא הצ׳יפ.
+    */
     { id: "inst-research", stage: "", title: "חקר מוסדות וחסמים", emoji: "🔍",
-      date: latest("paths_solution_click")?.at ?? latest("paths_blocker_open")?.at ?? null, chips: [],
-      events: [...by("paths_blocker_open"), ...by("paths_solution_click"), ...by("paths_solution_open")] },
+      date: latest("paths_research_done")?.at ?? latest("paths_solution_click")?.at ?? latest("paths_blocker_open")?.at ?? null,
+      chips: by("paths_research_done").length > 0
+        ? [{ text: `דיבר/ה עם ${by("paths_research_done").length} מוסדות`, kind: "info" as const }]
+        : latest("paths_prep_done") || latest("paths_research_remind")
+          ? [{ text: "לא דיבר/ה עם אף מוסד — לעשות שיחה אחת יחד בפגישה", kind: "talk" as const }]
+          : [],
+      events: [...by("paths_blocker_open"), ...by("paths_solution_click"), ...by("paths_solution_open"),
+               ...by("paths_research_open"), ...by("paths_research_done"), ...by("paths_research_remind"),
+               ...by("paths_prep_done")] },
     { id: "m3", stage: "מלגות והרשמה", title: "פגישה 3 — נעילת מסלול", emoji: "🗓",
       date: latest("meeting_booked", pr => S(pr.n) === "3")?.at ?? null, chips: [],
       events: [...by("meeting_open", pr => S(pr.n) === "3"), ...by("meeting_booked", pr => S(pr.n) === "3")] },

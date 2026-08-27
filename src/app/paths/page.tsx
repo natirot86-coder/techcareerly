@@ -811,6 +811,25 @@ export default function PathsPage() {
   const [activeDomain, setActiveDomain] = useState<Domain | null>(null);
   const [thinking, setThinking] = useState(false);
   const [copied, setCopied] = useState(false);
+  /** יוצא ממסך ההכנה בלי שדיבר עם אף מוסד — שאלה אחת, לא חסימה */
+  const [confirmNoResearch, setConfirmNoResearch] = useState(false);
+  const [remindResearch, setRemindResearch] = useState(false);
+
+  /** כמה מוסדות באמת בירר — הוא גם המספר שמכריע וגם מה שמניע את המסך */
+  const researchedCount = Object.values(research).filter(r => r.status === "done").length;
+
+  function finishPrep(remind: boolean) {
+    try {
+      localStorage.setItem("paths-journey", JSON.stringify({ quiz: true, shortlist: true, prep: true, research: researchedCount > 0 }));
+      /* התחייבות שנשמרת, ולא הבטחה שנעלמת ברגע שהמסך מתחלף */
+      if (remind) localStorage.setItem("paths-research-remind", new Date().toISOString());
+      else localStorage.removeItem("paths-research-remind");
+    } catch { /* ignore */ }
+    setRemindResearch(remind);
+    if (remind) logEvent("paths_research_remind", {});
+    logEvent("paths_prep_done", { researched: String(researchedCount) });
+    goToPhase("done");
+  }
 
   function updateResearch(id: string, patch: Partial<ResearchEntry>) {
     setResearch(prev => {
@@ -877,6 +896,7 @@ export default function PathsPage() {
       if (savedS) setShortlist(JSON.parse(savedS));
       const savedR = localStorage.getItem("paths-research");
       if (savedR) setResearch(JSON.parse(savedR));
+      setRemindResearch(!!localStorage.getItem("paths-research-remind"));
       /*
        * דווקא המפתח הספציפי של פגישה 3. הדגל הכללי meeting-booked נדלק
        * בכל קביעה שהיא — וגרם למסך הסיום להכריז שפגישה 3 קבועה
@@ -2486,13 +2506,9 @@ export default function PathsPage() {
             </div>
           )}
 
+
           <button
-            onClick={() => {
-              try {
-                localStorage.setItem("paths-journey", JSON.stringify({ quiz: true, shortlist: true, prep: true, research: doneCount > 0 }));
-              } catch { /* ignore */ }
-              goToPhase("done");
-            }}
+            onClick={() => finishPrep(false)}
             className="w-full py-4 rounded-2xl text-white text-[15px] font-black mb-3 active:scale-[0.98] transition-transform"
             style={{ background: NAVY, ...HEEBO }}
           >
@@ -2540,44 +2556,84 @@ export default function PathsPage() {
             ))}
           </div>
 
-          {/* ── Optional research mission ── */}
-          <div className="rounded-2xl p-5 mb-6" style={{ background: "rgba(251,133,0,0.06)", border: "1.5px solid rgba(251,133,0,0.22)" }}>
+          {/*
+            ── חקר המוסדות — הפעולה הראשית של המסך (נתי 28.8) ──
+            קודם הוא היה מוכתר "אופציונלי" בכתום, וכפתור "סיימתי" הכחול
+            שמתחתיו היה גדול יותר — כלומר בנינו מסך שמזמין לדלג ואז כתבנו
+            עליו שכדאי לא לדלג. **ההיררכיה היא ההודעה.** לא הפכנו את זה
+            לחובה: שער על "תתקשר לזר" מסנן לפי חרדה חברתית ולא לפי
+            מוטיבציה, ואי אפשר לאמת שיחה — "חובה" הייתה צ׳קבוקס.
+          */}
+          <div className="rounded-2xl p-5 mb-4" style={{ background: "rgba(251,133,0,0.06)", border: `1.5px solid ${ORANGE}` }}>
             <div className="text-[11px] font-black uppercase tracking-widest mb-1.5" style={{ color: ORANGE }}>
-              אופציונלי — אבל שווה הרבה
+              הצעד הבא שלך
             </div>
             <div className="text-[17px] leading-tight mb-2" style={{ ...HEEBO, color: "#92400e" }}>
               רוצה להגיע לפגישה עם תשובות במקום שאלות?
             </div>
             <div className="text-[12.5px] leading-[1.75] mb-4" style={{ color: "rgba(0,0,0,0.6)" }}>
-              אפשר לברר חלק מזה בעצמך — בטלפון, ביום פתוח או באירוע זום. זה לוקח כמה דקות לכל מוסד,
-              ומי שעושה את זה מגיע לפגישה חזק בהרבה. <span className="font-bold">אפשר גם לדלג ולהמשיך — זה לא חובה.</span>
+              חלק מהתשובות אפשר להשיג לפני הפגישה — בטלפון, ביום פתוח או באירוע זום. זה כמה דקות
+              לכל מוסד. <span className="font-bold">מי שעושה שיחה אחת כזאת מגיע לפגישה אחרת לגמרי:</span>{" "}
+              הוא כבר יודע במה מדובר, ואפשר להתקדם משם במקום להתחיל מהתחלה.
+              {researchedCount > 0 && (
+                <span className="block mt-2 font-bold" style={{ color: "#166534" }}>
+                  כבר בירר{researchedCount === 1 ? "ת מוסד אחד" : `ת ${researchedCount} מוסדות`} ✓
+                </span>
+              )}
             </div>
             <button
               onClick={() => { logEvent("paths_research_open", {}); goToPhase("research"); }}
-              className="w-full py-3.5 rounded-xl text-white text-[14px] font-black active:scale-[0.98] transition-transform"
+              className="w-full py-4 rounded-xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
               style={{ background: ORANGE, ...HEEBO }}
             >
-              לערכת החקר ←
+              {researchedCount > 0 ? "להמשיך בערכת החקר \u2190" : "לערכת החקר \u2190"}
             </button>
           </div>
 
-          <button
-            onClick={() => {
-              try {
-                localStorage.setItem("paths-journey", JSON.stringify({ quiz: true, shortlist: true, prep: true }));
-              } catch { /* ignore */ }
-              /* researched=0 הוא המספר שמכריע אם החקר צריך להיות חובה —
-                 בלעדיו ההחלטה הזאת מתקבלת בעיוורון */
-              logEvent("paths_prep_done", {
-                researched: String(Object.values(research).filter(r => r.status === "done").length),
-              });
-              goToPhase("done");
-            }}
-            className="w-full py-4 rounded-2xl text-white text-[15px] font-black mb-3 active:scale-[0.98] transition-transform"
-            style={{ background: NAVY, ...HEEBO }}
-          >
-            סיימתי — שמור הכל ←
-          </button>
+          {/*
+            "סיימתי" ירד מכפתור ראשי לקישור משני — אותה בחירה בדיוק, הפוכה
+            במשקל. ומי שיוצא בלי שדיבר עם אף מוסד מקבל שאלה אחת ולא חסימה:
+            התחייבות עוברת בהסכמה, לא במנעול.
+          */}
+          {confirmNoResearch ? (
+            <div className="rounded-2xl p-4 mb-3" style={{ background: "#fff", border: `1.5px solid ${ORANGE}` }}>
+              <div className="text-[13.5px] leading-[1.7] mb-3" style={{ color: "#3d4653" }}>
+                עוד לא דיברת עם אף מוסד. זה בסדר גמור להמשיך — רק חבל להגיע לפגישה
+                עם שאלות שאפשר היה לענות עליהן בשיחה אחת.
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => { logEvent("paths_research_open", { from: "reminder" }); goToPhase("research"); }}
+                  className="w-full py-3.5 rounded-xl text-white text-[14px] font-black"
+                  style={{ background: ORANGE, ...HEEBO }}
+                >
+                  בסדר, אני מנסה מוסד אחד ←
+                </button>
+                <button
+                  onClick={() => finishPrep(true)}
+                  className="w-full py-3 rounded-xl text-[13.5px] font-black"
+                  style={{ background: "rgba(2,62,138,0.07)", color: NAVY, ...HEEBO }}
+                >
+                  תזכירו לי מחר — ממשיך בינתיים
+                </button>
+                <button
+                  onClick={() => finishPrep(false)}
+                  className="w-full py-2 text-[12.5px] font-bold"
+                  style={{ color: "rgba(0,0,0,0.42)" }}
+                >
+                  לא צריך, ממשיך
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => { if (researchedCount === 0) { setConfirmNoResearch(true); return; } finishPrep(false); }}
+              className="w-full py-3 rounded-2xl text-[14px] font-black mb-3"
+              style={{ background: "rgba(2,62,138,0.07)", color: NAVY, ...HEEBO }}
+            >
+              {researchedCount === 0 ? "לסיים בלי לחקור" : "סיימתי — שמור הכל ←"}
+            </button>
+          )}
         </div>
         <BottomNav />
       </div>
@@ -2625,6 +2681,30 @@ export default function PathsPage() {
             הגעת לכאן לבד. עכשיו יש לך כיוון, רשימה ושאלות.
           </div>
         </div>
+
+        {/*
+          מי שביקש "תזכירו לי מחר" מקבל את התזכורת כאן — במסך שאליו הוא
+          חוזר ממילא. התחייבות שנעלמת ברגע שהמסך מתחלף איננה התחייבות,
+          והכרטיס נעלם מעצמו ברגע שהוא בירר מוסד אחד.
+        */}
+        {remindResearch && researchedCount === 0 && (
+          <div className="rounded-2xl p-4 mb-4 flex items-start gap-3" style={{ background: "#fff", border: `1.5px solid ${ORANGE}` }}>
+            <div className="text-[22px] leading-none mt-0.5">📞</div>
+            <div className="flex-1">
+              <div className="text-[14px] font-black mb-1" style={{ color: "#92400e" }}>ביקשת שנזכיר</div>
+              <div className="text-[12.5px] leading-[1.7] mb-2.5" style={{ color: "rgba(0,0,0,0.6)" }}>
+                מוסד אחד, שיחה אחת — וזה כל ההבדל בין להגיע לפגישה עם שאלות לבין להגיע עם תשובות.
+              </div>
+              <button
+                onClick={() => { logEvent("paths_research_open", { from: "reminder_card" }); goToPhase("research"); }}
+                className="px-4 py-2.5 rounded-xl text-white text-[13px] font-black"
+                style={{ background: ORANGE, ...HEEBO }}
+              >
+                לערכת החקר ←
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* The decision */}
         <div className="rounded-2xl p-5 mb-4" style={{ background: "rgba(251,133,0,0.07)", border: "1.5px solid rgba(251,133,0,0.25)" }}>
