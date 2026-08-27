@@ -157,7 +157,7 @@ export default function ExplorePage() {
           className="mt-5 mb-4 rounded-xl px-4 py-3.5 flex items-center gap-3"
           style={{ background: "rgba(2,62,138,0.05)" }}
         >
-          <img src="/domains/ice-cream.jpeg" alt="" className="w-20 h-28 object-cover rounded-xl shrink-0" />
+          <img src="/domains/tasting-icecream.jpeg" alt="" className="w-20 h-28 object-cover rounded-xl shrink-0" style={{ objectPosition: "center 62%" }} />
           <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.55)" }}>
             <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}>בגלידריה חדשה — טועמים לפני שמזמינים.</span>{" "}
             קריירה? אותו דבר: כל כרטיס הוא טעימה אמיתית מהתחום (~20 דקות של עשייה, לא קריאה).
