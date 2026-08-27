@@ -816,6 +816,10 @@ export default function PathsPage() {
     setResearch(prev => {
       const cur = prev[id] ?? { status: "todo" as const, answers: {}, note: "" };
       const next = { ...prev, [id]: { ...cur, ...patch } };
+      /* השיחה עם המוסד היא הפעולה היחידה בשלב 4 שקורית מחוץ למסך, ועד
+         היום לא נמדדה כלל — הרכזת ראתה "חקר מוסדות" לפי מסך החסמים,
+         שאין לו שום קשר לשאלה אם דיבר עם מישהו */
+      if (patch.status === "done" && cur.status !== "done") logEvent("paths_research_done", { institution: id });
       try { localStorage.setItem("paths-research", JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
@@ -2549,7 +2553,7 @@ export default function PathsPage() {
               ומי שעושה את זה מגיע לפגישה חזק בהרבה. <span className="font-bold">אפשר גם לדלג ולהמשיך — זה לא חובה.</span>
             </div>
             <button
-              onClick={() => goToPhase("research")}
+              onClick={() => { logEvent("paths_research_open", {}); goToPhase("research"); }}
               className="w-full py-3.5 rounded-xl text-white text-[14px] font-black active:scale-[0.98] transition-transform"
               style={{ background: ORANGE, ...HEEBO }}
             >
@@ -2562,6 +2566,11 @@ export default function PathsPage() {
               try {
                 localStorage.setItem("paths-journey", JSON.stringify({ quiz: true, shortlist: true, prep: true }));
               } catch { /* ignore */ }
+              /* researched=0 הוא המספר שמכריע אם החקר צריך להיות חובה —
+                 בלעדיו ההחלטה הזאת מתקבלת בעיוורון */
+              logEvent("paths_prep_done", {
+                researched: String(Object.values(research).filter(r => r.status === "done").length),
+              });
               goToPhase("done");
             }}
             className="w-full py-4 rounded-2xl text-white text-[15px] font-black mb-3 active:scale-[0.98] transition-transform"
