@@ -146,6 +146,7 @@ function JourneyDrawer({ onClose }: { onClose: () => void }) {
           {stageNow > 1 ? `${stageNow - 1} מתוך 6 כבר מאחוריך` : "מתחילים — 6 שלבים לפניך"}
         </div>
         <DrawerSerpentine stageNow={stageNow} onPick={n => setOpen(open === n ? null : n)} onClose={onClose} />
+        <NextEventRow onClose={onClose} />
         <div className="flex flex-col gap-2">
           {JOURNEY.map(s => {
             const done = s.n < stageNow;
@@ -195,7 +196,6 @@ function JourneyDrawer({ onClose }: { onClose: () => void }) {
             );
           })}
         </div>
-        <NextEventRow onClose={onClose} />
         <div className="text-[11.5px] text-center mt-3" style={{ color: "rgba(0,0,0,0.35)" }}>
           שלבים שעברת נפתחים לחזרה · הבאים נפתחים כשמגיעים אליהם
         </div>
