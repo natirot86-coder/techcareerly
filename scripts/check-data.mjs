@@ -171,7 +171,9 @@ if (noCity.length) warn(`${noCity.length} קורסים פעילים בלי city 
 for (const c of COURSES) {
   if (c.status !== "active" || !c.startsAt) continue;
   const d = new Date(c.startsAt);
-  if (d < today) warn(`קורס "${c.name}" — מועד הפתיחה (${c.startsAt}) עבר`);
+  /* לא באג: courseState מסמן "passed" ו-visibleCourses מסתיר מהמועמד
+     מעצמו. זו רשימת המחזורים שמחכים לתאריך חדש — ולא ממציאים אותו */
+  if (d < today) warn(`קורס "${c.name}" — המחזור (${c.startsAt}) עבר והוא מוסתר מהמועמד. לשאול תאריך חדש`);
 }
 
 // ── 9. תארים בלי מוסד שמלמד אותם ───────────────────────────────────────────
