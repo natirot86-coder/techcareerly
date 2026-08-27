@@ -854,7 +854,6 @@ export default function PathsPage() {
       }
 
       const wanted = params.get("phase") as Phase | null;
-      if (wanted) { setPhase(wanted); return; }
 
       const savedQ = localStorage.getItem("paths-quiz");
       if (savedQ) {
@@ -916,6 +915,9 @@ export default function PathsPage() {
        * ובמצב הכנה השער לא מוצג בכלל — בחירת התחום שייכת לפגישה.
        */
       if (m2Done && !picked.length && !savedChoice && (!savedPhase || savedPhase === "intro")) setPhase("domain");
+
+      // ?phase= הוא כלי בדיקה מפורש — הוא גובר על השחזור ועל השער
+      if (wanted) setPhase(wanted);
     } catch { /* ignore */ }
   }, []);
 
