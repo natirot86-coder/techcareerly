@@ -1313,7 +1313,7 @@ export default function PathsPage() {
             className="block w-full py-4 text-center font-black text-[15px] text-white rounded-2xl active:scale-[0.98] transition-transform"
             style={{ background: ORANGE, ...HEEBO }}
           >
-            {quizStarted ? "להמשיך מאיפה שעצרתי ←" : "בוא נתחיל — 6 שאלות ←"}
+            {quizStarted ? "להמשיך מאיפה שעצרתי ←" : `בוא נתחיל — ${QUIZ_QUESTIONS.length} שאלות ←`}
           </button>
 
           {allAnswered && (
