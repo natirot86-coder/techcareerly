@@ -165,7 +165,7 @@ export default function ResultsPage() {
             <span className="text-[18px] shrink-0 mt-0.5">💡</span>
             <div className="text-[12.5px] leading-[1.6]" style={{ color: "#92400e" }}>
               <span className="font-bold">נסי תחום נוסף לפני הפגישה.</span>{" "}
-              שתי טעימות מספיקות כדי שיהיה לכן על מה לדון — ושיהיה לרכזת מה להשוות.
+              לפחות שתי טעימות — כדי שיהיה על מה לדון ולרכזת מה להשוות. יותר? עוד יותר טוב.
             </div>
           </div>
         )}

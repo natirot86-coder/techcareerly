@@ -24,7 +24,7 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
   const unlocked = doneCount >= 2;
 
   const copyByState = [
-    "שיחה בלי טעימות = 20 דקות של 'לא יודע מה אני רוצה'. שיחה אחרי 2 טעימות = שיחה שמגיעה לאיפשהו.",
+    "שיחה בלי טעימות = 20 דקות של 'לא יודע מה אני רוצה'. שיחה אחרי לפחות 2 טעימות = שיחה שמגיעה לאיפשהו — וכל טעימה נוספת מחדדת.",
     "כמעט שם — עוד טעימה אחת ואפשר לדבר ברצינות.",
     "אפשר לקבוע — וכל טעימה נוספת תחדד את הבחירה בפגישה.",
   ];
@@ -91,7 +91,7 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
         </div>
 
         <div className="text-[10.5px] mb-1 text-left" style={{ color: "rgba(0,0,0,0.35)" }}>
-          שתי טעימות פותחות את הפגישה · השאר מחדדות
+          לפחות שתי טעימות פותחות את הפגישה · וכל אחת נוספת מחדדת
         </div>
 
         <div className="text-[12px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.45)" }}>
@@ -163,7 +163,7 @@ export default function ExplorePage() {
           <div className="px-4 py-3.5 text-[13px] leading-[1.75]" style={{ color: "rgba(0,0,0,0.55)" }}>
             <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}>בגלידריה חדשה — טועמים לפני שמזמינים.</span>{" "}
             קריירה? אותו דבר: כל כרטיס הוא טעימה אמיתית מהתחום (~20 דקות של עשייה, לא קריאה).
-            <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}> התחילו ממה שסיקרן אתכם — ואחרי שתי טעימות כבר יהיה לכם את מה להשוות.</span>{" "}
+            <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}> התחילו ממה שסיקרן אתכם — לפחות שתי טעימות — כדי שיהיה את מה להשוות, וכל אחת נוספת מחדדת.</span>{" "}
             אין סדר נכון, אין בוחן, ואי אפשר לטעות 😄
           </div>
         </div>
