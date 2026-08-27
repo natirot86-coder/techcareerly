@@ -106,39 +106,77 @@ function buildStages(): { stages: Stage[]; current: number } {
   return { stages, current };
 }
 
-/** מפת-העל לדסקטופ: שתי שורות, קשת מקווקה ביניהן, לחיצה גוללת לשלב */
+/**
+ * הסרפנטינה של הווב — כל התחנות, בשפה הוויזואלית של מסך הרכזת.
+ * ארבע בשורה, שורות מתחלפות בכיוון (RTL: מתחילים מימין), וקשת מקווקה
+ * סוגרת כל מעבר שורה. תג שם השלב מעל התחנה הראשונה שלו.
+ */
 function Serpentine({ stages, current }: { stages: Stage[]; current: number }) {
   const DASH = "#ddd6c9";
-  const POS: [number, number][] = [[500, 46], [305, 46], [110, 46], [110, 150], [305, 150], [500, 150]];
-  const go = (n: number) => document.getElementById(`stage-${n}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const PER_ROW = 4, W = 720, ROW_H = 132, PAD = 92;
+  const STEP = (W - PAD * 2) / (PER_ROW - 1);
+
+  // שיטוח: כל תחנה נושאת את שם השלב רק אם היא הראשונה בו
+  const flat = stages.flatMap(st =>
+    st.stops.map((stop, i) => ({
+      ...stop,
+      stageTitle: i === 0 ? st.title : null,
+      locked: st.n > current,
+      isCurrentStage: st.n === current,
+    })),
+  );
+  const rows = Math.ceil(flat.length / PER_ROW);
+  const pos = (idx: number): [number, number] => {
+    const row = Math.floor(idx / PER_ROW), col = idx % PER_ROW;
+    const x = row % 2 === 0 ? W - PAD - col * STEP : PAD + col * STEP; // RTL בשורה זוגית
+    return [x, 52 + row * ROW_H];
+  };
+  const H = 52 + (rows - 1) * ROW_H + 74;
+
   return (
-    <svg viewBox="0 0 580 210" className="w-full mb-6 hidden md:block" aria-hidden="false">
-      <path d="M 500 46 L 110 46" fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />
-      <path d="M 110 46 C 52 46, 52 150, 110 150" fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />
-      <path d="M 110 150 L 500 150" fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />
-      {stages.map((st, i) => {
-        const [x, y] = POS[i];
-        const done = st.stops.every(t => t.done);
-        const isCurrent = st.n === current;
-        const total = st.stops.length;
-        const got = st.stops.filter(t => t.done).length;
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full mb-7 hidden md:block">
+      {flat.map((_, i) => {
+        if (i === flat.length - 1) return null;
+        const [x1, y1] = pos(i), [x2, y2] = pos(i + 1);
+        // אותה שורה — קו ישר; מעבר שורה — חצי-קשת החוצה
+        if (y1 === y2) {
+          return <path key={i} d={`M ${x1} ${y1} L ${x2} ${y2}`} fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />;
+        }
+        const out = x1 < W / 2 ? x1 - 54 : x1 + 54;
+        return <path key={i} d={`M ${x1} ${y1} C ${out} ${y1}, ${out} ${y2}, ${x2} ${y2}`} fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />;
+      })}
+
+      {flat.map((stop, i) => {
+        const [x, y] = pos(i);
+        const active = stop.isCurrentStage && !stop.done;
         return (
-          <g key={st.n} onClick={() => go(st.n)} style={{ cursor: "pointer" }}>
-            {isCurrent && <circle cx={x} cy={y} r="25" fill="rgba(251,133,0,0.16)" />}
-            <circle cx={x} cy={y} r="18" fill={done ? GREEN : isCurrent ? ORANGE : "#eceae4"} />
-            <text x={x} y={y + 5.5} fontSize={done ? "16" : "13"} fontWeight="900"
-              fill={done || isCurrent ? "#fff" : "#a8a195"} textAnchor="middle">
-              {done ? "✓" : isCurrent ? st.n : "🔒"}
-            </text>
-            <text x={x} y={y + 36} fontSize="12.5" fontWeight="800"
-              fill={done || isCurrent ? NAVY : "#a8a195"} textAnchor="middle">
-              {st.title}
-            </text>
-            {!done && (
-              <text x={x} y={y + 51} fontSize="10.5" fontWeight="700" fill="#a8a195" textAnchor="middle">
-                {got}/{total} תחנות
-              </text>
+          <g key={i} onClick={() => stop.href && !stop.locked && (window.location.href = stop.href!)}
+            style={{ cursor: stop.href && !stop.locked ? "pointer" : "default" }}>
+            {stop.stageTitle && (
+              <>
+                <rect x={x - 58} y={y - 46} width="116" height="20" rx="10" fill="#eef3fa" />
+                <text x={x} y={y - 32} fontSize="11.5" fontWeight="900" fill={NAVY} textAnchor="middle">
+                  {stop.stageTitle}
+                </text>
+              </>
             )}
+            {active && <circle cx={x} cy={y} r="22" fill="rgba(251,133,0,0.16)" />}
+            <circle cx={x} cy={y} r="15" fill={stop.locked ? "#eceae4" : stop.done ? GREEN : ORANGE} />
+            <text x={x} y={y + 5} fontSize={stop.done && !stop.locked ? "14" : "11"} fontWeight="900"
+              fill={stop.locked ? "#a8a195" : "#fff"} textAnchor="middle">
+              {stop.locked ? "🔒" : stop.done ? "✓" : "○"}
+            </text>
+            {stop.label.split(" ").reduce((lines: string[], w) => {
+              const last = lines[lines.length - 1];
+              if (last && (last + " " + w).length <= 16) lines[lines.length - 1] = last + " " + w;
+              else lines.push(w);
+              return lines;
+            }, []).slice(0, 2).map((line, li) => (
+              <text key={li} x={x} y={y + 30 + li * 13} fontSize="10.5" fontWeight="600"
+                fill={stop.locked ? "#c9c4ba" : stop.done ? "#5c6473" : NAVY} textAnchor="middle">
+                {line}
+              </text>
+            ))}
           </g>
         );
       })}
@@ -197,7 +235,7 @@ export default function JourneyPage() {
           const isCurrent = stage.n === data.current;
           const isFuture = stage.n > data.current;
           return (
-            <div key={stage.n} id={`stage-${stage.n}`} className="flex gap-3.5" style={{ scrollMarginTop: 16 }}>
+            <div key={stage.n} id={`stage-${stage.n}`} className="flex gap-3.5 md:hidden" style={{ scrollMarginTop: 16 }}>
               {/* הציר — נקודה וקו, בדיוק כמו במרחב ההמתנה */}
               <div className="flex flex-col items-center shrink-0">
                 <div className="w-4 h-4 rounded-full mt-1.5"
@@ -253,7 +291,7 @@ export default function JourneyPage() {
           );
         })}
 
-        <div className="text-[12px] text-center pb-4" style={{ color: "rgba(0,0,0,0.35)" }}>
+        <div className="text-[12px] text-center pb-4 pt-1" style={{ color: "rgba(0,0,0,0.35)" }}>
           כל מה שעברת נשאר פתוח — אפשר לחזור לכל תחנה מתי שרוצים
         </div>
       </div>
