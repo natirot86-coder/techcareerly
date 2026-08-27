@@ -24,6 +24,7 @@ import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
 import MeetingCheckin from "@/components/ui/MeetingCheckin";
+import EventsList, { useEvents } from "@/components/ui/EventsList";
 import { track as trackEvent } from "@vercel/analytics";
 import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl, myCoordinator } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
@@ -318,6 +319,9 @@ export default function PlanPage() {
             onIntro={() => setView("intro")}
           />
         )}
+
+        {/* ימים פתוחים — של המוסד שנבחר (מודגש) ושל התוכנית */}
+        {view === "plan" && instMain && <PlanEvents instMain={instMain} />}
 
         {view === "money" && <MoneyOnce />}
 
@@ -1838,6 +1842,29 @@ function RejectedView({ id, onUndo, onBack }: { id: string; onUndo: () => void; 
       <button onClick={onUndo} className="text-center text-[13px]" style={{ color: "#8a8377" }}>
         לבטל את הסימון
       </button>
+    </div>
+  );
+}
+
+/**
+ * ימים פתוחים ואירועים בשלב 5. מציג את האירועים של המוסד שנבחר ואת
+ * הכלליים בלבד — אירוע של מוסד אחר אינו רלוונטי למי שכבר בחר.
+ */
+function PlanEvents({ instMain }: { instMain: string }) {
+  const events = useEvents();
+  const inst = INSTITUTIONS.find(i => i.name === instMain);
+  const mine = events.filter(e => !e.institution_id || e.institution_id === inst?.id);
+  if (!mine.length) return null;
+  return (
+    <div className="px-4 pb-6">
+      <div className="text-[13px] font-black mb-2" style={{ color: NAVY }}>
+        ימים פתוחים ואירועים
+      </div>
+      <p className="text-[12.5px] mb-3" style={{ color: "#8a8377", lineHeight: 1.6 }}>
+        יום פתוח הוא ההזדמנות הכי טובה לשאול על מעונות, מלגות ותנאי קבלה —
+        פנים אל פנים, לפני שנרשמים.
+      </p>
+      <EventsList events={mine} highlightInstitution={inst?.id ?? null} limit={3} />
     </div>
   );
 }

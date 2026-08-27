@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { JOURNEY } from "@/data/journey";
+import { useEvents, whenText } from "@/components/ui/EventsList";
 
 /**
  * מגירת המסע (נתי 25.8) — טאב "המסע" פותח מגירת שלבים במקום לנווט לדשבורד:
@@ -194,11 +195,38 @@ function JourneyDrawer({ onClose }: { onClose: () => void }) {
             );
           })}
         </div>
+        <NextEventRow onClose={onClose} />
         <div className="text-[11.5px] text-center mt-3" style={{ color: "rgba(0,0,0,0.35)" }}>
           שלבים שעברת נפתחים לחזרה · הבאים נפתחים כשמגיעים אליהם
         </div>
       </div>
     </div>
+  );
+}
+
+/** האירוע הקרוב ביותר — שורה אחת, כי המגירה היא ניווט ולא פיד */
+function NextEventRow({ onClose }: { onClose: () => void }) {
+  const events = useEvents();
+  const next = events[0];
+  if (!next) return null;
+  const inner = (
+    <>
+      <span className="text-[15px] shrink-0">📅</span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-[13px] font-bold truncate" style={{ color: "#023e8a" }}>{next.title}</span>
+        <span className="block text-[11.5px]" style={{ color: "#b35e00" }}>{whenText(next.starts_at)}</span>
+      </span>
+      {next.link && <span className="text-[13px] shrink-0" style={{ color: "#023e8a" }}>←</span>}
+    </>
+  );
+  const cls = "flex items-center gap-2.5 rounded-2xl px-3.5 py-2.5 mt-3";
+  const style = { background: "#fff", border: "1px solid rgba(251,133,0,0.35)" };
+  return next.link ? (
+    <a href={next.link} target="_blank" rel="noopener noreferrer" onClick={onClose} className={cls} style={{ ...style, textDecoration: "none" }}>
+      {inner}
+    </a>
+  ) : (
+    <div className={cls} style={style}>{inner}</div>
   );
 }
 
