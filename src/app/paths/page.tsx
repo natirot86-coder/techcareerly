@@ -846,6 +846,9 @@ export default function PathsPage() {
         setActiveTrack(recommendTrack(demo));
         setDomainInterest({ cyber: 5, networks: 4, code: 3 });
         setDomainChoice("open");
+        /* בלי תחום מחויב, מסך המוסדות בדמו נופל לקטלוג הכללי ובוחר
+           התארים — שהוא בדיוק מה שבאים לסקור — לא נפתח כלל */
+        setPickedDomains(["code"]);
         setResearch({
           "bgu": {
             status: "done",
