@@ -153,12 +153,14 @@ export default function ExplorePage() {
       <div className="max-w-[900px] mx-auto w-full px-[22px] md:px-12">
 
         {/* How it works */}
+        {/* האיור בגדול למעלה, הטקסט מתחת — כמו כרטיסי הכתבות (נתי 27.8) */}
         <div
-          className="mt-5 mb-4 rounded-xl px-4 py-3.5 flex items-center gap-3"
-          style={{ background: "rgba(2,62,138,0.05)" }}
+          className="mt-5 mb-4 rounded-2xl overflow-hidden"
+          style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}
         >
-          <img src="/domains/tasting-icecream.jpeg" alt="" className="w-20 h-28 object-cover rounded-xl shrink-0" style={{ objectPosition: "center 62%" }} />
-          <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.55)" }}>
+          <img src="/domains/tasting-icecream.jpeg" alt="" className="w-full object-cover"
+            style={{ aspectRatio: "16/6", objectPosition: "center 68%" }} />
+          <div className="px-4 py-3.5 text-[13px] leading-[1.75]" style={{ color: "rgba(0,0,0,0.55)" }}>
             <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}>בגלידריה חדשה — טועמים לפני שמזמינים.</span>{" "}
             קריירה? אותו דבר: כל כרטיס הוא טעימה אמיתית מהתחום (~20 דקות של עשייה, לא קריאה).
             <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}> התחילו ממה שסיקרן אתכם — ואחרי שתי טעימות כבר יהיה לכם את מה להשוות.</span>{" "}
