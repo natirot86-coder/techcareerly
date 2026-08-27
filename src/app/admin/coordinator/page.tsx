@@ -776,7 +776,10 @@ function Checklist({ items }: { items: { label: string; done: boolean; detail?: 
 export default function CoordinatorPage() {
   const [code, setCode] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [data, setData] = useState<{ needsAttention: Person[]; quiet: number; quietList?: Person[]; total: number; generatedAt: string } | null>(null);
+  const [data, setData] = useState<{
+    needsAttention: Person[]; quiet: number; quietList?: Person[]; total: number; generatedAt: string;
+    unmatchedBookings?: { id: number; title: string; start_time: string; attendee_name: string; attendee_phone: string }[];
+  } | null>(null);
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
   const [tab, setTab] = useState<"queue" | "all">("queue");
   const [error, setError] = useState<string | null>(null);
@@ -880,6 +883,37 @@ export default function CoordinatorPage() {
         )}
 
         {loading && <div style={{ padding: 30, textAlign: "center", color: "rgba(0,0,0,0.4)" }}>טוען…</div>}
+
+        {/*
+          הזמנות Cal שלא הותאמו לאף מועמד לפי טלפון. הן מופיעות ראשונות
+          כי הן היחידות שדורשות פעולה שאי אפשר לגזור: מישהו קבע פגישה
+          ואנחנו לא יודעים מי. השיוך עצמו נעשה בדף מנהל התוכנית.
+        */}
+        {!journeyFor && tab === "queue" && !!data?.unmatchedBookings?.length && (
+          <div style={{ background: "#fff7ec", border: "1px solid #f5dcb8", borderRadius: 14, padding: "16px 18px", marginBottom: 14 }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: "#8a4d00" }}>
+              הזמנות שלא זוהו ({data.unmatchedBookings.length})
+            </div>
+            <div style={{ fontSize: 13, color: "#8a4d00", lineHeight: 1.6, marginTop: 4, marginBottom: 10 }}>
+              מישהו קבע פגישה ביומן, אבל הטלפון שהוקלד לא תואם לאף משתתף באפליקציה.
+              שווה לבדוק מי זה — ואם הוא באפליקציה, לשייך אותו בדף מנהל התוכנית.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {data.unmatchedBookings.map(b => (
+                <div key={b.id} style={{ background: "#fff", borderRadius: 10, padding: "10px 12px", fontSize: 13.5 }}>
+                  <span style={{ fontWeight: 800, color: NAVY }}>{b.attendee_name || "ללא שם"}</span>
+                  {b.attendee_phone && (
+                    <span style={{ color: "#5b5648" }} dir="ltr"> · +{b.attendee_phone}</span>
+                  )}
+                  <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 2 }}>
+                    {new Date(b.start_time).toLocaleString("he-IL", { weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {b.title ? ` · ${b.title.split(" between ")[0]}` : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {!journeyFor && tab === "queue" && data && data.needsAttention.length === 0 && !loading && (
           <div style={{ background: "#eef8f3", border: "1px solid #cfe9dd", color: "#08694c", borderRadius: 14, padding: 22, textAlign: "center", fontSize: 15, fontWeight: 700 }}>
