@@ -106,6 +106,46 @@ function buildStages(): { stages: Stage[]; current: number } {
   return { stages, current };
 }
 
+/** מפת-העל לדסקטופ: שתי שורות, קשת מקווקה ביניהן, לחיצה גוללת לשלב */
+function Serpentine({ stages, current }: { stages: Stage[]; current: number }) {
+  const DASH = "#ddd6c9";
+  const POS: [number, number][] = [[500, 46], [305, 46], [110, 46], [110, 150], [305, 150], [500, 150]];
+  const go = (n: number) => document.getElementById(`stage-${n}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  return (
+    <svg viewBox="0 0 580 210" className="w-full mb-6 hidden md:block" aria-hidden="false">
+      <path d="M 500 46 L 110 46" fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />
+      <path d="M 110 46 C 52 46, 52 150, 110 150" fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />
+      <path d="M 110 150 L 500 150" fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />
+      {stages.map((st, i) => {
+        const [x, y] = POS[i];
+        const done = st.stops.every(t => t.done);
+        const isCurrent = st.n === current;
+        const total = st.stops.length;
+        const got = st.stops.filter(t => t.done).length;
+        return (
+          <g key={st.n} onClick={() => go(st.n)} style={{ cursor: "pointer" }}>
+            {isCurrent && <circle cx={x} cy={y} r="25" fill="rgba(251,133,0,0.16)" />}
+            <circle cx={x} cy={y} r="18" fill={done ? GREEN : isCurrent ? ORANGE : "#eceae4"} />
+            <text x={x} y={y + 5.5} fontSize={done ? "16" : "13"} fontWeight="900"
+              fill={done || isCurrent ? "#fff" : "#a8a195"} textAnchor="middle">
+              {done ? "✓" : isCurrent ? st.n : "🔒"}
+            </text>
+            <text x={x} y={y + 36} fontSize="12.5" fontWeight="800"
+              fill={done || isCurrent ? NAVY : "#a8a195"} textAnchor="middle">
+              {st.title}
+            </text>
+            {!done && (
+              <text x={x} y={y + 51} fontSize="10.5" fontWeight="700" fill="#a8a195" textAnchor="middle">
+                {got}/{total} תחנות
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function JourneyPage() {
   const [data, setData] = useState<{ stages: Stage[]; current: number } | null>(null);
   const [name, setName] = useState("");
@@ -141,7 +181,9 @@ export default function JourneyPage() {
         </div>
       </div>
 
-      <div className="max-w-[620px] mx-auto px-5 pt-5">
+      <div className="max-w-[620px] md:max-w-[720px] mx-auto px-5 pt-5">
+        <Serpentine stages={data.stages} current={data.current} />
+
         {/* אירוע קרוב — מה שדורש פעולה בזמן, לפני הציר */}
         {!!events.length && (
           <div className="mb-5">
@@ -155,7 +197,7 @@ export default function JourneyPage() {
           const isCurrent = stage.n === data.current;
           const isFuture = stage.n > data.current;
           return (
-            <div key={stage.n} className="flex gap-3.5">
+            <div key={stage.n} id={`stage-${stage.n}`} className="flex gap-3.5" style={{ scrollMarginTop: 16 }}>
               {/* הציר — נקודה וקו, בדיוק כמו במרחב ההמתנה */}
               <div className="flex flex-col items-center shrink-0">
                 <div className="w-4 h-4 rounded-full mt-1.5"
