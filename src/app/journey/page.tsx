@@ -29,7 +29,7 @@ const DOMAIN_HE: Record<string, string> = {
   qa: "בדיקות תוכנה", hardware: "חומרה", ai: "AI", ux: "עיצוב UX", marketing: "שיווק דיגיטלי",
 };
 
-type Stop = { label: string; done: boolean; href?: string };
+type Stop = { label: string; done: boolean; href?: string; /** פגישה = תחנת מעבר (עיגול כפול) */ meeting?: boolean };
 type Stage = { n: number; title: string; stops: Stop[] };
 
 /** קריאה בטוחה — המסך רץ גם כשאין כלום ב-storage */
@@ -65,7 +65,7 @@ function buildStages(): { stages: Stage[]; current: number } {
       stops: [
         { label: "קבעת את פגישת ההיכרות", done: flag("meeting-1-booked"), href: "/contact?m=1" },
         { label: "עברת את המבוא לעולם ההייטק", done: has("waiting-taste"), href: "/waiting" },
-        { label: "נפגשת עם הרכזת", done: m1 },
+        { label: "נפגשת עם הרכזת", done: m1, meeting: true },
       ],
     },
     {
@@ -81,10 +81,10 @@ function buildStages(): { stages: Stage[]; current: number } {
     {
       n: 4, title: JOURNEY[3].candidate,
       stops: [
-        { label: "נפגשתם ובחרת תחום", done: m2 },
+        { label: "נפגשתם ובחרת תחום", done: m2, meeting: true },
         { label: "ענית על שאלון המסלולים", done: has("paths-quiz"), href: "/paths" },
         { label: "חקרת מוסדות ושמרת רשימה", done: has("paths-shortlist"), href: "/paths" },
-        { label: "קבעת את פגישת בחירת המסלול", done: m3, href: "/contact?m=3" },
+        { label: "קבעת את פגישת בחירת המסלול", done: m3, href: "/contact?m=3", meeting: true },
       ],
     },
     {
@@ -137,16 +137,16 @@ function Serpentine({ stages, current }: { stages: Stage[]; current: number }) {
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full mb-7 hidden md:block">
-      {flat.map((_, i) => {
+      {flat.map((stop, i) => {
         if (i === flat.length - 1) return null;
         const [x1, y1] = pos(i), [x2, y2] = pos(i + 1);
-        // אותה שורה — קו ישר; מעבר שורה — חצי-קשת החוצה
-        if (y1 === y2) {
-          return <path key={i} d={`M ${x1} ${y1} L ${x2} ${y2}`} fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />;
-        }
-        // חצי-מעגל מדויק: sweep 0 בולט שמאלה, sweep 1 ימינה
-        const sweep = x1 < W / 2 ? 0 : 1;
-        return <path key={i} d={`M ${x1} ${y1} A ${R} ${R} 0 0 ${sweep} ${x2} ${y2}`} fill="none" stroke={DASH} strokeWidth="2.5" strokeDasharray="5 6" />;
+        // צבע הקטע נגזר מהתחנה שאליה הוא מוביל — הקו מספר את הסטטוס
+        const next = flat[i + 1];
+        const color = next.locked ? "#e3ddd2" : next.done ? GREEN : ORANGE;
+        const d = y1 === y2
+          ? `M ${x1} ${y1} L ${x2} ${y2}`
+          : `M ${x1} ${y1} A ${R} ${R} 0 0 ${x1 < W / 2 ? 0 : 1} ${x2} ${y2}`;
+        return <path key={i} d={d} fill="none" stroke={color} strokeWidth="9" strokeLinecap="round" />;
       })}
 
       {flat.map((stop, i) => {
@@ -163,12 +163,13 @@ function Serpentine({ stages, current }: { stages: Stage[]; current: number }) {
                 </text>
               </>
             )}
-            {active && <circle cx={x} cy={y} r="22" fill="rgba(251,133,0,0.16)" />}
-            <circle cx={x} cy={y} r="15" fill={stop.locked ? "#eceae4" : stop.done ? GREEN : ORANGE} />
-            <text x={x} y={y + 5} fontSize={stop.done && !stop.locked ? "14" : "11"} fontWeight="900"
-              fill={stop.locked ? "#a8a195" : "#fff"} textAnchor="middle">
-              {stop.locked ? "🔒" : stop.done ? "✓" : "○"}
-            </text>
+            {active && <circle cx={x} cy={y} r="19" fill="rgba(251,133,0,0.18)" />}
+            {/* תחנה בשפת מטרו: עיגול לבן עם טבעת בצבע הקו. פגישה = תחנת מעבר */}
+            <circle cx={x} cy={y} r={stop.meeting ? 12 : 9} fill="#fff"
+              stroke={stop.locked ? "#e3ddd2" : stop.done ? GREEN : ORANGE} strokeWidth={stop.meeting ? 4.5 : 4} />
+            {stop.meeting && (
+              <circle cx={x} cy={y} r="4.5" fill={stop.locked ? "#e3ddd2" : stop.done ? GREEN : ORANGE} />
+            )}
             {stop.label.split(" ").reduce((lines: string[], w) => {
               const last = lines[lines.length - 1];
               if (last && (last + " " + w).length <= 16) lines[lines.length - 1] = last + " " + w;
