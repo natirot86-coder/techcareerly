@@ -34,6 +34,19 @@ export type OnboardingInput = {
  * כשיתחבר Phone Auth אמיתי, אפשר לשדרג את אותו anonymous user עם
  * supabase.auth.updateUser + verifyOtp בלי לאבד את ה-id/הנתונים.
  */
+/**
+ * נרמול טלפון ישראלי לפורמט אחד: 972XXXXXXXXX.
+ * בלעדיו "050-1234567" מהאונבורדינג ו-"+972501234567" מטופס Cal הם
+ * שתי מחרוזות שונות — ואז אף התאמה לא תעבוד.
+ */
+export function normalizePhone(raw: string | null | undefined): string {
+  const d = (raw ?? "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("972")) return d;
+  if (d.startsWith("0")) return "972" + d.slice(1);
+  return d.length === 9 ? "972" + d : d;
+}
+
 export async function ensureCandidateId(): Promise<string | null> {
   if (!supabase) return null;
 
@@ -54,6 +67,20 @@ export async function ensureCandidateId(): Promise<string | null> {
   const { error: ensureError } = await supabase
     .from("candidates")
     .upsert({ id: candidateId }, { onConflict: "id", ignoreDuplicates: true });
+
+  /*
+   * הטלפון מ-Phone Auth יורד ל-candidates מנורמל — הוא המפתח שמאפשר
+   * ל-webhook של Cal להתאים הזמנה למועמד. נכתב פעם אחת לכל מכשיר.
+   */
+  const authPhone = normalizePhone(session?.user?.phone);
+  if (authPhone) {
+    try {
+      if (localStorage.getItem("phone-synced") !== authPhone) {
+        await supabase.from("candidates").update({ phone: authPhone }).eq("id", candidateId);
+        localStorage.setItem("phone-synced", authPhone);
+      }
+    } catch { /* ignore */ }
+  }
   // אובייקט גולמי מתקפל ל-{} ב-overlay של Next — מדפיסים מחרוזת כדי שהשדות תמיד יראו
   if (ensureError) console.error(
     `ensureCandidateId: failed to ensure candidates row — code=${ensureError.code} message=${ensureError.message} details=${ensureError.details} hint=${ensureError.hint}`

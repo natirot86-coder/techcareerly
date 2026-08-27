@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
     payload?: {
       title?: string;
       startTime?: string;
-      attendees?: { name?: string; email?: string }[];
+      attendees?: { name?: string; email?: string; phoneNumber?: string; smsReminderNumber?: string }[];
+      responses?: Record<string, unknown>;
       organizer?: { name?: string; email?: string };
       eventType?: { title?: string };
     };
@@ -58,6 +59,30 @@ export async function POST(req: NextRequest) {
     coordinatorId = match?.[0]?.id ?? null;
   }
 
+  /*
+   * זיהוי המועמד לפי טלפון מנורמל — התאמה מלאה בלבד.
+   * ניחוש לפי דמיון שמות היה מסוכן פי כמה מתור ידני: שיוך שגוי בשקט
+   * הוא בדיוק מה שאי אפשר לתקן. מה שלא הותאם נשאר candidate_id ריק
+   * ומופיע לרכזת כ"הזמנה לא משויכת".
+   */
+  const rawPhone =
+    (attendee as { phoneNumber?: string }).phoneNumber ??
+    (attendee as { smsReminderNumber?: string }).smsReminderNumber ??
+    (p.responses?.smsReminderNumber as string | undefined) ??
+    (p.responses?.attendeePhoneNumber as string | undefined) ??
+    "";
+  const digits = String(rawPhone).replace(/\D/g, "");
+  const phone = digits.startsWith("972") ? digits
+    : digits.startsWith("0") ? "972" + digits.slice(1)
+    : digits.length === 9 ? "972" + digits : digits;
+
+  let candidateId: string | null = null;
+  if (phone) {
+    const { data: match } = await db.from("candidates")
+      .select("id").eq("phone", phone).limit(1);
+    candidateId = match?.[0]?.id ?? null;
+  }
+
   const { error } = await db.from("cal_bookings").insert({
     trigger: body.triggerEvent ?? "unknown",
     title: p.eventType?.title ?? p.title ?? "",
@@ -66,6 +91,8 @@ export async function POST(req: NextRequest) {
     attendee_email: attendee.email ?? "",
     organizer_email: organizerEmail,
     coordinator_id: coordinatorId,
+    attendee_phone: phone,
+    candidate_id: candidateId,
     raw: body,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

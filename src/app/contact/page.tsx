@@ -52,6 +52,14 @@ export default function ContactPage() {
       ? (Number(param) as MeetingNum)
       : currentMeeting(localStorage);
     setMeeting(n);
+    try {
+      const ob = JSON.parse(localStorage.getItem("onboarding") || "{}");
+      const name = [ob.firstName, ob.lastName].filter(Boolean).join(" ")
+        || localStorage.getItem("user-name") || "";
+      const phone = localStorage.getItem("phone-synced") || "";
+      setPrefill({ ...(name ? { name } : {}), ...(phone ? { smsReminderNumber: "+" + phone } : {}) });
+    } catch { /* ignore */ }
+
     myCoordinator()
       .then(c => {
         setAssignedCal(c?.calLinks[n] ?? "");
@@ -169,6 +177,8 @@ export default function ContactPage() {
   const [welcomeName, setWelcomeName] = useState<string | null>(null);
   /** הרכזת המשויכת מהסגל — כפתור הוואטסאפ מופיע רק כשיש לה טלפון */
   const [coord, setCoord] = useState<{ name: string; phone: string } | null>(null);
+  /** מילוי מראש של טופס Cal — שם וטלפון שכבר יש לנו, כדי שלא יוקלדו שוב */
+  const [prefill, setPrefill] = useState<{ name?: string; smsReminderNumber?: string }>({});
   useEffect(() => {
     try {
       if (new URLSearchParams(window.location.search).get("welcome") === "1") {
@@ -262,7 +272,7 @@ export default function ContactPage() {
             namespace="contact"
             calLink={assignedCal || calLinkFor(meeting)}
             style={{ width: "100%", minHeight: "600px", borderRadius: "16px", overflow: "hidden" }}
-            config={{ layout: "month_view", theme: "light" }}
+            config={{ layout: "month_view", theme: "light", ...prefill }}
           />
         )}
 

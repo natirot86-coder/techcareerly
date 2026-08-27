@@ -221,8 +221,26 @@ export async function GET(req: NextRequest) {
 
   queue.sort((a, b) => a.topSeverity - b.topSeverity || ms(b.lastActive) - ms(a.lastActive));
 
+  /*
+   * הזמנות Cal עתידיות שלא הותאמו למועמד לפי טלפון — תור שיוך ידני.
+   * (ההתאמה האוטומטית היא התאמה מלאה בלבד; ניחוש לפי שם היה מסוכן.)
+   */
+  let unmatched: unknown[] = [];
+  try {
+    const { data } = await db
+      .from("cal_bookings")
+      .select("id, title, start_time, attendee_name, attendee_phone, trigger")
+      .is("candidate_id", null)
+      .gte("start_time", new Date().toISOString())
+      .neq("trigger", "BOOKING_CANCELLED")
+      .order("start_time")
+      .limit(20);
+    unmatched = data ?? [];
+  } catch { /* הטבלה או העמודה עוד לא קיימות — לא שוברים את המסך */ }
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
+    unmatchedBookings: unmatched,
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
     // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)
