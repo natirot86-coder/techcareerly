@@ -160,8 +160,9 @@ export default function ExplorePage() {
           <img src="/domains/ice-cream.jpeg" alt="" className="w-20 h-28 object-cover rounded-xl shrink-0" />
           <div className="text-[12.5px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.55)" }}>
             <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}>בגלידריה חדשה — טועמים לפני שמזמינים.</span>{" "}
-            קריירה? אותו דבר. כל כרטיס = טעימה קצרה מהתחום האמיתי (~15–20 דקות).
-            אין סדר נכון ואין בוחן בסוף 😄
+            קריירה? אותו דבר: כל כרטיס הוא טעימה אמיתית מהתחום (~20 דקות של עשייה, לא קריאה).
+            <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}> התחילו ממה שסיקרן אתכם — ואחרי שתי טעימות כבר יהיה לכם את מה להשוות.</span>{" "}
+            אין סדר נכון, אין בוחן, ואי אפשר לטעות 😄
           </div>
         </div>
 

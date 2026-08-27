@@ -388,7 +388,7 @@ function Home({
           <Station color={ORANGE} tag="אתה כאן" tagColor="#b35e00" title="חקר תחומי ההייטק" glow last>
             <Card>
               <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6 }}>
-                עכשיו נפתחים שבעת התחומים — הפעם באמת כדי להבין מה מדבר אליך.
+                עכשיו נפתחים תשעת התחומים — הפעם באמת כדי להבין מה מדבר אליך.
                 אין מגבלה, אפשר לנסות כמה שבא לך.
               </p>
               <Link
