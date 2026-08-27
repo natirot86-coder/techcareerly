@@ -96,5 +96,15 @@ export async function POST(req: NextRequest) {
     raw: body,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  /*
+   * הרכזת סימנה ביומן שהמועמד לא הגיע — סיגנל at_risk. לא נועלים לו
+   * מסך: מי שלא הגיע צריך שיתקשרו אליו, וזה בדיוק מה שהסטטוס עושה.
+   */
+  const trig = (body.triggerEvent ?? "").toUpperCase();
+  if (candidateId && (trig.includes("NO_SHOW") || trig.includes("NOSHOW"))) {
+    await db.from("candidates").update({ status: "at_risk" }).eq("id", candidateId);
+  }
+
   return NextResponse.json({ ok: true });
 }

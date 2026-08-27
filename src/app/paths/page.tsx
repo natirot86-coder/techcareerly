@@ -803,6 +803,8 @@ export default function PathsPage() {
    * "התקיימה" נגזרת מהמועד שנשמר בקביעה, לא מלחיצת כפתור.
    */
   const [prepMode, setPrepMode] = useState(false);
+  /** עבר מועד פגישה 2 וטרם נענתה שאלת השער — מציגים אותה במקום המנעול */
+  const [askMeeting2, setAskMeeting2] = useState(false);
   /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
   const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
   /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
@@ -901,10 +903,19 @@ export default function PathsPage() {
        * נשאר פתוח גם בלי מועד (לא נועלים אחורה), ודמו עוקף את הנעילה.
        */
       let m2Done = picked.length > 0 || !!savedChoice;
+      let ask = false;
       try {
+        const attended = localStorage.getItem("meeting-2-attended");
         const at = localStorage.getItem("meeting-2-at");
-        if (at && Date.now() > new Date(at).getTime() + 60 * 60 * 1000) m2Done = true;
+        const since = at ? Date.now() - new Date(at).getTime() : -1;
+        const HOUR = 3600e3, WEEK = 7 * 24 * HOUR;
+
+        if (attended === "yes") m2Done = true;              // שכבה 2 — אמר שנפגשו
+        else if (attended === "missed") m2Done = false;     // אמר שלא — נשאר סגור
+        else if (since > WEEK) m2Done = true;               // שכבה 3 — רשת ביטחון
+        else if (since > HOUR) ask = true;                  // עברה שעה — שואלים
       } catch { }
+      setAskMeeting2(ask);
       if (params.has("demo")) m2Done = true;
       setPrepMode(!m2Done);
 
@@ -1078,6 +1089,49 @@ export default function PathsPage() {
         {Header}
         <JourneyStrip current={4} phaseLabel="הכנה לפגישה" phaseIndex={0} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-8 pb-32">
+          {askMeeting2 ? (
+            /*
+              שאלת השער. שתי אפשרויות בלבד ואין "דלג" — זו שאלה של שנייה,
+              ודילוג היה מרוקן אותה מתוכן. מי שעונה "כן" נפתח מיד, כי
+              לתקוע מישהו שכן היה בפגישה זה הנזק הגדול מכולם.
+            */
+            <>
+              <div className="text-[34px] mb-3">👋</div>
+              <div className="text-[20px] leading-[1.4] mb-2" style={{ ...HEEBO, color: NAVY }}>
+                לפני שממשיכים — הפגישה כבר הייתה?
+              </div>
+              <div className="text-[13px] leading-[1.85] mb-6" style={{ color: "rgba(0,0,0,0.58)" }}>
+                לפי היומן המועד עבר. שנייה אחת, ונמשיך בדיוק למקום הנכון.
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.setItem("meeting-2-attended", "yes");
+                  trackEvent("meeting2_checkin", { result: "yes" });
+                  logEvent("meeting2_checkin", { result: "yes" });
+                  setAskMeeting2(false);
+                  setPrepMode(false);
+                }}
+                className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+                style={{ background: ORANGE, ...HEEBO }}
+              >
+                כן, נפגשנו — להמשיך ←
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem("meeting-2-attended", "missed");
+                  localStorage.setItem("at-risk", "missed-meeting-2");
+                  trackEvent("meeting2_checkin", { result: "missed" });
+                  logEvent("meeting2_checkin", { result: "missed" });
+                  setAskMeeting2(false);
+                }}
+                className="w-full mt-3 py-3.5 rounded-2xl text-[14px] font-bold"
+                style={{ background: "#fff", border: "1.5px solid rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.6)" }}
+              >
+                עוד לא / לא הצלחתי להגיע
+              </button>
+            </>
+          ) : (
+          <>
           <div className="text-[34px] mb-3">🔒</div>
           <div className="text-[20px] leading-[1.4] mb-2" style={{ ...HEEBO, color: NAVY }}>
             החלק הזה נפתח אחרי הפגישה
@@ -1103,6 +1157,18 @@ export default function PathsPage() {
           >
             רוצה לטעום עוד תחום לפני הפגישה? ←
           </Link>
+          {/* מי שאמר "לא הגעתי" — הדרך חזרה, לא מסך מת */}
+          {localStorage.getItem("meeting-2-attended") === "missed" && (
+            <Link
+              href="/contact?m=2"
+              className="block text-center w-full mt-4 py-3.5 rounded-2xl text-[14px] font-black"
+              style={{ background: "#fff3e2", color: "#7a4100" }}
+            >
+              לקבוע מועד חדש לפגישה ←
+            </Link>
+          )}
+          </>
+          )}
         </div>
         <BottomNav />
       </div>
