@@ -1507,7 +1507,7 @@ export const INSTITUTIONS: Institution[] = [
     noPsychometric: "כן — לימודי תעודה, ללא דרישות אקדמיות",
     support: "לא אומת",
     industry: "לא אומת",
-    schedule: "טכנאי PC ורשתות: 68 שעות, פרונטלי+מקוון · אוטומציה עסקית ו-AI: 120 שעות",
+    schedule: "טכנאי PC ורשתות: 68 שעות, פרונטלי+מקוון · אוטומציה עסקית ו-AI‏: 120 שעות",
     contactName: "",
     contactRole: "",
     contactPhone: "",

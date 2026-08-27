@@ -558,7 +558,7 @@ export default function DayPage() {
                 {
                   role: "NOC Technician", co: "בזק, Partner, HOT",
                   desc: "מוקד ניטור 24/7 — בודקת dashboards, מגיבה לalerts, פותחת tickets. זה תפקיד הכניסה הכי נפוץ. משמרות, עבודת צוות, ולמידה מהירה.",
-                  badge: "כניסה: CompTIA Network+ · 6 חודשים",
+                  badge: "כניסה: CompTIA Network+‏ · 6 חודשים",
                   link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=NOC+technician",
                 },
                 {

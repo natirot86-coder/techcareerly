@@ -97,7 +97,7 @@ const TOOLS: { id: ToolId; cmd: string; output: { text: string; color?: string }
 
 // git log — selectable lines (indices into the data lines, excluding the command line)
 const LOG_LINES: { text: string; suspicious: boolean; explanation: string }[] = [
-  { text: "e91d0b2  Tue 22:09  feat: add discount code support to checkout", suspicious: true,  explanation: "נגע בcheckout — 5 דקות לפני שהשגיאות התחילו ב-22:14" },
+  { text: "e91d0b2  Tue 22:09  feat: add discount code support to checkout", suspicious: true,  explanation: "נגע בcheckout‏ — 5 דקות לפני שהשגיאות התחילו ב-22:14" },
   { text: "88c4a1f  Tue 14:20  chore: bump lodash to 4.17.21",               suspicious: false, explanation: "עדכון ספרייה כללי — לא נגע בקבצי checkout" },
   { text: "1d5e0f3  Mon 16:45  feat: add loyalty points calculation",        suspicious: false, explanation: "פיצ'ר נפרד לגמרי, יום שלם לפני האירוע" },
 ];
@@ -374,7 +374,7 @@ export default function CodeMystery() {
           </div>
           <div className="rounded-2xl p-4 mb-5" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
             <div className="text-[10.5px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(0,0,0,0.3)" }}>מה עשית</div>
-            {["✓ Git forensics — log, blame, grep", "✓ Timeline reconstruction", "✓ Evidence chain — 5 ראיות", "✓ זיהוי גורם שורשי", "✓ Post-mortem — שורש, גורם, מניעה"].map((line, i) => (
+            {["✓ Git forensics — log, blame, grep", "✓ Timeline reconstruction", "✓ Evidence chain‏ — 5 ראיות", "✓ זיהוי גורם שורשי", "✓ Post-mortem — שורש, גורם, מניעה"].map((line, i) => (
               <div key={i} className="flex items-center gap-2 mb-2 text-[12px]" style={{ color: "#15803d" }}>{line}</div>
             ))}
             <div className="mt-3 pt-3 text-[12.5px] leading-[1.6]"

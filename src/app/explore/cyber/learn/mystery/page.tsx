@@ -342,7 +342,7 @@ export default function CyberMystery() {
           </div>
           <div className="rounded-2xl p-4 mb-5" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
             <div className="text-[10.5px] font-bold uppercase tracking-widest mb-3" style={{ color: "rgba(0,0,0,0.3)" }}>מה עשית</div>
-            {["✓ Log analysis — grep, ls, last", "✓ Timeline reconstruction", "✓ Evidence chain — 5 ראיות", "✓ Suspect identification", "✓ Post-mortem — שורש, גורם, מניעה"].map((line, i) => (
+            {["✓ Log analysis — grep, ls, last", "✓ Timeline reconstruction", "✓ Evidence chain‏ — 5 ראיות", "✓ Suspect identification", "✓ Post-mortem — שורש, גורם, מניעה"].map((line, i) => (
               <div key={i} className="flex items-center gap-2 mb-2 text-[12px]" style={{ color: "#15803d" }}>{line}</div>
             ))}
             <div className="mt-3 pt-3 text-[12.5px] leading-[1.6]"

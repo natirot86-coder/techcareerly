@@ -111,7 +111,7 @@ const NODES: Node[] = [
   { id: "cyber-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",             url: `${BASE}/explore/cyber/experience`,    cx: 650, cy: 950, w: 140, color: "#dc2626", badge: "חדש", badgeColor: "#dc2626" },
 
   // ── Learn — Networks ──────────────────────────────────────────────────────
-  { id: "networks-day",        label: "יום בחיי",          sub: "Network Engineer · 5 שלבים",   url: `${BASE}/explore/networks/learn/day`,     cx: 940, cy: 760, w: 148, color: "#2563eb" },
+  { id: "networks-day",        label: "יום בחיי",          sub: "Network Engineer‏ · 5 שלבים",   url: `${BASE}/explore/networks/learn/day`,     cx: 940, cy: 760, w: 148, color: "#2563eb" },
   { id: "networks-mystery",    label: "תעלומת TechFlow",   sub: "Firewall · DNS · curl",         url: `${BASE}/explore/networks/learn/mystery`, cx: 940, cy: 855, w: 130, color: "#2563eb" },
   { id: "networks-experience", label: "כלי עיבוד חוויה",  sub: "6 שאלות SCCT",                  url: `${BASE}/explore/networks/experience`,    cx: 940, cy: 950, w: 140, color: "#2563eb", badge: "חדש", badgeColor: "#2563eb" },
 
