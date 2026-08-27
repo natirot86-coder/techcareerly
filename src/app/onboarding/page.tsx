@@ -523,7 +523,7 @@ function Step1({
         <div className="flex gap-2">
           <Chip label="זכר" selected={gender === "male"} onClick={() => setGender("male")} />
           <Chip label="נקבה" selected={gender === "female"} onClick={() => setGender("female")} />
-          <Chip label="אחר" selected={gender === "other"} onClick={() => setGender("other")} />
+          {/* "אחר" הוסר (נתי 27.8) — שתי אפשרויות בלבד; הצורה המשולבת בקוד נשארת רק כ-fallback טכני לפני תשובה */}
         </div>
       </div>
 
@@ -817,6 +817,7 @@ export default function OnboardingPage() {
     localStorage.setItem("user-name", firstName.trim());
     const derivedAge = Math.floor((Date.now() - new Date(age).getTime()) / (365.25 * 24 * 3600 * 1000));
     try {
+      localStorage.setItem("user-gender", gender);
       localStorage.setItem("birth-date", age);
       localStorage.setItem("service-status", service);
       localStorage.setItem("home-city", city.trim());

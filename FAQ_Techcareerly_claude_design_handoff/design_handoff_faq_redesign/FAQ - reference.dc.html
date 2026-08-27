@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body { margin:0; background:#efece4; font-family:'Heebo',sans-serif; }
+a { color:#023e8a; } a:hover { color:#fb8500; }
+</style>
+</helmet>
+<section style="padding:40px; display:flex; gap:48px; align-items:flex-start; flex-wrap:wrap;" data-screen-label="FAQ — Techcareerly">
+
+  <!-- ============ 1a: מסך FAQ מלא, מפת מסע סרפנטינה (מומלץ) ============ -->
+  <div id="1a" style="display:flex; flex-direction:column; gap:10px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="background:#023e8a; color:#fff; font-weight:700; font-size:13px; border-radius:8px; padding:2px 10px;">1a</span>
+      <span style="font-size:13px; font-weight:600; color:#023e8a;">סרפנטינה 2 שורות — מומלץ ✓</span>
+    </div>
+    <div dir="rtl" style="width:390px; background:#fbf9f5; border-radius:28px; box-shadow:0 8px 32px rgba(2,62,138,0.10); padding:24px 20px 32px; box-sizing:border-box;">
+      <div style="font-size:24px; font-weight:800; color:#023e8a; margin-bottom:4px;">שאלות ותשובות</div>
+      <div style="font-size:13.5px; color:#6b7280; margin-bottom:20px;">כל מה ששואלים אותנו — במקום אחד</div>
+
+      <!-- ש1: מפת מסע -->
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; margin-bottom:12px; overflow:hidden;">
+        <div role="button" tabindex="0" onClick="{{ toggle0 }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; cursor:pointer;" style-hover="background:#fbf9f5;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">איך נראה כל התהליך, מההתחלה ועד הסוף?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition:transform .2s; transform:{{ chev0 }};"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <sc-if value="{{ open0 }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:0 16px 16px;">
+            <div style="background:#fbf9f5; border-radius:14px; padding:14px 6px 8px; margin-bottom:12px;">
+              <svg width="100%" viewBox="0 0 340 158" style="display:block;">
+                <path d="M 295 32 L 45 32 C 5 32 5 112 45 112 L 295 112" fill="none" stroke="#ddd6c9" stroke-width="2.5" stroke-dasharray="5 6"></path>
+                <circle cx="107.5" cy="32" r="5.5" fill="#fb8500" stroke="#fbf9f5" stroke-width="2"></circle>
+                <circle cx="15" cy="72" r="5.5" fill="#fb8500" stroke="#fbf9f5" stroke-width="2"></circle>
+                <circle cx="107.5" cy="112" r="5.5" fill="#fb8500" stroke="#fbf9f5" stroke-width="2"></circle>
+                <circle cx="295" cy="32" r="14" fill="#023e8a"></circle><text x="295" y="36.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Heebo">1</text>
+                <circle cx="170" cy="32" r="14" fill="#023e8a"></circle><text x="170" y="36.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Heebo">2</text>
+                <circle cx="45" cy="32" r="14" fill="#023e8a"></circle><text x="45" y="36.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Heebo">3</text>
+                <circle cx="45" cy="112" r="14" fill="#023e8a"></circle><text x="45" y="116.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Heebo">4</text>
+                <circle cx="170" cy="112" r="14" fill="#023e8a"></circle><text x="170" y="116.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Heebo">5</text>
+                <circle cx="295" cy="112" r="14" fill="#023e8a"></circle><text x="295" y="116.5" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="Heebo">6</text>
+                <text x="295" y="62" text-anchor="middle" fill="#023e8a" font-size="10.5" font-weight="600" font-family="Heebo">פתיחת חשבון</text>
+                <text x="170" y="62" text-anchor="middle" fill="#023e8a" font-size="10.5" font-weight="600" font-family="Heebo">היכרות</text>
+                <text x="45" y="62" text-anchor="middle" fill="#023e8a" font-size="10.5" font-weight="600" font-family="Heebo">טעימות הייטק</text>
+                <text x="45" y="142" text-anchor="middle" fill="#023e8a" font-size="10.5" font-weight="600" font-family="Heebo">בחירת מסלול</text>
+                <text x="170" y="142" text-anchor="middle" fill="#023e8a" font-size="10.5" font-weight="600" font-family="Heebo">מלגות והרשמה</text>
+                <text x="295" y="142" text-anchor="middle" fill="#023e8a" font-size="10.5" font-weight="600" font-family="Heebo">סטודנט/ית</text>
+              </svg>
+              <div style="display:flex; align-items:center; gap:6px; justify-content:center; padding-top:6px;">
+                <span style="width:9px; height:9px; border-radius:50%; background:#fb8500; display:inline-block;"></span>
+                <span style="font-size:11px; color:#6b7280; font-weight:500;">פגישה עם הרכזת</span>
+              </div>
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">שישה שלבים: פתיחת חשבון ← פגישת היכרות עם הרכזת ← טעימות הייטק (מתנסים בתחומים) ← בחירת מסלול לימודים ← מלגות והרשמה ← סטודנט/ית. שלוש פגישות עם הרכזת מחלקות את הדרך, וכל שלב באפליקציה מכין אותך לפגישה הבאה. הקצב שלך — יש מי שעובר הכל בחודש ויש מי שלוקח שלושה.</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- ש2: כרטיסיות טעימה -->
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; margin-bottom:12px; overflow:hidden;">
+        <div role="button" tabindex="0" onClick="{{ toggle1 }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; cursor:pointer;" style-hover="background:#fbf9f5;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">כמה טעימות צריך לעשות?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition:transform .2s; transform:{{ chev1 }};"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <sc-if value="{{ open1 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 16px 16px;">
+            <div style="background:#fbf9f5; border-radius:14px; padding:14px 12px; margin-bottom:12px;">
+              <div style="display:flex; gap:8px; align-items:stretch;">
+                <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+                  <div style="display:flex; gap:8px;">
+                    <div style="flex:1; height:64px; background:#ecfdf5; border:2px solid #059669; border-radius:12px; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+                    <div style="flex:1; height:64px; background:#ecfdf5; border:2px solid #059669; border-radius:12px; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div>
+                  </div>
+                  <div style="font-size:11px; font-weight:700; color:#059669; text-align:center;">הרף המינימלי</div>
+                </div>
+                <div style="flex:1.4; display:flex; flex-direction:column; gap:6px;">
+                  <div style="display:flex; gap:8px;">
+                    <div style="flex:1; height:64px; border:2px dashed #ddd6c9; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fb8500; font-size:22px; font-weight:600;">+</div>
+                    <div style="flex:1; height:64px; border:2px dashed #ddd6c9; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fb8500; font-size:22px; font-weight:600;">+</div>
+                    <div style="flex:1; height:64px; border:2px dashed #ddd6c9; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fb8500; font-size:22px; font-weight:600;">+</div>
+                  </div>
+                  <div style="font-size:11px; font-weight:600; color:#6b7280; text-align:center;">+ כל אחת מחדדת</div>
+                </div>
+              </div>
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">לפחות שתיים — כדי שיהיה לך את מה להשוות. אין מספר נכון: יש תשעה תחומים, וכל טעימה לוקחת בערך 40 דקות. מי שמסיים שתיים ומרגיש שמצא — מצוין. מי שרוצה לטעום חמש — גם מצוין. הכלי בסוף כל טעימה (שש שאלות) הוא מה שהופך את ההתנסות לתובנה בפגישה.</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- ש3: ציר 3 פגישות -->
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; margin-bottom:12px; overflow:hidden;">
+        <div role="button" tabindex="0" onClick="{{ toggle2 }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; cursor:pointer;" style-hover="background:#fbf9f5;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">מה קורה בכל אחת משלוש הפגישות?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition:transform .2s; transform:{{ chev2 }};"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <sc-if value="{{ open2 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 16px 16px;">
+            <div style="background:#fbf9f5; border-radius:14px; padding:16px 10px 14px; margin-bottom:12px; position:relative;">
+              <div style="position:absolute; top:29px; right:40px; left:40px; border-top:2.5px dashed #ddd6c9;"></div>
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; position:relative;">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+                  <div style="width:26px; height:26px; border-radius:50%; background:#fb8500; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;">1</div>
+                  <div style="font-size:12px; font-weight:700; color:#023e8a;">היכרות</div>
+                  <div style="font-size:10.5px; line-height:1.5; color:#37414f; text-align:center;">סוגרים: תוכנית אישית<br>מביאים: כלום</div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+                  <div style="width:26px; height:26px; border-radius:50%; background:#fb8500; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;">2</div>
+                  <div style="font-size:12px; font-weight:700; color:#023e8a;">בחירת תחום</div>
+                  <div style="font-size:10.5px; line-height:1.5; color:#37414f; text-align:center;">סוגרים: התחום שלך<br>מביאים: תובנות מהטעימות</div>
+                </div>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+                  <div style="width:26px; height:26px; border-radius:50%; background:#fb8500; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;">3</div>
+                  <div style="font-size:12px; font-weight:700; color:#023e8a;">בחירת מסלול</div>
+                  <div style="font-size:10.5px; line-height:1.5; color:#37414f; text-align:center;">סוגרים: מוסד ומימון<br>מביאים: מסלולים ששמרת</div>
+                </div>
+              </div>
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">פגישה 1 — היכרות: מי את/ה, מה מעניין אותך, בניית תוכנית. לא מביאים כלום. פגישה 2 — בחירת תחום: עוברים על מה שגילית בטעימות וסוגרים יחד לאן הולכים. פגישה 3 — בחירת מסלול: נועלים מוסד לימודים ומתכננים את ההרשמה והמימון. כל פגישה סוגרת שלב ופותחת את הבא.</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- ש4: משוואה -->
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; margin-bottom:12px; overflow:hidden;">
+        <div role="button" tabindex="0" onClick="{{ toggle3 }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; cursor:pointer;" style-hover="background:#fbf9f5;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">זה עולה כסף?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition:transform .2s; transform:{{ chev3 }};"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <sc-if value="{{ open3 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 16px 16px;">
+            <div style="background:#fbf9f5; border-radius:14px; padding:14px; margin-bottom:12px; display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="background:#fff; border:1px solid #ede8db; border-radius:999px; padding:5px 14px; font-size:13px; font-weight:600; color:#023e8a;">הליווי</span>
+                <span style="font-size:15px; color:#6b7280; font-weight:600;">=</span>
+                <span style="background:#ecfdf5; border:2px solid #059669; border-radius:999px; padding:4px 14px; font-size:14px; font-weight:800; color:#059669;">0 ₪</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="background:#fff; border:1px solid #ede8db; border-radius:999px; padding:5px 14px; font-size:13px; font-weight:600; color:#023e8a;">הלימודים</span>
+                <span style="font-size:15px; color:#6b7280; font-weight:600;">=</span>
+                <span style="background:#fff; border:1px solid #ede8db; border-radius:999px; padding:5px 14px; font-size:13px; font-weight:600; color:#37414f;">תלוי מסלול</span>
+                <span style="font-size:15px; color:#6b7280; font-weight:600;">−</span>
+                <span style="background:#fff7ed; border:1px solid #fb8500; border-radius:999px; padding:5px 14px; font-size:13px; font-weight:700; color:#fb8500;">מלגות</span>
+              </div>
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">הליווי של התוכנית — לא. הלימודים עצמם תלויים במסלול שתבחר/י, ובדיוק בשביל זה יש את שלב המלגות: רוב המשתתפים לא משלמים את המחיר המלא, וחלק מהמסלולים כמעט חינמיים. את המספרים המדויקים תראה/י בשלב 5, מותאמים למסלול שלך.</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- ש5 -->
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; margin-bottom:12px; overflow:hidden;">
+        <div role="button" tabindex="0" onClick="{{ toggle4 }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; cursor:pointer;" style-hover="background:#fbf9f5;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">פספסתי פגישה / נעלמתי לכמה שבועות. מה עכשיו?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition:transform .2s; transform:{{ chev4 }};"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <sc-if value="{{ open4 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 16px 16px;">
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">כלום לא נסגר. קובעים מועד חדש ביומן וממשיכים בדיוק מאיפה שעצרת — האפליקציה זוכרת הכל. זה קורה להרבה אנשים, והרכזת מעדיפה שתחזור/י באיחור מאשר שלא תחזור/י בכלל.</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- ש6 -->
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; margin-bottom:12px; overflow:hidden;">
+        <div role="button" tabindex="0" onClick="{{ toggle5 }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; cursor:pointer;" style-hover="background:#fbf9f5;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">אני לא בטוח/ה שאני מתאים/ה להייטק. שווה בכלל להתחיל?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition:transform .2s; transform:{{ chev5 }};"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <sc-if value="{{ open5 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 16px 16px;">
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">בדיוק בשביל הספק הזה התהליך קיים. לא צריך רקע, לא צריך להיות גאון במתמטיקה, ובערך חצי מעובדי ההייטק בכלל לא כותבים קוד. הטעימות נותנות לך לנסות באמת לפני שמחליטים — ואי אפשר להיכשל בהן.</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- ש7 -->
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; overflow:hidden;">
+        <div role="button" tabindex="0" onClick="{{ toggle6 }}" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; cursor:pointer;" style-hover="background:#fbf9f5;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">שאלה על מלגה / מוסד / כסף — למי פונים?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition:transform .2s; transform:{{ chev6 }};"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <sc-if value="{{ open6 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 16px 16px;">
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">לרכזת, וזו לא התחמקות: הזכאויות משתנות לפי השירות שלך, היישוב, המסלול והשנה — ותשובה כללית עלולה להטעות. הרכזת רואה את התמונה שלך ותיתן תשובה מדויקת. אפשר לשלוח לה הודעה מכל מסך דרך 'קשר'.</p>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 1b: חלופה — סולם אנכי לש1 ============ -->
+  <div id="1b" style="display:flex; flex-direction:column; gap:10px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="background:#6b7280; color:#fff; font-weight:700; font-size:13px; border-radius:8px; padding:2px 10px;">1b</span>
+      <span style="font-size:13px; font-weight:600; color:#6b7280;">חלופה: סולם אנכי (ש1 בלבד)</span>
+    </div>
+    <div dir="rtl" style="width:390px; background:#fbf9f5; border-radius:28px; box-shadow:0 8px 32px rgba(2,62,138,0.10); padding:24px 20px; box-sizing:border-box;">
+      <div style="background:#fff; border:1px solid #ede8db; border-radius:18px; overflow:hidden;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px;">
+          <span style="font-size:15px; font-weight:600; color:#023e8a;">איך נראה כל התהליך, מההתחלה ועד הסוף?</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb8500" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transform:rotate(180deg);"><path d="M6 9l6 6 6-6"></path></svg>
+        </div>
+        <div style="padding:0 16px 16px;">
+          <div style="background:#fbf9f5; border-radius:14px; padding:16px 14px; margin-bottom:12px; position:relative;">
+            <div style="position:absolute; top:24px; bottom:24px; right:27px; border-right:2.5px dashed #ddd6c9;"></div>
+            <div style="display:flex; flex-direction:column; gap:14px; position:relative;">
+              <div style="display:flex; align-items:center; gap:12px;"><div style="width:28px; height:28px; border-radius:50%; background:#023e8a; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</div><div style="font-size:13px; font-weight:600; color:#023e8a;">פתיחת חשבון</div></div>
+              <div style="display:flex; align-items:center; gap:12px;"><div style="width:28px; height:28px; border-radius:50%; background:#023e8a; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</div><div style="font-size:13px; font-weight:600; color:#023e8a;">היכרות</div><span style="background:#fff7ed; border:1px solid #fb8500; border-radius:999px; padding:2px 10px; font-size:10.5px; font-weight:700; color:#fb8500;">פגישה 1</span></div>
+              <div style="display:flex; align-items:center; gap:12px;"><div style="width:28px; height:28px; border-radius:50%; background:#023e8a; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</div><div style="font-size:13px; font-weight:600; color:#023e8a;">טעימות הייטק</div><span style="background:#fff7ed; border:1px solid #fb8500; border-radius:999px; padding:2px 10px; font-size:10.5px; font-weight:700; color:#fb8500;">פגישה 2</span></div>
+              <div style="display:flex; align-items:center; gap:12px;"><div style="width:28px; height:28px; border-radius:50%; background:#023e8a; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">4</div><div style="font-size:13px; font-weight:600; color:#023e8a;">בחירת מסלול</div><span style="background:#fff7ed; border:1px solid #fb8500; border-radius:999px; padding:2px 10px; font-size:10.5px; font-weight:700; color:#fb8500;">פגישה 3</span></div>
+              <div style="display:flex; align-items:center; gap:12px;"><div style="width:28px; height:28px; border-radius:50%; background:#023e8a; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">5</div><div style="font-size:13px; font-weight:600; color:#023e8a;">מלגות והרשמה</div></div>
+              <div style="display:flex; align-items:center; gap:12px;"><div style="width:28px; height:28px; border-radius:50%; background:#059669; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></div><div style="font-size:13px; font-weight:600; color:#023e8a;">סטודנט/ית</div></div>
+            </div>
+          </div>
+          <p style="margin:0; font-size:14px; line-height:1.65; color:#37414f;">שישה שלבים: פתיחת חשבון ← פגישת היכרות עם הרכזת ← טעימות הייטק (מתנסים בתחומים) ← בחירת מסלול לימודים ← מלגות והרשמה ← סטודנט/ית. שלוש פגישות עם הרכזת מחלקות את הדרך, וכל שלב באפליקציה מכין אותך לפגישה הבאה. הקצב שלך — יש מי שעובר הכל בחודש ויש מי שלוקח שלושה.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;openQuestion&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:6,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;התנהגות&quot;}}">
+class Component extends DCLogic {
+  state = { open: undefined };
+  renderVals() {
+    const open = this.state.open === undefined ? (this.props.openQuestion ?? 0) : this.state.open;
+    const v = {};
+    for (let i = 0; i < 7; i++) {
+      v['open' + i] = open === i;
+      v['chev' + i] = open === i ? 'rotate(180deg)' : 'rotate(0deg)';
+      v['toggle' + i] = () => this.setState({ open: open === i ? null : i });
+    }
+    return v;
+  }
+}
+</script>
+</body>
+</html>

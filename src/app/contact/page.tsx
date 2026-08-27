@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Link from "next/link";
-import { calLinkFor, currentMeeting, MEETING_META, type MeetingNum } from "@/data/meetings";
+import { calLinkFor, currentMeeting, MEETING_META, genderMeetingWhat, type MeetingNum } from "@/data/meetings";
 import { logEvent, myCoordinator } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -248,7 +248,7 @@ export default function ContactPage() {
             className="rounded-xl px-4 py-3.5 text-[12.5px] leading-[1.7]"
             style={{ background: "rgba(2,62,138,0.05)", color: "rgba(0,0,0,0.55)" }}
           >
-            <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}>{meta.what}</span>
+            <span className="font-bold" style={{ color: "rgba(0,0,0,0.7)" }}>{genderMeetingWhat(meeting!, typeof window !== "undefined" ? localStorage.getItem("user-gender") : null)}</span>
             <br />
             {meta.bring}
           </div>
