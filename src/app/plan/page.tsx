@@ -31,7 +31,7 @@ import type { Track } from "@/data/institutions";
 import {
   BUDGETED_TUITION, SCHOLARSHIPS, RECOMMENDED_STACK, DOC_CATALOG,
   AREA_LABEL, buildPlan, monthKey, monthLabel, dueText, daysUntil,
-  nextOccurrence, EXCLUSIONS, type PlanTask, type TaskArea, type Scholarship,
+  nextOccurrence, MONTHS, EXCLUSIONS, type PlanTask, type TaskArea, type Scholarship,
 } from "@/data/plan";
 import { INSTITUTIONS } from "@/data/institutions";
 
@@ -192,6 +192,18 @@ export default function PlanPage() {
    * העוגן: קודם ההרשמה עצמה למוסד שנבחר — היא תנאי מקדים לרוב המשימות
    * המתוארכות (מלגות דורשות אישור קבלה). רק אחריה, הדדליין הקרוב.
    */
+  /*
+    שלב 5 נשאר פתוח לגמרי לפני פגישה 3 (נתי 28.8) — מאחורי הדלת
+    יושבים תאריכים, וחסימה כאן מפספסת דדליין: מלגה שנסגרה
+    אינה נפתחת כי הפגישה נדחתה בשבועיים. **חוץ מהרשמה עצמה** —
+    הטעות היחידה במסע שעולה כסף וזמן אמיתיים לתקן, והיא ממילא
+    תלויה בבחירת מוסד שנסגרת בפגישה. לא נועלים — אומרים.
+  */
+  const [m3Done, setM3Done] = useState(true);
+  useEffect(() => {
+    try { setM3Done(localStorage.getItem("meeting-3-attended") === "yes"); } catch { /* ignore */ }
+  }, []);
+
   const anchor = useMemo(() => {
     if (instMain) {
       const short = instMain.split(" — ")[0];
@@ -298,6 +310,7 @@ export default function PlanPage() {
         {view === "plan" && !instMain && <InstGate onCommit={commitInstitution} />}
         {view === "plan" && instMain && (
           <PlanView
+            m3Done={m3Done}
             anchor={anchor}
             open={open}
             done={done}
@@ -598,9 +611,10 @@ function InstGate({ onCommit }: { onCommit: (main: string, backup: string | null
 }
 
 function PlanView({
-  anchor, open, done, openMonths, setOpenMonths, showDone, setShowDone,
+  m3Done, anchor, open, done, openMonths, setOpenMonths, showDone, setShowDone,
   onToggle, onOpen, onRemove, onSnooze, onMoney, onAdd, onIntro,
 }: {
+  m3Done: boolean;
   anchor: PlanTask | null;
   open: PlanTask[];
   done: PlanTask[];
@@ -648,6 +662,19 @@ function PlanView({
         </button>
       </div>
 
+      {/*
+        המסך אומר מה פתוח ומה נסגר בפגישה, במקום להיראות כאילו
+        הכל פתוח. זה ההפך מ-"אתה עוד לא מוכן": הדחוף נמסר לו עכשיו,
+        ומה שקובע נשמר לרכזת.
+      */}
+      {!m3Done && (
+        <div className="mx-4 mb-3 px-4 py-3 rounded-2xl text-[13px] leading-[1.7]"
+          style={{ background: "rgba(251,133,0,0.08)", border: "1px solid rgba(251,133,0,0.25)", color: "#8a4d00" }}>
+          <span className="font-black">המלגות פתוחות עכשיו</span> — לחלקן יש תאריך אחרון, ולא כדאי לחכות לפגישה.
+          {" "}את ההרשמה עצמה סוגרים יחד עם הרכזת בפגישה — רישום למוסד הלא נכון עולה כסף וזמן לתקן.
+        </div>
+      )}
+
       {/* כרטיס עוגן — פעולה אחת. לעולם לא נעלם */}
       {anchor ? (
         <div className="mx-4 p-[18px] rounded-[18px] flex flex-col gap-3" style={{ background: NAVY, color: "#fff" }}>
@@ -667,6 +694,11 @@ function PlanView({
           <div className="text-[21px] font-extrabold" style={{ lineHeight: 1.3 }}>{anchor.title}</div>
           {anchor.note && (
             <div className="text-[14px]" style={{ lineHeight: 1.55, color: "#dbe6f5" }}>{anchor.note}</div>
+          )}
+          {!m3Done && anchor.area === "registration" && (
+            <div className="text-[13px] px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.12)", color: "#ffd9a8", lineHeight: 1.6 }}>
+              את זה סוגרים בפגישה עם הרכזת. עד אז — שווה לבדוק מה צריך להביא ומה מועדי ההרשמה, אבל לא להירשם לבד.
+            </div>
           )}
           <div className="flex gap-2.5">
             <button
@@ -1041,6 +1073,13 @@ function MoneyView() {
   const Card = (f: Scholarship, dimmed: boolean) => {
     const closes = f.closesAt ? nextOccurrence(f.closesAt.d, f.closesAt.m) : null;
     const d = closes ? daysUntil(closes) : null;
+    /*
+      nextOccurrence מגלגל לשנה הבאה, ולכן מלגה שנסגרה מוצגת
+      כ"בעוד 350 יום". זה נכון — ומטעה: מי שמתחיל השנה קורא
+      "יש לי המון זמן" בזמן שלשנה א׳ שלו החלון כבר נסגר. זו מלגה
+      ששווה שנה שלמה, ולכן אומרים את זה במפורש במקום לסמוך על השנה.
+    */
+    const missedWindow = !!(closes && f.closesAt && closes.getFullYear() > new Date().getFullYear());
     const on = picked.includes(f.id);
     return (
       <div
@@ -1060,7 +1099,7 @@ function MoneyView() {
           <div className="flex items-center gap-1.5 shrink-0">
             {on && (
               <span className="px-2 py-1 rounded-full text-[11.5px] font-black" style={{ background: GREEN, color: "#fff" }}>
-                {f.amount ? `− ${f.amount.toLocaleString("he-IL")} ₪` : "סכום יפורסם"}
+                {f.amount ? `− ${f.amount.toLocaleString("he-IL")} ₪` : "ללא סכום ידוע"}
               </span>
             )}
             {closes ? (
@@ -1077,6 +1116,12 @@ function MoneyView() {
           </div>
         </div>
         <div className="text-[13.5px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>{f.what}</div>
+        {missedWindow && closes && (
+          <div className="text-[13px] mt-1.5 px-2.5 py-2 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.55 }}>
+            החלון לשנה הזאת נסגר ב-{f.closesAt!.d}.{f.closesAt!.m} — הבא נפתח ב{MONTHS[f.closesAt!.m - 1]} {closes.getFullYear()}.
+            {" "}שווה לשאול את הרכזת אם יש חריגה או מסלול אחר.
+          </div>
+        )}
         {f.windowNote && <div className="text-[13px] mt-1.5" style={{ color: "#8a8377" }}>{f.windowNote}</div>}
         {f.catch && !dimmed && (
           <div className="text-[13.5px] mt-2 p-2.5 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.55 }}>
@@ -1122,9 +1167,20 @@ function MoneyView() {
             ))}
             <div style={{ height: 1, background: BORDER, margin: "12px 0" }} />
             <Row label="נשאר" value={`${gap.toLocaleString("he-IL")} ₪`} bold />
+            {/*
+              "הסכום יפורסם" נכתב עד 28.8 באותן ארבע מילים בשלושה מצבים
+              שונים לגמרי: מתפרסם בספטמבר (מרום) · ידוע שהוא גדול אבל לא
+              אומת (עולים ביחד) · פשוט לא הזנו. `amountNote` כבר מחזיק
+              את ההסבר — ורק הוא מאפשר לאדם לדעת אם יש לו מה לחכות לו.
+            */}
             {unknownAmount.length > 0 && (
-              <div className="text-[12.5px] mt-2" style={{ color: "#8a8377", lineHeight: 1.6 }}>
-                ועוד {unknownAmount.map(f => f.name.split(" — ")[0]).join(" · ")} — הסכום יפורסם, ולכן לא בחשבון.
+              <div className="text-[12.5px] mt-2 flex flex-col gap-1" style={{ color: "#8a8377", lineHeight: 1.6 }}>
+                {unknownAmount.map(f => (
+                  <div key={f.id}>
+                    <span className="font-bold">{f.name.split(" — ")[0]}</span> —{" "}
+                    {f.amountNote ?? "הסכום לא פורסם"}. לכן אינו בחשבון.
+                  </div>
+                ))}
               </div>
             )}
             {pickedItems.length === 0 && (

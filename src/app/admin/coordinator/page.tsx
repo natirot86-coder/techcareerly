@@ -31,6 +31,13 @@ const DOMAIN_HE: Record<string, string> = {
 };
 
 /** שש שאלות כלי עיבוד החוויה — כדי שנדע *באיזו* מהן נעצרו */
+const TRACK_HE: Record<string, string> = {
+  degree: "תואר אקדמי",
+  bootcamp: "הכשרה טכנולוגית",
+  mahat: "מה״ט — הנדסאי",
+  prep: "מכינה",
+};
+
 const SCCT_HE: Record<string, string> = {
   interest_scale: "שאלת העניין",
   interest_open: "העניין — בכתיבה חופשית",
@@ -97,6 +104,13 @@ function describe(e: Ev): string {
     case "paths_blocker_open":     return `הוצג לו/ה החסם: ${s(p.blocker)}`;
     case "paths_solution_click":   return `פתח/ה פתרון: ${s(p.solution)}`;
     case "paths_research_open":    return "נכנס/ה לערכת חקר המוסדות";
+    case "track_choice":           return s(p.followed) === "recommended"
+      ? `בחר/ה במסלול ${TRACK_HE[s(p.track)] ?? s(p.track)} — כמו ההמלצה`
+      : `בחר/ה במסלול ${TRACK_HE[s(p.track)] ?? s(p.track)} — **לא** המומלץ`;
+    case "meeting2_checkin":       return s(p.result) === "missed"
+      ? "אמר/ה שפגישה 2 עדיין לא התקיימה"
+      : "אישר/ה שפגישה 2 התקיימה";
+    case "meeting_self_declared":  return `אמר/ה שקבע/ה את פגישה ${s(p.n)} בעצמו/ה`;
     case "paths_research_done":    return `בירר/ה מול מוסד: ${s(p.institution)}`;
     case "paths_research_remind":  return "ביקש/ה תזכורת — טרם דיבר/ה עם אף מוסד";
     case "paths_prep_done":        return s(p.researched) === "0"
@@ -273,6 +287,17 @@ function buildStations(p: Person): Station[] {
   const m1missed = m1 && S((m1.props as Record<string, unknown>)?.result) === "missed";
 
   const gate = latest("paths_domain_gate");
+  const m2 = latest("meeting2_checkin");
+  const m2ok = m2 && S((m2.props as Record<string, unknown>)?.result) === "yes";
+  const m2missed = m2 && S((m2.props as Record<string, unknown>)?.result) === "missed";
+  /*
+    בחירה נגד ההמלצה לגיטימית ובלי חיכוך (24.8) — אבל היא סיגנל
+    לרכזת לפני פגישה 3. האירוע נשלח מאז, ועד עכשיו אף מסך לא קרא אותו.
+  */
+  const trackPick = latest("track_choice");
+  const trackOther = trackPick && S((trackPick.props as Record<string, unknown>)?.followed) === "other";
+  const trackName = trackPick ? S((trackPick.props as Record<string, unknown>)?.track) : "";
+
   const committed = latest("domain_committed");
   const instGate = latest("plan_inst_gate");
   const instCommitted = latest("institution_committed");
@@ -295,9 +320,19 @@ function buildStations(p: Person): Station[] {
       date: latest("scct_done")?.at ?? latest("sim_start")?.at ?? null,
       chips: tasted.length ? [{ text: "טעם/ה: " + tasted.map(dom).join(", "), kind: "info" as const }] : [],
       events: [...by("sim_start"), ...by("scct_done"), ...by("taste_done")] },
+    /*
+      המועמד עונה בעצמו אם הפגישה התקיימה (שכבה 2 של שער 27.8),
+      ועד עכשיו אף אחד לא קרא את התשובה. **הסתירה היא העיקר:**
+      הרכזת סימנה no-show ב-Cal והוא אמר "נפגשנו" — אחד מהם טועה,
+      וזה בדיוק מה שכדאי שתראה לפני שהיא מרימה טלפון.
+    */
     { id: "m2", stage: "מסלול לימודים", title: "פגישה 2 — בחירת תחום", emoji: "🗓",
-      date: latest("meeting_booked", pr => S(pr.n) === "2")?.at ?? null, chips: [],
-      events: [...by("meeting_open", pr => S(pr.n) === "2"), ...by("meeting_booked", pr => S(pr.n) === "2")] },
+      date: latest("meeting2_checkin")?.at ?? latest("meeting_booked", pr => S(pr.n) === "2")?.at ?? null,
+      signal: !!m2missed,
+      chips: m2ok ? [{ text: "אמר/ה שנפגשתם", kind: "quote" as const }]
+        : m2missed ? [{ text: "אמר/ה שעדיין לא נפגשתם", kind: "alert" as const }] : [],
+      events: [...by("meeting_open", pr => S(pr.n) === "2"), ...by("meeting_booked", pr => S(pr.n) === "2"),
+               ...by("meeting2_checkin"), ...by("meeting_self_declared", pr => S(pr.n) === "2")] },
     { id: "domain", stage: "", title: "בחירת כיוון", emoji: "🧭",
       date: committed?.at ?? null,
       chips: committed
@@ -307,6 +342,14 @@ function buildStations(p: Person): Station[] {
     { id: "quiz", stage: "", title: "שאלון אילוצים", emoji: "📋",
       date: quizDone?.at ?? null, chips: [],
       events: [...by("paths_question"), ...by("paths_quiz_done")] },
+    { id: "track", stage: "", title: "בחירת מסלול לימודים", emoji: "🛤",
+      date: trackPick?.at ?? null,
+      signal: !!trackOther,
+      chips: trackPick
+        ? [{ text: `${TRACK_HE[trackName] ?? trackName}${trackOther ? " — לא המומלץ לו/לה" : " — כמו ההמלצה"}`,
+            kind: trackOther ? ("talk" as const) : ("info" as const) }]
+        : [],
+      events: [...by("track_choice"), ...by("track_detail_open")] },
     /*
       עד 28.8 התחנה הזאת נגזרה מאירועי מסך החסמים בלבד — כלומר
       היא הדליקה גם למי שלא דיבר עם אף מוסד. השיחה עצמה היא
