@@ -120,10 +120,15 @@ for (const f of FUND) {
    מראה פער גדול מהאמת. זה הכיוון המסוכן יותר לטעות בו.
 */
 const CLAIMS_FULL = /מימון מלא|שכר לימוד מלא|100% משכר|כל שכר הלימוד|שכ״ל מלא/;
+/*
+   חשוב: חסר amount אינו באג כשיש amountNote שמסביר למה — מרום
+   מפרסמת בספטמבר, ושכ״ל המלא של עולים ביחד לא אומת. "לא יודעים"
+   מתועד הוא תשובה לגיטימית. הבאג הוא רק **שתיקה** — בלי סכום ובלי הסבר.
+*/
 for (const f of FUND) {
-  if (f.status !== "active" || f.amount) continue;
-  if (CLAIMS_FULL.test(`${f.what ?? ""} ${f.amountNote ?? ""}`))
-    err(`"${f.name}" מצהירה על מימון מלא אבל אין לה amount — החשבון מוריד ממנה 0 ₪`);
+  if (f.status !== "active" || f.amount || f.amountNote) continue;
+  if (CLAIMS_FULL.test(f.what ?? ""))
+    err(`"${f.name}" מצהירה על מימון מלא אבל אין לה לא amount ולא amountNote — החשבון מוריד 0 ₪ בלי להסביר`);
 }
 
 /*
@@ -132,8 +137,8 @@ for (const f of FUND) {
 */
 for (const id of m.scholarships.RECOMMENDED_STACK) {
   const f = FUND.find((x) => x.id === id);
-  if (f && !f.amount)
-    err(`"${f.name}" נמצאת בערימה המומלצת ואין לה amount — החשבון מוריד ממנה 0 ₪`);
+  if (f && !f.amount && !f.amountNote)
+    err(`"${f.name}" נמצאת בערימה המומלצת ושותקת על הסכום — החשבון מוריד 0 ₪ בלי להסביר למה`);
 }
 
 // ── 5. מה שמוצג למועמד בלי שאומת ───────────────────────────────────────────
