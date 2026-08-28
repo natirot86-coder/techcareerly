@@ -1,0 +1,412 @@
+<title>פגישה 1 — בוגרי טק-קריירה · מערך לסיוון</title>
+
+<style>
+  :root {
+    --navy: #023e8a;
+    --orange: #fb8500;
+    --ink: #1c1a16;
+    --muted: #5f6672;
+    --faint: #8b8f98;
+    --bg: #fbf9f5;
+    --card: #ffffff;
+    --line: rgba(2, 62, 138, 0.12);
+    --warn-bg: #fff7ec;
+    --warn-ink: #8a4d00;
+    --warn-line: rgba(251, 133, 0, 0.35);
+    --good: #0f7a52;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --navy: #7fb0ff;
+      --orange: #ffa733;
+      --ink: #f0ece5;
+      --muted: #b0b6c0;
+      --faint: #878d97;
+      --bg: #14161a;
+      --card: #1c1f25;
+      --line: rgba(127, 176, 255, 0.16);
+      --warn-bg: #2a2013;
+      --warn-ink: #ffc987;
+      --warn-line: rgba(255, 167, 51, 0.3);
+      --good: #4fc79a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --navy: #7fb0ff; --orange: #ffa733; --ink: #f0ece5; --muted: #b0b6c0;
+    --faint: #878d97; --bg: #14161a; --card: #1c1f25;
+    --line: rgba(127, 176, 255, 0.16);
+    --warn-bg: #2a2013; --warn-ink: #ffc987; --warn-line: rgba(255, 167, 51, 0.3);
+    --good: #4fc79a;
+  }
+  :root[data-theme="light"] {
+    --navy: #023e8a; --orange: #fb8500; --ink: #1c1a16; --muted: #5f6672;
+    --faint: #8b8f98; --bg: #fbf9f5; --card: #ffffff;
+    --line: rgba(2, 62, 138, 0.12);
+    --warn-bg: #fff7ec; --warn-ink: #8a4d00; --warn-line: rgba(251, 133, 0, 0.35);
+    --good: #0f7a52;
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    direction: rtl;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Heebo", "Assistant", "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    margin: 0;
+    padding: 0 0 5rem;
+  }
+  .wrap { max-width: 44rem; margin: 0 auto; padding: 0 1.15rem; }
+
+  /* ─── כותרת ─── */
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 2.2rem 0 1.6rem;
+    margin-bottom: 0;
+  }
+  :root[data-theme="dark"] header, .dk header { color: #10131a; }
+  @media (prefers-color-scheme: dark) { header { color: #10131a; } }
+  :root[data-theme="light"] header { color: #fff; }
+  header .kicker {
+    font-size: 0.74rem; font-weight: 800; letter-spacing: 0.16em;
+    opacity: 0.72; margin-bottom: 0.5rem;
+  }
+  header h1 { font-size: 1.75rem; font-weight: 900; line-height: 1.2; margin: 0 0 0.5rem; text-wrap: balance; }
+  header p { margin: 0; font-size: 0.95rem; line-height: 1.6; opacity: 0.85; }
+
+  /* ─── ניווט דביק: לקפוץ בין חלקים באמצע שיחה ─── */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+  }
+  nav ul { display: flex; gap: 0.4rem; list-style: none; margin: 0; padding: 0.55rem 1.15rem; white-space: nowrap; }
+  nav a {
+    display: block; padding: 0.32rem 0.72rem; border-radius: 999px;
+    font-size: 0.82rem; font-weight: 700; text-decoration: none;
+    color: var(--muted); border: 1px solid var(--line);
+  }
+  nav a:hover, nav a:focus-visible { color: var(--navy); border-color: var(--navy); outline: none; }
+
+  section { margin-top: 2.4rem; scroll-margin-top: 3.5rem; }
+  h2 {
+    font-size: 1.22rem; font-weight: 900; color: var(--navy);
+    margin: 0 0 0.15rem; line-height: 1.3; text-wrap: balance;
+  }
+  h2 .n {
+    display: inline-block; min-width: 1.55rem; height: 1.55rem; line-height: 1.55rem;
+    text-align: center; border-radius: 999px; background: var(--orange); color: #fff;
+    font-size: 0.82rem; margin-left: 0.5rem; vertical-align: 0.08rem;
+  }
+  h3 { font-size: 1rem; font-weight: 900; margin: 1.5rem 0 0.3rem; color: var(--ink); }
+  .lede { color: var(--muted); font-size: 0.95rem; margin: 0.35rem 0 1rem; }
+  p { margin: 0 0 0.8rem; }
+  strong { font-weight: 800; }
+  ul, ol { margin: 0 0 0.9rem; padding-inline-start: 1.1rem; }
+  li { margin-bottom: 0.45rem; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1rem 1.1rem; margin: 0.9rem 0;
+  }
+  .card p:last-child, .card ul:last-child, .card ol:last-child { margin-bottom: 0; }
+
+  .quote {
+    border-inline-start: 3px solid var(--orange);
+    background: var(--card); border-radius: 0 12px 12px 0;
+    padding: 0.85rem 1rem; margin: 0.9rem 0;
+    font-size: 1.02rem; font-weight: 700; color: var(--ink);
+  }
+  .warn {
+    background: var(--warn-bg); color: var(--warn-ink);
+    border: 1px solid var(--warn-line); border-radius: 12px;
+    padding: 0.8rem 1rem; margin: 0.9rem 0; font-size: 0.94rem;
+  }
+  .warn p:last-child { margin-bottom: 0; }
+
+  .goal { counter-reset: g; list-style: none; padding: 0; margin: 0.9rem 0; }
+  .goal li {
+    counter-increment: g; position: relative;
+    padding: 0.75rem 3rem 0.75rem 1rem;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; margin-bottom: 0.55rem;
+  }
+  .goal li::before {
+    content: counter(g);
+    position: absolute; inset-inline-start: 0.85rem; top: 0.8rem;
+    width: 1.6rem; height: 1.6rem; line-height: 1.6rem; text-align: center;
+    border-radius: 999px; background: var(--navy); color: var(--bg);
+    font-weight: 900; font-size: 0.85rem;
+  }
+
+  .tablewrap { overflow-x: auto; margin: 0.9rem 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; min-width: 20rem; }
+  th, td { text-align: start; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 900; color: var(--navy); font-size: 0.82rem; letter-spacing: 0.02em; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  .split { display: grid; gap: 0.8rem; }
+  @media (min-width: 40rem) { .split { grid-template-columns: 1fr 1fr; } }
+  .split > div {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 0.95rem 1rem;
+  }
+  .split h4 { margin: 0 0 0.35rem; font-size: 0.98rem; font-weight: 900; }
+  .split .a h4 { color: var(--navy); }
+  .split .b h4 { color: var(--orange); }
+  .split p, .split li { font-size: 0.92rem; }
+  .split ul { margin-bottom: 0; }
+
+  .yes { color: var(--good); font-weight: 800; }
+  .no { color: #c2410c; font-weight: 800; }
+  @media (prefers-color-scheme: dark) { .no { color: #ff9a6b; } }
+  :root[data-theme="dark"] .no { color: #ff9a6b; }
+  :root[data-theme="light"] .no { color: #c2410c; }
+
+  footer {
+    margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line);
+    font-size: 0.85rem; color: var(--faint);
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">פיילוט אקדמיה לבוגרים · 28.8.2026</div>
+    <h1>פגישה 1 — בוגרי טק-קריירה</h1>
+    <p>מערך לסיוון. הקהל: בוגרי הכשרה טכנולוגית שלנו, וחלקם כבר עובדים בהייטק.
+      הם לא צריכים לגלות מה זה סייבר — הם צריכים להחליט אם תואר שווה להם, ואיזה.</p>
+  </div>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#goal">מה חייב לצאת</a></li>
+    <li><a href="#open">הפתיחה</a></li>
+    <li><a href="#time">שאלת הזמינות</a></li>
+    <li><a href="#can">המסוגלות</a></li>
+    <li><a href="#money">כסף</a></li>
+    <li><a href="#tracks">מסלולי ערב</a></li>
+    <li><a href="#close">סגירה</a></li>
+    <li><a href="#after">אחרי</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+  <section id="goal">
+    <h2><span class="n">1</span>מה הפגישה חייבת לייצר</h2>
+    <p class="lede">שלושה דברים. אם יצאת עם שלושתם — הפגישה הצליחה, גם אם לא הספקת שום דבר אחר.</p>
+    <ol class="goal">
+      <li><strong>הוא יודע שיש מסלול שמתאים למצב חייו.</strong> לא "תואר" באוויר אלא צורה
+        קונקרטית: ערב · שלושה ימים · קצב עצמאי · או מלא, אם הוא בוחר בזה.</li>
+      <li><strong>הזמינות שלו ידועה.</strong> כמה מהשבוע הוא באמת יכול לפנות. זה השדה
+        שקובע מה האפליקציה תציג לו — בלעדיו היא מציגה הכל, וזה חסר ערך.</li>
+      <li><strong>פגישה 2 נקבעה ביומן.</strong> לא "נדבר", לא "אני אחזור אליך".</li>
+    </ol>
+
+    <h3>ומה הפגישה לא עושה</h3>
+    <div class="card">
+      <ul>
+        <li><strong>לא מאבחנת ולא מטפלת בפחדים.</strong> אם עולה חשש — מקשיבים, לא מנתחים.
+          פחד נמדד אצלנו בהתנהגות, לא בשאלון.</li>
+        <li><strong>לא נוקבת בסכומי מלגות שלא פורסמו.</strong> ראי "כסף" למטה.</li>
+        <li><strong>לא בוחרת בשבילו</strong> — גם כשההחלטה נראית לך שגויה. את הסיגנל הזה
+          האפליקציה מעבירה אלייך לפני פגישה 2.</li>
+      </ul>
+    </div>
+
+    <h3>מה כבר ידוע לפני הפגישה</h3>
+    <p>מהאונבורדינג: שם · גיל · יישוב מגורים · סוג שירות וחודש שחרור · מגדר.
+      ממאנדיי: <strong>מה הוא למד אצלנו ומתי סיים.</strong></p>
+    <div class="warn"><p>מה שלא ידוע ואי אפשר להסיק: <strong>אם הוא עובד היום.</strong> אל תניחי שכן.</p></div>
+  </section>
+
+  <section id="open">
+    <h2><span class="n">2</span>הפתיחה — ומיד הפיצול</h2>
+    <div class="quote">"לפני שנדבר על תואר — איפה אתה נמצא היום מבחינת עבודה?"</div>
+    <p>התשובה מפצלת את כל הפגישה. לשתי האוכלוסיות אין כמעט דבר משותף.</p>
+
+    <div class="split">
+      <div class="a">
+        <h4>א׳ · עובד/ת בהייטק</h4>
+        <p><strong>ההתנגדות איננה "אני לא מסוגל" אלא "למה שאוותר על משכורת".</strong>
+          זו שאלה כלכלית לגיטימית, ומגיעה לה תשובה כלכלית — לא עידוד.</p>
+        <ul>
+          <li><strong>רוב מה שמדברים עליו הוא לא ארבע שנים בלי משכורת.</strong> יש מסלולים
+            שרצים לצד עבודה מלאה — ראי הרשימה.</li>
+          <li><strong>התקרה, לא ההתחלה.</strong> לא כמה הוא מרוויח היום, אלא לאן אפשר להגיע
+            בלי תואר. מעבר מ-QA לפיתוח, מיישום לארכיטקטורה, תפקידי הובלה — שם התואר
+            מפסיק להיות נחמד ומתחיל להיות תנאי.</li>
+          <li><strong>הוא כבר שילם את המחיר היקר.</strong> הכניסה להייטק היא החלק הקשה,
+            והוא עשה אותה. תואר כשהוא כבר בפנים ומרוויח — קל בהרבה מתואר מאפס.</li>
+        </ul>
+        <p class="no">לא עובד: "תואר תמיד שווה" · "זה ייפתח לך דלתות". אמירות כלליות מול
+          מישהו שמסתכל על תלוש אמיתי נשמעות כמו הבטחה.</p>
+      </div>
+      <div class="b">
+        <h4>ב׳ · עדיין מחפש/ת עבודה</h4>
+        <p><strong>כאן הסדר הפוך: קודם פרנסה, אחר כך תואר.</strong> אל תפתחי בתואר.</p>
+        <ul>
+          <li>מה קרה מאז שסיים? כמה ראיונות, איפה נתקע. ייתכן שהפער בפורטפוליו או
+            בראיונות ולא בהשכלה — וזה תיקון של שבועות, לא של שנים.</li>
+          <li>אם התואר כן הכיוון — <strong>הוא צריך מלגות קיום, לא רק שכר לימוד.</strong>
+            שיחה אחרת לגמרי, והאפליקציה מכינה אותה בשלב 5.</li>
+          <li><strong>הפיקדון:</strong> חלון של חמש שנים מהשחרור, עשר למשרת מילואים פעיל.
+            אם החלון נסגר בקרוב — זה הנושא הראשון, לא התואר.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="time">
+    <h2><span class="n">3</span>השאלה שקובעת את המסך</h2>
+    <p class="lede">לשאול אותה במפורש. לא להסיק אותה.</p>
+    <div class="quote">כמה מהשבוע אפשר לפנות ללימודים?</div>
+    <div class="card">
+      <ul>
+        <li>יום שלם, רוב השבוע — פנוי/ה ללמוד</li>
+        <li>יומיים-שלושה בשבוע — לצד עבודה</li>
+        <li>ערב בלבד, או קצב עצמאי משלי</li>
+        <li><strong>שוקל/ת לשנות את מצב העבודה בשביל התואר הנכון</strong></li>
+      </ul>
+    </div>
+    <div class="warn">
+      <p><strong>האפשרות הרביעית היא לא היסוס — היא מצב אמיתי</strong>, והיא הקהל שהפיילוט
+        נועד לו. מי שנמצא בה יראה גם מסלולי יום וגם מסלולי ערב.
+        <strong>אל תדחפי אותו לבחור אחת מהשלוש הראשונות.</strong></p>
+    </div>
+
+    <h3>הכיוון — תחום התואר</h3>
+    <p><strong>לא מגבילים אותו למה שלמד אצלנו.</strong> בוגר QA שרוצה תואר במדעי המחשב הוא
+      בדיוק המקרה שהתוכנית קיימת בשבילו; לכלוא אותו ב"תואר בבדיקות תוכנה" זה להפוך את
+      ההכשרה שנתנו לו לתקרה. מה שכן — התחום שלו הוא הכניסה הסבירה ביותר ויופיע ראשון.</p>
+    <div class="card">
+      <p><strong>שווה להזכיר: הנדסת מערכות מידע.</strong> אותן דרישות כמו מדעי המחשב —
+        מתמטיקה 4–5 יח׳ ופסיכומטרי — אבל <strong>ברף קבלה נמוך יותר</strong> ברוב המוסדות,
+        ו-75% מהבוגרים עובדים בהייטק. הרבה אנשים לא יודעים שהיא קיימת.</p>
+    </div>
+  </section>
+
+  <section id="can">
+    <h2><span class="n">4</span>המסוגלות — הקלף שרק לקהל הזה יש</h2>
+    <p>תחושת המסוגלות נמוכה באופן שיטתי אצל דור ראשון להשכלה גבוהה, וזה החסם האמיתי —
+      לא הידע. אבל מול בוגר יש ראיה שאי אפשר להתווכח איתה:</p>
+    <div class="quote">"אתה כבר עשית את זה. סיימת הכשרה טכנולוגית, ולמדת דברים שלא ידעת.
+      זו לא שאלה תיאורטית אם אתה מסוגל ללמוד — יש לך תשובה."</div>
+    <p><strong>למועמד רגיל אין את המשפט הזה. השתמשי בו.</strong></p>
+  </section>
+
+  <section id="money">
+    <h2><span class="n">5</span>כסף — מה אומרים ומה לא</h2>
+    <div class="split">
+      <div class="a">
+        <h4 class="yes">מותר</h4>
+        <ul>
+          <li>שכר לימוד מפוקח: <strong>12,203 ₪ לשנה</strong> במוסד מתוקצב (תשפ״ז). זהה
+            ב-11 מוסדות.</li>
+          <li><strong>ייעוד 44</strong> ו<strong>פריפריה 45</strong> — כל אחת שווה
+            <strong>שנה א׳ במימון מלא</strong>. מממשים אחת, לא את שתיהן.</li>
+          <li>מלגות נכנסות לפיקדון — מי שיש לו פיקדון פתוח משלם פחות מהכיס.</li>
+        </ul>
+      </div>
+      <div class="b">
+        <h4 class="no">אסור</h4>
+        <ul>
+          <li><strong>סכום למרום.</strong> מל״ג מפרסמת אחוז משכר הלימוד לפי דירוג המקצוע,
+            והתנאים לתשפ״ז מתפרסמים רק בספטמבר. פר״ח נתנה 10,000 —
+            <strong>זו פר״ח, לא מרום.</strong></li>
+          <li>כל סכום בלי מקור רשמי. מספר שנאמר בפגישה מצוטט אחר כך מול המוסד, ואם הוא
+            שגוי — <strong>האמינות שלנו מולם</strong> היא שנפגעת.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn">
+      <p><strong>ייעוד 44 לשנה הזאת נסגרה ב-15.8.</strong> לחלון הבא צריך להיערך מראש.</p>
+    </div>
+  </section>
+
+  <section id="tracks">
+    <h2><span class="n">6</span>מסלולים שאפשר לעבוד לצידם — מאומת</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>מוסד</th><th>הצורה</th></tr></thead>
+        <tbody>
+          <tr><td><strong>מכללת ספיר</strong></td><td>ימים א׳-ב׳-ג׳ בלבד · תואר 3 שנים</td></tr>
+          <tr><td><strong>המכללה למנהל</strong></td><td>מסלול ערב במדעי המחשב · תשעה סמסטרים במקום שישה</td></tr>
+          <tr><td><strong>HIT — חולון</strong></td><td>אחר הצהריים וערב</td></tr>
+          <tr><td><strong>סמי שמעון</strong></td><td>באר שבע ואשדוד · כולל ערב</td></tr>
+          <tr><td><strong>האקדמית רמת גן</strong></td><td>יום, ובנוסף מסלול ערב במדעי המחשב</td></tr>
+          <tr><td><strong>האוניברסיטה הפתוחה</strong></td><td>קצב עצמאי לחלוטין, בלי פסיכומטרי</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn">
+      <p><strong>האו״פ — לומר את האמת:</strong> היעדר המסגרת הוא בדיוק המקור לאחוזי הנשירה
+        הגבוהים שלה. מצוינת למי שיודע לנהל את עצמו, מלכודת למי שלא. זו שיחה, לא המלצה
+        אוטומטית.</p>
+      <p><strong>אונו — אין מסלול ערב במדעי המחשב.</strong> בוקר בלבד, ימים א׳/ג׳/ה׳,
+        אומת מולם. אתרים חיצוניים טוענים אחרת והם טועים. חוסך שיחה מבוזבזת.</p>
+    </div>
+    <div class="card">
+      <p><strong>ולמי שחסר פסיכומטרי:</strong> מכינת חיפה היא אפיק מעבר לתואר בלי
+        פסיכומטרי · בראודה כמעט חינם ופוטרת מפסיכומטרי בממוצע 85+ ·
+        והפסיכומטרי של המדינה נלמד חינם בקמפוס IL.</p>
+    </div>
+  </section>
+
+  <section id="close">
+    <h2><span class="n">7</span>הסגירה</h2>
+    <p><strong>לא לסיים בלי שנקבעה פגישה 2 ביומן.</strong> קובעים בפגישה עצמה, לא אחריה.</p>
+    <div class="quote">"בימים הקרובים תיכנס לאפליקציה ותראה את התארים שמתאימים למה שאמרת —
+      כמה זה עולה, כמה זמן, ומה צריך כדי להיכנס. תבחר כמה מוסדות שמעניינים אותך, ותתקשר
+      לשאול אותם מה שלא ברור. בפגישה הבאה נסגור."</div>
+    <div class="warn">
+      <p><strong>התקשרות למוסד — ליחידת התמיכה, לא למדור הרישום.</strong> מדור רישום עונה
+        "אינך עומד בתנאים" ולא מכיר מסלולי קבלה חלופיים; שיחה כזו יכולה לסיים את התהליך.
+        יחידת התמיכה מכירה את המסלולים החלופיים — זה התפקיד שלה.</p>
+    </div>
+  </section>
+
+  <section id="after">
+    <h2><span class="n">8</span>אחרי הפגישה — מה מזינים</h2>
+    <p class="lede">חמישה שדות. שתי דקות.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>שדה</th><th>ערכים</th></tr></thead>
+        <tbody>
+          <tr><td>מצב תעסוקה</td><td>עובד/ת בהייטק · מחפש/ת · לא בתחום</td></tr>
+          <tr><td>זמינות שבועית</td><td>מלא · 2–3 ימים · ערב/עצמאי · שוקל/ת לשנות</td></tr>
+          <tr><td>תחום עיקרי שמעניין</td><td>מרשימת התחומים</td></tr>
+          <tr><td>פסיכומטרי / בגרות</td><td>יש · חסר · לא רלוונטי</td></tr>
+          <tr><td>נושא לפגישה 2</td><td>שורה חופשית</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>כל השאר האפליקציה גוזרת מעצמה.</strong> אין צ׳קליסט "התקיימה פגישה" — מועד
+      הפגישה מגיע מ-Cal והמערכת יודעת. מה שמזינים זה רק מה שנאמר בחדר ואי אפשר להסיק ממסך.</p>
+
+    <h3>במה זה שונה מהמסלול הרגיל</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th></th><th>קהל רחב</th><th>בוגרי טק-קריירה</th></tr></thead>
+        <tbody>
+          <tr><td>שלבים</td><td>6</td><td><strong>5</strong> — בלי טעימות</td></tr>
+          <tr><td>פגישות</td><td>3</td><td><strong>2</strong> — היכרות, ונעילת מסלול</td></tr>
+          <tr><td>מסלולים</td><td>תואר · מה״ט · הכשרה</td><td><strong>תואר בלבד</strong></td></tr>
+          <tr><td>שאלת פתיחה</td><td>מה מעניין אותך</td><td><strong>מה מסתדר מבחינת זמן</strong></td></tr>
+          <tr><td>החסם המרכזי</td><td>"אני לא מסוגל"</td><td><strong>"למה לוותר על משכורת"</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    מסמך פנימי · טק-קריירה · נכתב 28.8.2026.
+    כל נתון כאן אומת מול מקור רשמי; מה שלא אומת לא נכנס.
+  </footer>
+</div>
