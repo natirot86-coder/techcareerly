@@ -64,7 +64,10 @@ const QUIZ_LABELS = ["שעות", "כסף", "השכלה", "ילדים", "יציב
  * שם דורשת מיגרציה. נצברת ב-/api/funnel בצד שרת, מאותו לוג בדיוק.
  */
 type Funnels = {
+  cohort: string;
+  cohortCounts: Record<string, number>;
   sampled: number;
+  sampledAll: number;
   simSteps: Record<string, { i: number; of: number; concept: string; n: number }[]>;
   scctSteps: Record<string, number>;
   blockers: Record<string, number>;
@@ -89,21 +92,30 @@ function AdminAnalyticsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /*
+    הקוהורט שמוצג (28.8). ברירת המחדל main בכוונה — פיילוט
+    שמדלג על הטעימות היה מצניח את אחוז ההמרה ונראה כמו רגרסיה.
+  */
+  const [cohort, setCohort] = useState("main");
+
   useEffect(() => {
     (async () => {
       if (!supabase) { setErr("no-env"); setLoading(false); return; }
       const { data, error } = await supabase.rpc("admin_stats");
       if (error) setErr(error.message); else setS(data as Stats);
       setLoading(false);
-
-      // הצבירה של האירועים החדשים — אותו קוד גישה של שאר לוחות הניהול
-      const code = localStorage.getItem("coordinator-code");
-      if (code) {
-        const r = await fetch("/api/funnel", { headers: { "x-coordinator-code": code } });
-        if (r.ok) setF(await r.json());
-      }
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      // הצבירה של האירועים החדשים — אותו קוד גישה של שאר לוחות הניהול
+      const code = localStorage.getItem("coordinator-code");
+      if (!code) return;
+      const r = await fetch(`/api/funnel?cohort=${cohort}`, { headers: { "x-coordinator-code": code } });
+      if (r.ok) setF(await r.json());
+    })();
+  }, [cohort]);
 
   const live = !!s;
 
@@ -127,6 +139,32 @@ function AdminAnalyticsPage() {
       </div>
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "18px 24px 60px" }}>
+        {/*
+          בורר קוהורט — מופיע רק כשבאמת יש יותר מאחד. כל עוד הפיילוט
+          לא התחיל, המסך נראה בדיוק כמו קודם — ולא מוסיף פקד שאין לו משמעות.
+        */}
+        {f && Object.keys(f.cohortCounts ?? {}).length > 1 && (
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#6b6558" }}>קהל:</span>
+            {[["main", "הקהל הרחב"], ["alumni", "בוגרי טק-קריירה"], ["all", "הכל יחד"]].map(([id, label]) => {
+              const n = id === "all" ? Object.values(f.cohortCounts).reduce((a, b) => a + b, 0) : (f.cohortCounts[id] ?? 0);
+              const on = cohort === id;
+              return (
+                <button key={id} onClick={() => setCohort(id)}
+                  style={{
+                    fontSize: 12.5, fontWeight: 800, padding: "6px 12px", borderRadius: 999,
+                    background: on ? NAVY : "#fff", color: on ? "#fff" : "#4a463e",
+                    border: `1px solid ${on ? NAVY : "rgba(0,0,0,0.12)"}`, cursor: "pointer",
+                  }}>
+                  {label} <span style={{ opacity: 0.6 }}>{n}</span>
+                </button>
+              );
+            })}
+            <span style={{ fontSize: 11.5, color: "#8b8577" }}>
+              הגרפים למטה מסננים לפי הבחירה. הכרטיסים העליונים (admin_stats) מציגים את כולם.
+            </span>
+          </div>
+        )}
         {!live && !loading && (
           <Banner tone={err === "no-env" ? "danger" : "warn"}>
             {err === "no-env" ? (

@@ -61,7 +61,27 @@ export async function GET(req: NextRequest) {
     .limit(20000);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const events = (data ?? []) as Ev[];
+  const all = (data ?? []) as Ev[];
+
+  /*
+   * פילוח לפי קוהורט (28.8) — **לפני שהמועמד הראשון נכנס.**
+   * בוגרי טק-קריירה מדלגים על שלב הטעימות, ולכן ערבוב שלהם עם
+   * הקהל הרחב היה **מצניח את אחוז ההמרה בטעימות ונראה כמו רגרסיה במוצר**.
+   * מספר שהתחיל לשקר אינו ניתן לתיקון רטרואקטיבי.
+   *
+   * ברירת המחדל היא main בכוונה: כך המספר שמוצג באנליטיקות
+   * ממשיך להיות בדיוק מה שהוא היה, והפיילוט נוסף ולא מערבב.
+   */
+  const wanted = (req.nextUrl.searchParams.get("cohort") ?? "main").toLowerCase();
+  const { data: people } = await db.from("candidates").select("id, cohort");
+  const cohortOf = new Map<string, string>((people ?? []).map(p => [String(p.id), String(p.cohort ?? "main")]));
+
+  const cohortCounts: Record<string, number> = {};
+  for (const c of cohortOf.values()) cohortCounts[c] = (cohortCounts[c] ?? 0) + 1;
+
+  /* מי שאינו בטבלה (אירוע יתום) נחשב main — כמו ברירת המחדל ב-DB */
+  const events = wanted === "all" ? all
+    : all.filter(e => (cohortOf.get(String(e.candidate_id)) ?? "main") === wanted);
 
   /*
    * נטישה בסימולציה: לכל תחום, כמה אנשים הגיעו לכל צעד.
@@ -94,7 +114,10 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
+    cohort: wanted,
+    cohortCounts,
     sampled: events.length,
+    sampledAll: all.length,
     simSteps,
     scctSteps: peopleBy(events, "scct_step", e => `${s(e.props?.domain)}|${s(e.props?.q)}`),
     blockers: peopleBy(events, "paths_blocker_open", e => s(e.props?.blocker)),
