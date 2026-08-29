@@ -1,4 +1,5 @@
 import { supabase, supabaseEnabled } from "./supabase";
+import { isCohort, type CohortId } from "@/data/journey";
 
 export type Candidate = {
   id: string;
@@ -16,6 +17,8 @@ export type Candidate = {
   onboarding_completed_at: string | null;
   last_active_at: string;
   created_at: string;
+  /** main = הקהל הרחב · alumni = בוגרי הכשרה של טק-קריירה (28.8) */
+  cohort: CohortId;
 };
 
 export type OnboardingInput = {
@@ -87,6 +90,31 @@ export async function ensureCandidateId(): Promise<string | null> {
   );
 
   return candidateId;
+}
+
+/* ─── קוהורט (28.8) ──────────────────────────────────────────────────────────
+ *
+ * מקור האמת הוא `candidates.cohort` בשרת. localStorage הוא **מטמון בלבד**:
+ * הדליפה המסוכנת אינה הקישור (הוא עובר בוואטסאפ ותמיד ידלוף) אלא איבוד
+ * הקוהורט באמצע המסע — ניקוי דפדפן או מכשיר חדש — שהיה מקפיץ אדם באמצע
+ * פיילוט חזרה לשישה שלבים ולטאב טעימות. לכן קוראים מהשרת ומרעננים מטמון.
+ *
+ * הקריאה סינכרונית בכוונה: מסך שממתין לרשת כדי לדעת כמה שלבים לצייר היה
+ * מהבהב. ברירת המחדל main, כלומר ההתנהגות הקיימת בדיוק.
+ */
+export function cachedCohort(): CohortId {
+  try {
+    const v = localStorage.getItem("cohort");
+    return isCohort(v) ? v : "main";
+  } catch { return "main"; }
+}
+
+/** מרענן את המטמון מהשרת. רץ ברקע ואינו חוסם רינדור */
+export async function refreshCohort(): Promise<CohortId> {
+  const c = await getCandidate();
+  const v = isCohort(c?.cohort) ? c!.cohort : "main";
+  try { localStorage.setItem("cohort", v); } catch { /* ignore */ }
+  return v;
 }
 
 export async function getCandidate(): Promise<Candidate | null> {

@@ -19,7 +19,7 @@ import ts from "typescript";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const TMP = path.join(ROOT, ".data-check-tmp");
-const FILES = ["institutions", "scholarships", "courses", "degrees"];
+const FILES = ["institutions", "scholarships", "courses", "degrees", "journey", "meetings"];
 
 /** מהדר כל קובץ נתונים ל-ESM זמני, כדי לייבא אותו כמו מודול רגיל */
 async function load() {
@@ -187,6 +187,37 @@ const openAll = INST.some((i) => i.openToAllDegrees);
 for (const d of DEGREES) {
   if (d.status !== "active") continue;
   if (!taught.has(d.id) && !openAll) warn(`תואר "${d.name}" — אף מוסד לא מקושר אליו`);
+}
+
+// ── 10. קוהורטים ──────────────────────────────────────────────
+/*
+   תצורה שבורה של קוהורט צריכה ליפול כאן ולא על מסך של מועמד.
+   שלוש הבדיקות: הרשימה לא ריקה · המיספור רציף · וכל שלב
+   שהוחרג באמת קיים — החרגה של מזהה ששונה שם היא החרגה שלא עושה כלום.
+*/
+const J = m.journey;
+const ids = new Set(J.JOURNEY.map((s) => s.id));
+for (const c of ["main", "alumni"]) {
+  const list = J.journeyFor(c);
+  if (!list.length) { err(`קוהורט "${c}": רשימת השלבים ריקה`); continue; }
+  list.forEach((s, i) => {
+    if (s.n !== i + 1) err(`קוהורט "${c}": מיספור לא רציף — "${s.id}" קיבל ${s.n} במקום ${i + 1}`);
+    if (!ids.has(s.id)) err(`קוהורט "${c}": שלב "${s.id}" אינו ב-JOURNEY`);
+  });
+}
+/* כל שלב שהוחרג חייב להיות קיים — אחרת החסרון לא עשה כלום */
+for (const c of ["main", "alumni"]) {
+  const kept = new Set(J.journeyFor(c).map((s) => s.id));
+  const dropped = [...ids].filter((id) => !kept.has(id));
+  for (const id of dropped) if (!ids.has(id)) err(`קוהורט "${c}": מחריג מזהה שאינו קיים — "${id}"`);
+}
+/* כל פגישה ששלב מצביע אליה חייבת להיות לה חריץ ב-meetings.ts */
+const links = Object.values(m.meetings.COORDINATORS ?? {})[0]?.links ?? {};
+for (const st of J.JOURNEY) {
+  if (!st.closes) continue;
+  const n = Object.entries(J.MEETING_NAMES).find(([, v]) => v === st.closes)?.[0];
+  if (!n) err(`שלב "${st.id}" נסגר ב"${st.closes}" — שאינה ב-MEETING_NAMES`);
+  else if (!links[n]) warn(`פגישה ${n} ("${st.closes}") — אין לה קישור יומן ב-meetings.ts`);
 }
 
 // ── דוח ────────────────────────────────────────────────────────────────────

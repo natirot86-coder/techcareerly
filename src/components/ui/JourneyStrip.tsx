@@ -13,13 +13,28 @@
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 
-import { JOURNEY } from "@/data/journey";
+import { useEffect, useState } from "react";
+import { JOURNEY, journeyFor, stageNumFor, type CohortId } from "@/data/journey";
+import { cachedCohort, refreshCohort } from "@/lib/candidate";
 
 /**
  * שמות השלבים מגיעים מ-src/data/journey.ts. `short` הוא מה שמופיע מתחת
  * לנקודה, `full` הוא השם המלא שהמועמד רואה — ולא שפת הארגון.
  */
 export const JOURNEY_STAGES = JOURNEY.map(s => ({ n: s.n, short: s.short, full: s.candidate }));
+
+/**
+ * `current` שמסך מעביר הוא תמיד המספור של **הקהל הרחב** — כך אף מסך לא
+ * צריך להכיר קוהורטים. הפס מתרגם: אצל בוגרים שלב 4 הוא השלב השלישי.
+ */
+function useJourney() {
+  const [cohort, setCohort] = useState<CohortId>("main");
+  useEffect(() => {
+    setCohort(cachedCohort());
+    refreshCohort().then(setCohort).catch(() => {});
+  }, []);
+  return { cohort, stages: journeyFor(cohort).map(s => ({ n: s.n, short: s.short, full: s.candidate })) };
+}
 
 export default function JourneyStrip({
   current,
@@ -35,8 +50,11 @@ export default function JourneyStrip({
   phaseIndex?: number;
   phaseTotal?: number;
 }) {
-  const doneCount = current - 1;
-  const leftCount = JOURNEY_STAGES.length - current;
+  const { cohort, stages } = useJourney();
+  /* שלב שלא קיים אצל הקוהורט מקבל 0 — ואז אין מה להדגיש, וזה נכון */
+  const cur = stageNumFor(cohort, current) || current;
+  const doneCount = cur - 1;
+  const leftCount = stages.length - cur;
   const micro =
     phaseIndex !== undefined && phaseTotal
       ? Math.min(100, Math.round((phaseIndex / phaseTotal) * 100))
@@ -63,9 +81,9 @@ export default function JourneyStrip({
 
         {/* The track */}
         <div className="flex items-start" style={{ gap: 0 }}>
-          {JOURNEY_STAGES.map((s, i) => {
-            const done = s.n < current;
-            const active = s.n === current;
+          {stages.map((s, i) => {
+            const done = s.n < cur;
+            const active = s.n === cur;
             const size = active ? 26 : done ? 20 : 16;
 
             return (
@@ -118,15 +136,15 @@ export default function JourneyStrip({
                 </div>
 
                 {/* Connector */}
-                {i < JOURNEY_STAGES.length - 1 && (
+                {i < stages.length - 1 && (
                   <div
                     className="flex-1"
                     style={{
                       height: 2.5,
                       marginTop: 13,
                       borderRadius: 999,
-                      background: s.n < current ? ORANGE : "rgba(0,0,0,0.1)",
-                      opacity: s.n < current ? 0.55 : 1,
+                      background: s.n < cur ? ORANGE : "rgba(0,0,0,0.1)",
+                      opacity: s.n < cur ? 0.55 : 1,
                     }}
                   />
                 )}

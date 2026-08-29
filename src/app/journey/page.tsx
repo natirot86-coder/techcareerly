@@ -18,7 +18,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import EventsList, { useEvents } from "@/components/ui/EventsList";
-import { JOURNEY } from "@/data/journey";
+import { JOURNEY, journeyFor, type CohortId } from "@/data/journey";
+import { cachedCohort } from "@/lib/candidate";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -55,13 +56,19 @@ function buildStages(): { stages: Stage[]; current: number } {
   const m3 = flag("meeting-3-booked");
   const enrolled = has("enrollment-doc-path");
 
-  const stages: Stage[] = [
+  /*
+    כל שלב נושא את המזהה מ-journey.ts, וכך הסינון לפי קוהורט נעשה לפי
+    **מה השלב** ולא לפי מספרו — הבוגרים מאבדים את "tasting" והשאר ממוספר
+    מחדש מעצמו. אין כאן רשימה שנייה של שלבים.
+  */
+  const cohort: CohortId = cachedCohort();
+  const allStages: (Stage & { id: string })[] = [
     {
-      n: 1, title: JOURNEY[0].candidate,
+      id: "signup", n: 1, title: JOURNEY[0].candidate,
       stops: [{ label: "מילאת את השאלון הראשוני", done: has("onboarding") || has("user-name"), href: "/onboarding" }],
     },
     {
-      n: 2, title: JOURNEY[1].candidate,
+      id: "intro", n: 2, title: JOURNEY[1].candidate,
       stops: [
         { label: "קבעת את פגישת ההיכרות", done: flag("meeting-1-booked"), href: "/contact?m=1" },
         { label: "עברת את המבוא לעולם ההייטק", done: has("waiting-taste"), href: "/waiting" },
@@ -69,7 +76,7 @@ function buildStages(): { stages: Stage[]; current: number } {
       ],
     },
     {
-      n: 3, title: JOURNEY[2].candidate,
+      id: "tasting", n: 3, title: JOURNEY[2].candidate,
       stops: [
         ...tasted.map(d => ({ label: `טעמת ${DOMAIN_HE[d]}`, done: true, href: `/explore/${d}` })),
         ...(tasted.length < 2
@@ -79,17 +86,19 @@ function buildStages(): { stages: Stage[]; current: number } {
       ],
     },
     {
-      n: 4, title: JOURNEY[3].candidate,
+      id: "track", n: 4, title: JOURNEY[3].candidate,
       stops: [
-        { label: "נפגשת עם הרכזת — פגישה 2", done: get("meeting-2-attended") === "yes", meeting: true },
+        ...(cohort === "alumni"
+          ? []
+          : [{ label: "נפגשת עם הרכזת — פגישה 2", done: get("meeting-2-attended") === "yes", meeting: true }]),
         { label: "בחרת את הכיוון שלך", done: has("paths-domains"), href: "/paths" },
         { label: "ענית על שאלון המסלולים", done: has("paths-quiz"), href: "/paths" },
         { label: "חקרת מוסדות ושמרת רשימה", done: has("paths-shortlist"), href: "/paths" },
-        { label: "קבעת את פגישת בחירת המסלול", done: m3, href: "/contact?m=3", meeting: true },
+        { label: `קבעת את פגישת בחירת המסלול${cohort === "alumni" ? " — פגישה 2" : ""}`, done: m3, href: "/contact?m=3", meeting: true },
       ],
     },
     {
-      n: 5, title: JOURNEY[4].candidate,
+      id: "plan", n: 5, title: JOURNEY[4].candidate,
       stops: [
         { label: "בחרת מוסד לימודים", done: has("plan-inst-main"), href: "/plan" },
         { label: "ראית כמה זה עולה ואילו מלגות מגיעות לך", done: has("plan-picked"), href: "/plan?view=money" },
@@ -97,13 +106,20 @@ function buildStages(): { stages: Stage[]; current: number } {
       ],
     },
     {
-      n: 6, title: JOURNEY[5].candidate,
+      id: "student", n: 6, title: JOURNEY[5].candidate,
       stops: [{ label: "אישור הלימודים שלך שמור", done: enrolled, href: "/enroll" }],
     },
   ];
 
+  /* הרשימה והמיספור מגיעים מ-journeyFor — מקור אחד, גם לקוהורטים */
+  const order = journeyFor(cohort);
+  const stages: Stage[] = order.flatMap(js => {
+    const found = allStages.find(x => x.id === js.id);
+    return found ? [{ n: js.n, title: js.candidate, stops: found.stops }] : [];
+  });
+
   // השלב הנוכחי = הראשון שלא הושלם במלואו
-  const current = stages.find(s => s.stops.some(t => !t.done))?.n ?? 6;
+  const current = stages.find(s => s.stops.some(t => !t.done))?.n ?? stages.length;
   return { stages, current };
 }
 
@@ -215,7 +231,7 @@ export default function JourneyPage() {
             {name ? `המסע של ${name}` : "המסע שלך"}
           </h1>
           <div className="text-[13.5px] mt-1.5" style={{ opacity: 0.8 }}>
-            {doneCount} תחנות כבר מאחוריך · שלב {data.current} מתוך 6
+            {doneCount} תחנות כבר מאחוריך · שלב {data.current} מתוך {data.stages.length}
           </div>
           {/* פס התקדמות אחד — הישג לפני רשימה */}
           <div className="h-2 rounded-full mt-3 overflow-hidden" style={{ background: "rgba(255,255,255,0.18)" }}>

@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { JOURNEY } from "@/data/journey";
+import { JOURNEY, journeyFor, stageNumFor, type CohortId } from "@/data/journey";
+import { cachedCohort } from "@/lib/candidate";
 import { useEvents, whenText } from "@/components/ui/EventsList";
 
 /**
@@ -11,9 +12,19 @@ import { useEvents, whenText } from "@/components/ui/EventsList";
  * מעצם המבנה), הנוכחי מוביל לפעולה הבאה, והעתידי נעול עם מנעול נראה.
  * גזירת השלב זהה לדשבורד — ממה שקרה, לא ממה שהוצהר.
  */
+/*
+ * ⚠️ מחזירה תמיד את **המספור של הקהל הרחב**, גם לבוגרים. כך הגזירה נשארת
+ * מקום אחד, והתרגום לקוהורט קורה רק בתצוגה — אחרת כל תנאי כאן היה צריך
+ * להכיר קוהורטים, וזה בדיוק הפיזור שהמפרט אוסר.
+ */
 export function deriveStage(): number {
   const flag = (k: string) => localStorage.getItem(k) === "true";
   const has = (k: string) => !!localStorage.getItem(k);
+  /* לבוגרים אין שלב טעימות: אחרי פגישת ההיכרות הם ישר בשלב המסלול */
+  if (cachedCohort() === "alumni" && !has("paths-quiz") && !has("paths-journey")
+      && !has("plan-tasks") && !has("plan-intro-seen") && !has("enrollment-doc-path")) {
+    return flag("meeting-1-attended") ? 4 : flag("meeting-1-booked") ? 2 : 1;
+  }
   return has("enrollment-doc-path") ? 6
     : has("plan-tasks") || has("plan-intro-seen") ? 5
     : has("paths-quiz") || has("paths-journey") ? 4
@@ -156,8 +167,14 @@ export default function BottomNav() {
 
 function JourneyRail() {
   const [stageNow, setStageNow] = useState(0);
-  useEffect(() => { try { setStageNow(deriveStage()); } catch { /* ignore */ } }, []);
+  const [cohort, setCohort] = useState<CohortId>("main");
+  useEffect(() => {
+    try { setStageNow(deriveStage()); setCohort(cachedCohort()); } catch { /* ignore */ }
+  }, []);
   if (!stageNow) return null;
+  /* התצוגה במספור של הקוהורט; הגזירה נשארה במספור של הקהל הרחב */
+  const railStages = journeyFor(cohort);
+  const railNow = stageNumFor(cohort, stageNow) || stageNow;
   return (
     <aside
       dir="rtl"
@@ -165,11 +182,11 @@ function JourneyRail() {
       style={{ background: "linear-gradient(180deg, #023e8a 0%, #03318f 100%)", fontFamily: "'Heebo', sans-serif" }}
     >
       <div className="text-[11px] font-black tracking-wide mb-1" style={{ color: "rgba(255,255,255,0.6)" }}>
-        המסע שלך · {stageNow > 1 ? `${stageNow - 1} מתוך 6 מאחוריך` : "6 שלבים"}
+        המסע שלך · {railNow > 1 ? `${railNow - 1} מתוך ${railStages.length} מאחוריך` : `${railStages.length} שלבים`}
       </div>
-      {JOURNEY.map(st => {
-        const done = st.n < stageNow;
-        const current = st.n === stageNow;
+      {railStages.map(st => {
+        const done = st.n < railNow;
+        const current = st.n === railNow;
         return (
           <div key={st.n} className="flex items-center gap-2.5 rounded-xl px-2.5 py-2"
             style={{ background: current ? "rgba(251,133,0,0.18)" : "transparent", opacity: done || current ? 1 : 0.45 }}>
