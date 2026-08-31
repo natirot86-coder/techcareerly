@@ -21,6 +21,7 @@
 
 import { useState } from "react";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
+import { HAVE_CHIPS } from "@/data/degrees";
 import { logEvent, savePathsAnswers } from "@/lib/candidate";
 import { track as trackEvent } from "@vercel/analytics";
 
@@ -73,16 +74,17 @@ const QUESTIONS: Q[] = [
     ],
   },
   {
+    /*
+      ⚠️ **אותה רשימה בדיוק כמו בקהל הרחב** (`HAVE_CHIPS` ב-degrees.ts).
+      בגרסה הראשונה קיצרתי אותה לחמש אפשרויות — וזו הייתה טעות: הצ׳יפים
+      האלה מזינים את חישוב תנאי הכניסה ואת מסך החסמים, ורשימה מקוצרת
+      הייתה גורמת לשתי הזרימות לחשב אחרת על אותו אדם. בוגר עם מתמטיקה
+      3 יחידות היה נופל ל"אף אחד מאלה" ומקבל תמונת חסמים שגויה.
+    */
     key: "edu",
     title: "מה יש לך ביד?",
     note: "אפשר לסמן כמה. אין תשובה שפוסלת — לכל מצב יש מסלול",
-    opts: [
-      { id: "bagrut", label: "בגרות מלאה" },
-      { id: "math45", label: "מתמטיקה 4 או 5 יחידות" },
-      { id: "psycho", label: "פסיכומטרי" },
-      { id: "degree", label: "תואר קודם" },
-      { id: "none", label: "אף אחד מאלה" },
-    ],
+    opts: [...HAVE_CHIPS, { id: "none", label: "אף אחד מאלה" }],
   },
   {
     key: "where",
@@ -120,7 +122,8 @@ function toContract(a: Record<string, string>, chips: string[]) {
   /* אותה גזירה בדיוק כמו בקהל הרחב: education נגזר מהצ׳יפים ולא נשמר בנפרד */
   const education = chips.includes("degree") ? "C"
     : chips.includes("bagrut") ? "B" : "A";
-  return { time, budget, location, education };
+  /* `has` הוא מה שמסך החסמים ובוחר התארים קוראים — אותו פורמט בדיוק */
+  return { time, budget, location, education, has: chips.filter(c => c !== "none").join(",") };
 }
 
 export default function AlumniIntake({ onDone }: { onDone: () => void }) {

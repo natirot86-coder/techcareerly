@@ -13,7 +13,7 @@ import { savePathsAnswers, saveChosenDomains, logEvent, cachedCohort } from "@/l
 import { gateMeetingFor, meetingLabelFor, stageCountFor, isCohort, type CohortId } from "@/data/journey";
 import AlumniIntake from "./AlumniIntake";
 import { visibleCourses, type Course } from "@/data/courses";
-import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
+import { degreesFor, ENTRY_LABEL, HAVE_CHIPS, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
 import dynamic from "next/dynamic";
 import InstitutionCard from "@/components/ui/InstitutionCard";
@@ -81,18 +81,6 @@ type QuizAnswers = {
   has?: string;
 };
 
-/** מה שאפשר לסמן. הכל בניסוח חיובי — "מה יש לך", לא "מה חסר לך" */
-const HAVE_CHIPS: { id: string; label: string }[] = [
-  { id: "bagrut",  label: "בגרות מלאה" },
-  { id: "math3",   label: "מתמטיקה 3 יח׳" },
-  { id: "math4",   label: "מתמטיקה 4 יח׳" },
-  { id: "math5",   label: "מתמטיקה 5 יח׳" },
-  { id: "science", label: "פיזיקה או ביולוגיה מורחב" },
-  { id: "english", label: "אנגלית 4–5 יח׳" },
-  { id: "psycho",  label: "יש לי פסיכומטרי ואני מרוצה מהציון" },
-  { id: "psycho-low", label: "יש לי פסיכומטרי ואני לא מרוצה מהציון" },
-  { id: "degree",  label: "כבר יש לי תואר ראשון" },
-];
 
 const hasOf = (a: QuizAnswers) => (a.has ?? "").split(",").filter(Boolean);
 
