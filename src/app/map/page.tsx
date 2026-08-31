@@ -7,6 +7,7 @@
  */
 "use client";
 
+import { useState } from "react";
 import { INSTITUTIONS, DOMAIN_LABEL } from "@/data/institutions";
 import { FUNDING } from "@/data/scholarships";
 import { COURSES } from "@/data/courses";
@@ -37,11 +38,19 @@ type Node = {
   badgeColor?: string;
   /** "meeting" = נקודת מפגש אנושית ולא מסך. מצויר כגלולה מלאה ולא כמלבן */
   kind?: "meeting";
+  /**
+   * לאיזה מסע הצומת שייך. חסר = **לשניהם**, וזה הרוב המכריע —
+   * המפה אמורה להראות בעין שהאפליקציה אחת ושני המסעות חולקים כמעט הכל.
+   */
+  only?: Cohort[];
 };
+
+type Cohort = "main" | "alumni";
 
 type Edge = {
   from: string;
   to: string;
+  only?: Cohort[];
   label?: string;        // תיאור המעבר (כפתור / פעולה)
   dashed?: boolean;
   color?: string;
@@ -56,6 +65,18 @@ const NH = 44;   // node height default
 // ─── Nodes ────────────────────────────────────────────────────────────────────
 
 const BASE = process.env.NODE_ENV === "development" ? "http://localhost:3000" : "https://hasifaapp.vercel.app";
+
+/*
+  כל עץ החשיפה — תחומים, סימולציות ומרכזי הלמידה — שייך לקהל הרחב בלבד.
+  לתייג שלושים צמתים אחד-אחד היה מזמין שכחה, ולכן זה נגזר מהמזהה: המבנה
+  כבר מקודד את השיוך, ואין רשימה שנייה שיכולה להתיישן.
+*/
+const EXPLORE_TREE = /^(d-|s-|code-|cyber-|networks-|qa-|mkt-|ai-|ux-|hw-)|^(learn|analytics|mystery|experience|results)$/;
+
+export function nodeCohorts(id: string, only?: Cohort[]): Cohort[] {
+  if (only) return only;
+  return EXPLORE_TREE.test(id) ? ["main"] : ["main", "alumni"];
+}
 
 const NODES: Node[] = [
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -84,7 +105,7 @@ const NODES: Node[] = [
   { id: "admin-analytics", label: "אנליטיקות", sub: "מה קורה באפליקציה · פנימי", url: `${BASE}/admin/analytics`, cx: 415, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
   // ── Explore ───────────────────────────────────────────────────────────────
-  { id: "explore", label: "חקר תחומים", sub: `דירוג ${N_DOMAIN} תחומים`, url: `${BASE}/explore`, cx: 575, cy: 455, w: 140, color: "#fb8500" },
+  { id: "explore", only: ["main"], label: "חקר תחומים", sub: `דירוג ${N_DOMAIN} תחומים`, url: `${BASE}/explore`, cx: 575, cy: 455, w: 140, color: "#fb8500" },
 
   // ── Domain pages ──────────────────────────────────────────────────────────
   { id: "d-code",      label: "קוד",       url: `${BASE}/explore/code`,      cx: 70,  cy: 555, w: 72, color: "#fb8500" },
@@ -165,7 +186,7 @@ const NODES: Node[] = [
   // הדף בוחר לבד לפי מצב המועמד; ?m= הוא לבדיקה ידנית
 
   { id: "m1", label: "פגישה 1", sub: "היכרות · אין מה להביא", url: `${BASE}/contact?m=1`, cx: 330, cy: 358, w: 150, color: "#0ea5e9", kind: "meeting" },
-  { id: "m2", label: "פגישה 2", sub: "בחירת תחום", url: `${BASE}/contact?m=2`, cx: 575, cy: 1245, w: 140, color: "#0ea5e9", kind: "meeting" },
+  { id: "m2", only: ["main"], label: "פגישה 2", sub: "בחירת תחום", url: `${BASE}/contact?m=2`, cx: 575, cy: 1245, w: 140, color: "#0ea5e9", kind: "meeting" },
   { id: "m3", label: "פגישה 3", sub: "נעילת מסלול", url: `${BASE}/contact?m=3`, cx: 575, cy: 1645, w: 140, color: "#0ea5e9", kind: "meeting" },
 
   // ── שלב 4 — מסלול לימודים ────────────────────────────────────────────────
@@ -174,14 +195,20 @@ const NODES: Node[] = [
   // ── שמונת המסכים של שלב 4 ────────────────────────────────────────────────
   // כל אחד נפתח ישירות עם נתוני דמו, בלי לעבור את כל הזרימה
   { id: "p-intro",        label: "פתיחה",          sub: "מה נעשה כאן",         url: `${BASE}/paths?reset=1`,                   cx: 120, cy: 1465, w: 110, color: "#8b5cf6" },
-  { id: "p-quiz",         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,         cx: 300, cy: 1465, w: 115, color: "#8b5cf6" },
-  { id: "p-result",       label: "המסלול המומלץ",  sub: "ניקוד משוקלל",        url: `${BASE}/paths?demo=1&phase=result`,       cx: 490, cy: 1465, w: 135, color: "#8b5cf6" },
-  { id: "p-routes",       label: "כל הדרכים מכאן", sub: "3 מסלולים כקווי רכבת", url: `${BASE}/paths?demo=1&phase=routes`,       cx: 700, cy: 1465, w: 145, color: "#8b5cf6", badge: "חדש", badgeColor: "#8b5cf6" },
+  { id: "p-quiz", only: ["main"],         label: "6 שאלות",        sub: "מגבלות החיים",        url: `${BASE}/paths?demo=1&phase=quiz`,         cx: 300, cy: 1465, w: 115, color: "#8b5cf6" },
+  { id: "p-result", only: ["main"],       label: "המסלול המומלץ",  sub: "ניקוד משוקלל",        url: `${BASE}/paths?demo=1&phase=result`,       cx: 490, cy: 1465, w: 135, color: "#8b5cf6" },
+  { id: "p-routes", only: ["main"],       label: "כל הדרכים מכאן", sub: "3 מסלולים כקווי רכבת", url: `${BASE}/paths?demo=1&phase=routes`,       cx: 700, cy: 1465, w: 145, color: "#8b5cf6", badge: "חדש", badgeColor: "#8b5cf6" },
   { id: "p-blockers",     label: "מה עומד בדרך",   sub: "חסם ← פתרון + תאריך", url: `${BASE}/paths?demo=1&phase=blockers`,     cx: 930, cy: 1465, w: 140, color: "#fb8500", badge: "הלב", badgeColor: "#fb8500" },
   { id: "p-institutions", label: "מוסדות",         sub: "בניית רשימה",         url: `${BASE}/paths?demo=1&phase=institutions`, cx: 930, cy: 1560, w: 120, color: "#8b5cf6" },
   { id: "p-prep",         label: "שאלות לפגישה",   sub: "נוצרות מהתשובות",     url: `${BASE}/paths?demo=1&phase=prep`,         cx: 700, cy: 1560, w: 135, color: "#8b5cf6" },
   { id: "p-research",     label: "ערכת חקר",       sub: "אופציונלי",           url: `${BASE}/paths?demo=1&phase=research`,     cx: 470, cy: 1560, w: 115, color: "#8b5cf6" },
   { id: "p-done",         label: "סיכום",          sub: "לפני/בפגישה + CTA",   url: `${BASE}/paths?demo=1&phase=done`,         cx: 240, cy: 1560, w: 120, color: "#8b5cf6", badge: "סיום", badgeColor: "#8b5cf6" },
+
+  /*
+    ── מסע הבוגרים ──────────────────────────────────────────────────────────
+    הווריאציה היחידה. משם ואילך הוא ממשיך באותם מסכים בדיוק כמו כולם.
+  */
+  { id: "a-intake", only: ["alumni"], label: "שאלון בוגרים", sub: "6 שאלות · בלי מנוע משקלים", url: `${BASE}/paths`, cx: 130, cy: 1622, w: 150, color: "#0f7a52", badge: "בוגרים", badgeColor: "#0f7a52" },
 
   // ── שלב 5 — לוגיסטיקה ומלגות ─────────────────────────────────────────────
   { id: "plan", label: "התוכנית שלי", sub: "5 מסכים — לחצו על כל אחד למטה", url: `${BASE}/plan`, cx: 575, cy: 1755, w: 215, color: "#059669", badge: "שלב 5", badgeColor: "#059669" },
@@ -388,19 +415,23 @@ function edgeGeom(from: Node, to: Node): EdgeGeom {
 
 // ─── Node Component ───────────────────────────────────────────────────────────
 
-function FlowNode({ node }: { node: Node }) {
+function FlowNode({ node, dim }: { node: Node; dim?: boolean }) {
   const r = nodeRect(node);
   const hasSubtitle = !!node.sub;
   const h = hasSubtitle ? 52 : 40;
 
   return (
     <a
+      /* מטושטש ולא מוסתר: העין צריכה לראות **מה משותף ומה בלעדי** */
+      data-dim={dim ? "1" : undefined}
       href={node.url}
       target="_blank"
       rel="noopener noreferrer"
       title={node.label + (node.sub ? " — " + node.sub : "")}
       style={{
         position: "absolute",
+        opacity: dim ? 0.1 : 1,
+        pointerEvents: dim ? "none" : undefined,
         left: r.left,
         top: node.cy - h / 2,
         width: r.w,
@@ -415,7 +446,7 @@ function FlowNode({ node }: { node: Node }) {
         boxShadow: `0 2px 8px ${node.color}22`,
         textDecoration: "none",
         cursor: "pointer",
-        transition: "transform 0.12s, box-shadow 0.12s",
+        transition: "transform 0.12s, box-shadow 0.12s, opacity 0.18s",
         zIndex: 2,
         padding: "0 6px",
       }}
@@ -452,7 +483,7 @@ function FlowNode({ node }: { node: Node }) {
 
 // ─── SVG Arrows ──────────────────────────────────────────────────────────────
 
-function Arrows() {
+function Arrows({ cohort }: { cohort: Cohort | "both" }) {
   return (
     <svg
       width={W}
@@ -480,13 +511,18 @@ function Arrows() {
         const from = getNode(edge.from);
         const to = getNode(edge.to);
         if (!from || !to) return null;
+        /* קשת שאחד מקצותיה אינו במסע הנבחר — מיטשטשת יחד איתו */
+        const inJourney = cohort === "both" ||
+          (nodeCohorts(from.id, from.only).includes(cohort) &&
+           nodeCohorts(to.id, to.only).includes(cohort) &&
+           (!edge.only || edge.only.includes(cohort)));
 
         const color = edge.color || from.color;
         const markerId = `arrow-${color.replace("#", "")}`;
         const { d, lx, ly } = edgeGeom(from, to);
 
         return (
-          <g key={i}>
+          <g key={i} opacity={inJourney ? 1 : 0.08}>
             <path
               d={d}
               fill="none"
@@ -562,7 +598,15 @@ const LABELS = [
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export default function MapPage() {
+  /*
+    בורר המסע (נתי 1.9). לא קנבס שני — **אותו קנבס, הדגשה אחרת**. זה מה
+    שמראה בעין את מה שקשה להסביר במילים: אפליקציה אחת, שני מסעות, וכמעט
+    הכל משותף. מה שאינו במסע הנבחר מיטשטש ולא נעלם, כדי שרואים גם את
+    הבלעדי וגם את המשותף.
+  */
+  const [cohort, setCohort] = useState<Cohort | "both">("both");
   const totalScreens = NODES.length;
+  const inCohort = (c: Cohort) => NODES.filter(n => nodeCohorts(n.id, n.only).includes(c)).length;
 
   return (
     <div dir="rtl" style={{ minHeight: "100vh", background: "#f5f3ef" }}>
@@ -581,6 +625,33 @@ export default function MapPage() {
           </div>
           <div style={{ fontSize: 12, marginTop: 4, opacity: 0.65 }}>
             {totalScreens} מסכים · לחיצה = פתיחת המסך · חצים = מעבר ניווט אמיתי
+          </div>
+
+          {/* שני מסעי לקוח, אפליקציה אחת */}
+          <div style={{ display: "flex", gap: 7, marginTop: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: 11.5, fontWeight: 800, opacity: 0.6 }}>מסע לקוח:</span>
+            {([
+              ["both", "שניהם", totalScreens],
+              ["main", "הקהל הרחב", inCohort("main")],
+              ["alumni", "בוגרי טק-קריירה", inCohort("alumni")],
+            ] as const).map(([id, label, n]) => {
+              const on = cohort === id;
+              return (
+                <button key={id} onClick={() => setCohort(id)}
+                  style={{
+                    fontSize: 12, fontWeight: 800, padding: "6px 13px", borderRadius: 999, cursor: "pointer",
+                    background: on ? "#fff" : "rgba(255,255,255,0.12)",
+                    color: on ? "#023e8a" : "#fff",
+                    border: `1px solid ${on ? "#fff" : "rgba(255,255,255,0.25)"}`,
+                  }}>
+                  {label} <span style={{ opacity: 0.55 }}>{n}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 11.5, marginTop: 7, opacity: 0.6, lineHeight: 1.6 }}>
+            אפליקציה אחת, שני מסעים. הבוגרים מדלגים על שלב הטעימות ועל פגישה 2,
+            ומקבלים שאלון קצר משלהם — <b>כל השאר זהה</b>.
           </div>
         </div>
       </div>
@@ -664,10 +735,13 @@ export default function MapPage() {
             </svg>
 
             {/* Arrows (SVG layer) */}
-            <Arrows />
+            <Arrows cohort={cohort} />
 
             {/* Nodes (HTML layer) */}
-            {NODES.map(node => <FlowNode key={node.id} node={node} />)}
+            {NODES.map(node => (
+              <FlowNode key={node.id} node={node}
+                dim={cohort !== "both" && !nodeCohorts(node.id, node.only).includes(cohort)} />
+            ))}
           </div>
         </div>
       </div>

@@ -26,6 +26,8 @@ import JourneyStrip from "@/components/ui/JourneyStrip";
 import MeetingCheckin from "@/components/ui/MeetingCheckin";
 import EventsList, { useEvents } from "@/components/ui/EventsList";
 import { track as trackEvent } from "@vercel/analytics";
+import { stageCountFor, stageNumFor, type CohortId } from "@/data/journey";
+import { cachedCohort } from "@/lib/candidate";
 import { syncPlanTasks, syncPlanDocuments, syncPlanApplications, logEvent, uploadEnrollmentDoc, enrollmentDocUrl, myCoordinator } from "@/lib/candidate";
 import type { Track } from "@/data/institutions";
 import {
@@ -420,26 +422,32 @@ export default function PlanPage() {
 // ─── 2a — מסך פתיחה ───────────────────────────────────────────────────────────
 
 function Intro({ onStart }: { onStart: () => void }) {
+  /* מסך הפתיחה של השלב — מספר השלבים נגזר מהקוהורט ולא מוקלד */
+  const [planCohort, setPlanCohort] = useState<CohortId>("main");
+  useEffect(() => { try { setPlanCohort(cachedCohort()); } catch { /* ignore */ } }, []);
   const seen = typeof window !== "undefined" && !!localStorage.getItem(LS.intro);
   return (
     <div className="min-h-screen flex flex-col" style={{ background: NAVY, color: "#fff" }} dir="rtl">
       <div className="max-w-[560px] w-full mx-auto flex-1 flex flex-col px-6 pt-7 pb-7">
-        {/* שישה מקטעים — כי המסע הוא שישה שלבים, וזה החמישי */}
+        {/* מקטע לכל שלב — המספר נגזר מהקוהורט, כי לבוגרים יש חמישה */}
         <div className="flex gap-1.5">
-          {[1, 2, 3, 4, 5, 6].map(n => (
-            <div
-              key={n}
-              style={{
-                width: 26, height: 4, borderRadius: 999,
-                background: n <= 5 ? ORANGE : "rgba(255,255,255,0.25)",
-                opacity: n < 5 ? 0.55 : 1,
-              }}
-            />
-          ))}
+          {Array.from({ length: stageCountFor(planCohort) }, (_, i) => i + 1).map(n => {
+            const here = stageNumFor(planCohort, 5);
+            return (
+              <div
+                key={n}
+                style={{
+                  width: 26, height: 4, borderRadius: 999,
+                  background: n <= here ? ORANGE : "rgba(255,255,255,0.25)",
+                  opacity: n < here ? 0.55 : 1,
+                }}
+              />
+            );
+          })}
         </div>
 
         <div className="text-[13px] font-bold mt-[22px]" style={{ color: ORANGE, letterSpacing: "0.04em" }}>
-          שלב 5 מתוך 6
+          שלב {stageNumFor(planCohort, 5)} מתוך {stageCountFor(planCohort)}
         </div>
 
         <h1 className="text-[30px] font-extrabold mt-2" style={{ lineHeight: 1.25 }}>

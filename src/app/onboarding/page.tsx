@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { saveOnboarding, logEvent } from "@/lib/candidate";
-import { JOURNEY } from "@/data/journey";
+import { journeyFor, type CohortId } from "@/data/journey";
+import { cachedCohort } from "@/lib/candidate";
 
 // שמות השלבים — מ-src/data/journey.ts בלבד, אין כאן רשימה שנייה
-const JOURNEY_LABELS = JOURNEY.map(s => s.candidate);
+/* השלבים נגזרים מהקוהורט — הרשימה מגיעה מהקורא, לא מקבוע במודול */
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
@@ -127,16 +128,17 @@ function OnboardingHeader({ step, onBack }: { step: Step; onBack?: () => void })
 }
 
 // ─── Journey Map SVG ──────────────────────────────────────────────────────────
-function JourneyMap() {
-  // RTL: שלב 1 מימין. ה-x-ים ממוינים יורד כדי שהדרך תיקרא לכיוון הקריאה
-  const pts = [
-    { x: 340, y: 28 },
-    { x: 278, y: 58 },
-    { x: 212, y: 28 },
-    { x: 146, y: 58 },
-    { x: 82,  y: 28 },
-    { x: 28,  y: 58 },
-  ];
+function JourneyMap({ stages }: { stages: { candidate: string }[] }) {
+  /*
+    RTL: שלב 1 מימין, וה-x-ים יורדים כדי שהדרך תיקרא לכיוון הקריאה.
+    המיקומים מחושבים מכמות השלבים ולא מוקלדים — לבוגרי טק-קריירה יש חמישה
+    שלבים, וציור של שישה היה מבטיח להם תחנה שלא קיימת אצלם.
+  */
+  const n = stages.length;
+  const pts = Array.from({ length: n }, (_, i) => ({
+    x: Math.round(340 - (i * 312) / Math.max(1, n - 1)),
+    y: i % 2 === 0 ? 28 : 58,
+  }));
 
   const pathD = pts
     .map((p, i) => {
@@ -157,7 +159,7 @@ function JourneyMap() {
       <path d={pathD} stroke="rgba(2,62,138,0.22)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="5 8" />
 
       {pts.map((p, i) => {
-        const words = JOURNEY_LABELS[i].split(" ");
+        const words = stages[i].candidate.split(" ");
         return (
           <g key={i}>
             {/* Pin shadow */}
@@ -429,7 +431,15 @@ function WizardTour({ gender, onDone }: { gender: Gender; onDone: () => void }) 
 }
 
 // ─── Step 0 — Welcome ─────────────────────────────────────────────────────────
+/* השלבים נגזרים מהקוהורט — לבוגרים חמישה, ולכולם השאר שישה */
+function useJourneyStages() {
+  const [c, setC] = useState<CohortId>("main");
+  useEffect(() => { try { setC(cachedCohort()); } catch { /* ignore */ } }, []);
+  return journeyFor(c);
+}
+
 function Step0({ onNext }: { onNext: () => void }) {
+  const obStages = useJourneyStages();
   return (
     <div className="flex flex-col min-h-full">
       {/* Hero */}
@@ -448,9 +458,9 @@ function Step0({ onNext }: { onNext: () => void }) {
       <div className="px-[22px] py-7 flex flex-col gap-6">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-widest mb-5" style={{ color: "rgba(0,0,0,0.35)" }}>
-            התהליך שלנו — 6 שלבים
+            התהליך שלנו — {obStages.length} שלבים
           </div>
-          <JourneyMap />
+          <JourneyMap stages={obStages} />
         </div>
 
         <div className="text-[13px]" style={{ color: "rgba(0,0,0,0.45)" }}>
@@ -711,6 +721,7 @@ function Step3({ firstName, gender, blockers, setBlockers, onNext }: {
 function Step4({ firstName, gender, blockers, onDone }: {
   firstName: string; gender: Gender; blockers: string[]; onDone: () => void;
 }) {
+  const obStages = useJourneyStages();
   const blockerNote = blockers.length > 0
     ? "שמנו לב מה עצר אותך עד היום — זה יעלה בפגישה, וזו בדיוק המטרה שלה."
     : null;
@@ -778,6 +789,7 @@ function Step4({ firstName, gender, blockers, onDone }: {
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
+  const obStages = useJourneyStages();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -918,10 +930,10 @@ export default function OnboardingPage() {
           <div className="w-1/2 bg-cream flex items-center justify-center p-12">
             <div className="w-full max-w-[400px]">
               <div className="text-[11px] font-bold uppercase tracking-widest mb-6" style={{ color: "rgba(0,0,0,0.35)" }}>
-                התהליך שלנו — 6 שלבים
+                התהליך שלנו — {obStages.length} שלבים
               </div>
               <div className="mb-6">
-                <JourneyMap />
+                <JourneyMap stages={obStages} />
               </div>
               <div className="text-[13px] mb-8" style={{ color: "rgba(0,0,0,0.45)" }}>
                 כל שלב בקצב שלך, עם רכזת לאורך כל הדרך

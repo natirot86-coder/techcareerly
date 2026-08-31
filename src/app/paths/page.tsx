@@ -10,7 +10,7 @@ import AllPaths from "@/components/ui/AllPaths";
 import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 import { savePathsAnswers, saveChosenDomains, logEvent, cachedCohort } from "@/lib/candidate";
-import { gateMeetingFor, type CohortId } from "@/data/journey";
+import { gateMeetingFor, meetingLabelFor, stageCountFor, type CohortId } from "@/data/journey";
 import AlumniIntake from "./AlumniIntake";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
@@ -815,6 +815,8 @@ export default function PathsPage() {
   */
   const [cohort, setCohort] = useState<CohortId>("main");
   const gateN = gateMeetingFor(cohort, "track") ?? 2;
+  /* אצל בוגרים פגישת נעילת המסלול היא השנייה שלהם, לא השלישית */
+  const lockN = meetingLabelFor(cohort, 3);
   /** בוגר שכבר מילא את שאלון הכניסה — ממשיך משם למסכים המשותפים */
   const [alumniDone, setAlumniDone] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
@@ -2341,7 +2343,7 @@ export default function PathsPage() {
             className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-all"
             style={{ background: shortlist.length > 0 ? NAVY : "rgba(0,0,0,0.15)", ...HEEBO, cursor: shortlist.length > 0 ? "pointer" : "not-allowed" }}
           >
-            {shortlist.length > 0 ? "לשאלות לפגישה 3 ←" : "הוסף לפחות מוסד אחד לרשימה"}
+            {shortlist.length > 0 ? `לשאלות לפגישה ${lockN} ←` : "הוסף לפחות מוסד אחד לרשימה"}
           </button>
         </div>
         <BottomNav />
@@ -2583,7 +2585,7 @@ export default function PathsPage() {
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.prep} phaseIndex={5} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
 
-          <div className="text-[22px] leading-tight mb-1" style={{ ...HEEBO, color: NAVY }}>שאלות לפגישה 3</div>
+          <div className="text-[22px] leading-tight mb-1" style={{ ...HEEBO, color: NAVY }}>שאלות לפגישה {lockN}</div>
           <div className="text-[13px] mb-5" style={{ color: "rgba(0,0,0,0.45)" }}>נוצרו על פי התשובות שלך — הביאי אותן לפגישה עם הרכזת</div>
 
           {/* Shortlist recap */}
