@@ -95,6 +95,25 @@ export function stageNumFor(cohort: CohortId, mainN: number): number {
   return id ? (journeyFor(cohort).find(s => s.id === id)?.n ?? 0) : 0;
 }
 
+/**
+ * הפגישה שסוגרת את השלב **שלפני** השלב הנתון — כלומר השער אליו.
+ *
+ * שלב 4 של הקהל הרחב נפתח אחרי פגישה 2, אבל אצל בוגרי טק-קריירה אין פגישה 2
+ * בכלל, ואותו שלב נפתח אחרי פגישת ההיכרות. שער שמקודד "2" היה נועל אותם
+ * לנצח מול מסך ריק — ולכן הוא **נגזר מ-`closes` ולא מוקלד**.
+ * מחזירה null כשאין שלב קודם או שהוא אינו נסגר בפגישה.
+ */
+export function gateMeetingFor(cohort: CohortId, stageId: string): 1 | 2 | 3 | null {
+  const list = journeyFor(cohort);
+  const i = list.findIndex(s => s.id === stageId);
+  if (i <= 0) return null;
+  const closes = list[i - 1].closes;
+  if (!closes) return null;
+  const hit = (Object.entries(MEETING_NAMES) as [string, string][])
+    .find(([, name]) => name === closes);
+  return hit ? (Number(hit[0]) as 1 | 2 | 3) : null;
+}
+
 /** מספר הפגישה כפי שהמועמד רואה אותה. אצל בוגרים אין פגישה 2, וה-3 היא השנייה */
 export function meetingLabelFor(cohort: CohortId, n: 1 | 2 | 3): number {
   if (cohort !== "alumni") return n;

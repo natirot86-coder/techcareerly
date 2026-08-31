@@ -9,7 +9,8 @@ import JourneyStrip from "@/components/ui/JourneyStrip";
 import AllPaths from "@/components/ui/AllPaths";
 import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
-import { savePathsAnswers, saveChosenDomains, logEvent } from "@/lib/candidate";
+import { savePathsAnswers, saveChosenDomains, logEvent, cachedCohort } from "@/lib/candidate";
+import { gateMeetingFor, type CohortId } from "@/data/journey";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
@@ -805,6 +806,14 @@ export default function PathsPage() {
   const [prepMode, setPrepMode] = useState(false);
   /** עבר מועד פגישה 2 וטרם נענתה שאלת השער — מציגים אותה במקום המנעול */
   const [askMeeting2, setAskMeeting2] = useState(false);
+  /*
+    השער נגזר מ-journey.ts ולא מוקלד: אצל הקהל הרחב שלב המסלול נפתח אחרי
+    פגישה 2, ואצל בוגרי טק-קריירה — שאין להם פגישה 2 בכלל — אחרי פגישת
+    ההיכרות. שער שמקודד "2" היה נועל אותם לנצח מול מסך ריק אחרי הפגישה,
+    וזה בדיוק רגע הנטישה שהשער נבנה כדי למנוע.
+  */
+  const [cohort, setCohort] = useState<CohortId>("main");
+  const gateN = gateMeetingFor(cohort, "track") ?? 2;
   /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
   const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
   /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
@@ -929,11 +938,15 @@ export default function PathsPage() {
        * פגישה 2 "התקיימה" = שעה אחרי המועד שנשמר בקביעה. מי שכבר בחר תחומים
        * נשאר פתוח גם בלי מועד (לא נועלים אחורה), ודמו עוקף את הנעילה.
        */
+      const co = cachedCohort();
+      setCohort(co);
+      const gn = gateMeetingFor(co, "track") ?? 2;
+
       let m2Done = picked.length > 0 || !!savedChoice;
       let ask = false;
       try {
-        const attended = localStorage.getItem("meeting-2-attended");
-        const at = localStorage.getItem("meeting-2-at");
+        const attended = localStorage.getItem(`meeting-${gn}-attended`);
+        const at = localStorage.getItem(`meeting-${gn}-at`);
         const since = at ? Date.now() - new Date(at).getTime() : -1;
         const HOUR = 3600e3, WEEK = 7 * 24 * HOUR;
 
@@ -1132,9 +1145,9 @@ export default function PathsPage() {
               </div>
               <button
                 onClick={() => {
-                  localStorage.setItem("meeting-2-attended", "yes");
-                  trackEvent("meeting2_checkin", { result: "yes" });
-                  logEvent("meeting2_checkin", { result: "yes" });
+                  localStorage.setItem(`meeting-${gateN}-attended`, "yes");
+                  trackEvent(`meeting${gateN}_checkin`, { result: "yes" });
+                  logEvent(`meeting${gateN}_checkin`, { result: "yes" });
                   setAskMeeting2(false);
                   setPrepMode(false);
                 }}
@@ -1145,10 +1158,10 @@ export default function PathsPage() {
               </button>
               <button
                 onClick={() => {
-                  localStorage.setItem("meeting-2-attended", "missed");
-                  localStorage.setItem("at-risk", "missed-meeting-2");
-                  trackEvent("meeting2_checkin", { result: "missed" });
-                  logEvent("meeting2_checkin", { result: "missed" });
+                  localStorage.setItem(`meeting-${gateN}-attended`, "missed");
+                  localStorage.setItem("at-risk", `missed-meeting-${gateN}`);
+                  trackEvent(`meeting${gateN}_checkin`, { result: "missed" });
+                  logEvent(`meeting${gateN}_checkin`, { result: "missed" });
                   setAskMeeting2(false);
                 }}
                 className="w-full mt-3 py-3.5 rounded-2xl text-[14px] font-bold"
@@ -1185,9 +1198,9 @@ export default function PathsPage() {
             רוצה לטעום עוד תחום לפני הפגישה? ←
           </Link>
           {/* מי שאמר "לא הגעתי" — הדרך חזרה, לא מסך מת */}
-          {localStorage.getItem("meeting-2-attended") === "missed" && (
+          {localStorage.getItem(`meeting-${gateN}-attended`) === "missed" && (
             <Link
-              href="/contact?m=2"
+              href={`/contact?m=${gateN}`}
               className="block text-center w-full mt-4 py-3.5 rounded-2xl text-[14px] font-black"
               style={{ background: "#fff3e2", color: "#7a4100" }}
             >
@@ -1312,7 +1325,7 @@ export default function PathsPage() {
         {Header}
         <JourneyStrip current={4} phaseLabel={PHASE_LABEL.intro} phaseIndex={0} phaseTotal={7} />
         <div className="flex-1 max-w-[720px] mx-auto w-full px-[22px] pt-6 pb-32">
-          <MeetingCheckin n={2} title="פגישת בחירת התחום" />
+          <MeetingCheckin n={gateN} title={gateN === 1 ? "פגישת ההיכרות" : "פגישת בחירת התחום"} />
 
           {prepMode && (
             <div

@@ -17,7 +17,11 @@ import { logEvent } from "@/lib/candidate";
 const GREEN = "#059669";
 const ORANGE = "#fb8500";
 
-export default function MeetingCheckin({ n, title }: { n: 2 | 3; title: string }) {
+/*
+  n = 1 נוסף ב-31.8: אצל בוגרי טק-קריירה פגישת ההיכרות היא זו שסוגרת את
+  השלב שלפני המסלול, ולכן היא זו שנשאלת "איך היה?". הרכיב עצמו אדיש למספר.
+*/
+export default function MeetingCheckin({ n, title }: { n: 1 | 2 | 3; title: string }) {
   const [show, setShow] = useState(false);
   const [missed, setMissed] = useState(false);
 
