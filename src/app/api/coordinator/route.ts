@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id")
+      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -180,14 +180,22 @@ export async function GET(req: NextRequest) {
         .map(e => String((e.props as { domain?: string } | null)?.domain ?? ""))
         .filter(Boolean)
     ).size;
+    /*
+      הצ׳קליסט נגזר מהקוהורט (31.8): לבוגרי טק-קריירה אין שלב
+      טעימות ואין פגישת בחירת תחום. שורה שלעולם לא תסומן אינה
+      "משימה פתוחה" — היא רעש שמסתיר את מי שבאמת תקוע.
+    */
+    const cohort = String(c.cohort ?? "main");
     const checklist = [
       { label: "נרשם/ה לאפליקציה", done: true },
       { label: "קבע/ה פגישת היכרות", done: has("meeting_booked", pr => pr.n === "1") || has("meeting1_checkin") },
       { label: "הגיע/ה לפגישה 1", done: has("meeting1_checkin", pr => pr.result === "yes") },
-      { label: "טעם/ה תחומים", done: tastedDomains > 0, detail: tastedDomains ? `${tastedDomains} תחומים` : undefined },
-      { label: "קבע/ה פגישת בחירת תחום", done: has("meeting_booked", pr => pr.n === "2") },
-      { label: "בחר/ה כיוון", done: has("domain_committed") || !!c.chosen_domain },
-      { label: "קבע/ה פגישת נעילת מסלול", done: has("meeting_booked", pr => pr.n === "3") },
+      ...(cohort === "alumni" ? [] : [
+        { label: "טעם/ה תחומים", done: tastedDomains > 0, detail: tastedDomains ? `${tastedDomains} תחומים` : undefined },
+        { label: "קבע/ה פגישת בחירת תחום", done: has("meeting_booked", pr => pr.n === "2") },
+        { label: "בחר/ה כיוון", done: has("domain_committed") || !!c.chosen_domain },
+      ]),
+      { label: cohort === "alumni" ? "קבע/ה פגישה 2 — נעילת מסלול" : "קבע/ה פגישת נעילת מסלול", done: has("meeting_booked", pr => pr.n === "3") },
       { label: "בחר/ה מוסד", done: has("institution_committed") },
       { label: "נרשם/ה ללימודים", done: myTasks.some(t => t.status === "done" && /הרשמה/.test(t.title ?? "")) || has("enrollment_doc_uploaded") },
       { label: "העלה/תה אישור לימודים", done: has("enrollment_doc_uploaded") },
@@ -202,6 +210,9 @@ export async function GET(req: NextRequest) {
       stage: c.current_stage,
       domain: c.chosen_domain,
       coordinatorId: c.coordinator_id ?? null,
+      /* בוגרי טק-קריירה מדלגים על שלב הטעימות — בלי זה הם ייראו לרכזת
+         תקועים לנצח בתחנה שאינה שלהם, ותור החילוץ יתמלא ברעש */
+      cohort: c.cohort ?? "main",
       ranked: myRanks,
       lastActive: iso(seenAt),
       lastAction: doing?.created_at ?? null,

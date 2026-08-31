@@ -240,6 +240,7 @@ function ago(iso: string | null): string {
 
 type Person = {
   id: string; name: string; anonymous: boolean; region: string | null;
+  cohort?: string;
   stage: number; domain: string | null; ranked: string[]; lastActive: string | null; lastAction: string | null;
   signals: { severity: 1 | 2 | 3; reason: string; action: string }[];
   checklist: { label: string; done: boolean; detail?: string }[];
@@ -278,6 +279,8 @@ function buildStations(p: Person): Station[] {
     return all.length ? all[all.length - 1] : null;
   };
   const S = (v: unknown) => (v == null ? "" : String(v));
+  /* הקוהורט של המשתתף — קובע אילו תחנות רלוונטיות לו בכלל */
+  const cohort = p.cohort ?? "main";
 
   const tasted = [...new Set([...by("sim_start"), ...by("scct_done"), ...by("taste_done")]
     .map(e => S((e.props as Record<string, unknown>)?.domain)).filter(Boolean))];
@@ -307,16 +310,18 @@ function buildStations(p: Person): Station[] {
   const enrolled = (p.checklist ?? []).find(c => c.label.includes("נרשם/ה ללימודים"))?.done ?? false;
   const docUp = latest("enrollment_doc_uploaded");
 
-  const def: Omit<Station, "state">[] = [
-    { id: "signup", stage: "פתיחת חשבון", title: "נרשם/ה ומילא/ה שאלון בסיס", emoji: "📝",
+  /* `done` ו-`only` הם הגדרה ולא תצוגה, ולכן הם חיים כאן ולא ב-Station */
+  type Def = Omit<Station, "state"> & { done: boolean; only?: readonly string[] };
+  const def: Def[] = [
+    { done: true, id: "signup", stage: "פתיחת חשבון", title: "נרשם/ה ומילא/ה שאלון בסיס", emoji: "📝",
       date: evs[0]?.at ?? null, chips: [], events: by("profile") },
-    { id: "m1", stage: "היכרות", title: "פגישה 1 — נקבעה והתקיימה", emoji: "🗓",
+    { done: !!m1ok, id: "m1", stage: "היכרות", title: "פגישה 1 — נקבעה והתקיימה", emoji: "🗓",
       date: m1?.at ?? latest("meeting_booked", pr => S(pr.n) === "1")?.at ?? null,
       signal: !!m1missed,
       chips: m1ok ? [{ text: "״היה טוב״", kind: "quote" as const }]
         : m1missed ? [{ text: "לא הצליח/ה להגיע", kind: "alert" as const }] : [],
       events: [...by("meeting_open", pr => S(pr.n) === "1"), ...by("meeting_booked", pr => S(pr.n) === "1"), ...by("meeting1_checkin")] },
-    { id: "taste", stage: "טעימות הייטק", title: "טעימות תחומים", emoji: "🧪",
+    { done: tasted.length >= 2, only: ["main"] as const, id: "taste", stage: "טעימות הייטק", title: "טעימות תחומים", emoji: "🧪",
       date: latest("scct_done")?.at ?? latest("sim_start")?.at ?? null,
       chips: tasted.length ? [{ text: "טעם/ה: " + tasted.map(dom).join(", "), kind: "info" as const }] : [],
       events: [...by("sim_start"), ...by("scct_done"), ...by("taste_done")] },
@@ -326,23 +331,23 @@ function buildStations(p: Person): Station[] {
       הרכזת סימנה no-show ב-Cal והוא אמר "נפגשנו" — אחד מהם טועה,
       וזה בדיוק מה שכדאי שתראה לפני שהיא מרימה טלפון.
     */
-    { id: "m2", stage: "מסלול לימודים", title: "פגישה 2 — בחירת תחום", emoji: "🗓",
+    { done: !!latest("meeting_booked", pr => S(pr.n) === "2"), only: ["main"] as const, id: "m2", stage: "מסלול לימודים", title: "פגישה 2 — בחירת תחום", emoji: "🗓",
       date: latest("meeting2_checkin")?.at ?? latest("meeting_booked", pr => S(pr.n) === "2")?.at ?? null,
       signal: !!m2missed,
       chips: m2ok ? [{ text: "אמר/ה שנפגשתם", kind: "quote" as const }]
         : m2missed ? [{ text: "אמר/ה שעדיין לא נפגשתם", kind: "alert" as const }] : [],
       events: [...by("meeting_open", pr => S(pr.n) === "2"), ...by("meeting_booked", pr => S(pr.n) === "2"),
                ...by("meeting2_checkin"), ...by("meeting_self_declared", pr => S(pr.n) === "2")] },
-    { id: "domain", stage: "", title: "בחירת כיוון", emoji: "🧭",
+    { done: !!committed, only: ["main"] as const, id: "domain", stage: "", title: "בחירת כיוון", emoji: "🧭",
       date: committed?.at ?? null,
       chips: committed
         ? [{ text: "בחר/ה: " + S((committed.props as Record<string, unknown>)?.domains).split(",").map(dom).join(" + "), kind: "info" as const }]
         : [],
       events: [...by("paths_domain_gate"), ...by("domain_committed")] },
-    { id: "quiz", stage: "", title: "שאלון אילוצים", emoji: "📋",
+    { done: !!quizDone, id: "quiz", stage: "", title: "שאלון אילוצים", emoji: "📋",
       date: quizDone?.at ?? null, chips: [],
       events: [...by("paths_question"), ...by("paths_quiz_done")] },
-    { id: "track", stage: "", title: "בחירת מסלול לימודים", emoji: "🛤",
+    { done: !!trackPick, id: "track", stage: "", title: "בחירת מסלול לימודים", emoji: "🛤",
       date: trackPick?.at ?? null,
       signal: !!trackOther,
       chips: trackPick
@@ -355,7 +360,7 @@ function buildStations(p: Person): Station[] {
       היא הדליקה גם למי שלא דיבר עם אף מוסד. השיחה עצמה היא
       הפעולה היחידה בשלב 4 שקורית מחוץ למסך, ולכן היא הצ׳יפ.
     */
-    { id: "inst-research", stage: "", title: "חקר מוסדות וחסמים", emoji: "🔍",
+    { done: by("paths_solution_click").length > 0 || by("paths_blocker_open").length > 0 || by("paths_research_done").length > 0, id: "inst-research", stage: "", title: "חקר מוסדות וחסמים", emoji: "🔍",
       date: latest("paths_research_done")?.at ?? latest("paths_solution_click")?.at ?? latest("paths_blocker_open")?.at ?? null,
       chips: by("paths_research_done").length > 0
         ? [{ text: `דיבר/ה עם ${by("paths_research_done").length} מוסדות`, kind: "info" as const }]
@@ -365,50 +370,43 @@ function buildStations(p: Person): Station[] {
       events: [...by("paths_blocker_open"), ...by("paths_solution_click"), ...by("paths_solution_open"),
                ...by("paths_research_open"), ...by("paths_research_done"), ...by("paths_research_remind"),
                ...by("paths_prep_done")] },
-    { id: "m3", stage: "מלגות והרשמה", title: "פגישה 3 — נעילת מסלול", emoji: "🗓",
+    { done: !!latest("meeting_booked", pr => S(pr.n) === "3"), id: "m3", stage: "מלגות והרשמה", title: "פגישה 3 — נעילת מסלול", emoji: "🗓",
       date: latest("meeting_booked", pr => S(pr.n) === "3")?.at ?? null, chips: [],
       events: [...by("meeting_open", pr => S(pr.n) === "3"), ...by("meeting_booked", pr => S(pr.n) === "3")] },
-    { id: "inst", stage: "", title: "בחירת מוסד + גיבוי", emoji: "🏛",
+    { done: !!instCommitted, id: "inst", stage: "", title: "בחירת מוסד + גיבוי", emoji: "🏛",
       date: instCommitted?.at ?? null,
       chips: instCommitted
         ? [{ text: S((instCommitted.props as Record<string, unknown>)?.main).split(" — ")[0], kind: "info" as const }]
         : [],
       events: [...by("plan_inst_gate"), ...by("institution_committed")] },
-    { id: "scholarships", stage: "", title: "בחירת מלגות", emoji: "💰",
+    { done: picks.length > 0, id: "scholarships", stage: "", title: "בחירת מלגות", emoji: "💰",
       date: latest("plan_scholarship_pick")?.at ?? null,
       chips: picks.length ? [{ text: `${picks.length} מלגות בחשבון`, kind: "info" as const }] : [],
       events: [...by("plan_money_opened"), ...by("plan_scholarship_pick")] },
-    { id: "anchor", stage: "", title: "העוגן: ההרשמה עצמה", emoji: "⚓",
+    { done: enrolled, id: "anchor", stage: "", title: "העוגן: ההרשמה עצמה", emoji: "⚓",
       date: null, chips: [], events: by("plan_task_open") },
-    { id: "student", stage: "סטודנט/ית", title: "אישור לימודים הועלה", emoji: "🎓",
+    { done: !!docUp, id: "student", stage: "סטודנט/ית", title: "אישור לימודים הועלה", emoji: "🎓",
       date: docUp?.at ?? null, chips: [], events: by("enrollment_doc_uploaded") },
   ];
 
-  // מצב כל תחנה: מה הושלם — לפי ראיות; העצירה — שער שנראה בלי בחירה
-  const doneFlags = [
-    true,
-    !!m1ok,
-    tasted.length >= 2,
-    !!latest("meeting_booked", pr => S(pr.n) === "2"),
-    !!committed,
-    !!quizDone,
-    by("paths_solution_click").length > 0 || by("paths_blocker_open").length > 0,
-    !!latest("meeting_booked", pr => S(pr.n) === "3"),
-    !!instCommitted,
-    picks.length > 0,
-    enrolled,
-    !!docUp,
-  ];
-
+  /*
+    עד 31.8 היה כאן מערך doneFlags מקביל לרשימת התחנות, והוא נשבר:
+    תחנת "בחירת מסלול" נוספה בלי הדגל שלה, וכל התחנות אחריה
+    הציגו את המצב של שכנתן. שתי רשימות מקבילות שנשמרות ביד יוצאות
+    מסנכרון, ולכן `done` יושב עכשיו בתוך התחנה עצמה ואי אפשר לשכוח אותו.
+  */
   const now = Date.now();
   const daysSince = (iso?: string | null) => (iso ? Math.floor((now - +new Date(iso)) / DAY_MS) : 0);
 
   // התחנה הפתוחה הראשונה היא "כאן עכשיו" — או "עצר כאן" אם יש ראיית עמידה
-  let currentIdx = doneFlags.findIndex(d => !d);
-  if (currentIdx === -1) currentIdx = def.length - 1;
+  /* תחנות שאינן של הקוהורט נעלמות — אחרת בוגר נראה תקוע לנצח בטעימות */
+  const mine = def.filter(d => !("only" in d) || (d.only as readonly string[]).includes(cohort));
 
-  return def.map((d, i) => {
-    if (doneFlags[i]) return { ...d, state: "done" as const };
+  let currentIdx = mine.findIndex(d => !d.done);
+  if (currentIdx === -1) currentIdx = mine.length - 1;
+
+  return mine.map((d, i) => {
+    if (d.done) return { ...d, state: "done" as const };
     if (i !== currentIdx) return { ...d, state: "future" as const, date: null };
     // עצירה מוכחת: שער נראה בלי בחירה יומיים+, או אי-תנועה שבוע כשנכנסים
     let stuckDays = 0;
