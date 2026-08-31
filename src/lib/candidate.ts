@@ -104,6 +104,21 @@ export async function ensureCandidateId(): Promise<string | null> {
  */
 export function cachedCohort(): CohortId {
   try {
+    /*
+      תצוגה מקדימה של המסע השני: ?demo=1&cohort=alumni.
+      **לא נכתבת לשום מקום** — לא ל-localStorage ולא ל-DB — ותקפה רק לצפייה
+      הנוכחית. מותנית ב-demo, שהוא ממילא הדגל הפנימי לסקירה; פרמטר ב-URL
+      שמשנה קוהורט באמת היה בדיוק ערוץ הזליגה שנבנינו נגדו.
+
+      היא יושבת כאן ולא בכל מסך בנפרד, כדי שפס ההתקדמות, מסך המסע, ה-FAQ
+      ושלב 5 יראו את **אותו** קוהורט. תצוגה מקדימה שחלק מהמסך מכיר וחלק לא
+      היא בדיוק מה שגרם לפס להראות "טעימות" בזמן שהזרימה כבר הייתה של בוגרים.
+    */
+    const q = new URLSearchParams(window.location.search);
+    if (q.has("demo")) {
+      const preview = q.get("cohort");
+      if (isCohort(preview)) return preview;
+    }
     const v = localStorage.getItem("cohort");
     return isCohort(v) ? v : "main";
   } catch { return "main"; }
@@ -111,6 +126,12 @@ export function cachedCohort(): CohortId {
 
 /** מרענן את המטמון מהשרת. רץ ברקע ואינו חוסם רינדור */
 export async function refreshCohort(): Promise<CohortId> {
+  /*
+    בתצוגה מקדימה השרת היה דורס את הפריוויו וכל רכיב שמרענן היה חוזר ל-main
+    — וזה בדיוק מה שגרם לפס ההתקדמות להראות "טעימות" מעל זרימת בוגרים.
+  */
+  const q = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  if (q?.has("demo") && isCohort(q.get("cohort"))) return q.get("cohort") as CohortId;
   const c = await getCandidate();
   const v = isCohort(c?.cohort) ? c!.cohort : "main";
   try { localStorage.setItem("cohort", v); } catch { /* ignore */ }

@@ -10,7 +10,7 @@ import AllPaths from "@/components/ui/AllPaths";
 import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 import { savePathsAnswers, saveChosenDomains, logEvent, cachedCohort } from "@/lib/candidate";
-import { gateMeetingFor, meetingLabelFor, stageCountFor, type CohortId } from "@/data/journey";
+import { gateMeetingFor, meetingLabelFor, stageCountFor, isCohort, type CohortId } from "@/data/journey";
 import AlumniIntake from "./AlumniIntake";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
@@ -944,12 +944,21 @@ export default function PathsPage() {
        * פגישה 2 "התקיימה" = שעה אחרי המועד שנשמר בקביעה. מי שכבר בחר תחומים
        * נשאר פתוח גם בלי מועד (לא נועלים אחורה), ודמו עוקף את הנעילה.
        */
+      /*
+        תצוגה מקדימה של המסע השני (?demo=1&cohort=alumni) — לסקירה בלבד.
+        **לא נכתבת לשום מקום**: לא ל-localStorage ולא ל-DB, ותקפה רק לצפייה
+        הזאת. מותנית ב-demo, שהוא ממילא הדגל הפנימי שלנו — פרמטר ב-URL
+        שמשנה קוהורט באמת היה בדיוק ערוץ הזליגה שנבנינו נגדו.
+      */
+      const preview = params.get("cohort");
+      const previewing = params.has("demo") && preview === "alumni";
       const co = cachedCohort();
       setCohort(co);
       /* אצל בוגרים המסלול ידוע מראש — בלי זה הם היו נוחתים על לשונית ההכשרה */
       if (co === "alumni") setActiveTrack("degree");
-      setDemoMode(params.has("demo"));
-      setAlumniDone(!!localStorage.getItem("alumni-intake"));
+      /* בתצוגה מקדימה של הבוגרים רוצים לראות גם את השאלון עצמו */
+      setDemoMode(params.has("demo") && !previewing);
+      setAlumniDone(!!localStorage.getItem("alumni-intake") && !previewing);
       const gn = gateMeetingFor(co, "track") ?? 2;
 
       let m2Done = picked.length > 0 || !!savedChoice;
