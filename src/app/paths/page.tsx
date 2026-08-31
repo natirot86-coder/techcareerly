@@ -11,6 +11,7 @@ import TrackDetail from "@/components/ui/TrackDetail";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 import { savePathsAnswers, saveChosenDomains, logEvent, cachedCohort } from "@/lib/candidate";
 import { gateMeetingFor, type CohortId } from "@/data/journey";
+import AlumniIntake from "./AlumniIntake";
 import { visibleCourses, type Course } from "@/data/courses";
 import { degreesFor, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { FUNDING } from "@/data/scholarships";
@@ -814,6 +815,9 @@ export default function PathsPage() {
   */
   const [cohort, setCohort] = useState<CohortId>("main");
   const gateN = gateMeetingFor(cohort, "track") ?? 2;
+  /** בוגר שכבר מילא את שאלון הכניסה — ממשיך משם למסכים המשותפים */
+  const [alumniDone, setAlumniDone] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
   const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
   /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
@@ -940,6 +944,10 @@ export default function PathsPage() {
        */
       const co = cachedCohort();
       setCohort(co);
+      /* אצל בוגרים המסלול ידוע מראש — בלי זה הם היו נוחתים על לשונית ההכשרה */
+      if (co === "alumni") setActiveTrack("degree");
+      setDemoMode(params.has("demo"));
+      setAlumniDone(!!localStorage.getItem("alumni-intake"));
       const gn = gateMeetingFor(co, "track") ?? 2;
 
       let m2Done = picked.length > 0 || !!savedChoice;
@@ -1210,6 +1218,27 @@ export default function PathsPage() {
           </>
           )}
         </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  /*
+    ── הניתוב לבוגרי טק-קריירה (31.8) ─────────────────────────────────────
+
+    שורה אחת, קובץ אחד. השאלון שלהם, מסך ההשוואה בין שלושה מסלולים ושער
+    הכיוון מדולגים. **כל השאר משותף** — המוסדות, התארים, החסמים, החקר
+    וההכנה לפגישה. מסכים שבאג בהם שקט ויקר אסור להכפיל; שאלון שבאג בו
+    נראה בשנייה הראשונה — ולכן הגבול עובר בדיוק כאן.
+
+    ?demo עוקף, כמו בכל שער אחר באפליקציה.
+  */
+  if (cohort === "alumni" && !alumniDone && !demoMode) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
+        {Header}
+        <JourneyStrip current={4} phaseLabel="שאלון קצר" phaseIndex={0} phaseTotal={2} />
+        <AlumniIntake onDone={() => { setAlumniDone(true); setPhase("institutions"); }} />
         <BottomNav />
       </div>
     );
@@ -2068,11 +2097,19 @@ export default function PathsPage() {
 
   // ── Institutions ───────────────────────────────────────────────────────────
   if (phase === "institutions") {
-    const tracks: { key: Track; label: string; emoji: string }[] = [
-      { key: "degree", label: "תואר", emoji: "🎓" },
-      { key: "bootcamp", label: "הכשרה", emoji: "⚡" },
-      { key: "mahat", label: "מה\"ט", emoji: "🏫" },
-    ];
+    /*
+      לבוגרי טק-קריירה מוצג תואר בלבד (31.8) — הם כבר עשו הכשרה
+      טכנולוגית אצלנו, ולהציע להם אותה שוב זה לא להרחיב אלא לחזור אחורה.
+      בורר עם אפשרות אחת איננו בורר, ולכן השורה נעלמת לגמרי.
+    */
+    const tracks: { key: Track; label: string; emoji: string }[] =
+      cohort === "alumni"
+        ? [{ key: "degree", label: "תואר", emoji: "🎓" }]
+        : [
+            { key: "degree", label: "תואר", emoji: "🎓" },
+            { key: "bootcamp", label: "הכשרה", emoji: "⚡" },
+            { key: "mahat", label: "מה\"ט", emoji: "🏫" },
+          ];
     /*
      * מי שבחר שני תחומים בשער רואה כאן בורר תחום — כל המסך מסונן לתחום
      * אחד בכל רגע (נתי 20.8): תחום ← אפיק ← ובאקדמיה תואר ← מוסדות.
@@ -2123,8 +2160,8 @@ export default function PathsPage() {
             </div>
           )}
 
-          {/* Track tabs */}
-          <div className="flex gap-2 mb-5">
+          {/* Track tabs — לא מוצגים כשיש מסלול אחד */}
+          <div className="flex gap-2 mb-5" style={{ display: tracks.length > 1 ? undefined : "none" }}>
             {tracks.map(t => {
               const isRec = t.key === recommended;
               const isActive = t.key === activeTrack;
