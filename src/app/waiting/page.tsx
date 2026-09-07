@@ -34,7 +34,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { track as trackEvent } from "@vercel/analytics";
 import { coordinatorFor } from "@/data/meetings";
-import { logEvent } from "@/lib/candidate";
+import { logEvent, cachedCohort } from "@/lib/candidate";
+import { type CohortId } from "@/data/journey";
+import { WhyDegreeCard, WhyDegreeDone, WHY_DEGREE_TOTAL } from "./WhyDegree";
 import BottomNav from "@/components/ui/BottomNav";
 
 const NAVY = "#023e8a";
@@ -77,10 +79,32 @@ const INTRO_ARTICLES = [
 
 const INTRO_TOTAL = 7;
 
+/*
+  שני מסעות במרחב ההמתנה (8.9). הקהל הרחב מקבל את המבוא להייטק; בוגרי
+  טק-קריירה מקבלים "למה תואר" — כי כל שבעת הכרטיסים של המבוא מיותרים
+  למי שכבר בפנים, והאחרון אף מציג לו סיפור השראה על בוגר טק-קריירה.
+
+  ⚠️ **המנגנון זהה לחלוטין**: אותו מסך, אותו מונה צעדים, אותם אירועים
+  (`intro_step` / `intro_done`) ואותו מפתח סיום (`waiting-taste`). הקוהורט
+  מחליף **תוכן בלבד** — ולכן הדשבורד, ה-reset והאנליטיקות לא יודעים ששינינו
+  משהו, וזה בדיוק מה שמאפשר לשני המסעות לחיות זה לצד זה.
+*/
+function introTotalFor(c: CohortId) { return c === "alumni" ? WHY_DEGREE_TOTAL : INTRO_TOTAL; }
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function WaitingPage() {
   const [screen, setScreen] = useState<Screen>("home");
+  /* איזה תוכן יוצג במרחב ההמתנה — המבוא להייטק או "למה תואר" */
+  const [cohort, setCohort] = useState<CohortId>("main");
+  const total = introTotalFor(cohort);
+  /*
+    צפייה לסקירה (?demo=1&cohort=...). שני דברים: התוכן נפתח בלי פגישה
+    קבועה — אחרת סיוון פותחת את הקישור ורואה מנעול ולא תוכן — **ולא נכתב
+    כלום**, כדי שמי שנשלח לו הקישור לא ייספר כמועמד ולא יישאר עם דפדפן
+    שחושב שהוא באמצע המסע.
+  */
+  const [previewing, setPreviewing] = useState(false);
   /** 0..INTRO_TOTAL-1 — הכרטיס הנוכחי במבוא; INTRO_TOTAL = מסך הסיום */
   const [introIdx, setIntroIdx] = useState(0);
   const [tasteDone, setTasteDone] = useState(false);
@@ -99,6 +123,8 @@ export default function WaitingPage() {
   useEffect(() => {
     try {
       setTasteDone(!!localStorage.getItem("waiting-taste"));
+      setCohort(cachedCohort());
+      setPreviewing(new URLSearchParams(window.location.search).has("demo"));
       setBooked(localStorage.getItem("meeting-1-booked") === "true" ||
                 localStorage.getItem("meeting-booked") === "true");
       const ob = JSON.parse(localStorage.getItem("onboarding") || "{}");
@@ -134,20 +160,20 @@ export default function WaitingPage() {
   useEffect(() => { window.scrollTo(0, 0); }, [screen, introIdx]);
 
   // מחסום. אין דרך להגיע לשתי הדקות בלי פגישה קבועה — גם לא בקישור ישיר
-  useEffect(() => { if (screen === "taste" && !booked) setScreen("home"); }, [screen, booked]);
+  useEffect(() => { if (screen === "taste" && !booked && !previewing) setScreen("home"); }, [screen, booked, previewing]);
 
   /** צעד במבוא — נטישה מוסקת מ"הגיע לכרטיס N ולא ל-N+1", כרגיל */
   function introNext() {
     const next = introIdx + 1;
-    logEvent("intro_step", { n: String(next + 1) });
-    if (next >= INTRO_TOTAL) {
+    if (!previewing) logEvent("intro_step", { n: String(next + 1) });
+    if (next >= total) {
       // אותו מפתח כמו קודם — הדשבורד וה-reset כבר קוראים אותו
-      localStorage.setItem("waiting-taste", JSON.stringify({ intro: true, at: new Date().toISOString() }));
+      if (!previewing) localStorage.setItem("waiting-taste", JSON.stringify({ intro: true, at: new Date().toISOString() }));
       trackEvent("intro_done");
       logEvent("intro_done", {});
       setTasteDone(true);
     }
-    setIntroIdx(Math.min(next, INTRO_TOTAL));
+    setIntroIdx(Math.min(next, total));
   }
 
   return (
@@ -155,7 +181,7 @@ export default function WaitingPage() {
       <div style={{ maxWidth: 430, margin: "0 auto", padding: "28px 20px 110px" }}>
         {screen === "home" && (
           <Home
-            name={name} who={who} booked={booked} tasteDone={tasteDone}
+            name={name} who={who} booked={booked || previewing} tasteDone={tasteDone} alumni={cohort === "alumni"}
             attended={attended} passed={passed} hasDate={hasDate}
             onAttendance={markAttendance}
             onTaste={() => {
@@ -174,8 +200,12 @@ export default function WaitingPage() {
         {screen === "taste" && (
           <>
             <Back onClick={() => (introIdx === 0 ? setScreen("home") : setIntroIdx(introIdx - 1))} />
-            {introIdx < INTRO_TOTAL ? (
-              <IntroCard idx={introIdx} who={who} onNext={introNext} />
+            {introIdx < total ? (
+              cohort === "alumni"
+                ? <WhyDegreeCard idx={introIdx} onNext={introNext} />
+                : <IntroCard idx={introIdx} who={who} onNext={introNext} />
+            ) : cohort === "alumni" ? (
+              <WhyDegreeDone who={who} onPrep={() => setScreen("prep")} onHome={() => setScreen("home")} />
             ) : (
               <IntroDone who={who} onPrep={() => setScreen("prep")} onHome={() => setScreen("home")} />
             )}
@@ -197,10 +227,10 @@ export default function WaitingPage() {
 // ─── דף הבית — הציר ──────────────────────────────────────────────────────────
 
 function Home({
-  name, who, booked, tasteDone, onTaste, onPrep, onAlreadyBooked,
+  name, who, booked, tasteDone, alumni, onTaste, onPrep, onAlreadyBooked,
   attended, passed, hasDate, onAttendance,
 }: {
-  name: string; who: string; booked: boolean; tasteDone: boolean;
+  name: string; who: string; booked: boolean; tasteDone: boolean; alumni: boolean;
   onTaste: () => void; onPrep: () => void; onAlreadyBooked: () => void;
   attended: "yes" | "missed" | null; passed: boolean; hasDate: boolean;
   onAttendance: (v: "yes" | "missed") => void;
@@ -233,14 +263,18 @@ function Home({
           */}
           <Card dim={!booked}>
             <CardHead dot={booked ? ORANGE : "#cfd6e2"}>
-              שבע דקות — העולם שאתה נכנס אליו
+              {alumni ? "חמש דקות — למה תואר, בכנות" : "שבע דקות — העולם שאתה נכנס אליו"}
             </CardHead>
             <p style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 8 }}>
               {tasteDone
                 ? "כבר עברת על זה. אפשר לחזור מתי שבא לך."
                 : booked
-                  ? "כמה גדול ההייטק, כמה משלמים בו באמת, ואילו תפקידים יש בו חוץ ממתכנתים. מספרים אמיתיים, בלי מבחן."
-                  : "נפתח אחרי שתקבע את הפגישה. שבע דקות קריאה — תגיע לפגישה כשאתה כבר מכיר את העולם."}
+                  ? alumni
+                    ? "מה תואר באמת נותן מעבר למה שכבר יש לך, מה קשה בו, ולמה זה לא חייב להיות ארבע שנים בלי משכורת."
+                    : "כמה גדול ההייטק, כמה משלמים בו באמת, ואילו תפקידים יש בו חוץ ממתכנתים. מספרים אמיתיים, בלי מבחן."
+                  : alumni
+                    ? "נפתח אחרי שתקבע את הפגישה. חמש דקות קריאה — ותגיע עם השאלות הנכונות."
+                    : "נפתח אחרי שתקבע את הפגישה. שבע דקות קריאה — תגיע לפגישה כשאתה כבר מכיר את העולם."}
             </p>
             {booked ? (
               <button
