@@ -57,6 +57,20 @@ export async function ensureCandidateId(): Promise<string | null> {
   let candidateId = session?.user?.id ?? null;
 
   if (!candidateId) {
+    /*
+     * ⚠️ כאן נולד כל משתמש — **בלי טלפון**, ואף מסך באונבורדינג לא מבקש
+     * ממנו אחד. נכון ל-8.9.2026: 240 משתמשים ב-auth.users, 0 עם טלפון.
+     *
+     * זה שובר שלושה דברים שכבר בנויים: התאמת הזמנות Cal (הטלפון הוא
+     * המפתח המשותף היחיד), שיוך בוגרי טק-קריירה לפיילוט (`alumni_roster`
+     * מתאים לפי טלפון — **בלעדיו הפיילוט לא יכול לרוץ**), והחלפת מכשיר
+     * (אנונימי שמנקה דפדפן מקבל זהות חדשה ומאבד הכל).
+     *
+     * הפונקציות למטה — `sendPhoneOtp` ו-`verifyPhoneOtp` — כבר יודעות
+     * להמיר סשן אנונימי לזהות טלפון דרך `phone_change`. מה שחסר הוא מסך
+     * באונבורדינג שיקרא להן, ו-019sms מחובר כ-Send SMS Hook כדי שה-OTP
+     * באמת יגיע. ראה את הבלוק בראש README.
+     */
     const { data, error } = await supabase.auth.signInAnonymously();
     if (error || !data.user) {
       console.error("ensureCandidateId failed", error);
