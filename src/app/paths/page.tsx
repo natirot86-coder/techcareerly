@@ -808,6 +808,8 @@ export default function PathsPage() {
   /** בוגר שכבר מילא את שאלון הכניסה — ממשיך משם למסכים המשותפים */
   const [alumniDone, setAlumniDone] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  /** צופים במסע השני לסקירה — לא נכתב כלום, לא מקומית ולא בשרת */
+  const [previewMode, setPreviewMode] = useState(false);
   /** מסלול שנבחר במסך ההשוואה — null = מציגים את ההשוואה */
   const [openTrack, setOpenTrack] = useState<{ domain: Domain; track: Track } | null>(null);
   /** התחום שמוצג כרגע. תחום אחד על המסך, השאר במרחק לחיצה */
@@ -945,6 +947,7 @@ export default function PathsPage() {
       /* אצל בוגרים המסלול ידוע מראש — בלי זה הם היו נוחתים על לשונית ההכשרה */
       if (co === "alumni") setActiveTrack("degree");
       /* בתצוגה מקדימה של הבוגרים רוצים לראות גם את השאלון עצמו */
+      setPreviewMode(previewing);
       setDemoMode(params.has("demo") && !previewing);
       setAlumniDone(!!localStorage.getItem("alumni-intake") && !previewing);
       const gn = gateMeetingFor(co, "track") ?? 2;
@@ -1237,7 +1240,7 @@ export default function PathsPage() {
       <div className="min-h-screen flex flex-col" style={{ background: "#fbf9f5" }}>
         {Header}
         <JourneyStrip current={4} phaseLabel="שאלון קצר" phaseIndex={0} phaseTotal={2} />
-        <AlumniIntake onDone={() => { setAlumniDone(true); setPhase("institutions"); }} />
+        <AlumniIntake preview={previewMode} onDone={() => { setAlumniDone(true); setPhase("institutions"); }} />
         <BottomNav />
       </div>
     );
