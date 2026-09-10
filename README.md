@@ -141,7 +141,22 @@ public/map-shots/               # צילומי מסך אוטומטיים ל-/map
 מפתחות ואותם ערכי `A`/`B`/`C` — כי שלב 5 גוזר ממנו את שעות הפנאי לחשבון
 המלגות ובונה ממנו את רשימת המשימות. `WEIGHTS` לא נוגעים בו: 52/10/38 קפוא.
 
-📄 המפרט המלא: `docs/pilot-alumni-spec.md` · מערך פגישה 1: `docs/pilot-alumni-meeting1.html`
+📄 המפרט המלא: `docs/pilot-alumni-spec.md`
+
+**קישורים לשיתוף עם הרכזת:**
+
+| | |
+|---|---|
+| מערך פגישה 1 | https://hasifaapp.vercel.app/guides/meeting1.html |
+| מה שהמשתתף קורא לפני הפגישה | `/waiting?demo=1&cohort=alumni` |
+| השאלון והמוסדות | `/paths?demo=1&cohort=alumni` |
+| המסע שלו · שאלות · מלגות | `/journey` · `/faq` · `/plan` + אותם פרמטרים |
+
+⚠️ `?demo=1&cohort=alumni` היא **תצוגה בלבד — לא נכתב דבר**, לא ב-localStorage
+ולא ב-DB, והיא נפתחת בלי פגישה קבועה. מי שנשלח לו הקישור לא נספר כמועמד.
+
+⚠️ **מקור אחד למערך:** `docs/pilot-alumni-meeting1.html`. `public/guides/meeting1.html`
+נוצר ממנו — לא עורכים את הציבורי.
 🗺 במפת האפליקציה (`/map`) יש **בורר מסע** שמראה מה משותף ומה בלעדי.
 
 ---
