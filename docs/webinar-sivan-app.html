@@ -1,0 +1,276 @@
+<title>3 דקות על הליווי עם האפליקציה — תסריט ושקופיות לסיוון</title>
+
+<style>
+  :root {
+    --navy: #023e8a; --orange: #fb8500; --ink: #1c1a16; --muted: #5f6672;
+    --bg: #fbf9f5; --card: #fff; --line: rgba(2,62,138,.12); --good: #0f7a52;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    direction: rtl; margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Heebo", "Assistant", "Segoe UI", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.7;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 0 1.15rem 5rem; }
+
+  header { background: var(--navy); color: #fff; padding: 2rem 0 1.5rem; }
+  header .k { font-size: .74rem; font-weight: 800; letter-spacing: .16em; opacity: .7; }
+  header h1 { font-size: 1.7rem; font-weight: 900; margin: .45rem 0 .4rem; line-height: 1.2; }
+  header p { margin: 0; font-size: .95rem; opacity: .85; }
+
+  .bar {
+    position: sticky; top: 0; z-index: 20; background: rgba(251,249,245,.94);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+    padding: .6rem 1.15rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
+  }
+  .bar b { font-size: .85rem; color: var(--muted); }
+  button.mode {
+    font: inherit; font-size: .85rem; font-weight: 800; padding: .35rem .9rem;
+    border-radius: 999px; border: 1px solid var(--navy); background: var(--navy);
+    color: #fff; cursor: pointer;
+  }
+
+  h2 { font-size: 1.18rem; font-weight: 900; color: var(--navy); margin: 2rem 0 .2rem; }
+  .beat {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 1rem 1.1rem; margin: .8rem 0;
+  }
+  .beat .t {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: .6rem; margin-bottom: .5rem;
+  }
+  .beat .n { font-weight: 900; color: var(--navy); font-size: 1rem; }
+  .beat .sec {
+    font-size: .78rem; font-weight: 800; color: var(--orange);
+    background: rgba(251,133,0,.1); padding: .15rem .6rem; border-radius: 999px; white-space: nowrap;
+  }
+  .say { font-size: 1.02rem; line-height: 1.75; }
+  .say b { font-weight: 800; }
+  .note {
+    font-size: .85rem; color: var(--muted); margin-top: .6rem;
+    padding-top: .6rem; border-top: 1px dashed var(--line);
+  }
+  .warn {
+    background: #fff7ec; border: 1px solid rgba(251,133,0,.35); color: #8a4d00;
+    border-radius: 12px; padding: .8rem 1rem; margin: .9rem 0; font-size: .93rem;
+  }
+  .warn p { margin: 0 0 .5rem; } .warn p:last-child { margin: 0; }
+
+  /* ─── מצב הצגה ─── */
+  #deck { display: none; }
+  body.present #deck { display: block; }
+  body.present .wrap, body.present header { display: none; }
+  #deck {
+    position: fixed; inset: 0; background: var(--navy); color: #fff;
+    display: none; place-items: center; padding: 3rem 2rem;
+  }
+  body.present #deck { display: grid; }
+  .slide { display: none; max-width: 50rem; text-align: center; }
+  .slide.on { display: block; }
+  .slide .kick {
+    font-size: .8rem; font-weight: 800; letter-spacing: .18em;
+    color: var(--orange); margin-bottom: 1.2rem;
+  }
+  .slide h3 {
+    font-size: clamp(1.8rem, 5vw, 3.1rem); font-weight: 900;
+    line-height: 1.2; margin: 0 0 1.2rem; text-wrap: balance;
+  }
+  .slide p { font-size: clamp(1.05rem, 2.4vw, 1.45rem); line-height: 1.6; opacity: .92; margin: 0 auto; max-width: 38rem; }
+  .slide .big { font-size: clamp(2.6rem, 9vw, 5rem); font-weight: 900; color: var(--orange); line-height: 1.1; }
+  .rows { display: flex; flex-direction: column; gap: .8rem; margin-top: 1.6rem; text-align: right; }
+  .rows div {
+    background: rgba(255,255,255,.1); border-radius: 14px; padding: .9rem 1.2rem;
+    font-size: clamp(1rem, 2.2vw, 1.3rem); font-weight: 700;
+  }
+  .eq { display: flex; gap: .7rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 1.4rem; }
+  .eq span { font-size: clamp(1rem, 2.6vw, 1.5rem); font-weight: 800; }
+  .eq .box { background: rgba(255,255,255,.12); border-radius: 12px; padding: .6rem 1.1rem; }
+  .eq .res { background: var(--orange); }
+  #hud {
+    position: fixed; bottom: 1.1rem; left: 0; right: 0; display: flex;
+    justify-content: center; gap: 1rem; align-items: center;
+    font-size: .8rem; color: rgba(255,255,255,.55);
+  }
+  #hud button {
+    font: inherit; font-weight: 800; background: rgba(255,255,255,.14); color: #fff;
+    border: none; border-radius: 999px; padding: .3rem .9rem; cursor: pointer;
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="k">וובינר חשיפה · החלק של סיוון</div>
+    <h1>3 דקות: הליווי עם האפליקציה</h1>
+    <p>תסריט לדיבור + חמש שקופיות. ללחוץ "מצב הצגה" כדי להקרין — חצים להחלפת שקופית, Esc ליציאה.</p>
+  </div>
+</header>
+
+<div class="bar">
+  <button class="mode" onclick="present(true)">▶ מצב הצגה</button>
+  <b>סה״כ 3:00 · חמישה קטעים</b>
+</div>
+
+<div class="wrap">
+
+  <div class="warn">
+    <p><b>לפני שמתחילים — המשפט שמחזיק את כל שלוש הדקות:</b></p>
+    <p style="font-size:1.05rem;font-weight:800">
+      "האפליקציה לא מחליפה אותי. היא מה שקורה בין הפגישות."</p>
+    <p>אם נגמר הזמן באמצע — <b>זה המשפט שחייב להיאמר.</b> כל השאר הוא הרחבה שלו.</p>
+  </div>
+
+  <h2>התסריט</h2>
+
+  <div class="beat">
+    <div class="t"><span class="n">1 · הפתיחה שמסירה את החשש</span><span class="sec">0:00–0:35</span></div>
+    <p class="say">
+      "לפני שאני מספרת מה האפליקציה עושה, אני רוצה להגיד מה היא <b>לא</b>.
+      היא לא רובוט שמחליף אותי, והיא לא שאלון שבסופו מישהו אומר לכם מה לעשות.
+      <b>ההחלטה נשארת שלכם, והליווי נשאר אנושי.</b>
+      מה שהאפליקציה עושה זה את מה שקורה <b>בין</b> הפגישות איתי —
+      וזה בדיוק החלק שבו אנשים בדרך כלל נתקעים לבד."
+    </p>
+    <div class="note"><b>למה ככה:</b> החשש הראשון של מי ששומע "אפליקציה" הוא שיזרקו אותו למסך. להסיר אותו ראשון — אחרת הוא לא שומע כלום מכאן והלאה.</div>
+  </div>
+
+  <div class="beat">
+    <div class="t"><span class="n">2 · המבנה, במשפט</span><span class="sec">0:35–1:05</span></div>
+    <p class="say">
+      "התהליך הוא <b>שישה שלבים ושלוש פגישות איתי</b>. כל פגישה סוגרת שלב
+      ופותחת את הבא. ובין פגישה לפגישה — האפליקציה מכינה אתכם לבאה:
+      היא לא נותנת שיעורי בית, היא עושה את העבודה השחורה.
+      אתם מגיעים אליי עם תמונה, לא עם דף ריק."
+    </p>
+    <div class="note"><b>בוגרי טק-קריירה:</b> אצלם זה <b>חמישה שלבים ושתי פגישות</b> — בלי שלב הטעימות, כי כבר עשו הכשרה. להזכיר רק אם יש כאלה בקהל.</div>
+  </div>
+
+  <div class="beat">
+    <div class="t"><span class="n">3 · מה היא עושה בפועל — שלושה דברים</span><span class="sec">1:05–1:50</span></div>
+    <p class="say">
+      "שלושה דברים קונקרטיים.<br>
+      <b>אחד — היא נותנת לכם להתנסות לפני שמחליטים.</b> תשעה תחומים, וכל
+      אחד מהם אפשר לטעום בערך ארבעים דקות ולראות איך זה מרגיש. לא לקרוא
+      תיאור — <b>לעשות</b>.<br>
+      <b>שתיים — היא מראה את המסלולים עם מספרים אמיתיים:</b> כמה זמן,
+      כמה זה עולה, ומה צריך כדי להיכנס. כל מספר עם מקור — מה שלא אימתנו,
+      לא מופיע.<br>
+      <b>שלוש — היא מראה איפה לומדים את זה</b>, כולל מוסדות שמאפשרים ללמוד
+      לצד עבודה."
+    </p>
+    <div class="note"><b>אם יש זמן, דוגמה שתופסת:</b> "יש תואר שנכנסים אליו ברף נמוך יותר ממדעי המחשב, ו-75% מהבוגרים שלו עובדים בהייטק — הרבה אנשים בכלל לא יודעים שהוא קיים."</div>
+  </div>
+
+  <div class="beat">
+    <div class="t"><span class="n">4 · החשבון — הקטע הכי חזק</span><span class="sec">1:50–2:30</span></div>
+    <p class="say">
+      "והחלק שאני הכי אוהבת. השאלה הראשונה של כמעט כולם היא
+      <b>'כמה זה עולה לי'</b> — ובדרך כלל התשובה היא 'אל תדאג, יש מלגות'.
+      זו לא תשובה.<br>
+      באפליקציה יש מסך אחד שמראה <b>שכר לימוד, פחות המלגות שמגיעות לכם,
+      שווה למספר שנשאר</b>. עם התאריך האחרון להגשה של כל מלגה.
+      <b>לא הרגעה — מספר.</b><br>
+      ויש מלגות שמכסות שנה ראשונה שלמה. זה ההבדל בין 'אולי אי פעם'
+      לבין 'זה אפשרי, וזה מה שצריך לעשות עד מתי'."
+    </p>
+    <div class="note"><b>מה מותר לצטט:</b> שכר לימוד מפוקח ~12,200 ₪ לשנה במוסד מתוקצב. <b>אין לנקוב בסכום של מלגה ספציפית</b> — התנאים משתנים, וזה נושא לפגישה אישית.</div>
+  </div>
+
+  <div class="beat">
+    <div class="t"><span class="n">5 · הסגירה — אף אחד לא הולך לאיבוד</span><span class="sec">2:30–3:00</span></div>
+    <p class="say">
+      "ודבר אחרון, והוא אולי הכי חשוב.<br>
+      כשמישהו נתקע — <b>אני רואה את זה, בלי שהוא צריך לבקש עזרה.</b>
+      וזה מה שמחזיק אנשים בתהליך: לא כולם יודעים להרים טלפון ולהגיד
+      'אני לא מסתדר'.<br>
+      אז זה מה שאתם מקבלים: אפליקציה שעושה את העבודה,
+      <b>ובן אדם שרואה אתכם.</b> נתראה בפגישה הראשונה."
+    </p>
+    <div class="note"><b>לסיים בזה ולא בטכנולוגיה.</b> מה שנשאר בזיכרון מהוובינר הוא המשפט האחרון.</div>
+  </div>
+
+  <h2>שאלות שעלולות לעלות</h2>
+  <div class="beat">
+    <p class="say" style="font-size:.97rem">
+      <b>"זה עולה כסף?"</b> — הליווי לא. הלימודים תלויים במסלול, ובדיוק בשביל זה יש את שלב המלגות.<br><br>
+      <b>"כמה זמן זה לוקח?"</b> — הקצב שלכם. יש מי שעובר הכל בחודש ויש מי שלוקח שלושה.<br><br>
+      <b>"אני לא טכנולוגי, זה בשבילי?"</b> — בערך חצי מהתפקידים בהייטק לא כוללים כתיבת קוד. בדיוק בשביל זה יש את שלב ההתנסות — <b>לגלות במקום לנחש</b>.<br><br>
+      <b>"אין לי בגרות / פסיכומטרי"</b> — יש מסלולים לכל מצב, ויש אפיקים שעוקפים את הפסיכומטרי. <b>זו שיחה אישית, לא תשובה בוובינר.</b>
+    </p>
+  </div>
+
+  <div class="warn">
+    <p><b>שני דברים שלא להגיד:</b></p>
+    <p>❌ סכום של מלגה ספציפית — התנאים משתנים ומצטטים אותנו אחר כך.</p>
+    <p>❌ הבטחת תעסוקה. אנחנו מראים נתונים על בוגרים, לא מבטיחים מה יקרה לאדם הזה.</p>
+  </div>
+</div>
+
+<div id="deck">
+  <section class="slide on">
+    <div class="kick">הליווי עם האפליקציה</div>
+    <h3>האפליקציה לא מחליפה אותי.<br>היא מה שקורה בין הפגישות.</h3>
+  </section>
+
+  <section class="slide">
+    <div class="kick">המבנה</div>
+    <h3>שישה שלבים · שלוש פגישות</h3>
+    <p>כל פגישה סוגרת שלב ופותחת את הבא.<br>בין פגישה לפגישה — האפליקציה מכינה אתכם לבאה.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kick">מה היא עושה בפועל</div>
+    <h3>שלושה דברים</h3>
+    <div class="rows">
+      <div>① להתנסות בתשעה תחומים — לפני שמחליטים</div>
+      <div>② מסלולים עם מספרים אמיתיים, כל אחד עם מקור</div>
+      <div>③ איפה לומדים — כולל לצד עבודה</div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kick">השאלה הראשונה של כולם</div>
+    <h3>"כמה זה עולה לי?"</h3>
+    <div class="eq">
+      <span class="box">שכר לימוד</span><span>−</span>
+      <span class="box">מלגות</span><span>=</span>
+      <span class="box res">הפער</span>
+    </div>
+    <p style="margin-top:1.4rem">מספר, לא הרגעה. עם התאריך האחרון של כל מלגה.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kick">והדבר הכי חשוב</div>
+    <h3>כשנתקעים — אני רואה,<br>בלי שצריך לבקש.</h3>
+    <p style="margin-top:1.4rem">אפליקציה שעושה את העבודה,<br><b>ובן אדם שרואה אתכם.</b></p>
+  </section>
+
+  <div id="hud">
+    <button onclick="go(-1)">→ הקודם</button>
+    <span id="pos">1 / 5</span>
+    <button onclick="go(1)">הבא ←</button>
+    <button onclick="present(false)">יציאה (Esc)</button>
+  </div>
+</div>
+
+<script>
+  let i = 0;
+  const slides = () => document.querySelectorAll(".slide");
+  function show() {
+    slides().forEach((s, n) => s.classList.toggle("on", n === i));
+    document.getElementById("pos").textContent = (i + 1) + " / " + slides().length;
+  }
+  function go(d) { i = Math.min(Math.max(i + d, 0), slides().length - 1); show(); }
+  function present(on) {
+    document.body.classList.toggle("present", on);
+    if (on) { i = 0; show(); }
+  }
+  addEventListener("keydown", e => {
+    if (!document.body.classList.contains("present")) return;
+    /* RTL: חץ שמאלה מתקדם, ימינה חוזר — בהתאם לכיוון הקריאה */
+    if (e.key === "ArrowLeft" || e.key === " " || e.key === "PageDown") { go(1); e.preventDefault(); }
+    if (e.key === "ArrowRight" || e.key === "PageUp") { go(-1); e.preventDefault(); }
+    if (e.key === "Escape") present(false);
+  });
+</script>
