@@ -12,9 +12,10 @@
  * לרכזת הפעילה הראשונה.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { COORDINATOR_ROSTER, type CoordinatorProfile } from "@/data/coordinators";
+import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -27,39 +28,31 @@ export default function ProgramAdmin() {
   const [roster, setRoster] = useState<CoordinatorProfile[]>(COORDINATOR_ROSTER);
   const [assign, setAssign] = useState<Record<string, string>>({});
   const [people, setPeople] = useState<Person[]>([]);
-  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [toast, setToast] = useState("");
 
   useEffect(() => {
-    try {
-      setAssign(JSON.parse(localStorage.getItem(ASSIGN_KEY) ?? "{}"));
-      const savedCode = sessionStorage.getItem("coordinator-code");
-      if (savedCode) setCode(savedCode);
-    } catch { /* ignore */ }
+    try { setAssign(JSON.parse(localStorage.getItem(ASSIGN_KEY) ?? "{}")); } catch { /* ignore */ }
   }, []);
 
-  /* הסגל נטען מה-DB ברגע שיש קוד — עריכה נשמרת מיד, בלי JSON (נתי 23.8) */
-  async function loadRoster(c: string) {
+  /* הסגל נטען מה-DB — עריכה נשמרת מיד, בלי JSON (נתי 23.8) */
+  const loadRoster = useCallback(async () => {
     try {
-      const res = await fetch("/api/roster", { headers: { "x-coordinator-code": c } });
+      const headers = await coordinatorAuthHeaders();
+      const res = await fetch("/api/roster", { headers });
       if (res.ok) {
         const data = await res.json();
         if (data.roster?.length) setRoster(data.roster);
       }
     } catch { /* ignore */ }
-  }
+  }, []);
 
   const saveTimer = { current: null as ReturnType<typeof setTimeout> | null };
-  function persistRow(row: CoordinatorProfile) {
-    const c = sessionStorage.getItem("coordinator-code") ?? code;
-    fetch("/api/roster", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-coordinator-code": c },
-      body: JSON.stringify(row),
-    })
-      .then(r => { if (!r.ok) setErr("שמירת הרכזת נכשלה — בדוק/י את הקוד"); else setToast("נשמר ✓"); })
+  async function persistRow(row: CoordinatorProfile) {
+    const headers = { "content-type": "application/json", ...(await coordinatorAuthHeaders()) };
+    fetch("/api/roster", { method: "POST", headers, body: JSON.stringify(row) })
+      .then(r => { if (!r.ok) setErr("שמירת הרכזת נכשלה — ההזדהות עלולה לפוג, נסה/י לרענן"); else setToast("נשמר ✓"); })
       .then(() => setTimeout(() => setToast(""), 1500))
       .catch(() => setErr("אין חיבור לשרת — השינוי לא נשמר"));
   }
@@ -77,17 +70,13 @@ export default function ProgramAdmin() {
     setRoster([...roster, row]);
     persistRow(row);
   }
-  function setAssignment(personId: string, coordId: string) {
+  async function setAssignment(personId: string, coordId: string) {
     const next = { ...assign, [personId]: coordId };
     setAssign(next);
     localStorage.setItem(ASSIGN_KEY, JSON.stringify(next));
     // השיוך האמיתי — במסד, דרך צד השרת. אם המיגרציה טרם רצה נקבל הודעה ברורה
-    const c = sessionStorage.getItem("coordinator-code") ?? code;
-    fetch("/api/coordinator", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-coordinator-code": c },
-      body: JSON.stringify({ candidateId: personId, coordinatorId: coordId }),
-    })
+    const headers = { "content-type": "application/json", ...(await coordinatorAuthHeaders()) };
+    fetch("/api/coordinator", { method: "POST", headers, body: JSON.stringify({ candidateId: personId, coordinatorId: coordId }) })
       .then(async r => {
         if (!r.ok) {
           const j = await r.json().catch(() => null);
@@ -97,14 +86,14 @@ export default function ProgramAdmin() {
       .catch(() => setErr("השיוך נשמר מקומית בלבד — אין חיבור לשרת"));
   }
 
-  async function loadPeople() {
+  const loadPeople = useCallback(async () => {
     setLoading(true);
     setErr("");
     try {
-      const res = await fetch("/api/coordinator", { headers: { "x-coordinator-code": code } });
-      if (!res.ok) throw new Error(res.status === 401 ? "קוד שגוי" : `שגיאה ${res.status}`);
+      const headers = await coordinatorAuthHeaders();
+      const res = await fetch("/api/coordinator", { headers });
+      if (!res.ok) throw new Error(res.status === 401 ? "ההזדהות פגה — נסה/י לרענן" : `שגיאה ${res.status}`);
       const data = await res.json();
-      sessionStorage.setItem("coordinator-code", code);
       const all = [...(data.needsAttention ?? []), ...(data.quietList ?? [])];
       setPeople(all.map((q: { id: string; name: string; stage?: number; lastActive?: string | null }) => ({
         id: q.id, name: q.name || "ללא שם", stage: q.stage ?? 0, seenAt: (q as unknown as { lastActive?: string | null }).lastActive ?? null,
@@ -115,14 +104,17 @@ export default function ProgramAdmin() {
         if (q.coordinatorId) fromDb[q.id] = q.coordinatorId;
       }
       if (Object.keys(fromDb).length) setAssign(prev => ({ ...prev, ...fromDb }));
-      loadRoster(code);
+      loadRoster();
       if (!all.length) setErr("החיבור עבד אבל אין עדיין נתוני משתתפים בתשובה");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "שגיאה");
     } finally {
       setLoading(false);
     }
-  }
+  }, [loadRoster]);
+
+  // השער עבר ל-AdminGate ברמת ה-layout (7.9) — טוענים אוטומטית, בלי כפתור קוד
+  useEffect(() => { loadPeople(); }, [loadPeople]);
 
   const nameOf = (id: string) => roster.find(c => c.id === id)?.name || "—";
 
@@ -230,24 +222,13 @@ export default function ProgramAdmin() {
           {people.length === 0 ? (
             <div className="rounded-2xl p-5 flex flex-col gap-3" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.1)" }}>
               <div className="text-[13px]" style={{ color: "rgba(0,0,0,0.55)" }}>
-                המשתתפים נמשכים מאותו חיבור של מסך הרכזת — אותו קוד גישה.
+                {loading ? "טוען משתתפים…" : err || "אין עדיין נתוני משתתפים"}
               </div>
-              <div className="flex gap-2">
-                <input
-                  value={code}
-                  onChange={e => setCode(e.target.value)}
-                  placeholder="קוד גישה"
-                  type="password"
-                  className="flex-1 px-3 py-2.5 rounded-xl text-[13px]"
-                  style={{ border: "1px solid rgba(0,0,0,0.15)", direction: "ltr" }}
-                />
-                <button onClick={loadPeople} disabled={loading || !code}
-                  className="px-5 py-2.5 rounded-xl text-white text-[13px] font-black"
-                  style={{ background: loading || !code ? "rgba(0,0,0,0.2)" : NAVY }}>
-                  {loading ? "טוען…" : "טעינה"}
+              {!loading && (
+                <button onClick={() => loadPeople()} className="self-start px-4 py-2 rounded-xl text-white text-[13px] font-black" style={{ background: NAVY }}>
+                  נסה/י שוב
                 </button>
-              </div>
-              {err && <div className="text-[12px] font-bold" style={{ color: "#b91c1c" }}>{err}</div>}
+              )}
             </div>
           ) : (
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.1)" }}>

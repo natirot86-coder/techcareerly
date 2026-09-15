@@ -7,15 +7,20 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const code = process.env.COORDINATOR_CODE;
-  if (!code) return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
-  if (req.headers.get("x-coordinator-code") !== code && req.nextUrl.searchParams.get("code") !== code) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  /*
+   * הקישור נפתח כ-<a href> רגיל ולא יכול לשאת Authorization header —
+   * לכן כניסה אישית (OTP) עדיין לא נתמכת כאן, רק ?code= הישן
+   * (verifyCoordinator בודק אותו כחלק מהגיבוי המשותף). הצעד הבא: להפוך
+   * את הקישור להורדה דרך fetch כדי שגם טוקן אישי יעבוד.
+   */
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const candidateId = req.nextUrl.searchParams.get("candidate");
   if (!candidateId) return NextResponse.json({ error: "candidate required" }, { status: 400 });
 

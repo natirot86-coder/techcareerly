@@ -14,7 +14,6 @@ import Link from "next/link";
 import { COURSES, courseState, STATE_LABEL, type Course, type CourseState } from "@/data/courses";
 import { INSTITUTIONS } from "@/data/institutions";
 import { FUNDING } from "@/data/scholarships";
-import AdminGate from "@/components/AdminGate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -43,7 +42,7 @@ const FIELDS: { key: keyof Course; label: string; long?: boolean }[] = [
   { key: "verified", label: "אומת לאחרונה (YYYY-MM-DD)" },
 ];
 
-function AdminCoursesPage() {
+export default function AdminCoursesPage() {
   const [items, setItems] = useState<Course[]>(COURSES);
   const [openId, setOpenId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -210,9 +209,4 @@ function AdminCoursesPage() {
       )}
     </div>
   );
-}
-
-/** הלוח עטוף בשער הניהול — קוד אחד לכל הלוחות, נבדק מול השרת */
-export default function GatedPage() {
-  return <AdminGate><AdminCoursesPage /></AdminGate>;
 }

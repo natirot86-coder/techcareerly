@@ -1,20 +1,19 @@
 /**
  * GET/POST /api/roster — סגל הרכזות מה-DB (נתי 23.8: בלי JSON, צוות לא-טכני).
  *
- * אותו שער גישה כמו מסך הרכזת (COORDINATOR_CODE). הקריאה והכתיבה בצד שרת
- * עם המפתח הסודי; המועמדים קוראים רכזות פעילות ישירות דרך RLS.
+ * שער גישה: verifyCoordinator (7.9) — קוד חירום משותף, או זהות אישית
+ * מ-OTP. הקריאה והכתיבה בצד שרת עם המפתח הסודי; המועמדים קוראים רכזות
+ * פעילות ישירות דרך RLS.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
 export const dynamic = "force-dynamic";
 
-function gate(req: NextRequest) {
-  const code = process.env.COORDINATOR_CODE;
-  if (!code) return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
-  if (req.headers.get("x-coordinator-code") !== code) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+async function gate(req: NextRequest) {
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
   return null;
 }
 
@@ -26,7 +25,7 @@ function db() {
 }
 
 export async function GET(req: NextRequest) {
-  const blocked = gate(req);
+  const blocked = await gate(req);
   if (blocked) return blocked;
   const client = db();
   if (!client) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
@@ -36,7 +35,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const blocked = gate(req);
+  const blocked = await gate(req);
   if (blocked) return blocked;
   const client = db();
   if (!client) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });

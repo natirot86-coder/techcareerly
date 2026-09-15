@@ -8,6 +8,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +23,8 @@ export async function GET(req: NextRequest) {
   const client = db();
   if (!client) return NextResponse.json({ events: [] });
 
-  // ?all=1 (עם קוד) — גם אירועים שעברו, לתחזוקה בלוח הניהול
-  const wantAll = req.nextUrl.searchParams.get("all") === "1"
-    && req.headers.get("x-coordinator-code") === process.env.COORDINATOR_CODE;
+  // ?all=1 (עם הזדהות רכזת) — גם אירועים שעברו, לתחזוקה בלוח הניהול
+  const wantAll = req.nextUrl.searchParams.get("all") === "1" && (await verifyCoordinator(req)).ok;
 
   let q = client.from("events").select("*").eq("active", true).order("starts_at");
   if (!wantAll) q = q.gte("starts_at", new Date().toISOString());
@@ -35,11 +35,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const code = process.env.COORDINATOR_CODE;
-  if (!code) return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
-  if (req.headers.get("x-coordinator-code") !== code) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const client = db();
   if (!client) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
 

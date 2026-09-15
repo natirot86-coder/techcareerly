@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { FUNDING } from "@/data/scholarships";
 import Link from "next/link";
+import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -568,10 +569,13 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
             </div>
           ))}
         </div>
-        {/* האסמכתא למשרד העבודה — קישור חתום מצד השרת, כי הקובץ בתיקייה אישית */}
+        {/* האסמכתא למשרד העבודה — קישור חתום מצד השרת, כי הקובץ בתיקייה אישית.
+            קישור <a> רגיל לא יכול לשאת Authorization header, ולכן זו הסיבה
+            שה-?code= ממשיך לעבוד רק עם הגיבוי הישן — כניסה אישית דורשת
+            שקוד הגיבוי יהיה מוזן גם הוא, עד שהקישור הזה יהפוך להורדה דרך fetch */}
         {p.timeline.some(e => e.name === "enrollment_doc_uploaded") && (
           <a
-            href={`/api/enrollment-doc?candidate=${encodeURIComponent(p.id)}&code=${encodeURIComponent(typeof window !== "undefined" ? sessionStorage.getItem("coordinator-code") ?? "" : "")}`}
+            href={`/api/enrollment-doc?candidate=${encodeURIComponent(p.id)}&code=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("coordinator-code") ?? "" : "")}`}
             target="_blank" rel="noopener noreferrer"
             style={{
               display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14,
@@ -833,8 +837,6 @@ function Checklist({ items }: { items: { label: string; done: boolean; detail?: 
 }
 
 export default function CoordinatorPage() {
-  const [code, setCode] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
   const [data, setData] = useState<{
     needsAttention: Person[]; quiet: number; quietList?: Person[]; total: number; generatedAt: string;
     unmatchedBookings?: { id: number; title: string; start_time: string; attendee_name: string; attendee_phone: string }[];
@@ -847,13 +849,13 @@ export default function CoordinatorPage() {
   const [journeyFor, setJourneyFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { setCode(localStorage.getItem("coordinator-code")); }, []);
-
-  const load = useCallback(async (c: string) => {
+  // השער עבר ל-AdminGate ברמת ה-layout (7.9) — הגעה לכאן כבר אומרת שהזדהינו
+  const load = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const r = await fetch("/api/coordinator", { headers: { "x-coordinator-code": c } });
-      if (r.status === 401) { setError("קוד שגוי"); localStorage.removeItem("coordinator-code"); setCode(null); return; }
+      const headers = await coordinatorAuthHeaders();
+      const r = await fetch("/api/coordinator", { headers });
+      if (r.status === 401) { setError("ההזדהות פגה — רענון הדף אמור לפתור"); return; }
       if (r.status === 503) { setError((await r.json()).error); return; }
       if (!r.ok) {
         const body = await r.json().catch(() => null);
@@ -865,33 +867,7 @@ export default function CoordinatorPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { if (code) load(code); }, [code, load]);
-
-  if (!code) {
-    return (
-      <div dir="rtl" style={{ minHeight: "100vh", background: "#f5f3ef", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <div style={{ maxWidth: 360, width: "100%", background: "#fff", borderRadius: 18, padding: 26, border: "1px solid rgba(0,0,0,0.08)" }}>
-          <div style={{ fontSize: 20, ...HEEBO, color: NAVY }}>מסך הרכזת</div>
-          <p style={{ fontSize: 13, color: "rgba(0,0,0,0.5)", lineHeight: 1.7, marginTop: 8 }}>
-            המסך מציג נתונים אישיים של מועמדים, ולכן דורש קוד גישה.
-          </p>
-          <input
-            type="password" value={draft} onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && draft) { localStorage.setItem("coordinator-code", draft); setCode(draft); } }}
-            placeholder="קוד רכזת"
-            style={{ width: "100%", marginTop: 14, padding: "11px 13px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.15)", fontSize: 15 }}
-          />
-          <button
-            onClick={() => { if (draft) { localStorage.setItem("coordinator-code", draft); setCode(draft); } }}
-            style={{ width: "100%", marginTop: 10, padding: 12, borderRadius: 10, border: "none", background: NAVY, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
-          >
-            כניסה
-          </button>
-          {error && <div style={{ marginTop: 10, fontSize: 12.5, color: "#b91c1c" }}>{error}</div>}
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => { load(); }, [load]);
 
   return (
     <div dir="rtl" style={{ minHeight: "100vh", background: "#f5f3ef" }}>
@@ -1119,7 +1095,7 @@ export default function CoordinatorPage() {
         })()}
 
         {data && (
-          <button onClick={() => load(code)} style={{ marginTop: 8, fontSize: 12.5, fontWeight: 700, padding: "8px 16px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.14)", background: "#fff", color: NAVY, cursor: "pointer" }}>
+          <button onClick={() => load()} style={{ marginTop: 8, fontSize: 12.5, fontWeight: 700, padding: "8px 16px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.14)", background: "#fff", color: NAVY, cursor: "pointer" }}>
             רענון
           </button>
         )}

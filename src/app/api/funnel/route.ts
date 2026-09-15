@@ -18,6 +18,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -43,11 +44,8 @@ function peopleWith(events: Ev[], name: string): number {
 }
 
 export async function GET(req: NextRequest) {
-  const code = process.env.COORDINATOR_CODE;
-  if (!code) return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
-  if (req.headers.get("x-coordinator-code") !== code) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secret = process.env.SUPABASE_SECRET_KEY;

@@ -7,11 +7,14 @@
  * כוכב הצפון של המסך: "מי צריך אותי היום" — תור חילוץ, לא CRM. לכן ה-API
  * מחזיר סיגנלים ממוינים לפי דחיפות, וכל סיגנל נושא את הסיבה שלו במילים.
  *
- * שער גישה: COORDINATOR_CODE ב-env. לא מערכת הרשאות אמיתית — שכבת הגנה
- * מינימלית עד שיהיה Auth לרכזות. בלי הקוד ב-env — המסלול נעול לגמרי.
+ * שער גישה: verifyCoordinator (7.9) — קוד חירום משותף, או זהות אישית
+ * מ-OTP. כשידועה זהות אישית, הרשימה מסוננת ל"שלי" — מועמד/ת ששויכו
+ * לרכזת אחרת מוסתרים, אבל מי שעוד לא שויך/ה לאף אחד/ת נשאר/ת גלוי/ה
+ * לכולם (אחרת שיוך חסר = מועמד/ת שנעלם/ת בלי שאיש רואה).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +25,8 @@ type Signal = {
 };
 
 export async function GET(req: NextRequest) {
-  const code = process.env.COORDINATOR_CODE;
-  if (!code) {
-    return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
-  }
-  if (req.headers.get("x-coordinator-code") !== code) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secret = process.env.SUPABASE_SECRET_KEY;
@@ -78,7 +76,12 @@ export async function GET(req: NextRequest) {
 
   let skipped = 0;
 
-  const queue = (candidates.data ?? []).flatMap(c => {
+  // כניסה אישית (7.9) — "מי צריך אותי" מסונן לשלי + מי שעוד לא שויך לאף אחת
+  const myCandidates = auth.coordinatorId
+    ? (candidates.data ?? []).filter(c => !c.coordinator_id || c.coordinator_id === auth.coordinatorId)
+    : (candidates.data ?? []);
+
+  const queue = myCandidates.flatMap(c => {
    try {
     const signals: Signal[] = [];
     const myEvents = (events.data ?? []).filter(e => e.candidate_id === c.id);
@@ -267,11 +270,9 @@ export async function GET(req: NextRequest) {
  * רצה, מוחזרת שגיאה מפורשת במקום כישלון שקט.
  */
 export async function POST(req: NextRequest) {
-  const code = process.env.COORDINATOR_CODE;
-  if (!code) return NextResponse.json({ error: "COORDINATOR_CODE not configured" }, { status: 503 });
-  if (req.headers.get("x-coordinator-code") !== code) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!url || !secret) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });

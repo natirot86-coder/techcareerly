@@ -17,7 +17,6 @@ import Link from "next/link";
 import { DEGREES, ENTRY_LABEL, type Degree } from "@/data/degrees";
 import { INSTITUTIONS, DOMAIN_LABEL, type Domain } from "@/data/institutions";
 import { FUNDING } from "@/data/scholarships";
-import AdminGate from "@/components/AdminGate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -26,7 +25,7 @@ const STORE_KEY = "admin-degrees-draft";
 
 const DOMAINS: Domain[] = ["data", "code", "cyber", "networks", "hardware", "ai", "ux", "marketing", "qa"];
 
-function AdminDegreesPage() {
+export default function AdminDegreesPage() {
   const [items, setItems] = useState<Degree[]>(DEGREES);
   const [activeDomain, setActiveDomain] = useState<Domain>("data");
   const [view, setView] = useState<"map3" | "matrix" | "list">("map3");
@@ -650,8 +649,4 @@ function CoverageMatrix({ degrees }: { degrees: Degree[] }) {
       </div>
     </div>
   );
-}
-
-export default function GatedPage() {
-  return <AdminGate><AdminDegreesPage /></AdminGate>;
 }

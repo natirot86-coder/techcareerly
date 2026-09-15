@@ -1,23 +1,17 @@
 /**
- * GET /api/admin-auth — אימות קוד הניהול מול השרת.
+ * GET /api/admin-auth — אימות הכניסה לאזור הניהול.
  *
- * לוחות הניהול הם דפים סטטיים, ולכן סיסמה בצד לקוח הייתה קישוט — כל אחד
- * יכול לקרוא אותה מהקוד. כאן הקוד נבדק מול COORDINATOR_CODE שחי רק ב-env,
- * והדפדפן מקבל רק כן/לא.
- *
- * גילוי נאות של מודל האיום: נתוני המוסדות עצמם נמצאים ב-bundle של האתר
- * בכל מקרה (הם מוצגים למועמדים). השער מגן על **ממשקי העריכה והאישור**
- * מפני גישה מזדמנת — לא מפני מהנדס נחוש. Auth אמיתי לרכזות — בהמשך.
+ * שתי דרכים (src/lib/serverCoordinatorAuth.ts): קוד חירום משותף
+ * (x-coordinator-code, כמו קודם), או טוקן Supabase מכניסת OTP שמותאם
+ * לטלפון פעיל בטבלת coordinators. הדרך השנייה מחזירה גם מי בדיוק נכנס/ה.
  */
 import { NextRequest, NextResponse } from "next/server";
+import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const code = process.env.COORDINATOR_CODE;
-  if (!code) return NextResponse.json({ error: "not-configured" }, { status: 503 });
-  if (req.headers.get("x-coordinator-code") !== code) {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
-  return NextResponse.json({ ok: true });
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  return NextResponse.json({ ok: true, coordinatorId: auth.coordinatorId, name: auth.name });
 }

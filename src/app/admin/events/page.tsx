@@ -11,9 +11,10 @@
  * ריק = אירוע כללי לכולם; מלא = מודגש למי שבחר את המוסד הזה.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { INSTITUTIONS } from "@/data/institutions";
+import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -38,45 +39,39 @@ function toInput(iso: string): string {
 const toIso = (v: string) => (v ? new Date(v).toISOString() : "");
 
 export default function EventsAdmin() {
-  const [code, setCode] = useState("");
   const [events, setEvents] = useState<Ev[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState("");
   const [toast, setToast] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem("coordinator-code");
-      if (saved) { setCode(saved); load(saved); }
-    } catch { /* ignore */ }
-  }, []);
-
-  async function load(c: string) {
+  // השער עבר ל-AdminGate ברמת ה-layout (7.9) — טוענים אוטומטית, בלי כפתור קוד
+  const load = useCallback(async () => {
     setErr("");
     try {
-      const res = await fetch("/api/events?all=1", { headers: { "x-coordinator-code": c } });
-      if (!res.ok) throw new Error("קוד שגוי");
+      const headers = await coordinatorAuthHeaders();
+      const res = await fetch("/api/events?all=1", { headers });
+      if (!res.ok) throw new Error("ההזדהות פגה — נסה/י לרענן");
       const data = await res.json();
-      sessionStorage.setItem("coordinator-code", c);
       setEvents(data.events ?? []);
       setLoaded(true);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "שגיאה");
     }
-  }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   function persist(row: Ev) {
-    fetch("/api/events", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-coordinator-code": code },
-      body: JSON.stringify(row),
-    })
-      .then(r => {
-        if (!r.ok) setErr("השמירה נכשלה — בדוק/י את הקוד");
-        else { setToast("נשמר ✓"); setTimeout(() => setToast(""), 1500); }
-      })
-      .catch(() => setErr("אין חיבור לשרת — השינוי לא נשמר"));
+    (async () => {
+      const headers = { "content-type": "application/json", ...(await coordinatorAuthHeaders()) };
+      fetch("/api/events", { method: "POST", headers, body: JSON.stringify(row) })
+        .then(r => {
+          if (!r.ok) setErr("השמירה נכשלה — ההזדהות עלולה לפוג, נסה/י לרענן");
+          else { setToast("נשמר ✓"); setTimeout(() => setToast(""), 1500); }
+        })
+        .catch(() => setErr("אין חיבור לשרת — השינוי לא נשמר"));
+    })();
   }
 
   function update(id: string, key: keyof Ev, value: string | boolean) {
@@ -100,18 +95,13 @@ export default function EventsAdmin() {
         <div className="w-full max-w-[380px] rounded-2xl p-6" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}>
           <div className="text-[18px] font-black mb-1" style={{ color: NAVY }}>לוח האירועים</div>
           <p className="text-[13px] mb-4" style={{ color: "rgba(0,0,0,0.5)" }}>
-            ימים פתוחים, פאנלים וירידי לימודים. אותו קוד גישה של מסך הרכזת.
+            {err || "טוען…"}
           </p>
-          <input
-            type="password" value={code} onChange={e => setCode(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && load(code)}
-            className="w-full px-3 py-2.5 rounded-xl text-[14px] mb-3"
-            style={{ border: "1px solid rgba(0,0,0,0.12)" }}
-          />
-          <button onClick={() => load(code)} className="w-full py-2.5 rounded-xl text-[14px] font-black text-white" style={{ background: NAVY }}>
-            כניסה
-          </button>
-          {err && <div className="text-[12.5px] mt-3 font-bold" style={{ color: "#b91c1c" }}>{err}</div>}
+          {err && (
+            <button onClick={() => load()} className="w-full py-2.5 rounded-xl text-[14px] font-black text-white" style={{ background: NAVY }}>
+              נסה/י שוב
+            </button>
+          )}
         </div>
       </div>
     );

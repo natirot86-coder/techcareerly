@@ -19,9 +19,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { JOURNEY_STAGES } from "@/components/ui/JourneyStrip";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
-import AdminGate from "@/components/AdminGate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -86,7 +86,7 @@ const SCCT_Q: Record<string, string> = {
 };
 const SCCT_ORDER = ["interest_scale", "interest_open", "efficacy_scale", "efficacy_open", "outcome_scale", "outcome_open"];
 
-function AdminAnalyticsPage() {
+export default function AdminAnalyticsPage() {
   const [f, setF] = useState<Funnels | null>(null);
   const [s, setS] = useState<Stats | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -109,10 +109,10 @@ function AdminAnalyticsPage() {
 
   useEffect(() => {
     (async () => {
-      // הצבירה של האירועים החדשים — אותו קוד גישה של שאר לוחות הניהול
-      const code = localStorage.getItem("coordinator-code");
-      if (!code) return;
-      const r = await fetch(`/api/funnel?cohort=${cohort}`, { headers: { "x-coordinator-code": code } });
+      // הצבירה של האירועים החדשים — אותו שער כניסה של שאר לוחות הניהול
+      const headers = await coordinatorAuthHeaders();
+      if (!Object.keys(headers).length) return;
+      const r = await fetch(`/api/funnel?cohort=${cohort}`, { headers });
       if (r.ok) setF(await r.json());
     })();
   }, [cohort]);
@@ -723,9 +723,4 @@ function Hours({ data, live }: { data: Record<string, number>; live: boolean }) 
       </div>
     </div>
   );
-}
-
-/** הלוח עטוף בשער הניהול — קוד אחד לכל הלוחות, נבדק מול השרת */
-export default function GatedPage() {
-  return <AdminGate><AdminAnalyticsPage /></AdminGate>;
 }
