@@ -126,7 +126,15 @@ function toContract(a: Record<string, string>, chips: string[]) {
   return { time, budget, location, education, has: chips.filter(c => c !== "none").join(",") };
 }
 
-export default function AlumniIntake({ onDone }: { onDone: () => void }) {
+/**
+ * `preview` = צפייה בלבד (?demo=1&cohort=alumni), לסקירה של נתי, ישראל וסיוון.
+ *
+ * ⚠️ בלי הדגל הזה, מי שעובר את השאלון בתצוגה מקדימה **היה כותב באמת** —
+ * localStorage, תשובות ל-Supabase ואירועים לטבלת האנליטיקות. כלומר כל אחד
+ * שנשלח לו הקישור כדי "להסתכל" היה נספר כמועמד, ומזהם בדיוק את הפילוח
+ * שבנינו כדי שהפיילוט לא ישקר במספרים.
+ */
+export default function AlumniIntake({ onDone, preview }: { onDone: () => void; preview?: boolean }) {
   const [i, setI] = useState(0);
   const [ans, setAns] = useState<Record<string, string>>({});
   const [chips, setChips] = useState<string[]>([]);
@@ -143,13 +151,15 @@ export default function AlumniIntake({ onDone }: { onDone: () => void }) {
     }
     const next = { ...ans, [q.key]: optId };
     setAns(next);
-    logEvent("alumni_intake_step", { q: q.key, answer: optId });
+    if (!preview) logEvent("alumni_intake_step", { q: q.key, answer: optId });
     if (i + 1 < QUESTIONS.length) setI(i + 1);
     else finish(next, chips);
   }
 
   function finish(a: Record<string, string>, c: string[]) {
     const contract = toContract(a, c);
+    /* בצפייה — רואים את המסכים הבאים, ולא נשאר שום עקבות */
+    if (preview) { onDone(); return; }
     try {
       /* החוזה — מה ששלב 5 וכל שאר המסכים קוראים */
       localStorage.setItem("paths-quiz", JSON.stringify(contract));
@@ -221,7 +231,7 @@ export default function AlumniIntake({ onDone }: { onDone: () => void }) {
           onClick={() => {
             const next = { ...ans, edu: chips.join(",") };
             setAns(next);
-            logEvent("alumni_intake_step", { q: "edu", answer: chips.join(",") || "none" });
+            if (!preview) logEvent("alumni_intake_step", { q: "edu", answer: chips.join(",") || "none" });
             if (i + 1 < QUESTIONS.length) setI(i + 1); else finish(next, chips);
           }}
           className="w-full mt-5 py-4 rounded-2xl text-white text-[15px] font-black"
