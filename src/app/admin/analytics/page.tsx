@@ -17,7 +17,6 @@
  */
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { JOURNEY_STAGES } from "@/components/ui/JourneyStrip";
@@ -29,6 +28,8 @@ const ORANGE = "#fb8500";
 const GREEN = "#059669";
 const RED = "#dc2626";
 const MUTED = "rgba(0,0,0,0.1)";
+/** רוחב תוכן העמוד (16.9) — הורחב מ-900 כדי לאפשר גריד שתי עמודות בדסקטופ */
+const MAXW = 1160;
 
 type Stats = {
   candidates: number; onboarded: number; returning: number; at_risk: number;
@@ -121,24 +122,30 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div dir="rtl" style={{ minHeight: "100vh", background: "#f5f3ef" }}>
-      <div style={{ background: NAVY, color: "#fff", padding: "22px 24px" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <Link href="/map" style={{ fontSize: 12, opacity: 0.6, fontWeight: 700 }}>← למפת האפליקציה</Link>
-          <div style={{ fontSize: 26, marginTop: 8, ...HEEBO }}>מה קורה באפליקציה</div>
-          <div style={{ fontSize: 12.5, marginTop: 5, opacity: 0.7 }}>
+      {/*
+        הכותרת העצמאית הישנה (עם "← למפת האפליקציה" ופילי ניווט) הוסרה 16.9:
+        מאז שהסיידבר המשותף (AdminSidebar) עוטף את כל מסכי הניהול, אותם
+        קישורים בדיוק כבר יושבים שם — כפילות ניווט בלי תוספת מידע.
+      */}
+      <div style={{ background: NAVY, color: "#fff", padding: "20px 24px" }}>
+        <div style={{ maxWidth: MAXW, margin: "0 auto" }}>
+          <div style={{ fontSize: 24, ...HEEBO }}>מה קורה באפליקציה</div>
+          <div style={{ fontSize: 12.5, marginTop: 4, opacity: 0.7 }}>
             {loading ? "טוען…" : live
               ? `עודכן ${new Date(s!.generated_at).toLocaleString("he-IL")}`
               : "ממתין לחיבור הבקאנד — כל גרף מציג את השלד שלו"}
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-            {[["/admin/institutions", "מוסדות"], ["/admin/scholarships", "מלגות"]].map(([h, l]) => (
-              <Link key={h} href={h} style={{ fontSize: 12, fontWeight: 700, padding: "5px 11px", borderRadius: 8, background: "rgba(255,255,255,0.14)", color: "#fff" }}>{l}</Link>
-            ))}
-          </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "18px 24px 60px" }}>
+      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "18px 24px 60px" }}>
+        {/*
+          רצועת KPI (16.9) — התשובה המיידית לפני שגוללים לכרטיסים. ארבעה
+          מספרים בלבד, כל אחד כבר מחושב ב-admin_stats() בלי צורך במיגרציה
+          חדשה. הכוונה: מי שנכנס לרגע אחד מקבל תמונת מצב, לא רק מי שקורא הכל.
+        */}
+        <KpiStrip s={s} live={live} />
+
         {/*
           בורר קוהורט — מופיע רק כשבאמת יש יותר מאחד. כל עוד הפיילוט
           לא התחיל, המסך נראה בדיוק כמו קודם — ולא מוסיף פקד שאין לו משמעות.
@@ -192,7 +199,10 @@ export default function AdminAnalyticsPage() {
         </Banner>
 
         {/* ── כוכב הצפון ─────────────────────────────────────────────── */}
+        <Divider>סקירה כללית</Divider>
+        <Grid>
         <Card
+          full
           title="פאנל הפגישות"
           q="מתוך מי שהתקין את האפליקציה — כמה מגיעים לכל פגישה?"
           why="האפליקציה לא רושמת אף אחד. היא מביאה אותו מוכן לפגישה, והרכזת סוגרת. זה המספר החשוב ביותר במערכת, וכל השאר במעלה הזרם ממנו."
@@ -242,10 +252,11 @@ export default function AdminAnalyticsPage() {
             label: `${st.n}. ${st.short}`, n: s?.by_stage[String(st.n)] ?? 0,
           }))} />
         </Card>
+        </Grid>
 
         {/* ── שלב 3 ──────────────────────────────────────────────────── */}
         <Divider>שלב 3 · חשיפה</Divider>
-
+        <Grid>
         <Card
           title="מטריצת עניין מול מסוגלות"
           q="כמה אנשים מתעניינים בתחום אבל לא מאמינים שהם מסוגלים?"
@@ -280,6 +291,7 @@ export default function AdminAnalyticsPage() {
         </Card>
 
         <Card
+          full
           title="באיזה צעד נוטשים — בתוך הסימולציה"
           q="איזה תרגיל מאבד אנשים?"
           why="נטישה אף פעם לא נרשמת: אין בנייד אירוע 'יצא'. היא מוסקת — הגיע לצעד N ולא ל-N+1. לכל צעד רשום גם המושג שנלמד בו, כי 'צעד 4' לא אומר לך מה לתקן ו'מהו JOIN' כן."
@@ -327,6 +339,7 @@ export default function AdminAnalyticsPage() {
         </Card>
 
         <Card
+          full
           title="משפך תיאום הפגישה"
           q="כמה מהמגיעים ליומן באמת קובעים?"
           why="עד 17.8 נרשמה רק ההצלחה, ולכן מי שהגיע ליומן ויצא פשוט לא היה קיים. 'היומן נפל' מופרד בכוונה: בחיבור איטי המסך נראה שבור, המועמד לא ידווח על זה לאף אחד, והוא נספר כמי שלא רצה."
@@ -350,10 +363,11 @@ export default function AdminAnalyticsPage() {
             </>
           )}
         </Card>
+        </Grid>
 
         {/* ── שלב 4 ──────────────────────────────────────────────────── */}
         <Divider>שלב 4 · מסלול לימודים</Divider>
-
+        <Grid>
         <Card
           title="התפלגות ההמלצות"
           q="מנוע ההמלצה מתנהג כמו שתכננו, על הקהל האמיתי?"
@@ -415,11 +429,13 @@ export default function AdminAnalyticsPage() {
             label: `${i + 1}. ${label}`, n: s?.quiz_reach[String(i + 1)] ?? 0,
           }))} />
         </Card>
+        </Grid>
 
         {/* ── שלב 5 ──────────────────────────────────────────────────── */}
         <Divider>שלב 5 · לוגיסטיקה ומלגות</Divider>
-
+        <Grid>
         <Card
+          full
           title="דדליינים שהוחמצו"
           q="מישהו פספס מלגה בגלל שלא הצליח להתחיל?"
           why="זה אות הפחד, נמדד בהתנהגות ובלי שאלה אחת. משימה שעברה את התאריך ונשארה פתוחה היא לא עצלות — היא משהו שנתקע, ולמלגה יש תאריך שלא חוזר."
@@ -436,10 +452,11 @@ export default function AdminAnalyticsPage() {
             <Big label="נסגרו" n={s?.plan_done ?? 0} tone={GREEN} live={live} />
           </Row>
         </Card>
+        </Grid>
 
         {/* ── תפעול ──────────────────────────────────────────────────── */}
         <Divider>תפעול</Divider>
-
+        <Grid>
         <Card
           title="שעות שימוש"
           q="מתי רכזות צריכות להיות זמינות?"
@@ -464,7 +481,51 @@ export default function AdminAnalyticsPage() {
           <Bars live={live} skeletonRows={4} data={Object.entries(s?.events_7d ?? {})
             .sort((a, b) => b[1] - a[1]).map(([label, n]) => ({ label, n }))} />
         </Card>
+        </Grid>
       </div>
+    </div>
+  );
+}
+
+/**
+ * רצועת KPI (16.9) — התשובה של שלוש שניות, לפני שגוללים לכרטיסים.
+ * ארבעה מספרים בלבד ומכוונים: לא "נחמד לדעת" אלא מה שקובע אם היום דחוף.
+ * כולם כבר בתוך admin_stats() — אין תלות בשום מיגרציה חדשה.
+ */
+function KpiStrip({ s, live }: { s: Stats | null; live: boolean }) {
+  const candidates = s?.candidates ?? 0;
+  const m1 = s?.meetings?.m1 ?? 0;
+  const m1Pct = live && candidates > 0 ? Math.round((m1 / candidates) * 100) : null;
+  const tiles = [
+    { label: "מועמדים באפליקציה", value: live ? candidates : null, tone: NAVY },
+    { label: "המרה לפגישה 1", value: m1Pct !== null ? `${m1Pct}%` : null, tone: NAVY },
+    { label: "לא נכנסו 72 שעות", value: live ? (s?.at_risk ?? 0) : null, tone: RED },
+    { label: "עניין גבוה, מסוגלות נמוכה", value: live ? (s?.interest_gap ?? 0) : null, tone: ORANGE },
+  ];
+  return (
+    <div style={{
+      display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10,
+      background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 16, padding: 16, marginBottom: 16,
+    }}>
+      {tiles.map(t => (
+        <div key={t.label} style={{ textAlign: "center", padding: "6px 4px" }}>
+          <div style={{ fontSize: 30, ...HEEBO, color: t.value !== null ? t.tone : "rgba(0,0,0,0.16)" }}>
+            {t.value ?? "—"}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(0,0,0,0.5)", marginTop: 3, lineHeight: 1.4 }}>
+            {t.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** גריד שתי עמודות בדסקטופ — כרטיסי הכרעה (funnel) מבקשים full כדי לא להצטופף */
+function Grid({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 12, alignItems: "start" }}>
+      {children}
     </div>
   );
 }
@@ -472,14 +533,16 @@ export default function AdminAnalyticsPage() {
 // ─── כרטיס ────────────────────────────────────────────────────────────────────
 
 function Card({
-  title, q, why, threshold, thresholdText, needs, live, children,
+  title, q, why, threshold, thresholdText, needs, live, children, full,
 }: {
   title: string; q: string; why: string;
   threshold: "hard" | "none"; thresholdText: string;
   needs: string; live: boolean; children: React.ReactNode;
+  /** תופס את שתי עמודות הגריד — לכרטיסים עם funnel שצריך רוחב לרדת בו */
+  full?: boolean;
 }) {
   return (
-    <div style={{ background: "#fff", borderRadius: 16, border: "1px solid rgba(0,0,0,0.08)", padding: 18, marginBottom: 12 }}>
+    <div style={{ background: "#fff", borderRadius: 16, border: "1px solid rgba(0,0,0,0.08)", padding: 18, gridColumn: full ? "1 / -1" : undefined }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
         <div style={{ fontSize: 17, ...HEEBO, color: NAVY }}>{title}</div>
         {!live && (

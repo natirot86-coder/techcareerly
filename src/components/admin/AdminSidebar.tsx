@@ -10,9 +10,10 @@
  * נשארים בדיוק כמו שהיו. הסיידבר הוא רק שכבת ניווט מסביב לתוכן.
  */
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ADMIN_NAV as NAV } from "@/data/adminNav";
-import { coordinatorSignOut } from "@/lib/coordinatorAuth";
+import { coordinatorSignOut, getLoginLabel } from "@/lib/coordinatorAuth";
 
 const NAVY = "#023e8a";
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -20,6 +21,13 @@ const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 function useActive() {
   const pathname = usePathname();
   return (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** נקרא רק ב-mount, אחרי הידרציה — הזהות יושבת ב-localStorage בלבד */
+function useLoginLabel() {
+  const [label, setLabel] = useState<string | null>(null);
+  useEffect(() => { setLabel(getLoginLabel()); }, []);
+  return label;
 }
 
 /*
@@ -36,6 +44,7 @@ async function handleSignOut() {
 /** הגרסה לדסקטופ — עמודה קבועה בצד ימין (RTL), תמיד גלויה */
 export function AdminSidebar() {
   const isActive = useActive();
+  const loginLabel = useLoginLabel();
   return (
     <aside
       dir="rtl"
@@ -75,14 +84,29 @@ export function AdminSidebar() {
         >
           ← מפת האפליקציה
         </Link>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="px-3 py-2.5 rounded-xl text-[12px] font-bold text-center"
-          style={{ color: "#b91c1c", background: "rgba(185,28,28,0.06)" }}
-        >
-          התנתקות
-        </button>
+
+        {/*
+          אישור זהות אישי (16.9) — best practice בסיסי בכל פאנל ניהול: מי
+          שרואה מסך צריך לדעת *מי* מזוהה כרגע, לא רק שהוא בפנים. מקובץ
+          עם ההתנתקות כי זו פינת ה"חשבון", לא הניווט.
+        */}
+        <div className="flex flex-col gap-2 pt-2" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+          {loginLabel && (
+            <div className="flex items-center gap-2 px-3 text-[11.5px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>
+              <span>👤</span>
+              {/* בלי פועל מגודר ("מחוברת/מחובר") — לא ידוע המגדר של כל רכזת/רכז בסגל */}
+              <span className="truncate">{loginLabel}</span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="px-3 py-2.5 rounded-xl text-[12px] font-bold text-center"
+            style={{ color: "#b91c1c", background: "rgba(185,28,28,0.06)" }}
+          >
+            התנתקות
+          </button>
+        </div>
       </div>
     </aside>
   );
@@ -91,11 +115,20 @@ export function AdminSidebar() {
 /** הגרסה למובייל — פס עליון עם טאבים גוללים, כדי לא לגנוב עוד מסך גובה */
 export function AdminTopBar() {
   const isActive = useActive();
+  const loginLabel = useLoginLabel();
   return (
     <div dir="rtl" className="md:hidden sticky top-0 z-40" style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-      <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-        <div className="text-[14px]" style={{ color: NAVY, ...HEEBO }}>אזור ניהול</div>
-        <div className="flex items-center gap-3">
+      <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[14px]" style={{ color: NAVY, ...HEEBO }}>אזור ניהול</div>
+          {/* אישור זהות אישי (16.9) — אותו עיקרון כמו בסיידבר, בלי פועל מגודר */}
+          {loginLabel && (
+            <div className="text-[10.5px] font-bold truncate" style={{ color: "rgba(0,0,0,0.4)" }}>
+              👤 {loginLabel}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
           <Link href="/map" className="text-[11px] font-bold" style={{ color: "rgba(0,0,0,0.4)" }}>מפת האפליקציה ←</Link>
           <button type="button" onClick={handleSignOut} className="text-[11px] font-bold" style={{ color: "#b91c1c" }}>
             התנתקות

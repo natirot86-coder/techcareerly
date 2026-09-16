@@ -56,6 +56,21 @@ export function getCoordinatorIdentity(): CoordinatorIdentity | null {
   } catch { return null; }
 }
 
+/**
+ * תווית "מחוברת בתור" לתצוגה בסיידבר הניהול (16.9) — best practice בסיסי
+ * בכל פאנל ניהול: מי שרואה מסך ניהול צריך לדעת *מי* מזוהה כרגע, לא רק
+ * שהוא בפנים. למי שנכנס/ה עם OTP אישי — השם. למי שנכנס/ה בקוד החירום
+ * המשותף — תיוג גלוי שזו לא זהות אישית (עקבי עם "רואים הכל" ב-verifyCoordinator).
+ */
+export function getLoginLabel(): string | null {
+  const identity = getCoordinatorIdentity();
+  if (identity?.name) return identity.name;
+  try {
+    if (localStorage.getItem(LEGACY_CODE_KEY)) return "קוד גישה זמני";
+  } catch { /* ignore */ }
+  return null;
+}
+
 export async function coordinatorSignOut(): Promise<void> {
   try { localStorage.removeItem(IDENTITY_KEY); } catch { /* ignore */ }
   try { localStorage.removeItem(LEGACY_CODE_KEY); } catch { /* ignore */ }
