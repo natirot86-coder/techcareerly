@@ -18,8 +18,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import EventsList, { useEvents } from "@/components/ui/EventsList";
+import { useRouter } from "next/navigation";
 import { JOURNEY, journeyFor, type CohortId } from "@/data/journey";
-import { cachedCohort } from "@/lib/candidate";
+import { cachedCohort, signOutCandidate } from "@/lib/candidate";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -206,9 +207,15 @@ function Serpentine({ stages, current }: { stages: Stage[]; current: number }) {
 }
 
 export default function JourneyPage() {
+  const router = useRouter();
   const [data, setData] = useState<{ stages: Stage[]; current: number } | null>(null);
   const [name, setName] = useState("");
   const events = useEvents();
+
+  async function handleSignOut() {
+    await signOutCandidate();
+    router.push("/login");
+  }
 
   useEffect(() => {
     setData(buildStages());
@@ -314,6 +321,17 @@ export default function JourneyPage() {
 
         <div className="text-[12px] text-center pb-4 pt-1" style={{ color: "rgba(0,0,0,0.35)" }}>
           כל מה שעברת נשאר פתוח — אפשר לחזור לכל תחנה מתי שרוצים
+        </div>
+
+        <div className="text-center pb-6">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="text-[12.5px] font-bold underline"
+            style={{ color: "rgba(0,0,0,0.4)" }}
+          >
+            התנתקות
+          </button>
         </div>
       </div>
       <BottomNav />

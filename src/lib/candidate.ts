@@ -326,6 +326,16 @@ export async function signInWithGoogle(redirectTo: string): Promise<string | nul
   return error?.message ?? null;
 }
 
+/**
+ * התנתקות (16.9) — מסיימת את ה-session בלבד. לא נוגעת בהתקדמות השמורה
+ * ב-localStorage: זו בכוונה, כי ההתקדמות שייכת למכשיר לפי העיקרון הקיים
+ * בכל האפליקציה (`ResumeTracker`), ולא לזהות ההתחברות. מי שרוצה איפוס
+ * מלא כבר יש לו /reset המפורש לזה.
+ */
+export async function signOutCandidate(): Promise<void> {
+  if (supabase) await supabase.auth.signOut().catch(() => { /* ignore */ });
+}
+
 export const supabaseReady = supabaseEnabled;
 
 // ─── Tasks ───────────────────────────────────────────────────────────────────
