@@ -56,14 +56,20 @@ export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAu
 
   const phone = normalizePhone(user.phone);
   const db = createClient(url, secret, { auth: { persistSession: false } });
-  const { data: coord, error: coordError } = await db
+  /*
+   * לא .eq("phone", phone): טופס /admin/program מבטיח לצוות שאפשר להזין
+   * "גם 05... בסדר", ואכן ככה זה נשמר בפועל (נתחי בדיקה חי: 0509632170,
+   * לא 972509632170). השוואה מדויקת הייתה נועלת בחוץ כל רכזת שהוזנה
+   * בפורמט מקומי — מנרמלים משני הצדדים במקום לסמוך על איך שהוזן.
+   */
+  const { data: coords, error: coordError } = await db
     .from("coordinators")
-    .select("id, name, active")
-    .eq("phone", phone)
-    .maybeSingle();
+    .select("id, name, phone, active")
+    .eq("active", true);
 
   if (coordError) return { ok: false, status: 500, error: coordError.message };
-  if (!coord || !coord.active) {
+  const coord = coords?.find(c => normalizePhone(c.phone) === phone);
+  if (!coord) {
     return { ok: false, status: 403, error: "מספר הטלפון הזה לא רשום כרכזת פעילה בסגל" };
   }
 

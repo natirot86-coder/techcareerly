@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import { saveOnboarding, logEvent } from "@/lib/candidate";
+import { saveOnboarding, logEvent, sendPhoneOtp, verifyPhoneOtp, supabaseReady } from "@/lib/candidate";
 import { journeyFor, type CohortId } from "@/data/journey";
 import { cachedCohort } from "@/lib/candidate";
 
@@ -11,7 +11,7 @@ import { cachedCohort } from "@/lib/candidate";
 /* השלבים נגזרים מהקוהורט — הרשימה מגיעה מהקורא, לא מקבוע במודול */
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Step = 0 | 1 | 2 | 3 | 4 | 5;
+type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type Gender = "male" | "female" | "other" | "";
 
 const REGION_OPTIONS = ["מרכז", "צפון", "דרום", "ירושלים", "אחר"];
@@ -80,7 +80,7 @@ function TextInput({
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 function OnboardingHeader({ step, onBack }: { step: Step; onBack?: () => void }) {
-  if (step === 0 || step === 4) return null;
+  if (step === 0 || step === 4 || step === 5 || step === 6) return null;
   return (
     <div className="bg-navy text-white px-[22px] pt-[22px] pb-[20px]">
       <div className="flex items-center gap-3 mb-4">
@@ -785,6 +785,150 @@ function Step4({ firstName, gender, blockers, onDone }: {
   );
 }
 
+// ─── Step Phone — אימות טלפון ──────────────────────────────────────────────────
+
+// מספר בדיקה קבוע — עוקף את Supabase, זהה למה שמוגדר ב-/login (כל עוד
+// 019sms לא מחובר כ-Send SMS Hook, ה-OTP האמיתי לא באמת יוצא)
+const PHONE_TEST_NUMBER = "+972545603636";
+const PHONE_TEST_CODE = "12345";
+
+function phoneToE164(localNumber: string): string {
+  const digits = localNumber.replace(/\D/g, "");
+  const withoutLeadingZero = digits.startsWith("0") ? digits.slice(1) : digits;
+  return `+972${withoutLeadingZero}`;
+}
+
+function StepPhone({ firstName, gender, onDone }: {
+  firstName: string; gender: Gender; onDone: () => void;
+}) {
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [stage, setStage] = useState<"phone" | "otp">("phone");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const phoneValid = phone.replace(/\D/g, "").length >= 9;
+  const codeValid = code.trim().length >= 4;
+
+  async function handleSend() {
+    if (phoneToE164(phone) === PHONE_TEST_NUMBER) { setStage("otp"); return; }
+    setLoading(true);
+    setError(null);
+    const err = await sendPhoneOtp(phoneToE164(phone));
+    setLoading(false);
+    if (err) { setError(err); return; }
+    setStage("otp");
+  }
+
+  async function handleVerify() {
+    if (phoneToE164(phone) === PHONE_TEST_NUMBER) {
+      if (code.trim() !== PHONE_TEST_CODE) { setError("קוד שגוי"); return; }
+      onDone();
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const err = await verifyPhoneOtp(phoneToE164(phone), code.trim());
+    setLoading(false);
+    if (err) { setError(err); return; }
+    onDone();
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-6 px-[22px] py-10 text-center">
+      <div
+        className="w-[72px] h-[72px] rounded-full flex items-center justify-center"
+        style={{ background: "rgba(2,62,138,0.08)", border: "2px solid rgba(2,62,138,0.25)" }}
+      >
+        <svg width="26" height="32" viewBox="0 0 26 32" fill="none">
+          <rect x="2" y="2" width="22" height="28" rx="3" stroke="#023e8a" strokeWidth="2.5" />
+          <line x1="10" y1="26" x2="16" y2="26" stroke="#023e8a" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      <div>
+        <div className="text-[24px] text-navy" style={HEEBO}>
+          {stage === "phone" ? "עוד דבר אחד, " + firstName : "הזן/י את הקוד שקיבלת"}
+        </div>
+        <div className="text-[14px] mt-2" style={{ color: "rgba(0,0,0,0.5)" }}>
+          {stage === "phone"
+            ? g(gender,
+                "מספר הטלפון שומר לך את המקום — כדי שתחזור בדיוק לאיפה שהיית, ושהרכזת תמצא אותך",
+                "מספר הטלפון שומר לך את המקום — כדי שתחזרי בדיוק לאיפה שהיית, ושהרכזת תמצא אותך",
+                "מספר הטלפון שומר את המקום — כדי לחזור בדיוק לאיפה שהיית, ושהרכזת תמצא אותך")
+            : `שלחנו קוד אימות למספר ${phoneToE164(phone)}`}
+        </div>
+      </div>
+
+      <div className="w-full flex flex-col gap-3">
+        {!supabaseReady && (
+          <div className="text-[13px] rounded-xl px-4 py-3 text-right" style={{ background: "rgba(192,57,43,0.08)", color: "#c0392b" }}>
+            החיבור ל-Supabase עדיין לא מוגדר — אימות טלפון לא זמין כרגע.
+          </div>
+        )}
+
+        {stage === "phone" ? (
+          <>
+            <div className="flex gap-2" dir="ltr">
+              <div
+                className="flex items-center px-3 rounded-xl border shrink-0"
+                style={{ borderColor: "rgba(2,62,138,0.18)", background: "rgba(2,62,138,0.04)" }}
+              >
+                <span className="text-[15px] font-bold" style={{ color: "#023e8a" }}>+972</span>
+              </div>
+              <input
+                type="tel"
+                dir="ltr"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && phoneValid) handleSend(); }}
+                placeholder="50-1234567"
+                autoFocus
+                className="flex-1 min-w-0 border rounded-xl px-4 py-3 text-[15px] outline-none bg-white tracking-wide"
+                style={{ borderColor: phone ? "rgba(2,62,138,0.35)" : "rgba(2,62,138,0.18)", color: "#1c1c1c" }}
+              />
+            </div>
+            {error && <div className="text-[12.5px] text-right" style={{ color: "#c0392b" }}>{error}</div>}
+            <Button variant="primary" onClick={handleSend} disabled={!phoneValid || loading || !supabaseReady}>
+              {loading ? "שולח..." : "שליחת קוד אימות"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <TextInput value={code} onChange={setCode} placeholder="12345" />
+            {error && <div className="text-[12.5px] text-right" style={{ color: "#c0392b" }}>{error}</div>}
+            <Button variant="primary" onClick={handleVerify} disabled={!codeValid || loading}>
+              {loading ? "מאמת..." : "אימות והמשך"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => { setStage("phone"); setCode(""); setError(null); }}
+              className="text-[13px] font-bold"
+              style={{ color: "rgba(0,0,0,0.4)" }}
+            >
+              שינוי מספר טלפון
+            </button>
+          </>
+        )}
+
+        {/*
+          עד ש-019sms מחובר כ-Send SMS Hook, שליחת קוד אמיתית עלולה להיכשל —
+          ואסור שזה יחסום את הכניסה של מי שממתין לפגישה. לדלג תמיד אפשרי,
+          בדיוק כמו שהיה לפני הצעד הזה.
+        */}
+        <button
+          type="button"
+          onClick={onDone}
+          className="text-[12.5px] font-bold mt-2"
+          style={{ color: "rgba(0,0,0,0.35)" }}
+        >
+          אעדכן מספר טלפון בהמשך ←
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function OnboardingPage() {
   const router = useRouter();
@@ -812,9 +956,9 @@ export default function OnboardingPage() {
         localStorage.removeItem("onboarding-done");
         return;
       }
-      // קפיצה ישירה למסך לבדיקה — ?step=5 מגיע ישר לסיור (כמו ?demo בשאר המסכים)
+      // קפיצה ישירה למסך לבדיקה — ?step=6 מגיע ישר לאימות טלפון (כמו ?demo בשאר המסכים)
       const jump = Number(q.get("step"));
-      if (jump >= 0 && jump <= 5) {
+      if (jump >= 0 && jump <= 6) {
         setStep(jump as Step);
         return;
       }
@@ -973,20 +1117,40 @@ export default function OnboardingPage() {
     );
   }
 
-  // Step 5 — Wizard Tour
+  // Step 5 — Wizard Tour → אימות טלפון (שלב 6), לא ישר לסיום
   if (step === 5) {
     return (
       <>
         {/* Mobile */}
         <div className="md:hidden w-full max-w-[390px] min-h-screen flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
           <div className="flex-1 overflow-y-auto">
-            <WizardTour gender={gender} onDone={handleDone} />
+            <WizardTour gender={gender} onDone={() => setStep(6)} />
           </div>
         </div>
         {/* Desktop */}
         <div className="hidden md:flex w-full min-h-screen bg-cream items-center justify-center p-10">
           <div className="w-full max-w-[480px] rounded-2xl overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(2,62,138,0.12)" }}>
-            <WizardTour gender={gender} onDone={handleDone} />
+            <WizardTour gender={gender} onDone={() => setStep(6)} />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Step 6 — אימות טלפון: הצעד האחרון ממש לפני קביעת פגישה 1
+  if (step === 6) {
+    return (
+      <>
+        {/* Mobile */}
+        <div className="md:hidden w-full max-w-[390px] min-h-screen bg-card flex flex-col shadow-[0_20px_50px_rgba(2,62,138,0.16)]">
+          <div className="flex-1 overflow-y-auto">
+            <StepPhone firstName={firstName} gender={gender} onDone={handleDone} />
+          </div>
+        </div>
+        {/* Desktop */}
+        <div className="hidden md:flex w-full min-h-screen bg-cream items-center justify-center p-10">
+          <div className="w-full max-w-[480px] bg-card rounded-2xl overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(2,62,138,0.12)" }}>
+            <StepPhone firstName={firstName} gender={gender} onDone={handleDone} />
           </div>
         </div>
       </>

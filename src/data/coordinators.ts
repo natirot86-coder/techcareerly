@@ -37,6 +37,16 @@ export const COORDINATOR_ROSTER: CoordinatorProfile[] = [
     phone: "",
     active: true,
   },
+  {
+    // נוסף לבקשת ישראל (16.9) — לבדיקת כניסת רכזת אישית ב-OTP.
+    // אותו מספר כמו TEST_PHONE ב-/login וב-/onboarding, בכוונה.
+    id: "israel-mangisto",
+    name: "ישראל מנגיסטו",
+    location: "",
+    email: "israel@tech-career.org",
+    phone: "972545603636",
+    active: true,
+  },
 ];
 
 /** הרכזת של מועמד. עד שיש שדה שיוך ב-candidates — כולם אצל הראשונה הפעילה */
