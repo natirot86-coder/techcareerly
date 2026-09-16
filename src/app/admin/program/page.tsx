@@ -12,7 +12,7 @@
  * לרכזת הפעילה הראשונה.
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { COORDINATOR_ROSTER, type CoordinatorProfile } from "@/data/coordinators";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
@@ -148,71 +148,93 @@ export default function ProgramAdmin() {
 
             </div>
           </div>
-          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.1)" }}>
-            <table className="w-full text-[12.5px]" style={{ background: "#fff" }}>
-              <thead>
-                <tr style={{ background: "rgba(2,62,138,0.05)", color: NAVY }}>
-                  {["שם", "אזור", "מייל חשבון ה-Cal (לזיהוי הזמנות!)", "טלפון (גם 05… בסדר)", "פעילה", "משתתפים"].map(h => (
-                    <th key={h} className="text-right px-3 py-2.5 font-black">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {roster.map(c => {
-                  const count = Object.values(assign).filter(v => v === c.id).length;
-                  return (
-                    <React.Fragment key={c.id}>
-                    <tr style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                      {(["name", "location", "email", "phone"] as const).map(k => (
-                        <td key={k} className="px-2 py-1.5">
-                          <input
-                            value={c[k]}
-                            onChange={e => update(c.id, k, e.target.value)}
-                            className="w-full px-2 py-1.5 rounded-lg text-[12.5px]"
-                            style={{ border: "1px solid rgba(0,0,0,0.1)", direction: k === "email" || k === "phone" ? "ltr" : "rtl" }}
-                          />
-                        </td>
+          <div className="flex flex-col gap-3">
+            {roster.map(c => {
+              const count = Object.values(assign).filter(v => v === c.id).length;
+              return (
+                <div key={c.id} className="rounded-2xl p-4 flex flex-col gap-3"
+                  style={{ background: "#fff", border: `1px solid ${c.active ? "rgba(2,62,138,0.12)" : "rgba(0,0,0,0.08)"}`, opacity: c.active ? 1 : 0.6 }}>
+
+                  {/* שם + פעילה + מונה משתתפים — שורת הזיהוי, מודגשת יותר משאר השדות */}
+                  <div className="flex items-center gap-3">
+                    <input
+                      value={c.name}
+                      onChange={e => update(c.id, "name", e.target.value)}
+                      placeholder="שם הרכזת"
+                      className="flex-1 min-w-0 px-3 py-2 rounded-lg text-[14px] font-black"
+                      style={{ border: "1px solid rgba(0,0,0,0.12)", color: NAVY }}
+                    />
+                    <label className="flex items-center gap-1.5 text-[12px] font-bold shrink-0" style={{ color: "rgba(0,0,0,0.55)" }}>
+                      <input type="checkbox" checked={c.active} onChange={e => update(c.id, "active", e.target.checked)} />
+                      פעילה
+                    </label>
+                    <div className="text-[12px] font-black shrink-0 px-2.5 py-1 rounded-full" style={{ background: "rgba(2,62,138,0.06)", color: NAVY }}>
+                      {count} משתתפים
+                    </div>
+                  </div>
+
+                  {/* פרטי קשר — כל שדה עם תווית משלו, כדי שהכיתוב הארוך (מייל ה-Cal, פורמט הטלפון) לא ידחוק שדות אחרים */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <label className="text-[11px] font-bold flex flex-col gap-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+                      אזור
+                      <input
+                        value={c.location}
+                        onChange={e => update(c.id, "location", e.target.value)}
+                        className="px-2.5 py-2 rounded-lg text-[12.5px] font-normal"
+                        style={{ border: "1px solid rgba(0,0,0,0.1)", color: "#1c1a16" }}
+                      />
+                    </label>
+                    <label className="text-[11px] font-bold flex flex-col gap-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+                      מייל חשבון ה-Cal (לזיהוי הזמנות!)
+                      <input
+                        value={c.email}
+                        onChange={e => update(c.id, "email", e.target.value)}
+                        dir="ltr"
+                        className="px-2.5 py-2 rounded-lg text-[12.5px] font-normal"
+                        style={{ border: "1px solid rgba(0,0,0,0.1)", color: "#1c1a16" }}
+                      />
+                    </label>
+                    <label className="text-[11px] font-bold flex flex-col gap-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+                      טלפון (גם 05… בסדר)
+                      <input
+                        value={c.phone}
+                        onChange={e => update(c.id, "phone", e.target.value)}
+                        dir="ltr"
+                        className="px-2.5 py-2 rounded-lg text-[12.5px] font-normal"
+                        style={{ border: "1px solid rgba(0,0,0,0.1)", color: "#1c1a16" }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* קישור ההרשמה האישי — מועמד שנכנס דרכו משויך לרכזת מהרגע הראשון */}
+                  <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.03)", border: "1px solid rgba(2,62,138,0.08)" }}>
+                    <div className="text-[10.5px] font-bold uppercase tracking-wide mb-1" style={{ color: "rgba(0,0,0,0.4)" }}>קישור הזמנה אישי</div>
+                    <code className="text-[11.5px] font-bold select-all block truncate" dir="ltr" style={{ color: NAVY }}>
+                      {`https://hasifaapp.vercel.app/onboarding?coord=${c.id}`}
+                    </code>
+                  </div>
+
+                  {/* היומן האישי: כל רכזת עם חשבון Cal משלה. המייל למעלה חייב להיות
+                      המייל של חשבון ה-Cal — לפיו המערכת מזהה את ההזמנות שלה */}
+                  <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.03)", border: "1px solid rgba(2,62,138,0.08)" }}>
+                    <div className="text-[10.5px] font-bold uppercase tracking-wide mb-1.5" style={{ color: "rgba(0,0,0,0.4)" }}>יומן Cal (מה שאחרי cal.com/)</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {([["cal_m1", "פגישה 1"], ["cal_m2", "פגישה 2"], ["cal_m3", "פגישה 3"]] as const).map(([k, label]) => (
+                        <input
+                          key={k}
+                          value={c[k] ?? ""}
+                          onChange={e => update(c.id, k, e.target.value)}
+                          placeholder={label}
+                          dir="ltr"
+                          className="px-2.5 py-2 rounded-lg text-[11.5px]"
+                          style={{ border: "1px solid rgba(0,0,0,0.1)", background: "#fff" }}
+                        />
                       ))}
-                      <td className="px-3 py-1.5 text-center">
-                        <input type="checkbox" checked={c.active} onChange={e => update(c.id, "active", e.target.checked)} />
-                      </td>
-                      <td className="px-3 py-1.5 font-black text-center" style={{ color: NAVY }}>{count}</td>
-                    </tr>
-                    {/* קישור ההרשמה האישי — מועמד שנכנס דרכו משויך לרכזת מהרגע הראשון */}
-                    <tr>
-                      <td colSpan={6} className="px-3 pt-1 pb-0.5" style={{ background: "rgba(2,62,138,0.02)" }}>
-                        <span className="text-[11.5px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>קישור הזמנה אישי: </span>
-                        <code className="text-[11.5px] font-bold select-all" dir="ltr" style={{ color: NAVY, background: "#fff", padding: "2px 8px", borderRadius: 6, border: "1px solid rgba(0,0,0,0.08)" }}>
-                          {`https://hasifaapp.vercel.app/onboarding?coord=${c.id}`}
-                        </code>
-                      </td>
-                    </tr>
-                    {/* היומן האישי: כל רכזת עם חשבון Cal משלה. המייל למעלה חייב להיות
-                        המייל של חשבון ה-Cal — לפיו המערכת מזהה את ההזמנות שלה */}
-                    <tr>
-                      <td colSpan={6} className="px-2 pb-2.5" style={{ background: "rgba(2,62,138,0.02)" }}>
-                        <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                          <span className="text-[11.5px] font-bold whitespace-nowrap" style={{ color: "rgba(0,0,0,0.45)" }}>
-                            יומן Cal (מה שאחרי cal.com/):
-                          </span>
-                          {([["cal_m1", "פגישה 1"], ["cal_m2", "פגישה 2"], ["cal_m3", "פגישה 3"]] as const).map(([k, label]) => (
-                            <input
-                              key={k}
-                              value={c[k] ?? ""}
-                              onChange={e => update(c.id, k, e.target.value)}
-                              placeholder={label}
-                              className="flex-1 min-w-[140px] px-2 py-1.5 rounded-lg text-[11.5px]"
-                              style={{ border: "1px solid rgba(0,0,0,0.1)", direction: "ltr" }}
-                            />
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
