@@ -521,10 +521,16 @@ function KpiStrip({ s, live }: { s: Stats | null; live: boolean }) {
   );
 }
 
-/** גריד שתי עמודות בדסקטופ — כרטיסי הכרעה (funnel) מבקשים full כדי לא להצטופף */
+/**
+ * גריד שתי עמודות בדסקטופ (16.9 — stretch, לא start): כרטיסים באותה שורה
+ * נמתחים לאותו גובה. עד עכשיו כל כרטיס נשאר בגובה התוכן שלו, וההבדל
+ * העצום בין "שני מספרים" ל"גרף עם שמונה שורות" נראה כמו פריסה מקרית.
+ * הכרטיס עצמו ממרכז את התוכן הפנימי אנכית (ראה Card) כדי שמתיחה לא
+ * תיצור רווח ריק מתחת לגרף — התוכן הקצר יושב באמצע, לא נתקע למעלה.
+ */
 function Grid({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: 12, alignItems: "start" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 12 }}>
       {children}
     </div>
   );
@@ -532,6 +538,12 @@ function Grid({ children }: { children: React.ReactNode }) {
 
 // ─── כרטיס ────────────────────────────────────────────────────────────────────
 
+/**
+ * זוקק (16.9): עד עכשיו כל כרטיס נשא חמישה גופי טקסט קבועים (כותרת,
+ * שאלה, נימוק, הסבר-סף, מקור) — נכון לתיעוד אבל יותר מדי לסריקה מהירה.
+ * עכשיו רק הכותרת והתג נראים; ⓘ פותח את כל ההסבר לפי דרישה. שום מידע
+ * לא נמחק, רק עבר משכבת "תמיד גלוי" לשכבת "לפי בקשה".
+ */
 function Card({
   title, q, why, threshold, thresholdText, needs, live, children, full,
 }: {
@@ -541,36 +553,55 @@ function Card({
   /** תופס את שתי עמודות הגריד — לכרטיסים עם funnel שצריך רוחב לרדת בו */
   full?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div style={{ background: "#fff", borderRadius: 16, border: "1px solid rgba(0,0,0,0.08)", padding: 18, gridColumn: full ? "1 / -1" : undefined }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-        <div style={{ fontSize: 17, ...HEEBO, color: NAVY }}>{title}</div>
-        {!live && (
-          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.4)" }}>
-            ממתין לנתונים
+    <div style={{
+      background: "#fff", borderRadius: 16, border: "1px solid rgba(0,0,0,0.08)", padding: 16,
+      gridColumn: full ? "1 / -1" : undefined, display: "flex", flexDirection: "column", gap: 10,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, ...HEEBO, color: NAVY, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+          <button
+            type="button"
+            onClick={() => setOpen(o => !o)}
+            title="השאלה, הנימוק והמקור"
+            aria-label="פרטים נוספים"
+            style={{
+              width: 16, height: 16, borderRadius: 99, flexShrink: 0, fontSize: 10.5, fontWeight: 800, lineHeight: "14px",
+              border: `1px solid ${open ? NAVY : "rgba(0,0,0,0.2)"}`, color: open ? NAVY : "rgba(0,0,0,0.35)",
+              background: open ? "rgba(2,62,138,0.07)" : "transparent",
+            }}
+          >
+            i
+          </button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          {!live && (
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.4)" }}>
+              ממתין
+            </span>
+          )}
+          <span style={{
+            fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 99, whiteSpace: "nowrap",
+            background: threshold === "hard" ? "rgba(5,150,105,0.1)" : "rgba(0,0,0,0.05)",
+            color: threshold === "hard" ? "#08694c" : "rgba(0,0,0,0.4)",
+          }}>
+            {threshold === "hard" ? "סף מבוסס" : "ללא סף"}
           </span>
-        )}
-      </div>
-
-      {/* השאלה קודמת לגרף בכוונה */}
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#1c1a16", marginTop: 8, lineHeight: 1.5 }}>{q}</div>
-      <div style={{ fontSize: 12.5, color: "rgba(0,0,0,0.5)", marginTop: 4, lineHeight: 1.65 }}>{why}</div>
-
-      <div style={{ margin: "14px 0 4px" }}>{children}</div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 14 }}>
-        <div style={{
-          fontSize: 12, lineHeight: 1.6, padding: "8px 11px", borderRadius: 9,
-          background: threshold === "hard" ? "rgba(5,150,105,0.07)" : "rgba(0,0,0,0.035)",
-          color: threshold === "hard" ? "#08694c" : "rgba(0,0,0,0.5)",
-        }}>
-          <b>{threshold === "hard" ? "סף מבוסס · " : "אין בנצ׳מרק · "}</b>
-          {thresholdText}
-        </div>
-        <div style={{ fontSize: 11.5, color: "rgba(0,0,0,0.38)", lineHeight: 1.6 }}>
-          מקור: <code>{needs}</code>
         </div>
       </div>
+
+      {open && (
+        <div style={{ fontSize: 12, lineHeight: 1.6, background: "rgba(0,0,0,0.025)", borderRadius: 10, padding: "9px 11px" }}>
+          <div style={{ fontWeight: 700, color: "#1c1a16" }}>{q}</div>
+          <div style={{ color: "rgba(0,0,0,0.55)", marginTop: 3 }}>{why}</div>
+          <div style={{ color: threshold === "hard" ? "#08694c" : "rgba(0,0,0,0.5)", marginTop: 5 }}>{thresholdText}</div>
+          <div style={{ color: "rgba(0,0,0,0.38)", marginTop: 5, fontSize: 11 }}>מקור: <code>{needs}</code></div>
+        </div>
+      )}
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>{children}</div>
     </div>
   );
 }

@@ -51,10 +51,28 @@ export function AdminSidebar() {
       className="hidden md:flex flex-col shrink-0 w-[230px] h-screen sticky top-0 overflow-y-auto"
       style={{ background: "#fff", borderInlineStart: "1px solid rgba(0,0,0,0.08)" }}
     >
-      <Link href="/admin" className="block px-5 pt-6 pb-5" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-        <div className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.35)" }}>Techcareerly</div>
-        <div className="text-[17px] mt-0.5" style={{ color: NAVY, ...HEEBO }}>אזור ניהול</div>
-      </Link>
+      {/*
+        אישור זהות אישי (16.9, עבר לראש הסיידבר לבקשת ישראל) — מקובץ
+        עם המותג בראש, לא בתחתית: זה מה שגורם לזהות "מי מחובר" להיראות
+        מיד ולא רק אחרי גלילה. אותו מבנה כמו פאנלי ניהול מוכרים —
+        שם ארגון/מוצר למעלה, זהות + יציאה ממש מתחתיו.
+      */}
+      <div className="px-5 pt-6 pb-4" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+        <Link href="/admin" className="block">
+          <div className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.35)" }}>Techcareerly</div>
+          <div className="text-[17px] mt-0.5" style={{ color: NAVY, ...HEEBO }}>אזור ניהול</div>
+        </Link>
+        {loginLabel && (
+          <div className="flex items-center gap-1.5 mt-3 text-[12px] font-bold">
+            {/* בלי פועל מגודר ("מחוברת/מחובר") — לא ידוע המגדר של כל רכזת/רכז בסגל */}
+            <span className="truncate" style={{ color: "rgba(0,0,0,0.5)" }}>👤 {loginLabel}</span>
+            <span style={{ color: "rgba(0,0,0,0.25)" }}>·</span>
+            <button type="button" onClick={handleSignOut} style={{ color: "#b91c1c" }}>
+              התנתקות
+            </button>
+          </div>
+        )}
+      </div>
 
       <nav className="flex-1 flex flex-col gap-0.5 px-3 py-4">
         {NAV.map((item) => {
@@ -76,37 +94,14 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      <div className="mx-3 mb-5 flex flex-col gap-2">
+      <div className="mx-3 mb-5">
         <Link
           href="/map"
-          className="px-3 py-2.5 rounded-xl text-[12px] font-bold text-center"
+          className="block px-3 py-2.5 rounded-xl text-[12px] font-bold text-center"
           style={{ color: "rgba(0,0,0,0.4)", background: "rgba(0,0,0,0.03)" }}
         >
           ← מפת האפליקציה
         </Link>
-
-        {/*
-          אישור זהות אישי (16.9) — best practice בסיסי בכל פאנל ניהול: מי
-          שרואה מסך צריך לדעת *מי* מזוהה כרגע, לא רק שהוא בפנים. מקובץ
-          עם ההתנתקות כי זו פינת ה"חשבון", לא הניווט.
-        */}
-        <div className="flex flex-col gap-2 pt-2" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-          {loginLabel && (
-            <div className="flex items-center gap-2 px-3 text-[11.5px] font-bold" style={{ color: "rgba(0,0,0,0.45)" }}>
-              <span>👤</span>
-              {/* בלי פועל מגודר ("מחוברת/מחובר") — לא ידוע המגדר של כל רכזת/רכז בסגל */}
-              <span className="truncate">{loginLabel}</span>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="px-3 py-2.5 rounded-xl text-[12px] font-bold text-center"
-            style={{ color: "#b91c1c", background: "rgba(185,28,28,0.06)" }}
-          >
-            התנתקות
-          </button>
-        </div>
       </div>
     </aside>
   );
@@ -121,19 +116,18 @@ export function AdminTopBar() {
       <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[14px]" style={{ color: NAVY, ...HEEBO }}>אזור ניהול</div>
-          {/* אישור זהות אישי (16.9) — אותו עיקרון כמו בסיידבר, בלי פועל מגודר */}
+          {/* אישור זהות אישי (16.9) — מקובץ עם ההתנתקות, אותו עיקרון כמו בסיידבר */}
           {loginLabel && (
-            <div className="text-[10.5px] font-bold truncate" style={{ color: "rgba(0,0,0,0.4)" }}>
-              👤 {loginLabel}
+            <div className="flex items-center gap-1.5 text-[10.5px] font-bold truncate">
+              <span className="truncate" style={{ color: "rgba(0,0,0,0.4)" }}>👤 {loginLabel}</span>
+              <span style={{ color: "rgba(0,0,0,0.25)" }}>·</span>
+              <button type="button" onClick={handleSignOut} style={{ color: "#b91c1c" }}>
+                התנתקות
+              </button>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <Link href="/map" className="text-[11px] font-bold" style={{ color: "rgba(0,0,0,0.4)" }}>מפת האפליקציה ←</Link>
-          <button type="button" onClick={handleSignOut} className="text-[11px] font-bold" style={{ color: "#b91c1c" }}>
-            התנתקות
-          </button>
-        </div>
+        <Link href="/map" className="text-[11px] font-bold shrink-0" style={{ color: "rgba(0,0,0,0.4)" }}>מפת האפליקציה ←</Link>
       </div>
       <nav className="flex gap-1.5 px-3 pb-2.5 overflow-x-auto">
         {NAV.map((item) => {
