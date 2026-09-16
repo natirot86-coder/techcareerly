@@ -816,6 +816,46 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
   );
 }
 
+/**
+ * זיקוק סיגנלים (16.9) — `/api/coordinator` שולח סיגנל אחד **לכל משימה**
+ * שעברה דדליין או נפתחה 3 פעמים (route.ts:117,162). מי שצובר ארבע מלגות
+ * חורגות קיבל ארבע שורות זהות במילה הראשונה — הרשימה נראתה כמו לוג, לא
+ * כמו תמונת מצב. כאן, בתצוגה בלבד (לא נוגע ב-API), אותה קטגוריה מתקבצת
+ * לשורה אחת עם ספירה + עד שתי דוגמאות; סיגנלים ייחודיים נשארים כמו שהם.
+ */
+type SigGroup = { severity: 1 | 2 | 3; text: string };
+const DEADLINE_RE = /^דדליין עבר והמשימה פתוחה: (.+)$/;
+const REOPEN_RE = /^נפתחה 3 פעמים בלי להיסגר: (.+)$/;
+
+function groupSignals(signals: Person["signals"]): SigGroup[] {
+  const pack = (re: RegExp) => {
+    const items = signals.filter(sg => re.test(sg.reason));
+    if (!items.length) return null;
+    const names = items.map(sg => re.exec(sg.reason)![1]);
+    const severity = Math.min(...items.map(sg => sg.severity)) as 1 | 2 | 3;
+    const label = names.length === 1 ? names[0]
+      : `${names.slice(0, 2).join(" · ")}${names.length > 2 ? ` ועוד ${names.length - 2}` : ""}`;
+    return { severity, label, count: items.length };
+  };
+
+  const deadlines = pack(DEADLINE_RE);
+  const reopened = pack(REOPEN_RE);
+  const out: SigGroup[] = [];
+  if (deadlines) out.push({
+    severity: deadlines.severity,
+    text: deadlines.count === 1 ? `דדליין עבר: ${deadlines.label}` : `${deadlines.count} דדליינים עברו — ${deadlines.label}`,
+  });
+  if (reopened) out.push({
+    severity: reopened.severity,
+    text: reopened.count === 1 ? `נפתחה 3 פעמים בלי להיסגר: ${reopened.label}` : `${reopened.count} משימות נפתחו 3 פעמים בלי להיסגר — ${reopened.label}`,
+  });
+  for (const sg of signals) {
+    if (DEADLINE_RE.test(sg.reason) || REOPEN_RE.test(sg.reason)) continue;
+    out.push({ severity: sg.severity, text: sg.reason });
+  }
+  return out.sort((a, b) => a.severity - b.severity);
+}
+
 function Checklist({ items }: { items: { label: string; done: boolean; detail?: string }[] }) {
   if (!items.length) return null;
   return (
@@ -959,22 +999,27 @@ export default function CoordinatorPage() {
         {!journeyFor && tab === "queue" && data?.needsAttention.map(p => {
           const sev = SEV_META[p.signals[0]?.severity ?? 3];
           const isOpen = open === p.id;
+          const grouped = groupSignals(p.signals);
           return (
             <div key={p.id} style={{ background: "#fff", borderRadius: 14, border: `1px solid ${sev.color}33`, marginBottom: 10, overflow: "hidden" }}>
               <button onClick={() => setOpen(isOpen ? null : p.id)}
                 style={{ width: "100%", textAlign: "right", border: "none", background: "none", cursor: "pointer", padding: "14px 16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 11, fontWeight: 800, padding: "3px 10px", borderRadius: 99, background: sev.bg, color: sev.color }}>{sev.label}</span>
-                  <span style={{ fontSize: 15.5, fontWeight: 800, color: "#1c1a16" }}>{p.name}</span>
-                  {p.anonymous && <span style={{ fontSize: 10.5, color: "rgba(0,0,0,0.35)" }}>(עוד לא השלים/ה שאלון)</span>}
+                  <span style={{ fontSize: 15.5, fontWeight: 800, color: "#1c1a16" }}>
+                    {p.name}
+                    {/* מזהה קצר (16.9) — בלי זה שני "מועמד/ת ללא שם" ברצף נראים כמו כפילות תצוגה */}
+                    {p.anonymous && <span style={{ fontWeight: 700, color: "rgba(0,0,0,0.3)" }}> #{p.id.slice(-4)}</span>}
+                  </span>
+                  {p.anonymous && <span style={{ fontSize: 10.5, color: "rgba(0,0,0,0.35)" }}>עוד לא השלים/ה שאלון</span>}
                   <span style={{ fontSize: 11.5, color: "rgba(0,0,0,0.4)" }}>
                     שלב {p.stage}{p.region ? ` · ${p.region}` : ""}{p.domain ? ` · ${p.domain}` : ""}
                   </span>
                 </div>
-                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 5 }}>
-                  {p.signals.map((s, i) => (
-                    <div key={i} style={{ fontSize: 13, lineHeight: 1.6, color: "rgba(0,0,0,0.7)" }}>
-                      {s.severity === 1 ? "🔴" : s.severity === 2 ? "🟠" : "🔵"} {s.reason}
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                  {grouped.map((g, i) => (
+                    <div key={i} style={{ fontSize: 13, lineHeight: 1.5, color: "rgba(0,0,0,0.7)" }}>
+                      {g.severity === 1 ? "🔴" : g.severity === 2 ? "🟠" : "🔵"} {g.text}
                     </div>
                   ))}
                 </div>
