@@ -787,15 +787,29 @@ function Step4({ firstName, gender, blockers, onDone }: {
 
 // ─── Step Phone — אימות טלפון ──────────────────────────────────────────────────
 
-// מספר בדיקה קבוע — עוקף את Supabase, זהה למה שמוגדר ב-/login (כל עוד
-// 019sms לא מחובר כ-Send SMS Hook, ה-OTP האמיתי לא באמת יוצא)
-const PHONE_TEST_NUMBER = "+972545603636";
+/*
+  מספר בדיקה שעוקף אימות — **בפיתוח בלבד** (16.9).
+
+  ישראל הוסיף אותו כשה-OTP עוד לא באמת יצא, וזה היה נכון אז. מרגע
+  ש-019sms מחובר, מספר וקוד קבועים בקוד פתוח הם דלת אחורית: מי שקורא
+  את הריפו עובר אונבורדינג בלי טלפון אמיתי, ואז הוא גם בלתי ניתן לשיוך
+  ומזהם את הנתונים. הבדיקה נשארת זמינה מקומית ונעלמת בפרודקשן.
+*/
+const DEV_ONLY = process.env.NODE_ENV !== "production";
+const PHONE_TEST_NUMBER = DEV_ONLY ? "+972545603636" : null;
 const PHONE_TEST_CODE = "12345";
 
+/**
+ * המרה ל-E.164 ישראלי. **מטפלת גם במספר שכבר נושא קידומת בינלאומית** —
+ * הגרסה הקודמת הסירה רק את ה-+ והשאירה את ה-972, ואז הוסיפה 972 שוב:
+ * "+972545603636" הפך ל-"+972972545603636" וכל מי שהקליד קידומת נכשל.
+ */
 function phoneToE164(localNumber: string): string {
   const digits = localNumber.replace(/\D/g, "");
-  const withoutLeadingZero = digits.startsWith("0") ? digits.slice(1) : digits;
-  return `+972${withoutLeadingZero}`;
+  const national = digits.startsWith("972") ? digits.slice(3)
+    : digits.startsWith("0") ? digits.slice(1)
+    : digits;
+  return `+972${national}`;
 }
 
 function StepPhone({ firstName, gender, onDone }: {
@@ -811,7 +825,7 @@ function StepPhone({ firstName, gender, onDone }: {
   const codeValid = code.trim().length >= 4;
 
   async function handleSend() {
-    if (phoneToE164(phone) === PHONE_TEST_NUMBER) { setStage("otp"); return; }
+    if (PHONE_TEST_NUMBER && phoneToE164(phone) === PHONE_TEST_NUMBER) { setStage("otp"); return; }
     setLoading(true);
     setError(null);
     const err = await sendPhoneOtp(phoneToE164(phone));
@@ -821,7 +835,7 @@ function StepPhone({ firstName, gender, onDone }: {
   }
 
   async function handleVerify() {
-    if (phoneToE164(phone) === PHONE_TEST_NUMBER) {
+    if (PHONE_TEST_NUMBER && phoneToE164(phone) === PHONE_TEST_NUMBER) {
       if (code.trim() !== PHONE_TEST_CODE) { setError("קוד שגוי"); return; }
       onDone();
       return;

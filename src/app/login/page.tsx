@@ -8,13 +8,22 @@ import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
 // מספר בדיקה קבוע — עוקף את Supabase (שימושי כל עוד Phone provider לא מוגדר בדשבורד)
-const TEST_PHONE = "+972545603636";
+/*
+  מספר בדיקה שעוקף אימות — **בפיתוח בלבד** (16.9). ראה את ההסבר המלא
+  ב-onboarding/page.tsx: מרגע ש-019sms מחובר, מספר וקוד קבועים בקוד פתוח
+  הם דלת אחורית להיכנס בלי טלפון אמיתי.
+*/
+const DEV_ONLY = process.env.NODE_ENV !== "production";
+const TEST_PHONE = DEV_ONLY ? "+972545603636" : null;
 const TEST_CODE = "12345";
 
+/** מטפלת גם במספר שכבר נושא קידומת בינלאומית — אחרת 972 נוסף פעמיים */
 function toE164(localNumber: string): string {
   const digits = localNumber.replace(/\D/g, "");
-  const withoutLeadingZero = digits.startsWith("0") ? digits.slice(1) : digits;
-  return `+972${withoutLeadingZero}`;
+  const national = digits.startsWith("972") ? digits.slice(3)
+    : digits.startsWith("0") ? digits.slice(1)
+    : digits;
+  return `+972${national}`;
 }
 
 function TextInput({
@@ -103,7 +112,7 @@ export default function LoginPage() {
   }
 
   async function handleSendOtp() {
-    if (toE164(phone) === TEST_PHONE) {
+    if (TEST_PHONE && toE164(phone) === TEST_PHONE) {
       setStep("otp");
       return;
     }
@@ -131,7 +140,7 @@ export default function LoginPage() {
   }
 
   async function handleVerify() {
-    if (toE164(phone) === TEST_PHONE) {
+    if (TEST_PHONE && toE164(phone) === TEST_PHONE) {
       if (code.trim() !== TEST_CODE) { setError("קוד שגוי"); return; }
       goAfterLogin();
       return;
