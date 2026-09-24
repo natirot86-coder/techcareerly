@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort")
+      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -210,6 +210,8 @@ export async function GET(req: NextRequest) {
       name,
       anonymous: !c.first_name,
       region: c.region,
+      /* לזיהוי באיזור השיוך (16.9) — אותו טלפון שכבר מוצג לרכזת בכל מקום אחר */
+      phone: c.phone || null,
       stage: c.current_stage,
       domain: c.chosen_domain,
       coordinatorId: c.coordinator_id ?? null,
@@ -293,5 +295,38 @@ export async function POST(req: NextRequest) {
       { status: missing ? 409 : 500 },
     );
   }
+  return NextResponse.json({ ok: true });
+}
+
+/**
+ * PATCH /api/coordinator — שינוי קוהורט ידני (16.9).
+ *
+ * רשת הביטחון שמפרט הפיילוט (docs/pilot-alumni-spec.md, סעיף 3, דליפה ד)
+ * דורש: "הקוהורט ניתן לשינוי באדמין בלבד, ולא על ידי ביקור חוזר ב-URL".
+ * ההתאמה האוטומטית (POST /api/candidate/sync-cohort) יכולה לפספס — מספר
+ * שהוקלד לא מדויק ברשימת מאנדיי, או בוגר/ת שנרשמו לפני שהרשימה יובאה.
+ * זה הכלי לתקן שיוך שגוי בלי לגעת ב-DB ישירות.
+ */
+export async function PATCH(req: NextRequest) {
+  const auth = await verifyCoordinator(req);
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !secret) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
+
+  const body = await req.json().catch(() => null) as { candidateId?: string; cohort?: string } | null;
+  if (!body?.candidateId) return NextResponse.json({ error: "candidateId required" }, { status: 400 });
+  if (body.cohort !== "main" && body.cohort !== "alumni") {
+    return NextResponse.json({ error: "cohort חייב להיות main או alumni" }, { status: 400 });
+  }
+
+  const db = createClient(url, secret, { auth: { persistSession: false } });
+  const { error } = await db
+    .from("candidates")
+    .update({ cohort: body.cohort })
+    .eq("id", body.candidateId);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -95,6 +95,19 @@ export async function ensureCandidateId(): Promise<string | null> {
       if (localStorage.getItem("phone-synced") !== authPhone) {
         await supabase.from("candidates").update({ phone: authPhone }).eq("id", candidateId);
         localStorage.setItem("phone-synced", authPhone);
+        /*
+         * שיוך אוטומטי לפיילוט הבוגרים (16.9, docs/pilot-alumni-spec.md) —
+         * בדיוק הרגע שהמפרט מכנה "הקוהורט נקבע בהרשמה". רץ ברקע (לא
+         * await) כדי לא לעכב את זרימת האונבורדינג בשביל בדיקה שרלוונטית
+         * למיעוט המועמדים; המסך הבא שקורא cachedCohort/refreshCohort
+         * כבר יראה alumni אם הייתה התאמה.
+         */
+        if (session?.access_token) {
+          fetch("/api/candidate/sync-cohort", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }).catch(() => { /* ignore — לא קריטי לאונבורדינג עצמו */ });
+        }
       }
     } catch { /* ignore */ }
   }

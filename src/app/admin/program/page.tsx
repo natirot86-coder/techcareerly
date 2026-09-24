@@ -16,13 +16,17 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { COORDINATOR_ROSTER, type CoordinatorProfile } from "@/data/coordinators";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
+import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
 const ROSTER_KEY = "admin-roster-draft";
 const ASSIGN_KEY = "admin-assignments";
 
-type Person = { id: string; name: string; stage: number; seenAt: string | null };
+type Person = {
+  id: string; name: string; stage: number; seenAt: string | null;
+  anonymous: boolean; region: string | null; domain: string | null; phone: string | null;
+};
 
 export default function ProgramAdmin() {
   const [roster, setRoster] = useState<CoordinatorProfile[]>(COORDINATOR_ROSTER);
@@ -31,19 +35,37 @@ export default function ProgramAdmin() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [toast, setToast] = useState("");
+  // חיפוש באיזור השיוך (16.9) — לפי שם, אזור, תחום או טלפון
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     try { setAssign(JSON.parse(localStorage.getItem(ASSIGN_KEY) ?? "{}")); } catch { /* ignore */ }
   }, []);
 
-  /* הסגל נטען מה-DB — עריכה נשמרת מיד, בלי JSON (נתי 23.8) */
+  /*
+   * הסגל נטען מה-DB — עריכה נשמרת מיד, בלי JSON (נתי 23.8).
+   *
+   * תוקן 16.9: "הוספת רכזת לא עובד" — התקלה הייתה מירוץ. loadPeople קורא
+   * ל-loadRoster ברקע ב-mount, ואם מישהו לחץ "+ רכזת" בחלון הזמן הזה
+   * (בדיוק מה שקורה כשזו הפעולה הראשונה בעמוד), ה-GET הזה היה מחליף את
+   * כל ה-state ומוחק את השורה החדשה מהתצוגה — גם אם ה-POST שלה כבר נשלח
+   * ואפילו הצליח, כי ה-GET נשלח *לפני* שהוא הגיע לשרת. עכשיו ממזגים לפי
+   * id במקום להחליף: שורה מקומית שעוד אין לה תשובה מהשרת נשמרת.
+   */
   const loadRoster = useCallback(async () => {
     try {
       const headers = await coordinatorAuthHeaders();
       const res = await fetch("/api/roster", { headers });
       if (res.ok) {
         const data = await res.json();
-        if (data.roster?.length) setRoster(data.roster);
+        if (data.roster?.length) {
+          setRoster(prev => {
+            const fresh: CoordinatorProfile[] = data.roster;
+            const freshIds = new Set(fresh.map(c => c.id));
+            const pendingLocal = prev.filter(c => !freshIds.has(c.id));
+            return [...fresh, ...pendingLocal];
+          });
+        }
       }
     } catch { /* ignore */ }
   }, []);
@@ -95,8 +117,12 @@ export default function ProgramAdmin() {
       if (!res.ok) throw new Error(res.status === 401 ? "ההזדהות פגה — נסה/י לרענן" : `שגיאה ${res.status}`);
       const data = await res.json();
       const all = [...(data.needsAttention ?? []), ...(data.quietList ?? [])];
-      setPeople(all.map((q: { id: string; name: string; stage?: number; lastActive?: string | null }) => ({
-        id: q.id, name: q.name || "ללא שם", stage: q.stage ?? 0, seenAt: (q as unknown as { lastActive?: string | null }).lastActive ?? null,
+      setPeople(all.map((q: {
+        id: string; name: string; stage?: number; lastActive?: string | null;
+        anonymous?: boolean; region?: string | null; domain?: string | null; phone?: string | null;
+      }) => ({
+        id: q.id, name: q.name || "ללא שם", stage: q.stage ?? 0, seenAt: q.lastActive ?? null,
+        anonymous: !!q.anonymous, region: q.region ?? null, domain: q.domain ?? null, phone: q.phone ?? null,
       })));
       // השיוך שכבר במסד גובר על מה שבדפדפן
       const fromDb: Record<string, string> = {};
@@ -240,7 +266,18 @@ export default function ProgramAdmin() {
 
         {/* ── המשתתפים והשיוך ── */}
         <div>
-          <div className="text-[16px] font-black mb-2" style={{ color: NAVY }}>המשתתפים</div>
+          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <div className="text-[16px] font-black" style={{ color: NAVY }}>המשתתפים</div>
+            {people.length > 0 && (
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="חיפוש — שם, טלפון, אזור או תחום"
+                className="px-3 py-1.5 rounded-lg text-[12.5px] w-full sm:w-[260px]"
+                style={{ border: "1px solid rgba(0,0,0,0.15)" }}
+              />
+            )}
+          </div>
           {people.length === 0 ? (
             <div className="rounded-2xl p-5 flex flex-col gap-3" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.1)" }}>
               <div className="text-[13px]" style={{ color: "rgba(0,0,0,0.55)" }}>
@@ -252,20 +289,47 @@ export default function ProgramAdmin() {
                 </button>
               )}
             </div>
-          ) : (
+          ) : (() => {
+            const q = search.trim().toLowerCase();
+            const filtered = !q ? people : people.filter(p =>
+              p.name.toLowerCase().includes(q) ||
+              p.id.toLowerCase().includes(q) ||
+              (p.phone ?? "").toLowerCase().includes(q) ||
+              (p.region ?? "").toLowerCase().includes(q) ||
+              (p.domain ?? "").toLowerCase().includes(q)
+            );
+            return (
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.1)" }}>
+              {q && (
+                <div className="px-3 py-2 text-[11.5px]" style={{ background: "rgba(2,62,138,0.04)", color: "rgba(0,0,0,0.5)" }}>
+                  {filtered.length} מתוך {people.length}
+                </div>
+              )}
               <table className="w-full text-[12.5px]" style={{ background: "#fff" }}>
                 <thead>
                   <tr style={{ background: "rgba(2,62,138,0.05)", color: NAVY }}>
-                    {["שם", "שלב", "נראה לאחרונה", "רכזת"].map(h => (
+                    {["מזהה", "טלפון", "אזור · תחום", "שלב", "נראה לאחרונה", "רכזת"].map(h => (
                       <th key={h} className="text-right px-3 py-2.5 font-black">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {people.map(p => (
+                  {filtered.length === 0 && (
+                    <tr><td colSpan={6} className="px-3 py-4 text-center" style={{ color: "rgba(0,0,0,0.4)" }}>אין תוצאות ל"{search}"</td></tr>
+                  )}
+                  {filtered.map(p => (
                     <tr key={p.id} style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                      <td className="px-3 py-2 font-bold">{p.name}</td>
+                      <td className="px-3 py-2 font-bold">
+                        {p.name}
+                        {/* מזהה קצר למועמד/ת ללא שם (16.9) — בלעדיו כמה שורות "מועמד/ת ללא שם" נראות זהות */}
+                        {p.anonymous && <span className="font-bold" style={{ color: "rgba(0,0,0,0.35)" }}> #{p.id.slice(-4)}</span>}
+                      </td>
+                      <td className="px-3 py-2" dir="ltr" style={{ color: "rgba(0,0,0,0.6)" }}>
+                        {p.phone ? `+${p.phone}` : "—"}
+                      </td>
+                      <td className="px-3 py-2" style={{ color: "rgba(0,0,0,0.6)" }}>
+                        {[p.region, p.domain ? (DOMAIN_LABEL[p.domain as Domain] ?? p.domain) : null].filter(Boolean).join(" · ") || "—"}
+                      </td>
                       <td className="px-3 py-2">{p.stage || "—"}</td>
                       <td className="px-3 py-2" style={{ color: "rgba(0,0,0,0.5)" }}>
                         {p.seenAt ? new Date(p.seenAt).toLocaleDateString("he-IL") : "—"}
@@ -288,7 +352,8 @@ export default function ProgramAdmin() {
                 </tbody>
               </table>
             </div>
-          )}
+            );
+          })()}
         </div>
       </div>
 

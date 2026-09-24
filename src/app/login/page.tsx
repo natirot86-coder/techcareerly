@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady } from "@/lib/candidate";
 import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
@@ -219,6 +220,21 @@ export default function LoginPage() {
             </button>
           </>
         )}
+
+        {/*
+          כניסת צוות (16.9) — עד עכשיו לא הייתה שום דרך גלויה להגיע מכאן
+          לאזור הניהול. רכזת שהגיעה בטעות למסך הזה הייתה עלולה לעבור OTP
+          של מועמד/ת (שדרוג session אנונימי) במקום OTP של רכזת (זהות
+          עצמאית, מתנתקת קודם) — שתי זהויות שונות שאסור שיתערבבו.
+          הקישור הזה מפנה לתהליך הנכון במקום לנחש אחרי אימות שגוי.
+        */}
+        <Link
+          href="/admin"
+          className="text-center text-[12.5px] font-bold mt-2"
+          style={{ color: "rgba(0,0,0,0.35)" }}
+        >
+          צוות טק-קריירה? כניסה לאזור הניהול ←
+        </Link>
       </div>
     </div>
   );

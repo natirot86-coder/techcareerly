@@ -888,6 +888,26 @@ export default function CoordinatorPage() {
   // מסע הלקוח: לחיצה על שם בטאב "כל המשתתפים" פותחת את המפה של האדם
   const [journeyFor, setJourneyFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /*
+   * רשת הביטחון לשיוך שגוי (16.9, pilot-alumni-spec.md §3 דליפה ד) —
+   * עדכון אופטימי מקומי כדי שלא צריך לטעון מחדש את כל התור אחרי כל תיקון.
+   * המפתח האמיתי (`candidates.cohort`) מתעדכן דרך PATCH /api/coordinator.
+   */
+  const [cohortOverride, setCohortOverride] = useState<Record<string, "main" | "alumni">>({});
+  const [cohortSaving, setCohortSaving] = useState<string | null>(null);
+
+  async function setCohort(candidateId: string, cohort: "main" | "alumni") {
+    setCohortSaving(candidateId);
+    try {
+      const headers = await coordinatorAuthHeaders();
+      const r = await fetch("/api/coordinator", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ candidateId, cohort }),
+      });
+      if (r.ok) setCohortOverride(o => ({ ...o, [candidateId]: cohort }));
+    } finally { setCohortSaving(null); }
+  }
 
   // השער עבר ל-AdminGate ברמת ה-layout (7.9) — הגעה לכאן כבר אומרת שהזדהינו
   const load = useCallback(async () => {
@@ -1105,16 +1125,37 @@ export default function CoordinatorPage() {
             const isOpen = open === p.id;
             const doneCount = (p.checklist ?? []).filter(c => c.done).length;
             const total = (p.checklist ?? []).length || 9;
+            const cohort = cohortOverride[p.id] ?? (p.cohort === "alumni" ? "alumni" : "main");
+            const savingThis = cohortSaving === p.id;
             return (
               <div key={p.id} style={{ background: "#fff", borderRadius: 14, border: "1px solid rgba(0,0,0,0.08)", marginBottom: 8, overflow: "hidden" }}>
-                <button onClick={() => setJourneyFor(p.id)}
-                  style={{ width: "100%", textAlign: "right", border: "none", background: "none", cursor: "pointer", padding: "12px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {/* div ולא button: יש כאן כפתור-קוהורט מקונן, ושני <button> לא יכולים לקנן זה בזה */}
+                <div onClick={() => setJourneyFor(p.id)} role="button" tabIndex={0}
+                  onKeyDown={e => { if (e.key === "Enter") setJourneyFor(p.id); }}
+                  style={{ width: "100%", textAlign: "right", cursor: "pointer", padding: "12px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 14.5, fontWeight: 800, color: NAVY, textDecoration: "underline", textUnderlineOffset: 3 }}>{p.name}</span>
                     <span style={{ fontSize: 11.5, color: "rgba(0,0,0,0.45)" }}>שלב {p.stage || "—"}</span>
                     {p.signals.length > 0 && (
                       <span style={{ fontSize: 10.5, fontWeight: 800, color: "#b91c1c" }}>● {p.signals.length} סיגנלים</span>
                     )}
+                    {/*
+                      מתג קוהורט (16.9) — רשת הביטחון לתיקון שיוך שגוי מ-pilot-alumni-spec.md.
+                      stopPropagation כי הוא יושב בתוך שורה שכולה קליקבילית לניווט.
+                    */}
+                    <button
+                      type="button"
+                      disabled={savingThis}
+                      onClick={e => { e.stopPropagation(); setCohort(p.id, cohort === "alumni" ? "main" : "alumni"); }}
+                      title="לחיצה משנה את הקוהורט — משפיע על מספר השלבים והתוכן שהמועמד/ת רואה"
+                      style={{
+                        fontSize: 10.5, fontWeight: 800, borderRadius: 999, padding: "3px 10px", border: "none", cursor: savingThis ? "default" : "pointer",
+                        background: cohort === "alumni" ? "rgba(15,122,82,0.1)" : "rgba(0,0,0,0.05)",
+                        color: cohort === "alumni" ? "#0f7a52" : "rgba(0,0,0,0.45)",
+                        opacity: savingThis ? 0.5 : 1,
+                      }}>
+                      {savingThis ? "שומר…" : cohort === "alumni" ? "🎓 בוגר/ת" : "קהל רחב"}
+                    </button>
                     <span style={{ marginRight: "auto", fontSize: 11.5, fontWeight: 800, color: NAVY }}>
                       {doneCount}/{total}
                     </span>
@@ -1123,7 +1164,7 @@ export default function CoordinatorPage() {
                   <div style={{ height: 4, borderRadius: 999, background: "rgba(0,0,0,0.06)", marginTop: 8 }}>
                     <div style={{ height: "100%", width: `${(doneCount / total) * 100}%`, borderRadius: 999, background: doneCount === total ? "#059669" : ORANGE }} />
                   </div>
-                </button>
+                </div>
                 {isOpen && (
                   <div style={{ padding: "0 16px 14px", borderTop: "1px solid rgba(0,0,0,0.05)" }}>
                     <div style={{ paddingTop: 10 }}>
