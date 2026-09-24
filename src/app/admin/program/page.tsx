@@ -37,6 +37,26 @@ export default function ProgramAdmin() {
   const [toast, setToast] = useState("");
   // חיפוש באיזור השיוך (16.9) — לפי שם, אזור, תחום או טלפון
   const [search, setSearch] = useState("");
+  /*
+   * מודל הוספת רכזת (24.9) — עד עכשיו "+ רכזת" יצר מיד שורה ריקה ברשימה,
+   * וזה בדיוק מה שגרם לבלבול: קליק אחד יוצר רשומה בשרת בלי אישור, ומי
+   * שלא הבין את זה לחץ כמה פעמים "כי זה לא עבד" ויצר רשומות ריקות
+   * מיותרות (זה גם מה שקרה בפועל בפרודקשן — ראה ה-3 קורדינטורים הריקים
+   * שנוצרו תוך כדי בדיקת התיקון הקודם). עכשיו שום דבר לא נכתב לשרת
+   * עד לחיצה מפורשת על "הוספה".
+   */
+  const BLANK_DRAFT = { name: "", location: "", email: "", phone: "", active: true, cal_m1: "", cal_m2: "", cal_m3: "" };
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [draft, setDraft] = useState(BLANK_DRAFT);
+
+  // נועל גלילת הרקע כל עוד המודל פתוח — בלי זה גלילה מאחורי הרקע הכהה
+  // מזיזה את העמוד, ואחרי סגירה רואים אותו במקום אחר ממה שהיה
+  useEffect(() => {
+    if (!showAddModal) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [showAddModal]);
 
   useEffect(() => {
     try { setAssign(JSON.parse(localStorage.getItem(ASSIGN_KEY) ?? "{}")); } catch { /* ignore */ }
@@ -86,11 +106,13 @@ export default function ProgramAdmin() {
     const row = next.find(c => c.id === id);
     if (row) saveTimer.current = setTimeout(() => persistRow(row), 700);
   }
-  function addCoordinator() {
+  function openAddModal() { setDraft(BLANK_DRAFT); setShowAddModal(true); }
+  function confirmAdd() {
     const id = `coord-${Date.now()}`;
-    const row = { id, name: "", location: "", email: "", phone: "", active: true, cal_m1: "", cal_m2: "", cal_m3: "" };
-    setRoster([...roster, row]);
+    const row = { id, ...draft };
+    setRoster(r => [...r, row]);
     persistRow(row);
+    setShowAddModal(false);
   }
   async function setAssignment(personId: string, coordId: string) {
     const next = { ...assign, [personId]: coordId };
@@ -169,7 +191,7 @@ export default function ProgramAdmin() {
           <div className="flex items-center justify-between mb-2">
             <div className="text-[16px] font-black" style={{ color: NAVY }}>הרכזות</div>
             <div className="flex gap-2">
-              <button onClick={addCoordinator} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
+              <button onClick={openAddModal} className="text-[12px] font-bold px-3 py-1.5 rounded-lg"
                 style={{ background: "rgba(2,62,138,0.07)", color: NAVY }}>+ רכזת</button>
 
             </div>
@@ -360,6 +382,116 @@ export default function ProgramAdmin() {
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full text-white text-[13px] font-bold"
           style={{ background: NAVY }}>{toast}</div>
+      )}
+
+      {showAddModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            dir="rtl"
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-[480px] max-h-[90vh] overflow-y-auto rounded-2xl p-5 flex flex-col gap-3.5"
+            style={{ background: "#fff" }}
+          >
+            <div className="text-[17px] font-black" style={{ color: NAVY }}>הוספת רכזת</div>
+
+            <label className="text-[11px] font-bold flex flex-col gap-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+              שם
+              <input
+                autoFocus
+                value={draft.name}
+                onChange={e => setDraft(d => ({ ...d, name: e.target.value }))}
+                placeholder="שם הרכזת"
+                className="px-2.5 py-2 rounded-lg text-[13.5px]"
+                style={{ border: "1px solid rgba(0,0,0,0.15)" }}
+              />
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <label className="text-[11px] font-bold flex flex-col gap-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+                אזור
+                <input
+                  value={draft.location}
+                  onChange={e => setDraft(d => ({ ...d, location: e.target.value }))}
+                  className="px-2.5 py-2 rounded-lg text-[12.5px]"
+                  style={{ border: "1px solid rgba(0,0,0,0.1)" }}
+                />
+              </label>
+              <label className="text-[11px] font-bold flex flex-col gap-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+                טלפון (גם 05… בסדר)
+                <input
+                  value={draft.phone}
+                  onChange={e => setDraft(d => ({ ...d, phone: e.target.value }))}
+                  dir="ltr"
+                  className="px-2.5 py-2 rounded-lg text-[12.5px]"
+                  style={{ border: "1px solid rgba(0,0,0,0.1)" }}
+                />
+              </label>
+            </div>
+
+            <label className="text-[11px] font-bold flex flex-col gap-1" style={{ color: "rgba(0,0,0,0.45)" }}>
+              מייל חשבון ה-Cal (לזיהוי הזמנות!)
+              <input
+                value={draft.email}
+                onChange={e => setDraft(d => ({ ...d, email: e.target.value }))}
+                dir="ltr"
+                className="px-2.5 py-2 rounded-lg text-[12.5px]"
+                style={{ border: "1px solid rgba(0,0,0,0.1)" }}
+              />
+            </label>
+
+            <div className="rounded-xl px-3 py-2.5" style={{ background: "rgba(2,62,138,0.03)", border: "1px solid rgba(2,62,138,0.08)" }}>
+              <div className="text-[10.5px] font-bold uppercase tracking-wide mb-1.5" style={{ color: "rgba(0,0,0,0.4)" }}>
+                יומן Cal (מה שאחרי cal.com/) — אפשר גם להשלים אחר כך
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {([["cal_m1", "פגישה 1"], ["cal_m2", "פגישה 2"], ["cal_m3", "פגישה 3"]] as const).map(([k, label]) => (
+                  <input
+                    key={k}
+                    value={draft[k]}
+                    onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))}
+                    placeholder={label}
+                    dir="ltr"
+                    className="px-2.5 py-2 rounded-lg text-[11.5px]"
+                    style={{ border: "1px solid rgba(0,0,0,0.1)", background: "#fff" }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-1.5 text-[12px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>
+              <input type="checkbox" checked={draft.active} onChange={e => setDraft(d => ({ ...d, active: e.target.checked }))} />
+              פעילה — גלויה למועמדים
+            </label>
+
+            {/*
+              סדר הכפתורים (24.9, אחרי בדיקה חזותית): הפעולה הראשית קודמת
+              ב-DOM כדי שברינדור RTL היא תשב מימין — בדיוק כמו "להוסיף/ביטול"
+              ב-plan/page.tsx. בגרסה הקודמת "הוספה" ישבה משמאל ו"ביטול" מימין,
+              הפוך מהמוסכמה הקיימת באפליקציה.
+            */}
+            <div className="flex gap-2 mt-1">
+              <button
+                onClick={confirmAdd}
+                disabled={!draft.name.trim()}
+                className="flex-1 px-4 py-2.5 rounded-xl text-white text-[13.5px] font-black"
+                style={{ background: NAVY, opacity: draft.name.trim() ? 1 : 0.5, cursor: draft.name.trim() ? "pointer" : "not-allowed" }}
+              >
+                הוספה
+              </button>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl text-[13.5px] font-black"
+                style={{ background: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)" }}
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
