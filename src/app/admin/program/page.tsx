@@ -114,6 +114,17 @@ export default function ProgramAdmin() {
     persistRow(row);
     setShowAddModal(false);
   }
+
+  /** מחיקת רכזת (24.9) — הדרך היחידה לנקות רשומה שנוצרה בטעות (למשל מהמירוץ שתוקן) */
+  async function deleteCoordinator(id: string, name: string) {
+    if (!window.confirm(`למחוק את ${name || "הרכזת הזו"}? הפעולה לא הפיכה.`)) return;
+    setRoster(r => r.filter(c => c.id !== id));
+    const headers = { "content-type": "application/json", ...(await coordinatorAuthHeaders()) };
+    try {
+      const r = await fetch("/api/roster", { method: "DELETE", headers, body: JSON.stringify({ id }) });
+      if (!r.ok) { const j = await r.json().catch(() => null); setErr(j?.error ?? "המחיקה נכשלה"); loadRoster(); }
+    } catch { setErr("אין חיבור לשרת — המחיקה לא בוצעה"); loadRoster(); }
+  }
   async function setAssignment(personId: string, coordId: string) {
     const next = { ...assign, [personId]: coordId };
     setAssign(next);
@@ -219,6 +230,17 @@ export default function ProgramAdmin() {
                     <div className="text-[12px] font-black shrink-0 px-2.5 py-1 rounded-full" style={{ background: "rgba(2,62,138,0.06)", color: NAVY }}>
                       {count} משתתפים
                     </div>
+                    {/* מחיקה (24.9) — מוצג רק כשאין משתתפים משויכים, כדי לא לפתות למחוק רכזת פעילה בטעות */}
+                    {count === 0 && (
+                      <button
+                        onClick={() => deleteCoordinator(c.id, c.name)}
+                        title="מחיקת רכזת"
+                        className="shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-full"
+                        style={{ color: "#b91c1c", background: "rgba(185,28,28,0.06)" }}
+                      >
+                        מחיקה
+                      </button>
+                    )}
                   </div>
 
                   {/* פרטי קשר — כל שדה עם תווית משלו, כדי שהכיתוב הארוך (מייל ה-Cal, פורמט הטלפון) לא ידחוק שדות אחרים */}

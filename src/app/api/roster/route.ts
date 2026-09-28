@@ -1,9 +1,12 @@
 /**
- * GET/POST /api/roster — סגל הרכזות מה-DB (נתי 23.8: בלי JSON, צוות לא-טכני).
+ * GET/POST/DELETE /api/roster — סגל הרכזות מה-DB (נתי 23.8: בלי JSON, צוות לא-טכני).
  *
  * שער גישה: verifyCoordinator (7.9) — קוד חירום משותף, או זהות אישית
  * מ-OTP. הקריאה והכתיבה בצד שרת עם המפתח הסודי; המועמדים קוראים רכזות
  * פעילות ישירות דרך RLS.
+ *
+ * DELETE נוסף 24.9 — עד עכשיו לא הייתה שום דרך למחוק רשומה שנוצרה בטעות
+ * (בדיוק מה שקרה עם מירוץ "+ רכזת" לפני שהמודל עם האישור נבנה).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -58,6 +61,20 @@ export async function POST(req: NextRequest) {
     cal_m2: body.cal_m2 ?? "",
     cal_m3: body.cal_m3 ?? "",
   });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(req: NextRequest) {
+  const blocked = await gate(req);
+  if (blocked) return blocked;
+  const client = db();
+  if (!client) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
+
+  const body = await req.json().catch(() => null) as { id?: string } | null;
+  if (!body?.id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  const { error } = await client.from("coordinators").delete().eq("id", body.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
