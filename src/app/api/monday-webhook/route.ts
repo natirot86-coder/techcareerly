@@ -23,7 +23,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/candidate";
-import { heKey } from "@/lib/monday";
+import { waLink } from "@/lib/waLink";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +32,8 @@ const COL_PHONE = "text_mm7tmnqc";
 const COL_TRACK = "color_mm7tahjd";
 const ALUMNI_LABEL = "בוגרים — תואר בלבד";
 const NOTE = "סומן על ידי הרכזת בלוח אינטק";
+const COL_COORD = "color_mm7t74m3";
+const COL_WA = "link_mm7t82dd";
 
 /* ── הלוח הראשי: "החלטה סופית" ← שורה בלוח אינטק ────────────────────────────
    הלוח הראשי הוא שער הכניסה, ולוח אינטק הוא הבעלות. ההעברה הייתה עד היום
@@ -42,7 +44,7 @@ const MAIN_BOARD = process.env.MONDAY_MAIN_BOARD ?? "18396761860";
 const MAIN = {
   decision: "color_mm4ms1kq", phone: "phone_mm46se7z", phoneText: "text_mkyqhj10",
   email: "text_mkyq3a1", first: "text_mkywv4ea", last: "text_mkyqqaf9",
-  coord: "color_mm7t9gvx", birth: "date_mm6jsd1j",
+  birth: "date_mm6jsd1j",
 } as const;
 const INTECH = {
   phone: "text_mm7tmnqc", email: "text_mm7tase7", coord: "color_mm7t74m3",
@@ -85,6 +87,9 @@ export async function POST(req: NextRequest) {
 
   if (String(body?.event?.boardId ?? "") === MAIN_BOARD) return promoteFromMain(itemId);
 
+  /* שינוי רכז/ת — ההודעה והיומן שבה תלויים בה, ולכן הקישור נבנה מחדש */
+  if (body?.event?.columnId === COL_COORD) return rebuildWa(itemId);
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
@@ -126,22 +131,6 @@ const norm = (raw: unknown): string => {
   return d.length === 9 ? "972" + d : d;
 };
 
-/** "סיוון" בלוח הראשי מול "סיון מקונן" באינטק — מתרגמים לפי שם פרטי */
-async function coordLabel(name: string): Promise<string | null> {
-  const want = name.trim();
-  if (!want) return null;
-  const d = await monday<{ boards: { columns: { settings_str: string }[] }[] }>(
-    `{ boards(ids: ${BOARD}) { columns(ids: ["${INTECH.coord}"]) { settings_str } } }`
-  );
-  const raw = d?.boards?.[0]?.columns?.[0]?.settings_str;
-  if (!raw) return null;
-  let labels: string[] = [];
-  try { labels = Object.values(JSON.parse(raw).labels ?? {}) as string[]; } catch { return null; }
-  const first = heKey(want.split(/\s+/)[0]);
-  return labels.filter(l => heKey(l) === heKey(want) || heKey(l.split(/\s+/)[0]) === first)
-    .sort((a, b) => a.length - b.length)[0] ?? null;
-}
-
 async function promoteFromMain(itemId: number) {
   const ids = [...Object.values(MAIN), ...Object.values(MAIN_EXTRA)].map(c => `"${c}"`).join(", ");
   const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
@@ -172,7 +161,11 @@ async function promoteFromMain(itemId: number) {
   if (dup) return NextResponse.json({ ok: true, skipped: "already in board" });
 
   const name = [cv(MAIN.first), cv(MAIN.last)].filter(Boolean).join(" ") || item.name;
-  const coord = await coordLabel(cv(MAIN.coord));
+  /*
+    ⚠️ הרכז/ת **לא** עובר/ת מהלוח הראשי (נתי, 4.10): השיוך נקבע
+    בלוח אינטק, ושתי עמודות שכותבות לאותו שדה הן שתי אמיתות שיוצאות
+    מסנכרון. השדה נולד ריק והרכזת ממלאת — וריק אומר "טרם שויך".
+  */
   const vals: Record<string, unknown> = {
     [INTECH.status]: { label: "לפני שיחה ראשונה" },
     [INTECH.src]: { label: "לוח מועמדים ראשי" },
@@ -180,14 +173,51 @@ async function promoteFromMain(itemId: number) {
   };
   if (phone) vals[INTECH.phone] = phone;
   if (email) vals[INTECH.email] = email;
-  if (coord) vals[INTECH.coord] = { label: coord };
   if (cv(MAIN.birth)) vals[INTECH.birth] = { date: cv(MAIN.birth) };
   if (cv(MAIN_EXTRA.gender)) vals[INTECH.gender] = { label: cv(MAIN_EXTRA.gender) };
   if (cv(MAIN_EXTRA.city)) vals[INTECH.city] = cv(MAIN_EXTRA.city);
+
+  /* הקישור נולד עם השורה, עדיין בלי שם רכזת — ומתמלא כשהיא משוייכת */
+  const wa = waLink({ phone, participant: name });
+  if (wa) vals[COL_WA] = { url: wa, text: `וואטסאפ ל${name.trim().split(/\s+/)[0]}` };
 
   const made = await monday<{ create_item: { id: string } }>(
     `mutation ($b: ID!, $n: String!, $v: JSON!) { create_item(board_id: $b, item_name: $n, column_values: $v) { id } }`,
     { b: BOARD, n: name, v: JSON.stringify(vals) }
   );
   return NextResponse.json({ ok: !!made, created: made?.create_item?.id ?? null, name });
+}
+
+/* ── קישור הוואטסאפ ─────────────────────────────────────────────────────────
+   נבנה מחדש בכל שינוי רכז/ת, כי הקישור ליומן הוא פר-רכזת — הודעה שנוצרה
+   פעם אחת בלבד הייתה שולחת מועמד ליומן של מישהי אחרת. */
+export async function rebuildWa(itemId: number) {
+  const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
+    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_PHONE}","${COL_COORD}"]) { id text } } }`
+  );
+  const item = d?.items?.[0];
+  if (!item) return NextResponse.json({ ok: true, skipped: "item not found" });
+  const cv = (id: string) => (item.column_values.find(c => c.id === id)?.text ?? "").trim();
+
+  const coordName = cv(COL_COORD);
+  let calPath: string | null = null;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (coordName && url && key) {
+    const db = createClient(url, key, { auth: { persistSession: false } });
+    const { data } = await db.from("coordinators").select("cal_m1").ilike("name", coordName).limit(1);
+    calPath = data?.[0]?.cal_m1 || null;
+  }
+
+  const link = waLink({ phone: cv(COL_PHONE), participant: item.name, coordinator: coordName, calPath });
+  const value = link
+    ? { url: link, text: `וואטסאפ ל${item.name.trim().split(/\s+/)[0]}` }
+    : {};   // בלי טלפון תקין אין קישור — ולא קישור שבור
+
+  const ok = await monday(
+    `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b,
+       item_id: $i, column_values: $v) { id } }`,
+    { b: BOARD, i: itemId, v: JSON.stringify({ [COL_WA]: value }) }
+  );
+  return NextResponse.json({ ok: !!ok, link: !!link, coordinator: coordName || null });
 }
