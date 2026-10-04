@@ -24,6 +24,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/candidate";
 import { waLink } from "@/lib/waLink";
+import { sendMail, welcomeEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,9 @@ const ALUMNI_LABEL = "בוגרים — תואר בלבד";
 const NOTE = "סומן על ידי הרכזת בלוח אינטק";
 const COL_COORD = "color_mm7t74m3";
 const COL_WA = "link_mm7t82dd";
+const COL_STATUS = "color_mm7t1s7a";
+const COL_MAIL = "text_mm7tase7";
+const LINK_SENT = "נשלח קישור";
 
 /* ── הלוח הראשי: "החלטה סופית" ← שורה בלוח אינטק ────────────────────────────
    הלוח הראשי הוא שער הכניסה, ולוח אינטק הוא הבעלות. ההעברה הייתה עד היום
@@ -94,6 +98,20 @@ export async function POST(req: NextRequest) {
    * כל מה שיושב בהודעה, וקישור שלא מתעדכן אחריהם שולח ליומן הלא נכון
    * או פותח צ'אט עם אדם זר — בלי שאיש יראה שמשהו נשבר.
    */
+  /*
+   * ── המייל יוצא כשהרכזת מסמנת "נשלח קישור" (נתי, 5.10) ────────────────────
+   * הוואטסאפ הוא לחיצה שלה; המייל יוצא מעצמו באותו רגע. **שניהם ולא אחד:**
+   * הוואטסאפ נקרא מיד, והמייל הוא מה שאפשר לחזור אליו אחרי שבוע כשההודעה
+   * כבר נקברה. ⚠️ נשלח **פעם אחת** — נבדק מול הסטטוס הקודם, כי סימון חוזר
+   * של אותה תווית אינו אירוע חדש אצל האדם שמקבל אותו.
+   */
+  if (body?.event?.columnId === COL_STATUS) {
+    const prev = (body as { event?: { previousColumnValue?: { label?: { text?: string } } } })
+      ?.event?.previousColumnValue?.label?.text ?? "";
+    if (prev !== LINK_SENT) await maybeSendWelcome(itemId);
+    return rebuildWa(itemId);
+  }
+
   if (body?.event?.columnId !== COL_TRACK) return rebuildWa(itemId);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -226,4 +244,35 @@ export async function rebuildWa(itemId: number) {
     { b: BOARD, i: itemId, v: JSON.stringify({ [COL_WA]: value }) }
   );
   return NextResponse.json({ ok: !!ok, link: !!link, coordinator: coordName || null });
+}
+
+/* ── מייל הפתיחה ─────────────────────────────────────────────────────────────
+   יוצא רק על "נשלח קישור", רק אם יש מייל, ורק אם לרכזת יש קישור יומן —
+   אותו תנאי בדיוק כמו הוואטסאפ, כי זו אותה הודעה בשני ערוצים. */
+async function maybeSendWelcome(itemId: number) {
+  const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
+    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_STATUS}","${COL_MAIL}","${COL_COORD}"]) { id text } } }`
+  );
+  const item = d?.items?.[0];
+  if (!item) return;
+  const cv = (id: string) => (item.column_values.find(c => c.id === id)?.text ?? "").trim();
+  if (cv(COL_STATUS) !== LINK_SENT) return;
+
+  const to = cv(COL_MAIL);
+  if (!to || !to.includes("@")) return;
+
+  const coordName = cv(COL_COORD);
+  let calUrl: string | null = null;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (coordName && url && key) {
+    const db = createClient(url, key, { auth: { persistSession: false } });
+    const { data } = await db.from("coordinators").select("cal_m1").ilike("name", coordName).limit(1);
+    const p = data?.[0]?.cal_m1 || "";
+    calUrl = p ? (p.startsWith("http") ? p : `https://cal.com/${p}`) : null;
+  }
+
+  const mail = welcomeEmail({ participant: item.name, coordinator: coordName, calUrl });
+  const sent = await sendMail({ to, subject: mail.subject, html: mail.html });
+  console.log(`[monday-webhook] welcome mail → ${to}: ${sent === null ? "disabled" : sent}`);
 }
