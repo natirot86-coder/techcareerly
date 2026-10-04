@@ -1174,6 +1174,15 @@ export default function CoordinatorPage() {
             מושג מאיפה הוא הגיע** — וזו שאלה שרק הרכזת יכולה לסגור. הכרטיס
             הזה הוא הבדיקה היומית, במקום שבו היא כבר מסתכלת.
           */
+          /*
+            סומן "נשלח קישור" — אבל בלי רכז/ת או בלי קישור יומן שום דבר לא
+            יצא. הרכזת מאמינה ששלחה, והאדם ממתין להודעה שלא קיימת.
+          */
+          const stuckSend = board.filter(r => r.status === "נשלח קישור" && !r.coordinator);
+          if (stuckSend.length) cards.push({
+            n: stuckSend.length, label: "סומן ולא נשלח", hint: "אין רכז/ת משויך/ת",
+            key: "stuck", warn: true,
+          });
           const unknownSrc = board.filter(r => !r.source || r.source === "לא ידוע עדיין");
           if (unknownSrc.length) cards.push({
             n: unknownSrc.length, label: "מאיפה הגיעו?", hint: "קבעו פגישה בלי לעבור במאנדיי",
@@ -1556,6 +1565,8 @@ export default function CoordinatorPage() {
             ? data.board!.filter(r => r.status === "לפני שיחה ראשונה")
             : bigFilter === "unknown"
             ? data.board!.filter(r => !r.source || r.source === "לא ידוע עדיין")
+            : bigFilter === "stuck"
+            ? data.board!.filter(r => r.status === "נשלח קישור" && !r.coordinator)
             : data.board!;
           const byApp = new Map((data.quietList ?? []).concat(data.needsAttention)
             .map(p => [(p.phone ?? "").replace(/\D/g, ""), p]));

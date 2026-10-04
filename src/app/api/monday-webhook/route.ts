@@ -37,6 +37,15 @@ const COL_COORD = "color_mm7t74m3";
 const COL_WA = "link_mm7t82dd";
 const COL_STATUS = "color_mm7t1s7a";
 const COL_MAIL = "text_mm7tase7";
+/*
+ * ── הסימון ששומר מפני שליחה כפולה (נתי, 5.10) ───────────────────────────────
+ * המייל אינו יוצא רק על שינוי הסטטוס אלא **ברגע שמשלימים את השלישייה**:
+ * סטטוס "נשלח קישור" + רכז/ת משויך/ת + קישור יומן לרכז/ת. כלומר הוא יכול
+ * להיות מופעל משלושה כיוונים שונים, ואז "פעם אחת בלבד" חייב להישען על
+ * עובדה שמורה ולא על האירוע שהגיע. עמודת תאריך גלויה בלוח: רואים מתי יצא,
+ * ומחיקת התאריך שולחת שוב — תיקון בלי קוד.
+ */
+const COL_MAILED = "date_mm7tvfnx";
 const LINK_SENT = "נשלח קישור";
 
 /* ── הלוח הראשי: "החלטה סופית" ← שורה בלוח אינטק ────────────────────────────
@@ -105,10 +114,13 @@ export async function POST(req: NextRequest) {
    * כבר נקברה. ⚠️ נשלח **פעם אחת** — נבדק מול הסטטוס הקודם, כי סימון חוזר
    * של אותה תווית אינו אירוע חדש אצל האדם שמקבל אותו.
    */
-  if (body?.event?.columnId === COL_STATUS) {
-    const prev = (body as { event?: { previousColumnValue?: { label?: { text?: string } } } })
-      ?.event?.previousColumnValue?.label?.text ?? "";
-    if (prev !== LINK_SENT) await maybeSendWelcome(itemId);
+  /*
+   * שני הכיוונים שמשלימים את השלישייה מתוך מאנדיי: הסטטוס והרכז/ת.
+   * הכיוון השלישי — הוספת קישור יומן — קורה אצלנו ב-/admin/program, ומשם
+   * נקרא אותו נתיב ישירות (ראה drainPendingWelcome ב-api/roster).
+   */
+  if (body?.event?.columnId === COL_STATUS || body?.event?.columnId === COL_COORD) {
+    await maybeSendWelcome(itemId);
     return rebuildWa(itemId);
   }
 
@@ -249,14 +261,15 @@ export async function rebuildWa(itemId: number) {
 /* ── מייל הפתיחה ─────────────────────────────────────────────────────────────
    יוצא רק על "נשלח קישור", רק אם יש מייל, ורק אם לרכזת יש קישור יומן —
    אותו תנאי בדיוק כמו הוואטסאפ, כי זו אותה הודעה בשני ערוצים. */
-async function maybeSendWelcome(itemId: number) {
+export async function maybeSendWelcome(itemId: number) {
   const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
-    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_STATUS}","${COL_MAIL}","${COL_COORD}"]) { id text } } }`
+    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_STATUS}","${COL_MAIL}","${COL_COORD}","${COL_MAILED}"]) { id text } } }`
   );
   const item = d?.items?.[0];
   if (!item) return;
   const cv = (id: string) => (item.column_values.find(c => c.id === id)?.text ?? "").trim();
   if (cv(COL_STATUS) !== LINK_SENT) return;
+  if (cv(COL_MAILED)) return;   // כבר יצא — העובדה שמורה, לא האירוע
 
   const to = cv(COL_MAIL);
   if (!to || !to.includes("@")) return;
@@ -272,7 +285,52 @@ async function maybeSendWelcome(itemId: number) {
     calUrl = p ? (p.startsWith("http") ? p : `https://cal.com/${p}`) : null;
   }
 
+  /*
+   * ⚠️ **בלי רכז/ת או בלי קישור יומן — לא שולחים** (נתי, 5.10). ההודעה
+   * כולה נועדה להביא אותו לקבוע פגישה; בלי הכפתור הוא מקבל "נעים להכיר"
+   * ואין לו מה לעשות איתו. וזו אותה הכרעה בדיוק כמו בוואטסאפ.
+   *
+   * ⚠️ **אבל שקט הוא הכישלון הגרוע יותר כאן:** הרכזת סימנה "נשלח קישור",
+   * והיא מאמינה שמשהו יצא. לכן נרשמת הערה על השורה עצמה — היא רואה אותה
+   * במקום שבו היא כבר עובדת, ולא צריכה לנחש למה לא קרה כלום.
+   */
+  /*
+   * חסר אחד משלושת התנאים ⇒ **ממתין, לא נכשל.** הוא יישלח מעצמו ברגע
+   * שמישהו ישלים את החסר — זה מה שהופך את החסימה לתור שמתרוקן.
+   */
+  if (!calUrl) {
+    console.log(`[monday-webhook] welcome pending (${coordName || "ללא רכז/ת"}) — item ${itemId}`);
+    return;
+  }
+
   const mail = welcomeEmail({ participant: item.name, coordinator: coordName, calUrl });
   const sent = await sendMail({ to, subject: mail.subject, html: mail.html });
   console.log(`[monday-webhook] welcome mail → ${to}: ${sent === null ? "disabled" : sent}`);
+  if (sent) {
+    const today = new Date().toISOString().slice(0, 10);
+    await monday(
+      `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
+      { b: BOARD, i: itemId, v: JSON.stringify({ [COL_MAILED]: { date: today } }) }
+    );
+  }
+}
+
+/**
+ * הכיוון השלישי: קישור יומן נוסף לרכז/ת ⇒ כל מי שהמתין לה נשלח עכשיו.
+ * נקרא מ-/api/roster אחרי שמירה מוצלחת.
+ */
+export async function drainPendingWelcome(coordinatorName: string): Promise<number> {
+  const want = coordinatorName.trim();
+  if (!want) return 0;
+  const d = await monday<{ boards: { items_page: { items: { id: string; column_values: { id: string; text: string | null }[] }[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id
+       column_values(ids: ["${COL_STATUS}","${COL_COORD}","${COL_MAILED}"]) { id text } } } } }`
+  );
+  const rows = (d?.boards?.[0]?.items_page?.items ?? []).filter(it => {
+    const g = (id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
+    return g(COL_STATUS) === LINK_SENT && !g(COL_MAILED) && g(COL_COORD) === want;
+  });
+  for (const r of rows) await maybeSendWelcome(Number(r.id));
+  if (rows.length) console.log(`[roster] drained ${rows.length} pending welcome mails for ${want}`);
+  return rows.length;
 }

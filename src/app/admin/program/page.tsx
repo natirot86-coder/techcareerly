@@ -217,6 +217,25 @@ export default function ProgramAdmin() {
 
             </div>
           </div>
+          {/*
+            ── בלי יומן אין הודעה (נתי, 5.10) ──────────────────────────────────
+            הוואטסאפ והמייל נבנים שניהם סביב כפתור "קביעת הפגישה", והוא בא
+            מהיומן האישי של הרכז/ת. בלעדיו הסימון "נשלח קישור" לא שולח כלום
+            — **וזה נכשל בשקט אצל מי שחושבת שהודעה יצאה.** לכן החוסר צועק כאן,
+            במקום היחיד שאפשר לתקן אותו בו.
+          */}
+          {(() => {
+            const missing = roster.filter(c => isCoordinator(c) && c.active && !(c.cal_m1 ?? "").trim());
+            if (!missing.length) return null;
+            return (
+              <div className="rounded-2xl px-4 py-3 mb-3 text-[13px] leading-relaxed"
+                style={{ background: "#fff7ec", border: "1px solid rgba(180,83,9,0.25)", color: "#8a4d00" }}>
+                <b>אין קישור יומן ל{missing.map(c => c.name || c.id).join(", ")}.</b>{" "}
+                כל עוד השדה ריק, סימון &quot;נשלח קישור&quot; למשתתף שלה
+                <b> לא ישלח וואטסאפ ולא מייל</b> — כי אין לאן להפנות אותו לקביעת פגישה.
+              </div>
+            );
+          })()}
           <div className="flex flex-col gap-3">
             {roster.filter(isCoordinator).map(c => {
               const count = Object.values(assign).filter(v => v === c.id).length;

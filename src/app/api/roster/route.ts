@@ -10,6 +10,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { normalizePhone } from "@/lib/candidate";
+import { drainPendingWelcome } from "@/app/api/monday-webhook/route";
 import { createClient } from "@supabase/supabase-js";
 import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
@@ -50,6 +51,11 @@ export async function POST(req: NextRequest) {
   } | null;
   if (!body?.id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
+  /* היה לה קישור יומן לפני השמירה? ⇒ אם לא והיום כן, יש תור להתרוקן */
+  const { data: before } = await client.from("coordinators")
+    .select("cal_m1").eq("id", body.id).maybeSingle();
+  const hadCal = !!(before?.cal_m1 ?? "").trim();
+
   const { error } = await client.from("coordinators").upsert({
     id: body.id,
     name: body.name ?? "",
@@ -69,7 +75,21 @@ export async function POST(req: NextRequest) {
     cal_m3: body.cal_m3 ?? "",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+
+  /*
+   * ── הכיוון השלישי של מייל הפתיחה (נתי, 5.10) ──────────────────────────────
+   * המייל דורש שלושה: סטטוס "נשלח קישור" · רכז/ת · **קישור יומן**. השניים
+   * הראשונים קורים במאנדיי ויש להם webhook; השלישי קורה כאן. בלי זה, מי
+   * שסומן בזמן שלרכזת לא היה יומן היה ממתין לנצח — והרכזת הייתה בטוחה
+   * ששלחה. עכשיו הוספת הקישור משחררת את התור מעצמה.
+   */
+  const nowHasCal = !!(body.cal_m1 ?? "").trim();
+  let drained = 0;
+  if (!hadCal && nowHasCal && body.name) {
+    try { drained = await drainPendingWelcome(body.name); }
+    catch (e) { console.error("[roster] drain failed", e); }
+  }
+  return NextResponse.json({ ok: true, ...(drained ? { drained } : {}) });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -80,6 +100,11 @@ export async function DELETE(req: NextRequest) {
 
   const body = await req.json().catch(() => null) as { id?: string } | null;
   if (!body?.id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  /* היה לה קישור יומן לפני השמירה? ⇒ אם לא והיום כן, יש תור להתרוקן */
+  const { data: before } = await client.from("coordinators")
+    .select("cal_m1").eq("id", body.id).maybeSingle();
+  const hadCal = !!(before?.cal_m1 ?? "").trim();
 
   const { error } = await client.from("coordinators").delete().eq("id", body.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
