@@ -26,6 +26,74 @@ const SEV_META: Record<number, { label: string; color: string; bg: string }> = {
 };
 
 
+/**
+ * ── מה מתעדכן במאנדיי ולמה (נתי, 4.10) ──────────────────────────────────────
+ *
+ * שני הדברים שהמערכת **לא יכולה לדעת לבד** ולכן הרכזת מסמנת אותם ביד:
+ * אם האדם מעוניין אחרי שדיברה איתו, ולאיזה מסע לשלוח אותו. כל השאר נגזר —
+ * "בתהליך פעיל" נכתב מעצמו ברגע שנקבעת פגישה ב-Cal.
+ *
+ * הכרטיס יושב בטאב הפגישות ולא במסך נפרד: היא כבר כאן כשהיא מסתכלת על
+ * היומן, וזה הרגע שבו "מי זה ומה הלאה" רלוונטי. **וכולל קישור ישיר ללוח**,
+ * כי "תעדכני במאנדיי" בלי קישור הוא בקשה לחפש.
+ */
+const MONDAY_BOARD = "https://tech-career-team.monday.com/boards/18433888639";
+const APP_URL = "https://hasifaapp.vercel.app";
+
+function MondayCard() {
+  const Row = ({ n, title, children }: { n: number; title: string; children: React.ReactNode }) => (
+    <div style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+      <span style={{
+        flex: "0 0 auto", width: 20, height: 20, borderRadius: 999, background: NAVY, color: "#fff",
+        fontSize: 11.5, fontWeight: 900, display: "grid", placeItems: "center", marginTop: 2,
+      }}>{n}</span>
+      <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "#3d3a33" }}>
+        <b style={{ color: NAVY }}>{title}</b><br />{children}
+      </div>
+    </div>
+  );
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid rgba(2,62,138,0.14)`, borderRadius: 14,
+      padding: "15px 17px", display: "flex", flexDirection: "column", gap: 11,
+    }}>
+      <div style={{ fontSize: 14, fontWeight: 900, color: NAVY }}>שני דברים שרק את יודעת</div>
+      <Row n={1} title="סטטוס משתתף">
+        אחרי השיחה הראשונה: <b>נשלח קישור</b> אם הוא מעוניין וקיבל את המייל,
+        או <b>לא מעוניין/ת</b> אם לא. <b>בתהליך פעיל</b> נכתב מעצמו ברגע שהוא
+        קובע פגישה — אין צורך לסמן אותו.
+      </Row>
+      <Row n={2} title="מסלול באפליקציה">
+        <b>בוגרים — תואר בלבד</b> למי שסיים הכשרה אצלנו וחותר לתואר: חמישה
+        שלבים, בלי טעימות הייטק, ישר למסלולי לימוד. <b>קהל רחב</b> לכל השאר.
+        ריק = עוד לא הוחלט, והוא לא יקבל כלום.
+      </Row>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
+        <a href={MONDAY_BOARD} target="_blank" rel="noopener noreferrer"
+          style={{
+            fontSize: 13, fontWeight: 800, padding: "7px 14px", borderRadius: 999,
+            background: NAVY, color: "#fff", textDecoration: "none",
+          }}>
+          לוח אינטק במאנדיי ↗
+        </a>
+        <a href={APP_URL} target="_blank" rel="noopener noreferrer"
+          style={{
+            fontSize: 13, fontWeight: 800, padding: "7px 14px", borderRadius: 999,
+            background: "#fff", color: NAVY, textDecoration: "none",
+            border: `1px solid rgba(2,62,138,0.28)`,
+          }}>
+          הקישור שנשלח למשתתפים ↗
+        </a>
+      </div>
+      <div style={{ fontSize: 12, color: "#8d867a", lineHeight: 1.6 }}>
+        הקישור זהה לכולם — <b>מה שקובע מה האדם יראה הוא הטלפון שאיתו הוא
+        נכנס</b>, מול הסימון שלך בלוח. לכן קישור שעובר הלאה בוואטסאפ לא
+        משנה לאף אחד את המסלול.
+      </div>
+    </div>
+  );
+}
+
 const DOMAIN_HE: Record<string, string> = {
   data: "דאטה", cyber: "סייבר", networks: "רשתות", code: "קוד",
   qa: "בדיקות תוכנה", ai: "AI", ux: "UX", marketing: "שיווק דיגיטלי",
@@ -1290,6 +1358,7 @@ export default function CoordinatorPage() {
                   התקיימה או לא הגיע/ה — ומי שנפגש ונעלם מפסיק להיראות כמו מי שנפגש אתמול.
                 </div>
               )}
+              <MondayCard />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 900, color: NAVY, marginBottom: 8 }}>
                   הקרובות ({upcoming.length})
