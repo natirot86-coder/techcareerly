@@ -104,6 +104,29 @@ for (const [p, it] of intechBy) {
   if (ei && em && ei !== em) diffs.push({ field: "מייל", phone: p, intech: ei, main: em });
 }
 
+/* ── הטלפון שלא תואם (4.10) ───────────────────────────────────────────────
+   הטלפון הוא המפתח היחיד שמחבר מאנדיי, Cal והאפליקציה. אם האדם הקליד
+   באפליקציה מספר אחר ממה שרשום בלוח, **שום דבר לא נשבר ברעש** — הוא פשוט
+   מקבל את המסע הלא נכון, הפגישה שלו לא מתחברת אליו, והלוח לא יודע שהוא
+   נכנס. שלושה כשלים שקטים, ולכן הם נספרים כאן. */
+const appPhones = new Set();
+try {
+  const ST = readFileSync("C:/Users/user/.supabase-claude-token", "utf8").trim();
+  const r = await fetch("https://api.supabase.com/v1/projects/mfepztmnkkhzkghxnxrt/database/query", {
+    method: "POST", headers: { Authorization: `Bearer ${ST}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ query: `select phone from candidates where coalesce(phone,'') <> ''` }),
+  });
+  for (const row of await r.json()) appPhones.add(norm(row.phone));
+} catch { /* בלי טוקן — מדלגים על החלק הזה ולא מפילים את הדוח */ }
+
+const inBoardNotApp = [];
+for (const [p, it] of intechBy) {
+  const st = cv(it, I.status);
+  if (st !== "נשלח קישור" && st !== "בתהליך פעיל") continue;  // לפני שנשלח קישור אין מה לצפות
+  if (!appPhones.has(p)) inBoardNotApp.push({ name: it.name, phone: p, status: st });
+}
+const inAppNotBoard = [...appPhones].filter(p => !intechBy.has(p));
+
 const L = [];
 L.push(`סריקת סנכרון — לוח ראשי מול לוח אינטק`);
 L.push(`ראשי (החלטה סופית = חשיפה): ${mainItems.length} · אינטק: ${intechItems.length}`);
@@ -119,6 +142,12 @@ missingInIntech.forEach(x => L.push(`   ${x.name} · ${x.phone} · רכז/ת: ${
 L.push("");
 L.push(`הפרשי שם/מייל: ${diffs.length}`);
 diffs.forEach(d => L.push(`   ${d.field} · ${d.phone} · אינטק "${d.intech}" · ראשי "${d.main}"`));
+L.push("");
+L.push(`קיבלו קישור ולא נכנסו לאפליקציה (או שנכנסו עם מספר אחר): ${inBoardNotApp.length}`);
+inBoardNotApp.forEach(x => L.push(`   ${x.name} · ${x.phone} · ${x.status}`));
+L.push("");
+L.push(`באפליקציה עם מספר שאינו בלוח: ${inAppNotBoard.length}`);
+inAppNotBoard.forEach(p => L.push(`   ${p}`));
 
 console.log(L.join("\n"));
 
