@@ -87,8 +87,14 @@ export async function POST(req: NextRequest) {
 
   if (String(body?.event?.boardId ?? "") === MAIN_BOARD) return promoteFromMain(itemId);
 
-  /* שינוי רכז/ת — ההודעה והיומן שבה תלויים בה, ולכן הקישור נבנה מחדש */
-  if (body?.event?.columnId === COL_COORD) return rebuildWa(itemId);
+  /*
+   * עמודת "מסלול באפליקציה" היא היחידה שנוגעת ברשימת הבוגרים.
+   * **כל שאר האירועים בונים מחדש את קישור הוואטסאפ** — שורה חדשה,
+   * שיוך לרכז/ת, תיקון טלפון או שינוי שם. שלושת הנתונים האלה הם
+   * כל מה שיושב בהודעה, וקישור שלא מתעדכן אחריהם שולח ליומן הלא נכון
+   * או פותח צ'אט עם אדם זר — בלי שאיש יראה שמשהו נשבר.
+   */
+  if (body?.event?.columnId !== COL_TRACK) return rebuildWa(itemId);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;

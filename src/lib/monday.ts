@@ -25,6 +25,8 @@
  *    וזה מקור האמת. מאנדיי הוא העותק לרכזת, לא ההפך.
  */
 
+import { waLink } from "@/lib/waLink";
+
 const API = "https://api.monday.com/v2";
 const BOARD = process.env.MONDAY_INTECH_BOARD ?? "18433888639";
 
@@ -34,6 +36,7 @@ const COL = {
   coord: "color_mm7t74m3",
   status: "color_mm7t1s7a",
   source: "text_mm7t5f8a",
+  wa: "link_mm7t82dd",
 } as const;
 
 export const STATUS = {
@@ -173,6 +176,14 @@ export async function mondayMarkActive(p: {
   if (phone) vals[COL.phone] = phone;
   if (email) vals[COL.email] = email;
   if (coord) vals[COL.coord] = { label: coord };
+
+  /*
+   * ⚠️ הקישור נולד כאן ולא דרך ה-webhook: שורה שנוצרת ב-API עם
+   * רכז/ת כבר ממולאת לא מפיקה אירוע שינוי לעמודה — **לא השתנה כלום, הוא
+   * נולד כך** — ולכן מי שקבע פגישה בלי להיות בלוח היה נכנס בלי קישור.
+   */
+  const wa = waLink({ phone, participant: p.name ?? "", coordinator: coord });
+  if (wa) vals[COL.wa] = { url: wa, text: `וואטסאפ ל${(p.name ?? "").trim().split(/\s+/)[0]}` };
 
   const ok = await gql(
     `mutation ($b: ID!, $n: String!, $v: JSON!) { create_item(board_id: $b, item_name: $n,
