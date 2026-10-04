@@ -883,8 +883,14 @@ export default function CoordinatorPage() {
     myBookings?: {
       id: number; title: string; start_time: string; attendee_name: string;
       attendee_phone: string; attendee_email: string; trigger: string; candidate_id: string | null;
+      outcome: string | null; outcome_at: string | null; outcome_note: string | null;
     }[];
+    role?: "coordinator" | "manager";
+    viewingAs?: string | null;
+    staff?: { id: string; name: string }[];
   } | null>(null);
+  /* מנהלת בלבד: באיזו רכזת היא צופה כרגע. ריק = כולן יחד */
+  const [viewAs, setViewAs] = useState<string>("");
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
   const [tab, setTab] = useState<"queue" | "all" | "meetings">("queue");
   const [error, setError] = useState<string | null>(null);
@@ -899,6 +905,30 @@ export default function CoordinatorPage() {
    */
   const [cohortOverride, setCohortOverride] = useState<Record<string, "main" | "alumni">>({});
   const [cohortSaving, setCohortSaving] = useState<string | null>(null);
+
+  /*
+    סימון תוצאת פגישה. **רק "התקיימה / לא הגיע" — לא ביטול ולא שינוי תאריך**,
+    כי את אלה Cal כבר יודע וה-webhook קולט; מקור אמת שני על אותו תאריך הוא
+    בדיוק מה שיוצא מסנכרון. מה ש-Cal לעולם לא יידע הוא אם היא באמת התקיימה.
+  */
+  const [savingOutcome, setSavingOutcome] = useState<number | null>(null);
+  async function setOutcome(id: number, outcome: string | null) {
+    setSavingOutcome(id);
+    try {
+      const headers = await coordinatorAuthHeaders();
+      const r = await fetch("/api/booking-outcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ id, outcome }),
+      });
+      if (r.ok) {
+        setData(d => d && ({
+          ...d,
+          myBookings: (d.myBookings ?? []).map(b => b.id === id ? { ...b, outcome } : b),
+        }));
+      }
+    } finally { setSavingOutcome(null); }
+  }
 
   async function setCohort(candidateId: string, cohort: "main" | "alumni") {
     setCohortSaving(candidateId);
@@ -918,7 +948,7 @@ export default function CoordinatorPage() {
     setLoading(true); setError(null);
     try {
       const headers = await coordinatorAuthHeaders();
-      const r = await fetch("/api/coordinator", { headers });
+      const r = await fetch(`/api/coordinator${viewAs ? `?as=${encodeURIComponent(viewAs)}` : ""}`, { headers });
       if (r.status === 401) { setError("ההזדהות פגה — רענון הדף אמור לפתור"); return; }
       if (r.status === 503) { setError((await r.json()).error); return; }
       if (!r.ok) {
@@ -929,7 +959,7 @@ export default function CoordinatorPage() {
       setData(await r.json());
     } catch { setError("שגיאת רשת"); }
     finally { setLoading(false); }
-  }, []);
+  }, [viewAs]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -963,6 +993,32 @@ export default function CoordinatorPage() {
           if (!person) { setJourneyFor(null); return null; }
           return <JourneyMap p={person} coordName="" onBack={() => setJourneyFor(null)} />;
         })()}
+
+        {/*
+          בורר הרכזת — **למנהלת בלבד** (4.10). היא רואה את כולן יחד כברירת
+          מחדל, ויכולה לצפות בתצוגה של רכזת מסוימת כדי לשבת לידה ולראות
+          בדיוק את המסך שלה. קודם הדרך היחידה לזה הייתה לחלוק קוד חירום,
+          שמוחק את התיעוד של מי עשה מה.
+        */}
+        {!journeyFor && data?.role === "manager" && !!data.staff?.length && (
+          <div style={{ display: "flex", gap: 7, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12.5, fontWeight: 800, color: "#6b6558" }}>צופה בתור:</span>
+            {[{ id: "", name: "כל הרכזות" }, ...data.staff].map(c => {
+              const on = viewAs === c.id;
+              return (
+                <button key={c.id || "all"} onClick={() => setViewAs(c.id)}
+                  style={{
+                    fontSize: 12.5, fontWeight: 800, padding: "6px 13px", borderRadius: 999,
+                    cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                    background: on ? NAVY : "#fff", color: on ? "#fff" : "#4a463e",
+                    border: `1px solid ${on ? NAVY : "rgba(0,0,0,0.12)"}`,
+                  }}>
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {!journeyFor && data && (
           <div style={{ display: "flex", gap: 6, background: "rgba(2,62,138,0.06)", borderRadius: 12, padding: 4, marginBottom: 14 }}>
@@ -1178,6 +1234,39 @@ export default function CoordinatorPage() {
                     <span style={{ fontSize: 11.5, fontWeight: 800, padding: "3px 9px", borderRadius: 999, background: "#fff7ec", color: "#8a4d00" }}>לא באפליקציה</span>
                   )}
                 </div>
+
+                {/*
+                  מה שרק היא יודעת: האם זה קרה. ביטול ושינוי תאריך נשארים
+                  ב-Cal — ה-webhook קולט אותם, ומקור אמת שני על אותו תאריך
+                  הוא בדיוק מה שיוצא מסנכרון.
+                */}
+                {!cancelled && (
+                  <div style={{ display: "flex", gap: 6, marginTop: 9, alignItems: "center", flexWrap: "wrap" }}>
+                    {([["happened", "התקיימה ✓"], ["no_show", "לא הגיע/ה"]] as const).map(([v, label]) => {
+                      const on = b.outcome === v;
+                      return (
+                        <button key={v}
+                          disabled={savingOutcome === b.id}
+                          onClick={() => setOutcome(b.id, on ? null : v)}
+                          style={{
+                            fontSize: 12, fontWeight: 800, padding: "5px 12px", borderRadius: 999,
+                            cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                            background: on ? (v === "happened" ? "#0f7a52" : "#b45309") : "#fff",
+                            color: on ? "#fff" : "#6b6558",
+                            border: `1px solid ${on ? "transparent" : "rgba(0,0,0,0.14)"}`,
+                            opacity: savingOutcome === b.id ? 0.5 : 1,
+                          }}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                    {b.outcome && (
+                      <span style={{ fontSize: 11.5, color: "#8d867a" }}>
+                        לחיצה שנייה מבטלת את הסימון
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             );
           };

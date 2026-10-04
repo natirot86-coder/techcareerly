@@ -13,5 +13,5 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const auth = await verifyCoordinator(req);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
-  return NextResponse.json({ ok: true, coordinatorId: auth.coordinatorId, name: auth.name });
+  return NextResponse.json({ ok: true, coordinatorId: auth.coordinatorId, name: auth.name, role: auth.role });
 }

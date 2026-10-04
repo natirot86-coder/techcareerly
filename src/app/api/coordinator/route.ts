@@ -90,6 +90,16 @@ export async function GET(req: NextRequest) {
     **הסף הוא התחלת אונבורדינג ולא סיומו** — מי שהתחיל ונטש הוא בדיוק
     מי שהיא צריכה לראות.
   */
+  /*
+    ── מי רואה מה (4.10) ──────────────────────────────────────────────
+    רכזת רואה את שלה. **מנהלת רואה את כולן**, ויכולה לצפות בתצוגה של
+    רכזת מסוימת עם ?as= — כדי שתוכל לשבת לידה ולראות בדיוק את המסך שלה.
+    זה מחליף את הפתרון שהיה: לחלוק קוד חירום, שמוחק את התיעוד של מי עשה מה.
+  */
+  const viewAs = req.nextUrl.searchParams.get("as");
+  const effectiveId =
+    auth.role === "manager" ? (viewAs || null) : auth.coordinatorId;
+
   const real = (candidates.data ?? []).filter(
     c =>
       /*
@@ -101,8 +111,8 @@ export async function GET(req: NextRequest) {
       (String(c.first_name ?? "").trim() || c.onboarding_completed_at || String(c.phone ?? "").trim())
   );
 
-  const myCandidates = auth.coordinatorId
-    ? real.filter(c => !c.coordinator_id || c.coordinator_id === auth.coordinatorId)
+  const myCandidates = effectiveId
+    ? real.filter(c => !c.coordinator_id || c.coordinator_id === effectiveId)
     : real;
 
   const queue = myCandidates.flatMap(c => {
@@ -266,20 +276,27 @@ export async function GET(req: NextRequest) {
    * (ההתאמה האוטומטית היא התאמה מלאה בלבד; ניחוש לפי שם היה מסוכן.)
    */
   /*
-    כל הפגישות של הרכזת המחוברת — עבר ועתיד, מותאמות ולא (4.10).
+    כל הפגישות של הרכזת הנצפית — עבר ועתיד, מותאמות ולא (4.10).
     קודם היה כאן רק תור החריגים, וזה ענה על "מי לא זוהה" אבל לא על
     השאלה שהרכזת באמת שואלת: **"מי קבע איתי ומתי"**. היומן שלה מלא
     ומסך הניהול הראה יומן ריק — מסך שאי אפשר לסמוך עליו.
   */
+  let staff: { id: string; name: string }[] = [];
+  if (auth.role === "manager") {
+    const { data } = await db.from("coordinators")
+      .select("id, name").eq("active", true).neq("name", "").order("name");
+    staff = (data ?? []) as { id: string; name: string }[];
+  }
+
   let myBookings: unknown[] = [];
   try {
     let qb = db
       .from("cal_bookings")
-      .select("id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, candidate_id, coordinator_id")
+      .select("id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, candidate_id, coordinator_id, outcome, outcome_at, outcome_note")
       .order("start_time", { ascending: false })
       .limit(200);
     /* רכזת רואה את שלה; מנהל התוכנית (בלי זיהוי רכזת) רואה הכל */
-    if (auth.coordinatorId) qb = qb.eq("coordinator_id", auth.coordinatorId);
+    if (effectiveId) qb = qb.eq("coordinator_id", effectiveId);
     const { data } = await qb;
     myBookings = data ?? [];
   } catch { /* הטבלה או העמודה עוד לא קיימות — לא שוברים את המסך */ }
@@ -301,6 +318,10 @@ export async function GET(req: NextRequest) {
     generatedAt: new Date().toISOString(),
     unmatchedBookings: unmatched,
     myBookings,
+    role: auth.role,
+    viewingAs: effectiveId,
+    /* המנהלת צריכה את הרשימה כדי לבחור את מי לצפות */
+    staff: auth.role === "manager" ? staff : [],
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
     // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)

@@ -19,8 +19,15 @@ import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "./candidate";
 
+/**
+ * 'coordinator' רואה את המועמדים שלה · 'manager' רואה את כולם ויכול לצפות
+ * בתצוגה של רכזת מסוימת. קוד החירום המשותף מקבל manager — הוא ממילא ראה
+ * הכל מאז ומתמיד, וזה רק נותן שם למה שכבר קורה.
+ */
+export type Role = "coordinator" | "manager";
+
 export type CoordinatorAuth =
-  | { ok: true; coordinatorId: string | null; name: string | null }
+  | { ok: true; coordinatorId: string | null; name: string | null; role: Role }
   | { ok: false; status: number; error: string };
 
 export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAuth> {
@@ -30,7 +37,7 @@ export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAu
   // יכולים לשאת header; עדיין רק הקוד הישן, לא הכניסה האישית
   const queryCode = req.nextUrl.searchParams.get("code");
   if (legacyCode && (headerCode === legacyCode || queryCode === legacyCode)) {
-    return { ok: true, coordinatorId: null, name: null };
+    return { ok: true, coordinatorId: null, name: null, role: "manager" };
   }
 
   const authHeader = req.headers.get("authorization");
@@ -64,7 +71,7 @@ export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAu
    */
   const { data: coords, error: coordError } = await db
     .from("coordinators")
-    .select("id, name, phone, active")
+    .select("id, name, phone, active, role")
     .eq("active", true);
 
   if (coordError) return { ok: false, status: 500, error: coordError.message };
@@ -73,5 +80,6 @@ export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAu
     return { ok: false, status: 403, error: "מספר הטלפון הזה לא רשום כרכזת פעילה בסגל" };
   }
 
-  return { ok: true, coordinatorId: coord.id, name: coord.name };
+  const role: Role = coord.role === "manager" ? "manager" : "coordinator";
+  return { ok: true, coordinatorId: coord.id, name: coord.name, role };
 }
