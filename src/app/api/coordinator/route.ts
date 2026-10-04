@@ -258,6 +258,25 @@ export async function GET(req: NextRequest) {
    * הזמנות Cal עתידיות שלא הותאמו למועמד לפי טלפון — תור שיוך ידני.
    * (ההתאמה האוטומטית היא התאמה מלאה בלבד; ניחוש לפי שם היה מסוכן.)
    */
+  /*
+    כל הפגישות של הרכזת המחוברת — עבר ועתיד, מותאמות ולא (4.10).
+    קודם היה כאן רק תור החריגים, וזה ענה על "מי לא זוהה" אבל לא על
+    השאלה שהרכזת באמת שואלת: **"מי קבע איתי ומתי"**. היומן שלה מלא
+    ומסך הניהול הראה יומן ריק — מסך שאי אפשר לסמוך עליו.
+  */
+  let myBookings: unknown[] = [];
+  try {
+    let qb = db
+      .from("cal_bookings")
+      .select("id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, candidate_id, coordinator_id")
+      .order("start_time", { ascending: false })
+      .limit(200);
+    /* רכזת רואה את שלה; מנהל התוכנית (בלי זיהוי רכזת) רואה הכל */
+    if (auth.coordinatorId) qb = qb.eq("coordinator_id", auth.coordinatorId);
+    const { data } = await qb;
+    myBookings = data ?? [];
+  } catch { /* הטבלה או העמודה עוד לא קיימות — לא שוברים את המסך */ }
+
   let unmatched: unknown[] = [];
   try {
     const { data } = await db
@@ -274,6 +293,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     unmatchedBookings: unmatched,
+    myBookings,
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
     // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)

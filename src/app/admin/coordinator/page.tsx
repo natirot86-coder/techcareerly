@@ -880,9 +880,13 @@ export default function CoordinatorPage() {
   const [data, setData] = useState<{
     needsAttention: Person[]; quiet: number; quietList?: Person[]; total: number; generatedAt: string;
     unmatchedBookings?: { id: number; title: string; start_time: string; attendee_name: string; attendee_phone: string }[];
+    myBookings?: {
+      id: number; title: string; start_time: string; attendee_name: string;
+      attendee_phone: string; attendee_email: string; trigger: string; candidate_id: string | null;
+    }[];
   } | null>(null);
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
-  const [tab, setTab] = useState<"queue" | "all">("queue");
+  const [tab, setTab] = useState<"queue" | "all" | "meetings">("queue");
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   // מסע הלקוח: לחיצה על שם בטאב "כל המשתתפים" פותחת את המפה של האדם
@@ -962,7 +966,11 @@ export default function CoordinatorPage() {
 
         {!journeyFor && data && (
           <div style={{ display: "flex", gap: 6, background: "rgba(2,62,138,0.06)", borderRadius: 12, padding: 4, marginBottom: 14 }}>
-            {([["queue", "מי צריך אותי היום"], ["all", `כל המשתתפים (${data.total})`]] as const).map(([v, label]) => (
+            {([
+              ["queue", "מי צריך אותי היום"],
+              ["all", `כל המשתתפים (${data.total})`],
+              ["meetings", `הפגישות שלי (${data.myBookings?.length ?? 0})`],
+            ] as const).map(([v, label]) => (
               <button key={v} onClick={() => setTab(v)}
                 style={{
                   flex: 1, padding: "9px 0", borderRadius: 9, border: "none", cursor: "pointer",
@@ -1117,6 +1125,94 @@ export default function CoordinatorPage() {
             </div>
           );
         })}
+
+
+        {/*
+          ── הפגישות שלי (4.10) ──────────────────────────────────────────
+          היומן של הרכזת מלא, ומסך הניהול הראה רק את החריגים. כאן היא רואה
+          מי קבע איתה ומתי — עתיד קודם, כי זה מה שהיא צריכה לפני מחר.
+          "לא באפליקציה" הוא סיגנל אמיתי: קבע פגישה ולא נרשם, או נרשם בלי
+          טלפון — ובשני המקרים אי אפשר להתאים והיא צריכה לדעת.
+        */}
+        {!journeyFor && tab === "meetings" && data && (() => {
+          const all = data.myBookings ?? [];
+          const now = Date.now();
+          const upcoming = all.filter(b => +new Date(b.start_time) >= now && b.trigger !== "BOOKING_CANCELLED")
+            .sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time));
+          const past = all.filter(b => +new Date(b.start_time) < now || b.trigger === "BOOKING_CANCELLED");
+
+          const Row = (b: NonNullable<typeof data.myBookings>[number]) => {
+            const cancelled = b.trigger === "BOOKING_CANCELLED";
+            const when = new Date(b.start_time);
+            return (
+              <div key={b.id} style={{
+                background: "#fff", borderRadius: 12, padding: "11px 13px",
+                border: "1px solid rgba(2,62,138,0.1)", opacity: cancelled ? 0.5 : 1,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 14.5, fontWeight: 800, color: NAVY, textDecoration: cancelled ? "line-through" : "none" }}>
+                    {b.attendee_name || "ללא שם"}
+                  </span>
+                  <span style={{ fontSize: 12.5, color: "#6b6558", fontWeight: 700 }}>
+                    {when.toLocaleString("he-IL", { weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+                <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3, lineHeight: 1.55 }}>
+                  {b.title ? b.title.split(/ between | בין /)[0] : "—"}
+                </div>
+                <div style={{ display: "flex", gap: 7, marginTop: 7, flexWrap: "wrap", alignItems: "center" }}>
+                  {b.attendee_phone && (
+                    <a href={`https://wa.me/${b.attendee_phone}`} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#25d366", color: "#fff", textDecoration: "none" }}>
+                      וואטסאפ
+                    </a>
+                  )}
+                  {b.attendee_phone && (
+                    <span dir="ltr" style={{ fontSize: 12, color: "#6b6558" }}>+{b.attendee_phone}</span>
+                  )}
+                  {cancelled ? (
+                    <span style={{ fontSize: 11.5, fontWeight: 800, padding: "3px 9px", borderRadius: 999, background: "#fdecea", color: "#a33" }}>בוטלה</span>
+                  ) : b.candidate_id ? (
+                    <span style={{ fontSize: 11.5, fontWeight: 800, padding: "3px 9px", borderRadius: 999, background: "rgba(15,122,82,.1)", color: "#0f7a52" }}>באפליקציה ✓</span>
+                  ) : (
+                    <span style={{ fontSize: 11.5, fontWeight: 800, padding: "3px 9px", borderRadius: 999, background: "#fff7ec", color: "#8a4d00" }}>לא באפליקציה</span>
+                  )}
+                </div>
+              </div>
+            );
+          };
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: NAVY, marginBottom: 8 }}>
+                  הקרובות ({upcoming.length})
+                </div>
+                {upcoming.length ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{upcoming.map(Row)}</div>
+                ) : (
+                  <div style={{ fontSize: 13.5, color: "#8d867a" }}>אין פגישות עתידיות ביומן.</div>
+                )}
+              </div>
+
+              {past.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: "#8d867a", marginBottom: 8 }}>
+                    שהיו ({past.length})
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {past.sort((a, b) => +new Date(b.start_time) - +new Date(a.start_time)).slice(0, 30).map(Row)}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ fontSize: 12, color: "#8d867a", lineHeight: 1.6 }}>
+                מגיע מ-Cal.com דרך ה-webhook. &quot;לא באפליקציה&quot; = הטלפון שהוקלד בהזמנה
+                לא תואם לאף משתתף — או שהוא לא נרשם, או שנרשם בלי טלפון.
+              </div>
+            </div>
+          );
+        })()}
 
         {!journeyFor && tab === "all" && data && (() => {
           const everyone = [...data.needsAttention, ...(data.quietList ?? [])]
