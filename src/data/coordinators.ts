@@ -26,6 +26,13 @@ export type CoordinatorProfile = {
   cal_m1?: string;
   cal_m2?: string;
   cal_m3?: string;
+  /*
+   * 'coordinator' לוקחת מועמדים · 'manager' מנהלת את הרכזות ורואה את כולם ·
+   * 'owner' גם אנליטיקות. השורה נחוצה לכולם כי זו גם טבלת ההרשאות — אבל
+   * מי שאינו רכז/ת **אינו חלק מהסגל** ולכן מוצג בנפרד, בלי יומן ובלי קישור
+   * הזמנה אישי: שדות שמוצגים למי שאין לו בהם שימוש נראים כמו חוסר.
+   */
+  role?: "coordinator" | "manager" | "owner";
 };
 
 export const COORDINATOR_ROSTER: CoordinatorProfile[] = [

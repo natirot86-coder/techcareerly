@@ -19,6 +19,16 @@ import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 
 const NAVY = "#023e8a";
+
+/*
+  ── מי שייך לסגל ומי רק מורשה (נתי, 5.10) ────────────────────────────────────
+  טבלת `coordinators` משרתת שני דברים: **סגל** ו**הרשאות**. לנתי ולישראל חייבת
+  להיות שם שורה — היא מה שמזהה אותם באזור הניהול — אבל הם אינם לוקחים מועמדים,
+  ולכן הצגתם בין הרכזות הפכה את הרשימה ל"חמישה אנשים" כשבפועל יש שתיים.
+  ושדות שמוצגים למי שאין לו בהם שימוש (יומן Cal, קישור הזמנה אישי) נראים
+  כמו חוסר ולא כמו "לא רלוונטי".
+*/
+const isCoordinator = (c: { role?: string }) => (c.role ?? "coordinator") === "coordinator";
 const ORANGE = "#fb8500";
 const ROSTER_KEY = "admin-roster-draft";
 const ASSIGN_KEY = "admin-assignments";
@@ -208,7 +218,7 @@ export default function ProgramAdmin() {
             </div>
           </div>
           <div className="flex flex-col gap-3">
-            {roster.map(c => {
+            {roster.filter(isCoordinator).map(c => {
               const count = Object.values(assign).filter(v => v === c.id).length;
               return (
                 <div key={c.id} className="rounded-2xl p-4 flex flex-col gap-3"
@@ -306,6 +316,33 @@ export default function ProgramAdmin() {
               );
             })}
           </div>
+
+          {/*
+            גישת ניהול — לא סגל. שורה בטבלה נחוצה להם כי היא גם טבלת ההרשאות,
+            אבל הם אינם לוקחים מועמדים ואין להם יומן. שורה אחת לכל אחד, בלי
+            שדות שלא ישמשו אותם, כדי שרשימת הרכזות תמשיך לומר כמה רכזות יש.
+          */}
+          {roster.some(c => !isCoordinator(c)) && (
+            <div className="mt-5">
+              <div className="text-[12.5px] font-black mb-2" style={{ color: "rgba(0,0,0,0.4)" }}>
+                גישת ניהול — לא לוקחים מועמדים
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {roster.filter(c => !isCoordinator(c)).map(c => (
+                  <div key={c.id} className="rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3 flex-wrap"
+                    style={{ background: "rgba(0,0,0,0.025)", border: "1px solid rgba(0,0,0,0.07)" }}>
+                    <span className="text-[13px] font-bold" style={{ color: NAVY }}>{c.name || c.id}</span>
+                    <span className="text-[11.5px]" dir="ltr" style={{ color: "rgba(0,0,0,0.42)" }}>{c.email}</span>
+                    <span className="text-[11px] font-black px-2 py-0.5 rounded-full"
+                      style={{ background: c.role === "owner" ? "rgba(2,62,138,0.1)" : "rgba(0,0,0,0.06)",
+                               color: c.role === "owner" ? NAVY : "rgba(0,0,0,0.5)" }}>
+                      {c.role === "owner" ? "ניהול מוצר · גם אנליטיקות" : "מנהלת תוכנית · רואה את כולם"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── המשתתפים והשיוך ── */}
@@ -386,7 +423,7 @@ export default function ProgramAdmin() {
                           style={{ border: "1px solid rgba(0,0,0,0.1)", background: assign[p.id] ? "rgba(5,150,105,0.06)" : "#fff" }}
                         >
                           <option value="">— לא משויך —</option>
-                          {roster.filter(c => c.active).map(c => (
+                          {roster.filter(c => c.active && isCoordinator(c)).map(c => (
                             <option key={c.id} value={c.id}>{nameOf(c.id)}</option>
                           ))}
                         </select>

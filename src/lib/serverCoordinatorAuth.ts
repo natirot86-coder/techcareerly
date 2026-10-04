@@ -24,7 +24,15 @@ import { normalizePhone } from "./candidate";
  * בתצוגה של רכזת מסוימת. קוד החירום המשותף מקבל manager — הוא ממילא ראה
  * הכל מאז ומתמיד, וזה רק נותן שם למה שכבר קורה.
  */
-export type Role = "coordinator" | "manager";
+/*
+ * 'coordinator' ⊂ 'manager' ⊂ 'owner'.
+ * הפרדת owner נולדה מהאנליטיקות (נתי 4.10): מנהלת תוכנית
+ * צריכה תור חילוץ וכל המשתתפים; מסך האנליטיקות הוא **דיבאג מוצר**
+ * — באיזה צעד נוטשים בסימולציה, באיזו משש השאלות עוצרים — וזו עבודה
+ * של מי שבונה את המוצר.
+ */
+export type Role = "coordinator" | "manager" | "owner";
+export const isOwner = (r: Role) => r === "owner";
 
 export type CoordinatorAuth =
   | { ok: true; coordinatorId: string | null; name: string | null; role: Role }
@@ -80,6 +88,7 @@ export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAu
     return { ok: false, status: 403, error: "מספר הטלפון הזה לא רשום כרכזת פעילה בסגל" };
   }
 
-  const role: Role = coord.role === "manager" ? "manager" : "coordinator";
+  const role: Role = coord.role === "owner" ? "owner"
+    : coord.role === "manager" ? "manager" : "coordinator";
   return { ok: true, coordinatorId: coord.id, name: coord.name, role };
 }

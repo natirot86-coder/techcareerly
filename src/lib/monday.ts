@@ -182,6 +182,7 @@ export async function mondayMarkActive(p: {
    * רכז/ת כבר ממולאת לא מפיקה אירוע שינוי לעמודה — **לא השתנה כלום, הוא
    * נולד כך** — ולכן מי שקבע פגישה בלי להיות בלוח היה נכנס בלי קישור.
    */
+  /* בלי calPath הפונקציה מחזירה ריק — הקישור ייווצר ב-webhook כשתשוייך רכז/ת */
   const wa = waLink({ phone, participant: p.name ?? "", coordinator: coord });
   if (wa) vals[COL.wa] = { url: wa, text: `וואטסאפ ל${(p.name ?? "").trim().split(/\s+/)[0]}` };
 

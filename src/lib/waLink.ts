@@ -65,5 +65,13 @@ export function waLink(p: {
 }): string {
   const phone = waPhone(p.phone);
   if (!phone) return "";
+  /*
+   * ⚠️ **בלי יומן — אין הודעה** (נתי, 5.10). כל כולה של ההודעה
+   * הראשונה היא להביא אותו לקבוע פגישה; הודעה בלי הקישור משאירה
+   * את הפעולה העיקרית בחוץ, והרכזת תצטרך להדביק אותו בעצמה — זה
+   * בדיוק החיכוך שהכפתור בא להסיר.
+   * החוסר עצמו מוצג ב-/admin/program, כדי שלא יישאר שדה ריק שאיש לא מבין.
+   */
+  if (!(p.calPath ?? "").trim()) return "";
   return `https://wa.me/${phone}?text=${encodeURIComponent(waMessage(p))}`;
 }

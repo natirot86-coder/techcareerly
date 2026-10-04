@@ -94,6 +94,17 @@ function MondayCard() {
   );
 }
 
+/*
+  תזכורת מועד — השימוש האמיתי של וואטסאפ במסך הזה. שורה אחת ובלי קישורים:
+  האדם כבר בתהליך וכבר קיבל אותם.
+*/
+function reminderText(b: { attendee_name?: string | null; start_time: string }) {
+  const first = (b.attendee_name ?? "").trim().split(/\s+/)[0];
+  const when = new Date(b.start_time).toLocaleString("he-IL",
+    { weekday: "long", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+  return `היי${first ? " " + first : ""}, מזכירה שנפגשים ב${when}. נתראה! 🙂`;
+}
+
 const DOMAIN_HE: Record<string, string> = {
   data: "דאטה", cyber: "סייבר", networks: "רשתות", code: "קוד",
   qa: "בדיקות תוכנה", ai: "AI", ux: "UX", marketing: "שיווק דיגיטלי",
@@ -1285,10 +1296,19 @@ export default function CoordinatorPage() {
                   {b.title ? b.title.split(/ between | בין /)[0] : "—"}
                 </div>
                 <div style={{ display: "flex", gap: 7, marginTop: 7, flexWrap: "wrap", alignItems: "center" }}>
+                  {/*
+                    ⚠️ **זה אינו כפתור "שליחת הקישור"** (נתי, 5.10). ההודעה הראשונה —
+                    זו עם האפליקציה והיומן — יושבת **רק במאנדיי**, כי שתי דרכים
+                    לשלוח אותה הן שתי דרכים לשכוח אם כבר שלחת. כאן הרגע אחר:
+                    האדם כבר קבע, ומה שצריך הוא תזכורת מועד. התווית אומרת את זה
+                    במפורש — שני כפתורים ירוקים שכתוב עליהם "וואטסאפ" בשני
+                    מקומות הם בדיוק הבלבול שנתפס בצילום המסך.
+                  */}
                   {b.attendee_phone && (
-                    <a href={`https://wa.me/${b.attendee_phone}`} target="_blank" rel="noopener noreferrer"
+                    <a href={`https://wa.me/${b.attendee_phone}${cancelled ? "" : `?text=${encodeURIComponent(reminderText(b))}`}`}
+                      target="_blank" rel="noopener noreferrer"
                       style={{ fontSize: 12, fontWeight: 800, padding: "3px 10px", borderRadius: 999, background: "#25d366", color: "#fff", textDecoration: "none" }}>
-                      וואטסאפ
+                      {cancelled ? "פתיחת צ׳אט" : "תזכורת פגישה"}
                     </a>
                   )}
                   {b.attendee_phone && (
