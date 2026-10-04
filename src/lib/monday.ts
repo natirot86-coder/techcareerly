@@ -78,6 +78,16 @@ async function gql<T>(query: string, variables?: Record<string, unknown>): Promi
   }
 }
 
+/*
+  ⚠️ "סיוון" בלוח הראשי מול "סיון" באינטק — **כתיב מלא מול חסר**, ולכן
+  השוואת שם פרטי החזירה ריק והרכזת פשוט לא נכתבה. מכווצים אותיות כפולות
+  (וו→ו, יי→י) לפני ההשוואה; זה בדיוק ההבדל בין שתי הצורות, בלי למחוק
+  אותיות ובלי להמציא התאמות.
+*/
+export function heKey(s: string): string {
+  return s.replace(/ו{2,}/g, "ו").replace(/י{2,}/g, "י").trim();
+}
+
 type Item = { id: string; name: string; column_values: { id: string; text: string | null }[] };
 const cv = (it: Item, id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
 
@@ -107,9 +117,9 @@ async function resolveCoordLabel(name: string | null | undefined): Promise<strin
    * אם כבר נולדה בלוח תווית ארוכה ("סיון מקונן" לצד "סיון"), התאמה
    * מדויקת הייתה מנציחה דווקא את הכפולה. הקצר הוא הקנוני.
    */
-  const first = want.split(/\s+/)[0];
+  const first = heKey(want.split(/\s+/)[0]);
   const hits = entries
-    .filter(([, l]) => l === want || l === first || l.split(/\s+/)[0] === first)
+    .filter(([, l]) => heKey(l) === heKey(want) || heKey(l) === first || heKey(l.split(/\s+/)[0]) === first)
     .sort((a, b) => a[1].length - b[1].length || a[0] - b[0]);
   return hits[0]?.[1] ?? null;
 }
