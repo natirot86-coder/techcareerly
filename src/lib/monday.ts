@@ -96,14 +96,22 @@ async function resolveCoordLabel(name: string | null | undefined): Promise<strin
   );
   const raw = data?.boards?.[0]?.columns?.[0]?.settings_str;
   if (!raw) return null;
-  let labels: string[] = [];
-  try { labels = Object.values(JSON.parse(raw).labels ?? {}) as string[]; } catch { return null; }
+  let entries: [number, string][] = [];
+  try {
+    entries = Object.entries((JSON.parse(raw).labels ?? {}) as Record<string, string>)
+      .map(([k, v]) => [Number(k), String(v).trim()] as [number, string]);
+  } catch { return null; }
 
+  /*
+   * השוואה לפי **שם פרטי**, ומבין המתאימים נבחר הקצר ביותר. למה הקצר:
+   * אם כבר נולדה בלוח תווית ארוכה ("סיון מקונן" לצד "סיון"), התאמה
+   * מדויקת הייתה מנציחה דווקא את הכפולה. הקצר הוא הקנוני.
+   */
   const first = want.split(/\s+/)[0];
-  return labels.find(l => l === want)
-    ?? labels.find(l => l === first)
-    ?? labels.find(l => l.split(/\s+/)[0] === first)
-    ?? null;
+  const hits = entries
+    .filter(([, l]) => l === want || l === first || l.split(/\s+/)[0] === first)
+    .sort((a, b) => a[1].length - b[1].length || a[0] - b[0]);
+  return hits[0]?.[1] ?? null;
 }
 
 /**
