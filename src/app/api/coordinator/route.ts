@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone")
+      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, onboarding_completed_at")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -77,9 +77,26 @@ export async function GET(req: NextRequest) {
   let skipped = 0;
 
   // כניסה אישית (7.9) — "מי צריך אותי" מסונן לשלי + מי שעוד לא שויך לאף אחת
+  /*
+    ⚠️ שורה ב-candidates נוצרת ב**כל כניסה ראשונה לאפליקציה** — ensureCandidateId
+    עושה signInAnonymously ואז upsert, עוד לפני שנשאלה שאלה אחת. כלומר הטבלה
+    סופרת **דפדפנים, לא אנשים**: ב-4.10 היו בה 87 שורות, מהן 4 עם שם.
+    השאר הן בדיקות שלנו וכניסות חטופות.
+
+    בלי הסינון הזה הרכזת פותחת את התור ורואה 87 "מועמדים" שרובם רוחות —
+    מסך שמשקר בשקט, ובדיוק בכיוון שהופך אותו לחסר שימוש: מי שבאמת צריך
+    אותה נקבר ברעש.
+
+    **הסף הוא התחלת אונבורדינג ולא סיומו** — מי שהתחיל ונטש הוא בדיוק
+    מי שהיא צריכה לראות.
+  */
+  const real = (candidates.data ?? []).filter(
+    c => String(c.first_name ?? "").trim() || c.onboarding_completed_at || String(c.phone ?? "").trim()
+  );
+
   const myCandidates = auth.coordinatorId
-    ? (candidates.data ?? []).filter(c => !c.coordinator_id || c.coordinator_id === auth.coordinatorId)
-    : (candidates.data ?? []);
+    ? real.filter(c => !c.coordinator_id || c.coordinator_id === auth.coordinatorId)
+    : real;
 
   const queue = myCandidates.flatMap(c => {
    try {
