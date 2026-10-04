@@ -99,11 +99,17 @@ const NODES: Node[] = [
   { id: "admin-home", label: "אזור הניהול", sub: "שער + סיידבר לכל הלוחות", url: `${BASE}/admin`, cx: 85, cy: 18, w: 140, color: "#475569", badge: "חדש", badgeColor: "#fb8500" },
   { id: "admin", label: "מוסדות", sub: `${N_INST} מוסדות · פנימי`, url: `${BASE}/admin/institutions`, cx: 85, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-funding", label: "ניהול מלגות", sub: `${N_FUND} מלגות ותוכניות · פנימי`, url: `${BASE}/admin/scholarships`, cx: 250, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "admin-program", label: "סגל ושיוך", sub: "רכזות · שיוך מועמדים · פנימי", url: `${BASE}/admin/program`, cx: 1045, cy: 18, w: 150, color: "#475569", badge: "חדש", badgeColor: "#fb8500" },
+  { id: "admin-program", label: "סגל ושיוך", sub: "רכזות · יומני Cal · הרשאות", url: `${BASE}/admin/program`, cx: 1045, cy: 18, w: 150, color: "#475569" },
+  /*
+    המסמך שמסביר את כל מה שקורה **מחוץ** למסכים (5.10): מאיפה מגיעים
+    משתתפים, מי מעדכן מה, ושתי הקבוצות שבלוח רק לדיווח. הוא לא מסך של
+    האפליקציה ולכן אין לו חצים — אבל זה המקום שבו מחפשים אותו.
+  */
+  { id: "doc-journey", label: "מסע המשתתף", sub: "מסמך לצוות · מאנדיי · Cal · אפליקציה", url: `${BASE}/guides/journey.html`, cx: 250, cy: 18, w: 170, color: "#475569", badge: "חדש", badgeColor: "#fb8500" },
   { id: "admin-events", label: "לוח האירועים", sub: "ימים פתוחים ופאנלים · פנימי", url: `${BASE}/admin/events`, cx: 875, cy: 18, w: 150, color: "#475569" },
   { id: "reset", label: "בדיקה מההתחלה", sub: "מוחק הכל · פנימי", url: `${BASE}/reset`, cx: 1045, cy: 62, w: 130, color: "#dc2626", badge: "ניקוי", badgeColor: "#dc2626" },
   { id: "admin-degrees", label: "תחומים ותארים", sub: "מיפוי תואר×מוסד · פנימי", url: `${BASE}/admin/degrees`, cx: 730, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
-  { id: "admin-coordinator", label: "מסך הרכזת", sub: "מי צריך אותי היום · פנימי", url: `${BASE}/admin/coordinator`, cx: 885, cy: 62, w: 135, color: "#475569", badge: "עודכן", badgeColor: "#fb8500" },
+  { id: "admin-coordinator", label: "מסך הרכז/ת", sub: "תמונה גדולה · תור חילוץ · כולם · פגישות", url: `${BASE}/admin/coordinator`, cx: 885, cy: 62, w: 155, color: "#475569", badge: "עודכן", badgeColor: "#fb8500" },
   { id: "admin-courses", label: "ניהול קורסים", sub: `${N_COURSE} קורסים · פנימי`, url: `${BASE}/admin/courses`, cx: 575, cy: 62, w: 140, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
   { id: "admin-analytics", label: "אנליטיקות", sub: "מה קורה באפליקציה · פנימי", url: `${BASE}/admin/analytics`, cx: 415, cy: 62, w: 155, color: "#475569", badge: "ניהול", badgeColor: "#475569" },
 
