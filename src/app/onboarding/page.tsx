@@ -821,6 +821,32 @@ function StepPhone({ firstName, gender, onDone }: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /*
+    ── הדילוג מופיע רק כשצריך אותו (4.10) ────────────────────────────────────
+    הוא נוסף כשה-019 עוד לא היה מחובר, ואז הוא היה נכון: מסך שחוסם אדם
+    שממתין לפגישה בגלל תשתית שבורה הוא נזק ודאי. היום ה-hook פעיל
+    (hook_send_sms_enabled), והדילוג הפך להיות **הסיבה שלאף מועמד אין
+    טלפון** — 87 רשומות, שתיים עם מספר, ושתיהן של רכזים שנכנסו דרך /login.
+
+    בלי טלפון נשברים שלושה דברים שכבר בנויים: התאמת הזמנות Cal, שיוך
+    לפיילוט הבוגרים (`alumni_roster` מתאים לפי טלפון בלבד), והחלפת מכשיר.
+
+    ולכן הוא לא נמחק אלא **מותנה בכישלון אמיתי**: שגיאת שליחה, או קוד
+    שלא הגיע תוך 45 שניות. אם 019 ייפול — כולם ייכשלו, כולם יראו דילוג,
+    וההתנהגות תחזור בדיוק למה שהיא היום. זו נפילה בטוחה ולא הימור.
+  */
+  const [escape, setEscape] = useState(false);
+  useEffect(() => {
+    if (stage !== "otp" || escape) return;
+    const t = setTimeout(() => setEscape(true), 45_000);
+    return () => clearTimeout(t);
+  }, [stage, escape]);
+
+  function skip(reason: string) {
+    logEvent("phone_skipped", { reason });
+    onDone();
+  }
+
   const phoneValid = phone.replace(/\D/g, "").length >= 9;
   const codeValid = code.trim().length >= 4;
 
@@ -830,7 +856,7 @@ function StepPhone({ firstName, gender, onDone }: {
     setError(null);
     const err = await sendPhoneOtp(phoneToE164(phone));
     setLoading(false);
-    if (err) { setError(err); return; }
+    if (err) { setError(err); setEscape(true); return; }
     setStage("otp");
   }
 
@@ -925,19 +951,17 @@ function StepPhone({ firstName, gender, onDone }: {
           </>
         )}
 
-        {/*
-          עד ש-019sms מחובר כ-Send SMS Hook, שליחת קוד אמיתית עלולה להיכשל —
-          ואסור שזה יחסום את הכניסה של מי שממתין לפגישה. לדלג תמיד אפשרי,
-          בדיוק כמו שהיה לפני הצעד הזה.
-        */}
-        <button
-          type="button"
-          onClick={onDone}
-          className="text-[12.5px] font-bold mt-2"
-          style={{ color: "rgba(0,0,0,0.35)" }}
-        >
-          אעדכן מספר טלפון בהמשך ←
-        </button>
+        {/* מופיע רק אחרי כישלון אמיתי — ראה ההסבר בראש הקומפוננטה */}
+        {escape && (
+          <button
+            type="button"
+            onClick={() => skip(error ? "send_failed" : "no_code")}
+            className="text-[12.5px] font-bold mt-2"
+            style={{ color: "rgba(0,0,0,0.35)" }}
+          >
+            {error ? "אעדכן מספר טלפון בהמשך ←" : "לא הגיע קוד — אמשיך בינתיים ←"}
+          </button>
+        )}
       </div>
     </div>
   );
