@@ -321,6 +321,8 @@ function ago(iso: string | null): string {
 
 type Person = {
   id: string; name: string; anonymous: boolean; region: string | null;
+  /* המפתח שמחבר שורה בלוח לאדם באפליקציה — ראה mondayBoard ב-lib/monday.ts */
+  phone?: string | null;
   cohort?: string;
   stage: number; domain: string | null; ranked: string[]; lastActive: string | null; lastAction: string | null;
   signals: { severity: 1 | 2 | 3; reason: string; action: string }[];
@@ -965,14 +967,25 @@ export default function CoordinatorPage() {
       attendee_phone: string; attendee_email: string; trigger: string; candidate_id: string | null;
       outcome: string | null; outcome_at: string | null; outcome_note: string | null;
     }[];
-    role?: "coordinator" | "manager";
+    board?: {
+      id: string; name: string; phone: string; email: string; coordinator: string;
+      status: string; source: string; track: string; inApp: boolean; nextMeeting: string | null;
+    }[] | null;
+    role?: "coordinator" | "manager" | "owner";
     viewingAs?: string | null;
     staff?: { id: string; name: string }[];
   } | null>(null);
   /* מנהלת בלבד: באיזו רכזת היא צופה כרגע. ריק = כולן יחד */
   const [viewAs, setViewAs] = useState<string>("");
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
-  const [tab, setTab] = useState<"queue" | "all" | "meetings">("queue");
+  /*
+    ── הטאב הראשי (נתי, 5.10) ──────────────────────────────────────────────────
+    "מי צריך אותי היום" הוא תור חילוץ — בכוונה **רק החריגים**. מה שחסר היה
+    "איפה כולם עומדים", והוא הפך את המסך לכזה שעונה על שאלה אחת מתוך שתיים.
+    ה"תמונה הגדולה" היא עכשיו הבית, ותור החילוץ נשאר בדיוק מה שהוא.
+  */
+  const [tab, setTab] = useState<"big" | "queue" | "all" | "meetings">("big");
+  const [bigFilter, setBigFilter] = useState<string | null>(null);
   const [showPre, setShowPre] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -1104,19 +1117,21 @@ export default function CoordinatorPage() {
         {!journeyFor && data && (
           <div style={{ display: "flex", gap: 6, background: "rgba(2,62,138,0.06)", borderRadius: 12, padding: 4, marginBottom: 14 }}>
             {([
-              ["queue", "מי צריך אותי היום"],
-              ["all", `כל המשתתפים (${data.total})`],
-              ["meetings", `הפגישות שלי (${data.myBookings?.length ?? 0})`],
-            ] as const).map(([v, label]) => (
+              ["big", "התמונה הגדולה", "איפה כולם עומדים"],
+              ["queue", "מי צריך אותי היום", "רק מי שתקוע או שקט"],
+              ["all", `כל המשתתפים (${data.board?.length ?? data.total})`, "הרשימה המלאה"],
+              ["meetings", `הפגישות שלי (${data.myBookings?.length ?? 0})`, "היומן וסימון מה קרה"],
+            ] as const).map(([v, label, hint]) => (
               <button key={v} onClick={() => setTab(v)}
                 style={{
-                  flex: 1, padding: "9px 0", borderRadius: 9, border: "none", cursor: "pointer",
-                  fontSize: 13, fontWeight: 800, fontFamily: "'Heebo', sans-serif",
+                  flex: 1, padding: "7px 2px", borderRadius: 9, border: "none", cursor: "pointer",
+                  fontSize: 12.5, fontWeight: 800, fontFamily: "'Heebo', sans-serif", lineHeight: 1.25,
                   background: tab === v ? "#fff" : "transparent",
                   color: tab === v ? NAVY : "rgba(0,0,0,0.45)",
                   boxShadow: tab === v ? "0 1px 3px rgba(2,62,138,0.12)" : "none",
                 }}>
-                {label}
+                <span style={{ display: "block" }}>{label}</span>
+                <span style={{ display: "block", fontSize: 10.5, fontWeight: 700, opacity: 0.62, marginTop: 1 }}>{hint}</span>
               </button>
             ))}
           </div>
@@ -1129,6 +1144,98 @@ export default function CoordinatorPage() {
           כי הן היחידות שדורשות פעולה שאי אפשר לגזור: מישהו קבע פגישה
           ואנחנו לא יודעים מי. השיוך עצמו נעשה בדף מנהל התוכנית.
         */}
+        {/*
+          ── התמונה הגדולה ──────────────────────────────────────────────────
+          ארבעה מספרים ומשפך, והכל **נגזר משלושה מקורות**: הלוח (מי שלי
+          ובאיזה סטטוס), Cal (פגישות ומה קרה בהן), והאפליקציה (מי נכנס).
+
+          ⚠️ אין כאן השוואה בין רכזות ולא "הישגים". המסך נבנה מלכתחילה בלי
+          דירוגים, כי ברגע שרכזת רואה את המספר שלה מול של אחרת — המספר הופך
+          למטרה והאדם לאמצעי. משפך אישי כן, טבלת ליגה לא.
+        */}
+        {!journeyFor && tab === "big" && data && (() => {
+          const board = data.board ?? [];
+          const now = Date.now();
+          const week = now + 7 * 864e5;
+          const bk = (data.myBookings ?? []).filter(b => b.trigger !== "BOOKING_CANCELLED");
+          const live = bk.filter(b => !isPreProgram(b.start_time));
+          const thisWeek = bk.filter(b => +new Date(b.start_time) >= now && +new Date(b.start_time) <= week);
+          const unmarked = live.filter(b => +new Date(b.start_time) < now && !b.outcome);
+          const by = (s: string) => board.filter(r => r.status === s);
+
+          const cards: { n: number; label: string; hint: string; key: string; warn?: boolean }[] = [
+            { n: board.length, label: "בליווי שלי", hint: "בלוח אינטק", key: "all" },
+            { n: thisWeek.length, label: "פגישות השבוע", hint: "שבעת הימים הקרובים", key: "week" },
+            { n: unmarked.length, label: "ממתינות לסימון", hint: "פגישות שעברו", key: "unmarked", warn: unmarked.length > 0 },
+            { n: by("לפני שיחה ראשונה").length, label: "לפני שיחה ראשונה", hint: "עוד לא דיברתי איתם", key: "before" },
+          ];
+          /*
+            מי שקבע פגישה בלי לעבור במאנדיי נוצר שם אוטומטית, אבל **אין לנו
+            מושג מאיפה הוא הגיע** — וזו שאלה שרק הרכזת יכולה לסגור. הכרטיס
+            הזה הוא הבדיקה היומית, במקום שבו היא כבר מסתכלת.
+          */
+          const unknownSrc = board.filter(r => !r.source || r.source === "לא ידוע עדיין");
+          if (unknownSrc.length) cards.push({
+            n: unknownSrc.length, label: "מאיפה הגיעו?", hint: "קבעו פגישה בלי לעבור במאנדיי",
+            key: "unknown", warn: true,
+          });
+
+          /* המשפך — אותן תחנות שהלוח מחזיק, בסדר שבו אדם עובר אותן */
+          const funnel = [
+            { label: "לפני שיחה", n: by("לפני שיחה ראשונה").length },
+            { label: "נשלח קישור", n: by("נשלח קישור").length },
+            { label: "קבעו פגישה", n: by("בתהליך פעיל").length },
+            { label: "נכנסו לאפליקציה", n: board.filter(r => r.inApp).length },
+            { label: "נרשמו ללימודים", n: by("נרשמ/ה ללימודים").length },
+          ];
+          const peak = Math.max(1, ...funnel.map(f => f.n));
+
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {!data.board && (
+                <div style={{ background: "#fff7ec", border: "1px solid #f5dcb8", borderRadius: 12, padding: "11px 14px", fontSize: 13, color: "#8a4d00", lineHeight: 1.6 }}>
+                  הלוח לא נטען כרגע — המספרים כאן מבוססים על היומן בלבד.
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 9 }}>
+                {cards.map(c => (
+                  <button key={c.key}
+                    onClick={() => { setBigFilter(c.key); setTab(c.key === "unmarked" || c.key === "week" ? "meetings" : "all"); }}
+                    style={{
+                      background: c.warn ? "#fff7ec" : "#fff", textAlign: "right", cursor: "pointer",
+                      border: `1px solid ${c.warn ? "rgba(180,83,9,0.25)" : "rgba(2,62,138,0.12)"}`,
+                      borderRadius: 14, padding: "13px 15px", fontFamily: "'Heebo', sans-serif",
+                    }}>
+                    <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.1, color: c.warn ? "#b45309" : NAVY }}>{c.n}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#3d3a33", marginTop: 2 }}>{c.label}</div>
+                    <div style={{ fontSize: 11.5, color: "#8d867a", marginTop: 1 }}>{c.hint}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)", borderRadius: 14, padding: "15px 17px" }}>
+                <div style={{ fontSize: 13.5, fontWeight: 900, color: NAVY, marginBottom: 2 }}>המסע שלהם</div>
+                <div style={{ fontSize: 11.5, color: "#8d867a", marginBottom: 12 }}>כמה אנשים בכל תחנה — איפה הם נעצרים</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  {funnel.map(f => (
+                    <div key={f.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 12.5, color: "#5b5648", width: 118, flex: "0 0 auto" }}>{f.label}</span>
+                      <span style={{ flex: 1, height: 9, background: "rgba(2,62,138,0.07)", borderRadius: 99, overflow: "hidden" }}>
+                        <span style={{ display: "block", height: "100%", width: `${Math.round(f.n / peak * 100)}%`, background: NAVY, borderRadius: 99 }} />
+                      </span>
+                      <span style={{ fontSize: 13.5, fontWeight: 900, color: f.n ? NAVY : "#c4bfb4", width: 26, textAlign: "left", flex: "0 0 auto" }}>{f.n}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 11.5, color: "#8d867a", marginTop: 11, lineHeight: 1.6 }}>
+                  שלוש התחנות הראשונות מגיעות מהלוח במאנדיי · &quot;נכנסו לאפליקציה&quot; מהאפליקציה עצמה.
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {!journeyFor && tab === "queue" && !!data?.unmatchedBookings?.length && (
           <div style={{ background: "#fff7ec", border: "1px solid #f5dcb8", borderRadius: 14, padding: "16px 18px", marginBottom: 14 }}>
             <div style={{ fontSize: 15, fontWeight: 900, color: "#8a4d00" }}>
@@ -1437,7 +1544,74 @@ export default function CoordinatorPage() {
           );
         })()}
 
-        {!journeyFor && tab === "all" && data && (() => {
+        {/*
+          ── הרשימה מהלוח ────────────────────────────────────────────────────
+          עד 5.10 הרשימה נבנתה מ-candidates, כלומר **רק ממי שנכנס לאפליקציה**.
+          אף אחד מה-44 לא נכנס, ולכן הטאב היה ריק לגמרי בזמן שלרכזת 21 אנשים
+          בליווי. עכשיו הבעלות היא של הלוח, והאפליקציה מעשירה — ומי שכבר נכנס
+          מקבל את מפת המסע המלאה שלו בלחיצה (זה נשאר כפי שהיה).
+        */}
+        {!journeyFor && tab === "all" && data?.board && (() => {
+          const rows = bigFilter === "before"
+            ? data.board!.filter(r => r.status === "לפני שיחה ראשונה")
+            : bigFilter === "unknown"
+            ? data.board!.filter(r => !r.source || r.source === "לא ידוע עדיין")
+            : data.board!;
+          const byApp = new Map((data.quietList ?? []).concat(data.needsAttention)
+            .map(p => [(p.phone ?? "").replace(/\D/g, ""), p]));
+          const order = ["נרשמ/ה ללימודים", "סיימ/ה תהליך", "בתהליך פעיל", "נשלח קישור", "לפני שיחה ראשונה", "לא מעוניין/ת"];
+          const sorted = [...rows].sort((a, b) =>
+            (order.indexOf(a.status) + 99) % 99 - (order.indexOf(b.status) + 99) % 99 || a.name.localeCompare(b.name, "he"));
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {bigFilter && (
+                <button onClick={() => setBigFilter(null)}
+                  style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 800, color: NAVY, background: "rgba(2,62,138,0.07)",
+                    border: "none", borderRadius: 999, padding: "5px 12px", cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
+                  ✕ מסונן · הצג את כולם
+                </button>
+              )}
+              {sorted.map(r => {
+                const linked = r.phone ? byApp.get(r.phone) : undefined;
+                return (
+                  <div key={r.id} style={{ background: "#fff", borderRadius: 12, padding: "11px 14px",
+                    border: "1px solid rgba(2,62,138,0.1)", display: "flex", flexDirection: "column", gap: 5 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 14.5, fontWeight: 800, color: NAVY }}>{r.name}</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 800, padding: "3px 9px", borderRadius: 999,
+                        background: r.status === "בתהליך פעיל" ? "rgba(15,122,82,.1)" : "rgba(2,62,138,0.07)",
+                        color: r.status === "בתהליך פעיל" ? "#0f7a52" : NAVY }}>{r.status || "ללא סטטוס"}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "#8d867a", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {r.phone && <span dir="ltr">+{r.phone}</span>}
+                      {r.source && <span>· {r.source}</span>}
+                      {r.track === "בוגרים — תואר בלבד" && <span style={{ color: "#0369a1", fontWeight: 700 }}>· בוגר/ת</span>}
+                      {r.nextMeeting && (
+                        <span style={{ color: "#0f7a52", fontWeight: 700 }}>
+                          · פגישה {new Date(r.nextMeeting).toLocaleString("he-IL", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
+                      {r.inApp
+                        ? <span style={{ color: "#0f7a52", fontWeight: 700 }}>· באפליקציה ✓</span>
+                        : <span style={{ color: "#8a4d00" }}>· עוד לא נכנס/ה לאפליקציה</span>}
+                    </div>
+                    {linked && (
+                      <button onClick={() => setJourneyFor(linked.id)}
+                        style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 800, color: NAVY,
+                          background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline",
+                          fontFamily: "'Heebo', sans-serif" }}>
+                        מפת המסע שלו/ה ←
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+
+        {/* נפילה לאחור: בלי לוח — ההתנהגות הקודמת בדיוק */}
+        {!journeyFor && tab === "all" && data && !data.board && (() => {
           const everyone = [...data.needsAttention, ...(data.quietList ?? [])]
             .sort((a, b) => (b.stage ?? 0) - (a.stage ?? 0));
           return everyone.map(p => {

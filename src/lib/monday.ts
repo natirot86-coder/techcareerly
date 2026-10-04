@@ -37,6 +37,8 @@ const COL = {
   status: "color_mm7t1s7a",
   source: "text_mm7t5f8a",
   wa: "link_mm7t82dd",
+  /* "מאיפה הגיע/ה" — ערוץ אחד, רשימה סגורה */
+  channel: "color_mm7tee80",
 } as const;
 
 export const STATUS = {
@@ -169,8 +171,18 @@ export async function mondayMarkActive(p: {
     return ok ? "updated" : null;
   }
 
+  /*
+   * ⚠️ מי שקובע פגישה בלי להיות בלוח **נוצר כאן** (נתי, 5.10): תמיד יהיו
+   * כאלה שיקבלו קישור ישיר ויקפצו מעל מאנדיי, ועדיף שייכנסו אוטומטית
+   * מאשר שיתגלו כעבור שבוע. הכפילות נמנעת לפי טלפון או מייל למעלה.
+   *
+   * **מאיפה הגיע/ה נשאר "לא ידוע עדיין" במפורש ולא ריק** — זו שאלה פתוחה
+   * לרכזת, והיא נספרת במסך שלה. שדה ריק נראה כמו שכחה; "לא ידוע עדיין"
+   * נראה כמו משימה.
+   */
   const vals: Record<string, unknown> = {
     [COL.status]: { label: STATUS.active },
+    [COL.channel]: { label: "לא ידוע עדיין" },
     [COL.source]: `קבע/ה פגישה ביומן${coord ? " של " + coord : ""}${p.when ? " · " + p.when.slice(0, 10) : ""}`,
   };
   if (phone) vals[COL.phone] = phone;
@@ -192,4 +204,53 @@ export async function mondayMarkActive(p: {
     { b: BOARD, n: (p.name ?? "").trim() || phone || email, v: JSON.stringify(vals) }
   );
   return ok ? "created" : null;
+}
+
+/* ── הרשימה של הרכזת מגיעה מהלוח (נתי, 5.10) ──────────────────────────────────
+ *
+ * עד היום מסך הרכזת שאב את רשימת המשתתפים מ-`candidates`, כלומר **רק ממי
+ * שכבר נכנס לאפליקציה** — ובפועל אף אחד מה-44 לא נכנס, ולכן הטאב "כל
+ * המשתתפים" היה ריק לגמרי בזמן שלסיון 21 אנשים בליווי.
+ *
+ * המודל שסוכם: **הלוח הראשי שער · לוח אינטק בעלות · האפליקציה התקדמות.**
+ * הבעלות היא מי נמצא ברשימה, ולכן היא באה מהלוח. Cal והאפליקציה מעשירים.
+ */
+export type BoardRow = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  coordinator: string;
+  status: string;
+  source: string;
+  track: string;
+};
+
+const COL_EXTRA = { src: "color_mm7tee80", track: "color_mm7tahjd" } as const;
+
+/** כל השורות בלוח. `coordinatorName` ריק ⇒ הכל (מנהלת/owner) */
+export async function mondayBoard(coordinatorName?: string | null): Promise<BoardRow[] | null> {
+  const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track]
+    .map(c => `"${c}"`).join(", ");
+  const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
+       column_values(ids: [${ids}]) { id text } } } } }`
+  );
+  if (!data) return null;
+
+  const want = coordinatorName ? heKey(coordinatorName.split(/\s+/)[0]) : null;
+  return (data.boards?.[0]?.items_page?.items ?? [])
+    .map(it => ({
+      id: it.id,
+      name: it.name.trim(),
+      phone: normPhone(cv(it, COL.phone)),
+      email: cv(it, COL.email),
+      coordinator: cv(it, COL.coord),
+      status: cv(it, COL.status),
+      /* "מאיפה הגיע/ה" הוא הערוץ; "איך הגיע/ה?" הוא העקבות המלאות */
+      source: cv(it, COL_EXTRA.src) || cv(it, COL.source),
+      track: cv(it, COL_EXTRA.track),
+    }))
+    /* התאמה לפי שם פרטי מכווץ — "סיון" מול "סיוון", בדיוק כמו בתוויות */
+    .filter(r => !want || heKey(r.coordinator.split(/\s+/)[0]) === want);
 }

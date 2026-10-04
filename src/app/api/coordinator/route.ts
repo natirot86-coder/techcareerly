@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
+import { mondayBoard, type BoardRow } from "@/lib/monday";
 
 export const dynamic = "force-dynamic";
 
@@ -314,8 +315,44 @@ export async function GET(req: NextRequest) {
     unmatched = data ?? [];
   } catch { /* הטבלה או העמודה עוד לא קיימות — לא שוברים את המסך */ }
 
+  /*
+   * ── הרשימה מהלוח (נתי, 5.10) ───────────────────────────────────────────────
+   * `queue` נבנה מ-candidates, כלומר **רק ממי שכבר נכנס לאפליקציה**. נכון
+   * להיום אף אחד מה-44 לא נכנס, ולכן הטאב "כל המשתתפים" היה ריק בזמן
+   * שלרכזת 21 אנשים בליווי. הבעלות על "מי נמצא ברשימה" היא של לוח אינטק.
+   *
+   * ⚠️ הטלפון הוא המפתח שמחבר — `inApp` נגזר ממנו, ולכן אדם שהקליד
+   * באפליקציה מספר אחר ייראה כאן כמי שלא נכנס. זו הסיבה שהסתירה הזאת
+   * נספרת בסריקת הסנכרון במקום להיות מוסקת כאן בשקט.
+   *
+   * ⚠️ בלי MONDAY_TOKEN מחזיר null והמסך נופל חזרה להתנהגות הקודמת בדיוק.
+   */
+  let board: (BoardRow & { inApp: boolean; nextMeeting: string | null })[] | null = null;
+  try {
+    const rows = await mondayBoard(auth.role === "coordinator" ? auth.name : null);
+    if (rows) {
+      const appPhones = new Set(
+        (candidates.data ?? []).map(c => String(c.phone ?? "").replace(/\D/g, "")).filter(Boolean)
+      );
+      const nextBy = new Map<string, string>();
+      for (const b of (myBookings as { attendee_phone?: string; start_time?: string; trigger?: string }[])) {
+        const ph = (b.attendee_phone ?? "").replace(/\D/g, "");
+        if (!ph || !b.start_time || b.trigger === "BOOKING_CANCELLED") continue;
+        if (b.start_time < new Date().toISOString()) continue;
+        const cur = nextBy.get(ph);
+        if (!cur || b.start_time < cur) nextBy.set(ph, b.start_time);
+      }
+      board = rows.map(r => ({
+        ...r,
+        inApp: !!r.phone && appPhones.has(r.phone),
+        nextMeeting: nextBy.get(r.phone) ?? null,
+      }));
+    }
+  } catch { /* מאנדיי לא זמין — המסך ממשיך בלעדיו */ }
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
+    board,
     unmatchedBookings: unmatched,
     myBookings,
     role: auth.role,
