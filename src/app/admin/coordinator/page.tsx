@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { FUNDING } from "@/data/scholarships";
 import Link from "next/link";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
+import { isPreProgram } from "@/data/meetings";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -972,6 +973,7 @@ export default function CoordinatorPage() {
   const [viewAs, setViewAs] = useState<string>("");
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
   const [tab, setTab] = useState<"queue" | "all" | "meetings">("queue");
+  const [showPre, setShowPre] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   // מסע הלקוח: לחיצה על שם בטאב "כל המשתתפים" פותחת את המפה של האדם
@@ -1274,7 +1276,15 @@ export default function CoordinatorPage() {
           const now = Date.now();
           const upcoming = all.filter(b => +new Date(b.start_time) >= now && b.trigger !== "BOOKING_CANCELLED")
             .sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time));
-          const past = all.filter(b => +new Date(b.start_time) < now || b.trigger === "BOOKING_CANCELLED");
+          /*
+            פגישות שקדמו לתוכנית (אוגוסט) — סבב השיחות עם בוגרי הקורס.
+            נשמרות ומוצגות, אבל **בקבוצה משלהן ובלי סימון תוצאה**: הן אינן
+            חלק מהמסע, ו-15 שורות "ממתינות לסימון" שאיש לא יסמן הופכות את
+            המונה לרעש שמלמדים להתעלם ממנו. ראה PROGRAM_START ב-meetings.ts.
+          */
+          const pastAll = all.filter(b => +new Date(b.start_time) < now || b.trigger === "BOOKING_CANCELLED");
+          const pre = pastAll.filter(b => isPreProgram(b.start_time));
+          const past = pastAll.filter(b => !isPreProgram(b.start_time));
 
           const Row = (b: NonNullable<typeof data.myBookings>[number]) => {
             const cancelled = b.trigger === "BOOKING_CANCELLED";
@@ -1398,6 +1408,24 @@ export default function CoordinatorPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {past.sort((a, b) => +new Date(b.start_time) - +new Date(a.start_time)).slice(0, 30).map(Row)}
                   </div>
+                </div>
+              )}
+
+              {pre.length > 0 && (
+                <div>
+                  <button onClick={() => setShowPre(v => !v)}
+                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+                      fontSize: 13, fontWeight: 900, color: "#8d867a", marginBottom: 8, textAlign: "right" }}>
+                    {showPre ? "▾" : "▸"} לפני התוכנית ({pre.length})
+                  </button>
+                  <div style={{ fontSize: 12, color: "#8d867a", lineHeight: 1.6, marginBottom: 8 }}>
+                    סבב השיחות עם בוגרי הקורס, לפני שהתוכנית התחילה — אין מה לסמן בהן.
+                  </div>
+                  {showPre && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, opacity: 0.75 }}>
+                      {pre.sort((a, b) => +new Date(b.start_time) - +new Date(a.start_time)).map(Row)}
+                    </div>
+                  )}
                 </div>
               )}
 
