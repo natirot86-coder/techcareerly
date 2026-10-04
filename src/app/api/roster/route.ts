@@ -9,6 +9,7 @@
  * (בדיוק מה שקרה עם מירוץ "+ רכזת" לפני שהמודל עם האישור נבנה).
  */
 import { NextRequest, NextResponse } from "next/server";
+import { normalizePhone } from "@/lib/candidate";
 import { createClient } from "@supabase/supabase-js";
 import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
 
@@ -54,7 +55,13 @@ export async function POST(req: NextRequest) {
     name: body.name ?? "",
     location: body.location ?? "",
     email: body.email ?? "",
-    phone: body.phone ?? "",
+    /*
+      ⚠️ **מנרמלים בכתיבה ולא רק בקריאה** (4.10). הטופס מבטיח לצוות
+      ש"גם 05... בסדר", ובפועל נשמרו שם שני פורמטים — 0509632170 לצד
+      972545603636. ההשוואה בכניסה מנרמלת משני הצדדים ולכן זה עבד, אבל
+      כל צרכן חדש שישווה ישירות היה נשבר בשקט. פורמט אחד בטבלה.
+    */
+    phone: normalizePhone(body.phone),
     active: body.active ?? true,
     // קישורי Cal פר-פגישה — מה שבא אחרי cal.com/ . המועמד המשויך מקבל את היומן של הרכזת שלו
     cal_m1: body.cal_m1 ?? "",
