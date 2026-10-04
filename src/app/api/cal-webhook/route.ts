@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHmac, timingSafeEqual } from "crypto";
+import { mondayMarkActive } from "@/lib/monday";
 
 export const dynamic = "force-dynamic";
 
@@ -53,10 +54,12 @@ export async function POST(req: NextRequest) {
   // וההזמנה מזוהה כאן לפי מייל ה-organizer מול סגל הרכזות ב-DB
   const organizerEmail = (p.organizer?.email ?? "").trim().toLowerCase();
   let coordinatorId: string | null = null;
+  let coordinatorName: string | null = null;
   if (organizerEmail) {
     const { data: match } = await db.from("coordinators")
-      .select("id").ilike("email", organizerEmail).limit(1);
+      .select("id, name").ilike("email", organizerEmail).limit(1);
     coordinatorId = match?.[0]?.id ?? null;
+    coordinatorName = match?.[0]?.name ?? null;
   }
 
   /*
@@ -104,6 +107,27 @@ export async function POST(req: NextRequest) {
   const trig = (body.triggerEvent ?? "").toUpperCase();
   if (candidateId && (trig.includes("NO_SHOW") || trig.includes("NOSHOW"))) {
     await db.from("candidates").update({ status: "at_risk" }).eq("id", candidateId);
+  }
+
+  /*
+   * קביעת פגישה ⇒ "בתהליך פעיל" בלוח אינטק. זה הסטטוס היחיד שאפשר לגזור
+   * מעובדה ולא מהערכה, ולכן הוא היחיד שנכתב אוטומטית — "נשלח קישור" ו"לא
+   * מעוניין/ת" נשארים ביד של הרכזת, כי רק היא יודעת מה נאמר בשיחה.
+   *
+   * ⚠️ **רק על קביעה.** ביטול או הזזה לא משנים סטטוס: מי שהזיז פגישה הוא
+   * עדיין בתהליך, ומי שביטל צריך טלפון — לא הורדת דרגה בשקט בלוח.
+   *
+   * ⚠️ **אחרי ה-insert ולעולם לא במקומו.** Supabase הוא מקור האמת; מאנדיי
+   * הוא העותק לרכזת. כישלון כאן לא מפיל את ה-webhook ולא מאבד את ההזמנה.
+   */
+  const isNew = trig.includes("CREATED") || trig.includes("REQUESTED");
+  const isSelfTest = !!organizerEmail && (attendee.email ?? "").trim().toLowerCase() === organizerEmail;
+  if (isNew && !isSelfTest) {
+    const res = await mondayMarkActive({
+      phone, email: attendee.email, name: attendee.name,
+      coordinatorName, when: p.startTime,
+    });
+    if (res) console.log(`[cal-webhook] monday: ${res}`);
   }
 
   return NextResponse.json({ ok: true });
