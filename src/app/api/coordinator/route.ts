@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, onboarding_completed_at")
+      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, onboarding_completed_at, is_test")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -91,7 +91,14 @@ export async function GET(req: NextRequest) {
     מי שהיא צריכה לראות.
   */
   const real = (candidates.data ?? []).filter(
-    c => String(c.first_name ?? "").trim() || c.onboarding_completed_at || String(c.phone ?? "").trim()
+    c =>
+      /*
+        רשומות בדיקה מסומנות ב-is_test (מיגרציה 010). סינון לפי תוכן לא
+        יכול לתפוס אותן — "שדגלח ראר" נראה כמו שם — ולכן הסימון מפורש,
+        והכלל האוטומטי הוא שטלפון של רכזת לעולם אינו מועמד אמיתי.
+      */
+      !c.is_test &&
+      (String(c.first_name ?? "").trim() || c.onboarding_completed_at || String(c.phone ?? "").trim())
   );
 
   const myCandidates = auth.coordinatorId
