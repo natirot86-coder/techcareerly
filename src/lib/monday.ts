@@ -82,6 +82,31 @@ type Item = { id: string; name: string; column_values: { id: string; text: strin
 const cv = (it: Item, id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
 
 /**
+ * ⚠️ עמודת הרכז/ת היא **רשימה סגורה**, ו-`create_labels_if_missing` ישמח
+ * להמציא בה תווית חדשה. זה כבר קרה: ב-DB היא "סיון מקונן" ובלוח "סיון",
+ * והבדיקה הראשונה ילדה תווית רביעית. מאז מתרגמים מול התוויות הקיימות
+ * (שם פרטי מספיק), ומי שלא נמצא — לא נכתב. **עדיף שדה ריק על תווית
+ * כפולה**: ריק זה חוסר, כפולה זה פילטר שמפספס חצי מהשורות בשקט.
+ */
+async function resolveCoordLabel(name: string | null | undefined): Promise<string | null> {
+  const want = (name ?? "").trim();
+  if (!want) return null;
+  const data = await gql<{ boards: { columns: { settings_str: string }[] }[] }>(
+    `{ boards(ids: ${BOARD}) { columns(ids: ["${COL.coord}"]) { settings_str } } }`
+  );
+  const raw = data?.boards?.[0]?.columns?.[0]?.settings_str;
+  if (!raw) return null;
+  let labels: string[] = [];
+  try { labels = Object.values(JSON.parse(raw).labels ?? {}) as string[]; } catch { return null; }
+
+  const first = want.split(/\s+/)[0];
+  return labels.find(l => l === want)
+    ?? labels.find(l => l === first)
+    ?? labels.find(l => l.split(/\s+/)[0] === first)
+    ?? null;
+}
+
+/**
  * נקבעה פגישה ⇒ "בתהליך פעיל". מי שאינו בלוח — נוצר, כי זו בדיוק הדרך
  * שבה מגיעים מהקישור הישיר של הרכזת בלי לעבור באף טופס.
  *
@@ -108,7 +133,7 @@ export async function mondayMarkActive(p: {
   const hit = items.find(it => (phone && normPhone(cv(it, COL.phone)) === phone)
     || (email && cv(it, COL.email).toLowerCase() === email));
 
-  const coord = p.coordinatorName?.trim();
+  const coord = await resolveCoordLabel(p.coordinatorName);
 
   if (hit) {
     const now = cv(hit, COL.status);
