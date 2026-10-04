@@ -1271,8 +1271,25 @@ export default function CoordinatorPage() {
             );
           };
 
+          /*
+            פגישה שעברה בלי סימון היא מועמד שתקוע בסטטוס של היום שבו קבע.
+            אחרי חודשיים "בתהליך פעיל" כבר לא אומר כלום, ולכן המונה כאן —
+            לא כדי לנדנד, אלא כי בלי הסימון אי אפשר להבדיל בין מי שנפגש
+            והתקדם למי שנפגש ונעלם.
+          */
+          const unmarked = past.filter(b => b.trigger !== "BOOKING_CANCELLED" && !b.outcome).length;
+
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {unmarked > 0 && (
+                <div style={{
+                  background: "#fff7ec", border: "1px solid rgba(180,83,9,0.22)",
+                  borderRadius: 12, padding: "10px 13px", fontSize: 13.5, lineHeight: 1.6, color: "#8a4d00",
+                }}>
+                  <b>{unmarked} פגישות שעברו וטרם סומנו.</b> שתי לחיצות לכל אחת —
+                  התקיימה או לא הגיע/ה — ומי שנפגש ונעלם מפסיק להיראות כמו מי שנפגש אתמול.
+                </div>
+              )}
               <div>
                 <div style={{ fontSize: 13, fontWeight: 900, color: NAVY, marginBottom: 8 }}>
                   הקרובות ({upcoming.length})
