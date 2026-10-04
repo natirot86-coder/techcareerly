@@ -12,6 +12,22 @@ import { supabase } from "./supabase";
 
 const IDENTITY_KEY = "coordinator-identity";
 const LEGACY_CODE_KEY = "coordinator-code";
+/*
+  מתי הוזן קוד החירום. השרת דורש את החותמת הזאת ופוסל אותה אחרי 24 שעות —
+  ראה BREAK_GLASS_TTL_MS ב-serverCoordinatorAuth. בלי זה הקוד נשאר בדפדפן
+  **לנצח**, וזה בדיוק מה שהפך גיבוי חירום לדרך הכניסה הרגילה.
+*/
+const LEGACY_SINCE_KEY = "coordinator-code-since";
+export const BREAK_GLASS_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** האם יושבת בדפדפן כניסת חירום בתוקף (לבאנר ולבדיקת השער) */
+export function breakGlassActive(): boolean {
+  try {
+    if (!localStorage.getItem(LEGACY_CODE_KEY)) return false;
+    const since = Number(localStorage.getItem(LEGACY_SINCE_KEY) ?? "0");
+    return !!since && Date.now() - since <= BREAK_GLASS_TTL_MS;
+  } catch { return false; }
+}
 
 export type CoordinatorIdentity = { id: string; name: string | null };
 
@@ -66,14 +82,14 @@ export function getLoginLabel(): string | null {
   const identity = getCoordinatorIdentity();
   if (identity?.name) return identity.name;
   try {
-    if (localStorage.getItem(LEGACY_CODE_KEY)) return "קוד גישה זמני";
+    if (breakGlassActive()) return "כניסת חירום · פגה תוך 24 שעות";
   } catch { /* ignore */ }
   return null;
 }
 
 export async function coordinatorSignOut(): Promise<void> {
   try { localStorage.removeItem(IDENTITY_KEY); } catch { /* ignore */ }
-  try { localStorage.removeItem(LEGACY_CODE_KEY); } catch { /* ignore */ }
+  try { localStorage.removeItem(LEGACY_CODE_KEY); localStorage.removeItem(LEGACY_SINCE_KEY); } catch { /* ignore */ }
   if (supabase) await supabase.auth.signOut().catch(() => { /* ignore */ });
 }
 
@@ -90,11 +106,16 @@ export async function coordinatorAuthHeaders(): Promise<Record<string, string>> 
   }
   try {
     const legacy = localStorage.getItem(LEGACY_CODE_KEY);
-    if (legacy) return { "x-coordinator-code": legacy };
+    const since = localStorage.getItem(LEGACY_SINCE_KEY);
+    /* השרת פוסל חותמת חסרה או ישנה מ-24 שעות — שולחים אותה כמו שהיא */
+    if (legacy) return { "x-coordinator-code": legacy, "x-coordinator-since": since ?? "0" };
   } catch { /* ignore */ }
   return {};
 }
 
 export function saveLegacyCode(code: string): void {
-  try { localStorage.setItem(LEGACY_CODE_KEY, code); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(LEGACY_CODE_KEY, code);
+    localStorage.setItem(LEGACY_SINCE_KEY, String(Date.now()));
+  } catch { /* ignore */ }
 }

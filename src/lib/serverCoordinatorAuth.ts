@@ -35,8 +35,41 @@ export type Role = "coordinator" | "manager" | "owner";
 export const isOwner = (r: Role) => r === "owner";
 
 export type CoordinatorAuth =
-  | { ok: true; coordinatorId: string | null; name: string | null; role: Role }
+  | { ok: true; coordinatorId: string | null; name: string | null; role: Role; breakGlass?: boolean }
   | { ok: false; status: number; error: string };
+
+/*
+ * ── כניסת החירום: 24 שעות, לא לנצח (נתי, 5.10) ──────────────────────────────
+ *
+ * הקוד המשותף נבנה כגיבוי ליום שבו ה-SMS לא עבד. 019 מחובר מ-4.10, ולכן
+ * התנאי שהצדיק אותו כבר לא מתקיים — אבל **מחיקה מלאה הייתה חוסמת רכזת
+ * חדשה, או מי שהחליפה מכשיר, בדיוק ביום שבו היא הכי צריכה להיכנס.**
+ * הפתרון אינו לבטל את הדלת אלא להדליק עליה אור:
+ *
+ *   · הכניסה **פגה אחרי 24 שעות** ולא נשמרת לנצח בדפדפן. זה מה שהופך
+ *     אותה מדלת אחורית לחירום אמיתי.
+ *   · `breakGlass: true` חוזר ללקוח, והמסך מציג באנר קבוע. חירום שנראה
+ *     כמו חירום לא הופך לשגרה.
+ *   · כל שימוש נרשם ב-funnel_events. אין זהות אישית, אבל יש **כמה פעמים
+ *     ומתי** — וזה מספיק כדי לראות אם הדלת הזאת הפכה לדרך המלך.
+ *
+ * הקוד נשאר 'manager' ולא 'owner': אנליטיקות דורשות זהות אמיתית.
+ */
+export const BREAK_GLASS_TTL_MS = 24 * 60 * 60 * 1000;
+
+async function logBreakGlass(req: NextRequest) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !secret) return;
+  try {
+    const db = createClient(url, secret, { auth: { persistSession: false } });
+    await db.from("funnel_events").insert({
+      candidate_id: null,
+      name: "admin_break_glass",
+      props: { path: req.nextUrl.pathname },
+    });
+  } catch { /* רישום שנכשל לא חוסם כניסה */ }
+}
 
 export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAuth> {
   const legacyCode = process.env.COORDINATOR_CODE;
@@ -45,7 +78,18 @@ export async function verifyCoordinator(req: NextRequest): Promise<CoordinatorAu
   // יכולים לשאת header; עדיין רק הקוד הישן, לא הכניסה האישית
   const queryCode = req.nextUrl.searchParams.get("code");
   if (legacyCode && (headerCode === legacyCode || queryCode === legacyCode)) {
-    return { ok: true, coordinatorId: null, name: null, role: "manager" };
+    /*
+     * הלקוח שולח מתי הקוד הוזן (x-coordinator-since). חסר או ישן מ-24 שעות
+     * ⇒ 401, והמסך יבקש להזין מחדש. ⚠️ הזמן מגיע מהדפדפן ולכן ניתן לזיוף —
+     * זה מקובל כאן: מי שמזייף אותו מחזיק ממילא בקוד עצמו, והמנגנון בא
+     * למנוע **שכחה**, לא תוקף.
+     */
+    const since = Number(req.headers.get("x-coordinator-since") ?? "0");
+    if (!since || Date.now() - since > BREAK_GLASS_TTL_MS) {
+      return { ok: false, status: 401, error: "כניסת החירום פגה — נדרשת הזדהות מחדש" };
+    }
+    await logBreakGlass(req);
+    return { ok: true, coordinatorId: null, name: null, role: "manager", breakGlass: true };
   }
 
   const authHeader = req.headers.get("authorization");

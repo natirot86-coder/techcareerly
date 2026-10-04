@@ -11,7 +11,7 @@
  */
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { sendCoordinatorOtp, verifyCoordinatorOtp, saveLegacyCode, getCoordinatorIdentity } from "@/lib/coordinatorAuth";
+import { sendCoordinatorOtp, verifyCoordinatorOtp, saveLegacyCode, getCoordinatorIdentity, breakGlassActive, coordinatorSignOut } from "@/lib/coordinatorAuth";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -25,6 +25,8 @@ function toE164(localNumber: string): string {
 
 export default function AdminGate({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<"checking" | "locked" | "open">("checking");
+  /* באנר קבוע כל עוד הכניסה היא בקוד החירום — חירום שנראה כמו חירום לא הופך לשגרה */
+  const [emergency, setEmergency] = useState(false);
   const [showLegacy, setShowLegacy] = useState(false);
 
   // מצב הכניסה עם טלפון
@@ -57,11 +59,24 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
         } catch { /* נופלים לניסיון הבא */ }
       }
     }
-    // גיבוי חירום — הקוד הישן
+    /*
+      כניסת חירום — תקפה 24 שעות בלבד (נתי, 5.10). הקוד נבנה כגיבוי ליום
+      שבו ה-SMS לא עבד; 019 מחובר מ-4.10, וקוד שנשאר בדפדפן **לנצח** הוא
+      מה שהפך גיבוי חירום לדרך הכניסה הרגילה — ואיתה גם "כל אחד רואה את
+      של כולם", כי הקוד אינו זהות.
+    */
+    if (localStorage.getItem(LEGACY_KEY) && !breakGlassActive()) {
+      localStorage.removeItem(LEGACY_KEY);
+      localStorage.removeItem("coordinator-code-since");
+      setLegacyError("כניסת החירום פגה אחרי 24 שעות — עדיף להיכנס עם הטלפון שלך");
+      setShowLegacy(true);
+      setState("locked");
+      return;
+    }
     const saved = localStorage.getItem(LEGACY_KEY);
     if (saved) {
       const ok = await verifyLegacy(saved);
-      if (ok) { setState("open"); return; }
+      if (ok) { setState("open"); setEmergency(true); return; }
       localStorage.removeItem(LEGACY_KEY);
     }
     setState("locked");
@@ -101,7 +116,31 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
     }
   }
 
-  if (state === "open") return <>{children}</>;
+  if (state === "open") return (
+    <>
+      {/*
+        באנר קבוע ולא התראה חולפת: כל עוד מישהו עובד בקוד החירום, **אין לנו
+        מושג מי הוא** והוא רואה את כל הרכזות. זה בסדר לשעה של תקלה, וזה לא
+        בסדר כברירת מחדל — ובאנר שלא נעלם הוא מה שמבדיל ביניהם.
+      */}
+      {emergency && (
+        <div dir="rtl" style={{
+          background: "#b91c1c", color: "#fff", padding: "9px 16px",
+          fontSize: 12.5, fontWeight: 700, lineHeight: 1.6, textAlign: "center",
+          fontFamily: "'Heebo', sans-serif",
+        }}>
+          נכנסת בקוד חירום — אין זהות אישית, והתצוגה כוללת את כל הרכזות.
+          הכניסה תפוג תוך 24 שעות.{" "}
+          <button onClick={() => { coordinatorSignOut().then(() => location.reload()); }}
+            style={{ background: "none", border: "none", color: "#fff", textDecoration: "underline",
+              cursor: "pointer", fontWeight: 900, fontFamily: "inherit", fontSize: "inherit" }}>
+            כניסה עם הטלפון שלי
+          </button>
+        </div>
+      )}
+      {children}
+    </>
+  );
   if (state === "checking") return <div style={{ minHeight: "100vh", background: "#f5f3ef" }} />;
 
   return (

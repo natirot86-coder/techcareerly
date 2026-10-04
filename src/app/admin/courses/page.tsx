@@ -46,6 +46,23 @@ export default function AdminCoursesPage() {
   const [items, setItems] = useState<Course[]>(COURSES);
   const [openId, setOpenId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  /*
+    ── שלוש קבוצות ולא רשימה אחת (נתי, 5.10) ───────────────────────────────────
+
+    קורס שהמחזור שלו עבר **כבר אינו מוצג למועמד** — `visibleCourses` מסננת
+    אותו, והמצב נגזר מהתאריך ולא משדה. כלומר הבלבול היה של הצוות בלבד:
+    הלוח ערבב "פעיל" עם "עבר" ועם "מוסתר", ורכזת שסרקה אותו לא ידעה מה
+    ממנו אמיתי.
+
+    ⚠️ **ולמרות זאת לא מסתירים את מה שעבר.** קורס שפג הוא לא רעש אלא
+    **משימה**: צריך להשיג מהמוסד תאריך חדש. הכלל שנקבע הוא "לא ממציאים
+    תאריך — שואלים", ולכן הקבוצה הזאת היא בדיוק רשימת השאלות. אם נמחק
+    אותה מהמסך, הנתון ירקב בשקט ואיש לא ישים לב — וזה גרוע מלהציג אותו.
+
+    לכן: מופרדת, מקופלת כברירת מחדל, ועם כותרת שאומרת מה לעשות איתה.
+  */
+  const [showPast, setShowPast] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -107,7 +124,55 @@ export default function AdminCoursesPage() {
       </div>
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "16px 24px 60px", display: "flex", flexDirection: "column", gap: 10 }}>
-        {items.map(c => {
+        {(() => {
+          const active = items.filter(c => c.status !== "hidden" && courseState(c) !== "passed");
+          const past = items.filter(c => c.status !== "hidden" && courseState(c) === "passed");
+          const hidden = items.filter(c => c.status === "hidden");
+          const Head = ({ label, n, note, open, onToggle }:
+            { label: string; n: number; note?: string; open?: boolean; onToggle?: () => void }) => (
+            <button onClick={onToggle} disabled={!onToggle}
+              style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", width: "100%",
+                textAlign: "right", background: "none", border: "none", padding: "14px 2px 2px",
+                cursor: onToggle ? "pointer" : "default" }}>
+              <span style={{ fontSize: 13.5, fontWeight: 900, color: NAVY }}>
+                {onToggle ? (open ? "▾ " : "▸ ") : ""}{label} ({n})
+              </span>
+              {note && <span style={{ fontSize: 12, color: "rgba(0,0,0,0.45)" }}>{note}</span>}
+            </button>
+          );
+          return (
+            <>
+              <Head label="מחזורים פתוחים" n={active.length} note="אלה שהמועמד רואה" />
+              {active.map(Row)}
+              {past.length > 0 && (
+                <>
+                  <Head label="מחזור עבר" n={past.length} open={showPast} onToggle={() => setShowPast(v => !v)}
+                    note="ירדו מהמועמד מעצמם · צריך תאריך חדש מהמוסד" />
+                  {showPast && past.map(Row)}
+                </>
+              )}
+              {hidden.length > 0 && (
+                <>
+                  <Head label="מוסתרים" n={hidden.length} open={showHidden} onToggle={() => setShowHidden(v => !v)}
+                    note="הוסתרו ידנית" />
+                  {showHidden && hidden.map(Row)}
+                </>
+              )}
+            </>
+          );
+        })()}
+      </div>
+
+      {toast && (
+        <div style={{ position: "fixed", bottom: 22, insetInline: 0, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+          <div style={{ background: NAVY, color: "#fff", fontSize: 13, fontWeight: 700, padding: "10px 18px", borderRadius: 99 }}>{toast}</div>
+        </div>
+      )}
+    </div>
+  );
+
+  function Row(c: Course) {
+    return (() => {
           const st = courseState(c);
           const sm = STATE_META[st];
           const isOpen = openId === c.id;
@@ -199,14 +264,6 @@ export default function AdminCoursesPage() {
               )}
             </div>
           );
-        })}
-      </div>
-
-      {toast && (
-        <div style={{ position: "fixed", bottom: 22, insetInline: 0, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
-          <div style={{ background: NAVY, color: "#fff", fontSize: 13, fontWeight: 700, padding: "10px 18px", borderRadius: 99 }}>{toast}</div>
-        </div>
-      )}
-    </div>
-  );
+    })();
+  }
 }
