@@ -284,6 +284,32 @@ export async function saveChosenDomain(domainId: string): Promise<string | null>
 }
 
 /**
+ * תרגום שגיאות אימות טלפון לעברית (6.10) — בדיקה חיה מול production חשפה
+ * `otp_expired` מוצג כ-"Token has expired or is invalid" באנגלית, על מסך
+ * שכולו עברית ובלי שום הכוונה להקיש קוד חדש. זה בדיוק מה שגרם למועמדים
+ * "לא להצליח להתחבר": קוד שפג אחרי כ-60 שניות (ברירת המחדל של Supabase)
+ * הוא זמן סביר לגמרי לקרוא SMS ולהקליד, ובלי תרגום/כפתור מיידי לקוד חדש
+ * המסך פשוט נראה שבור. יושב כאן — מקור אחד לכל נקודות הכניסה שקוראות
+ * ל-sendPhoneOtp/verifyPhoneOtp (login ואונבורדינג).
+ */
+function translatePhoneAuthError(error: { code?: string; message?: string } | null): string | null {
+  if (!error) return null;
+  switch (error.code) {
+    case "otp_expired":
+      return "הקוד שגוי או שפג תוקפו — אפשר לבקש קוד חדש";
+    case "over_sms_send_rate_limit":
+    case "over_request_rate_limit":
+      return "יותר מדי ניסיונות — אפשר לנסות שוב בעוד כמה דקות";
+    case "sms_send_failed":
+    case "phone_provider_disabled":
+      return "שליחת ה-SMS נכשלה — אפשר לנסות שוב בעוד רגע";
+    default:
+      // שגיאה לא מוכרת מוצגת כמו שהיא — עדיף אנגלית גולמית על הסתרת מידע
+      return error.message ?? "שגיאה לא ידועה";
+  }
+}
+
+/**
  * שולח קוד OTP למספר טלפון.
  * אם המשתמש הנוכחי הוא anonymous (למשל עשה Onboarding בלי להתחבר) —
  * שולחים דרך updateUser כדי לשדרג את אותו משתמש במקום, ולשמור על ה-id
@@ -296,11 +322,11 @@ export async function sendPhoneOtp(phone: string): Promise<string | null> {
 
   if (session?.user?.is_anonymous) {
     const { error } = await supabase.auth.updateUser({ phone });
-    return error?.message ?? null;
+    return translatePhoneAuthError(error);
   }
 
   const { error } = await supabase.auth.signInWithOtp({ phone });
-  return error?.message ?? null;
+  return translatePhoneAuthError(error);
 }
 
 export async function verifyPhoneOtp(phone: string, token: string): Promise<string | null> {
@@ -310,7 +336,7 @@ export async function verifyPhoneOtp(phone: string, token: string): Promise<stri
   const type = session?.user?.is_anonymous ? "phone_change" : "sms";
 
   const { error } = await supabase.auth.verifyOtp({ phone, token, type });
-  return error?.message ?? null;
+  return translatePhoneAuthError(error);
 }
 
 export async function isAnonymousSession(): Promise<boolean> {

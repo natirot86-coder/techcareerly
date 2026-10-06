@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
@@ -101,6 +101,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /*
+   * שליחה חוזרת מאותו מסך (6.10) — בדיקה חיה מול production הראתה שקוד
+   * נכשל עם otp_expired אחרי כ-60-90 שניות, בדיוק זמן סביר לקרוא SMS
+   * ולהקליד. עד עכשיו הדרך היחידה לבקש קוד חדש הייתה "שינוי מספר טלפון"
+   * — חזרה למסך הראשון והקלדת המספר מחדש, חיכוך מיותר ברגע שהכי קריטי
+   * שלא יהיה. resendCooldown מונע גם ספאם וגם פגיעה ב-rate limit של Supabase.
+   */
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   const phoneValid = phone.replace(/\D/g, "").length >= 9;
   const codeValid = code.trim().length >= 4;
@@ -124,6 +140,21 @@ export default function LoginPage() {
     setLoading(false);
     if (err) { setError(err); return; }
     setStep("otp");
+    setResendCooldown(30);
+  }
+
+  async function handleResend() {
+    if (resendCooldown > 0 || resending) return;
+    setResending(true);
+    setError(null);
+    setResent(false);
+    const err = await sendPhoneOtp(toE164(phone));
+    setResending(false);
+    if (err) { setError(err); return; }
+    setCode("");
+    setResent(true);
+    setResendCooldown(30);
+    setTimeout(() => setResent(false), 4000);
   }
 
   // אותה מטרה כמו goAfterLogin, אבל כתובת מלאה — ה-redirect חוזר מגוגל כטעינת דף מחדש
@@ -207,17 +238,30 @@ export default function LoginPage() {
             <label className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>קוד אימות</label>
             <TextInput value={code} onChange={setCode} placeholder="123456" type="text" dir="ltr" />
             {error && <div className="text-[12.5px]" style={{ color: "#c0392b" }}>{error}</div>}
+            {resent && <div className="text-[12.5px] font-bold" style={{ color: "#1b7a3d" }}>✓ נשלח קוד חדש</div>}
             <Button variant="primary" onClick={handleVerify} disabled={!codeValid || loading}>
               {loading ? "מאמת..." : "אימות והמשך"}
             </Button>
-            <button
-              type="button"
-              onClick={() => { setStep("phone"); setCode(""); setError(null); }}
-              className="text-[13px] font-bold"
-              style={{ color: "rgba(0,0,0,0.4)" }}
-            >
-              שינוי מספר טלפון
-            </button>
+            <div className="flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending || resendCooldown > 0}
+                className="text-[13px] font-bold disabled:opacity-50"
+                style={{ color: "#023e8a" }}
+              >
+                {resending ? "שולח..." : resendCooldown > 0 ? `שלח קוד חדש (${resendCooldown})` : "שלח קוד חדש"}
+              </button>
+              <span style={{ color: "rgba(0,0,0,0.2)" }}>·</span>
+              <button
+                type="button"
+                onClick={() => { setStep("phone"); setCode(""); setError(null); }}
+                className="text-[13px] font-bold"
+                style={{ color: "rgba(0,0,0,0.4)" }}
+              >
+                שינוי מספר טלפון
+              </button>
+            </div>
           </>
         )}
 
