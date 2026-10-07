@@ -58,18 +58,14 @@ export async function ensureCandidateId(): Promise<string | null> {
 
   if (!candidateId) {
     /*
-     * ⚠️ כאן נולד כל משתמש — **בלי טלפון**, ואף מסך באונבורדינג לא מבקש
-     * ממנו אחד. נכון ל-8.9.2026: 240 משתמשים ב-auth.users, 0 עם טלפון.
+     * ⚠️ כאן נולד כל משתמש — **בלי טלפון**, ואף מסך לא מבקש ממנו אחד
+     * עד StepPhone בסוף האונבורדינג. מי שמדלג (או נושר קודם) נשאר
+     * אנונימי לצמיתות — ושובר התאמת הזמנות Cal, שיוך בוגרי הפיילוט
+     * (`alumni_roster` לפי טלפון), והחלפת מכשיר (זהות אנונימית חדשה
+     * בכל ניקוי דפדפן).
      *
-     * זה שובר שלושה דברים שכבר בנויים: התאמת הזמנות Cal (הטלפון הוא
-     * המפתח המשותף היחיד), שיוך בוגרי טק-קריירה לפיילוט (`alumni_roster`
-     * מתאים לפי טלפון — **בלעדיו הפיילוט לא יכול לרוץ**), והחלפת מכשיר
-     * (אנונימי שמנקה דפדפן מקבל זהות חדשה ומאבד הכל).
-     *
-     * הפונקציות למטה — `sendPhoneOtp` ו-`verifyPhoneOtp` — כבר יודעות
-     * להמיר סשן אנונימי לזהות טלפון דרך `phone_change`. מה שחסר הוא מסך
-     * באונבורדינג שיקרא להן, ו-019sms מחובר כ-Send SMS Hook כדי שה-OTP
-     * באמת יגיע. ראה את הבלוק בראש README.
+     * `sendPhoneOtp`/`verifyPhoneOtp` למטה **לא** משדרגות את הסשן
+     * האנונימי הזה דרך updateUser/phone_change (6.10) — ראו ההסבר שם.
      */
     const { data, error } = await supabase.auth.signInAnonymously();
     if (error || !data.user) {
@@ -310,20 +306,28 @@ function translatePhoneAuthError(error: { code?: string; message?: string } | nu
 }
 
 /**
- * שולח קוד OTP למספר טלפון.
- * אם המשתמש הנוכחי הוא anonymous (למשל עשה Onboarding בלי להתחבר) —
- * שולחים דרך updateUser כדי לשדרג את אותו משתמש במקום, ולשמור על ה-id
- * (וכל הנתונים המקושרים אליו) בלי לאבד כלום.
+ * שולח קוד OTP למספר טלפון — **תמיד** דרך signInWithOtp, לא updateUser (6.10).
+ *
+ * עד עכשיו, session אנונימי (זה שכל מועמד/ת מתחיל/ה איתו) עבר דרך
+ * updateUser({phone}) כדי "לשדרג" אותו ולשמור את אותו id. בבדיקה חיה
+ * מול production זה נכשל ב-100% מהמקרים עם `unexpected_failure:
+ * "Invalid payload sent to hook"` — זו תקלה מתועדת של Supabase עצמה,
+ * לא קוד שלנו: gotrue דוחה כל payload עם phone_change על session
+ * אנונימי כש-Send SMS Hook מותאם אישית מוגדר (מה שיש לנו, כי 019sms
+ * לא פרובайдר native נתמך).
+ * https://supabase.com/docs/guides/troubleshooting/auth-hooks-invalid-payload-when-anonymous-users-attempt-phone-changes-022c47
+ * Supabase ממליצים במפורש להימנע מ-phone_change על session אנונימי —
+ * לא "לחכות לתיקון".
+ *
+ * המחיר של המעבר ל-signInWithOtp: הוא לא משדרג את ה-session האנונימי,
+ * הוא יוצר/מזהה זהות נפרדת. באונבורדינג הרגיל זה בטוח — StepPhone קודם
+ * ל-saveOnboarding, כך שאין עדיין שום נתון אמיתי על ה-id האנונימי לאבד.
+ * מי שכבר צבר התקדמות אמיתית כאנונימי/ת (טעימות, דירוגים) ורק אז מאמת/ת
+ * טלפון (בעיקר דרך /login, לא דרך אונבורדינג רגיל) עדיין יכול/ה לאבד
+ * היסטוריה כזו — זה לא נפתר כאן, נרשם כפריט פתוח נפרד.
  */
 export async function sendPhoneOtp(phone: string): Promise<string | null> {
   if (!supabase) return "Supabase לא מוגדר — חסרים משתני סביבה";
-
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (session?.user?.is_anonymous) {
-    const { error } = await supabase.auth.updateUser({ phone });
-    return translatePhoneAuthError(error);
-  }
 
   const { error } = await supabase.auth.signInWithOtp({ phone });
   return translatePhoneAuthError(error);
@@ -332,10 +336,7 @@ export async function sendPhoneOtp(phone: string): Promise<string | null> {
 export async function verifyPhoneOtp(phone: string, token: string): Promise<string | null> {
   if (!supabase) return "Supabase לא מוגדר — חסרים משתני סביבה";
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const type = session?.user?.is_anonymous ? "phone_change" : "sms";
-
-  const { error } = await supabase.auth.verifyOtp({ phone, token, type });
+  const { error } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
   return translatePhoneAuthError(error);
 }
 
