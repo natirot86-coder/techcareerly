@@ -439,6 +439,7 @@ type Person = {
   /* המפתח שמחבר שורה בלוח לאדם באפליקציה — ראה mondayBoard ב-lib/monday.ts */
   phone?: string | null;
   coordinatorName?: string | null;
+  phoneVerified?: boolean;
   cohort?: string;
   /* השדות הגולמיים לעריכה (8.10) — name/anonymous למעלה נגזרים מהם */
   firstName?: string | null; lastName?: string | null;
@@ -634,7 +635,11 @@ const NODE_COLOR: Record<Station["state"], { bg: string; border: string; icon: s
   future:  { bg: "#fbf9f5", border: "#e2ddd3", icon: "#a8a195" },
 };
 
-function JourneyMap({ p, coordName, onBack, onSaved }: { p: Person; coordName: string; onBack: () => void; onSaved: () => void }) {
+function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coordName: string; onBack: () => void; onSaved: () => void }) {
+  /* עדכון אופטימי אחרי הזנת טלפון — כדי שלא צריך לטעון מחדש את כל התור */
+  const [phoneOverride, setPhoneOverride] = useState<string | null>(null);
+  const p = phoneOverride === null ? person : { ...person, phone: phoneOverride, phoneVerified: false };
+  const onPhoneSaved = (ph: string) => setPhoneOverride(ph);
   const stations = useMemo(() => buildStations(p), [p]);
   const [showEdit, setShowEdit] = useState(false);
 
@@ -729,6 +734,13 @@ function JourneyMap({ p, coordName, onBack, onSaved }: { p: Person; coordName: s
               <span style={{ fontSize: 14, fontWeight: 500, color: "#8d867a" }}>
                 {[profile.age ? `גיל ${profile.age}` : null, profile.city || null, p.region].filter(Boolean).join(" · ")}
               </span>
+              {/*
+                ── טלפון, ומה הוא שווה (נתי, 8.10) ────────────────────────
+                מי שלא הסתדר עם ה-SMS נכנס בלי טלפון ואז הוא בלתי נראה לכל
+                החיבורים. הרכז/ת יכולה להקליד — **והתווית אומרת שהוקלד**,
+                כי טלפון מאומת הוא הוכחה וטלפון שהוקלד הוא טענה.
+              */}
+              <PhoneTag p={p} onSaved={onPhoneSaved} />
               {/* הרכז/ת — הנתון היה קיים מאז 20.8 ואף מסך לא תרגם אותו לשם (8.10) */}
               <span style={{ fontSize: 12.5, fontWeight: 800, borderRadius: 999, padding: "3px 11px",
                 background: p.coordinatorName ? "rgba(2,62,138,.07)" : "#fff7ec",
@@ -1158,14 +1170,13 @@ const DOMAIN_OPTIONS = Object.keys(DOMAIN_HE);
 function EditParticipantModal({ p, onClose, onSaved }: { p: Person; onClose: () => void; onSaved: () => void }) {
   const [draft, setDraft] = useState<{
     firstName: string; lastName: string; gender: string; age: string;
-    region: string; phone: string; domain: string; status: string;
+    region: string; domain: string; status: string;
   }>({
     firstName: p.firstName ?? "",
     lastName: p.lastName ?? "",
     gender: p.gender ?? "",
     age: p.age != null ? String(p.age) : "",
     region: p.region ?? "",
-    phone: p.phone ?? "",
     domain: p.domain ?? "",
     status: p.status ?? "active",
   });
@@ -1195,7 +1206,6 @@ function EditParticipantModal({ p, onClose, onSaved }: { p: Person; onClose: () 
           gender: draft.gender,
           age: draft.age,
           region: draft.region,
-          phone: draft.phone,
           domain: draft.domain,
           status: draft.status,
         }),
@@ -1255,16 +1265,16 @@ function EditParticipantModal({ p, onClose, onSaved }: { p: Person; onClose: () 
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {field("אזור", <input value={draft.region} onChange={e => setDraft(d => ({ ...d, region: e.target.value }))} style={inputStyle} />)}
-          {field("טלפון", <input dir="ltr" value={draft.phone} onChange={e => setDraft(d => ({ ...d, phone: e.target.value }))} style={inputStyle} />)}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {field("תחום נבחר", (
             <select value={draft.domain} onChange={e => setDraft(d => ({ ...d, domain: e.target.value }))} style={inputStyle}>
               <option value="">טרם נבחר</option>
               {DOMAIN_OPTIONS.map(d => <option key={d} value={d}>{DOMAIN_HE[d]}</option>)}
             </select>
           ))}
+        </div>
+
+        {/* הטלפון נערך בתגית ליד השם (נתי 8.10) — יש לו סימון "אומת/הוקלד" שלא שייך לטופס הזה */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
           {field("סטטוס", (
             <select value={draft.status} onChange={e => setDraft(d => ({ ...d, status: e.target.value }))} style={inputStyle}>
               <option value="active">פעיל/ה</option>
@@ -1294,6 +1304,70 @@ function EditParticipantModal({ p, onClose, onSaved }: { p: Person; onClose: () 
         </div>
       </div>
     </div>
+  );
+}
+
+/** תגית הטלפון — מציגה, ומאפשרת להקליד כשחסר (8.10) */
+function PhoneTag({ p, onSaved }: { p: Person; onSaved: (phone: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save() {
+    setBusy(true); setErr(null);
+    try {
+      const headers = { "content-type": "application/json", ...(await coordinatorAuthHeaders()) };
+      const r = await fetch("/api/coordinator", { method: "POST", headers,
+        body: JSON.stringify({ candidateId: p.id, phone: draft }) });
+      const j = await r.json().catch(() => null);
+      if (!r.ok) { setErr(j?.error ?? "השמירה נכשלה"); return; }
+      onSaved(j?.phone ?? draft);
+      setEditing(false);
+    } catch { setErr("אין חיבור לשרת"); }
+    finally { setBusy(false); }
+  }
+
+  if (editing) {
+    return (
+      <span style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+        <input value={draft} onChange={e => setDraft(e.target.value)} placeholder="050-1234567" dir="ltr"
+          autoFocus
+          style={{ width: 130, padding: "4px 9px", borderRadius: 8, fontSize: 13,
+            border: "1px solid rgba(2,62,138,.25)", fontFamily: "'Heebo', sans-serif" }} />
+        <button onClick={save} disabled={busy}
+          style={{ fontSize: 12, fontWeight: 800, padding: "4px 11px", borderRadius: 999, border: "none",
+            background: NAVY, color: "#fff", cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
+          {busy ? "שומר…" : "שמירה"}
+        </button>
+        <button onClick={() => { setEditing(false); setErr(null); }}
+          style={{ fontSize: 12, fontWeight: 700, background: "none", border: "none", color: "#8d867a", cursor: "pointer" }}>
+          ביטול
+        </button>
+        {err && <span style={{ fontSize: 12, color: "#b91c1c" }}>{err}</span>}
+      </span>
+    );
+  }
+
+  if (!p.phone) {
+    return (
+      <button onClick={() => { setDraft(""); setEditing(true); }}
+        style={{ fontSize: 12.5, fontWeight: 800, borderRadius: 999, padding: "3px 11px", cursor: "pointer",
+          background: "#fff7ec", color: "#8a4d00", border: "1px dashed rgba(180,83,9,.4)", fontFamily: "'Heebo', sans-serif" }}>
+        + הוספת טלפון
+      </button>
+    );
+  }
+
+  return (
+    <button onClick={() => { setDraft("0" + (p.phone ?? "").slice(3)); setEditing(true); }}
+      title="לחיצה לעריכה"
+      style={{ fontSize: 12.5, fontWeight: 800, borderRadius: 999, padding: "3px 11px", cursor: "pointer",
+        border: "none", fontFamily: "'Heebo', sans-serif",
+        background: p.phoneVerified ? "rgba(15,122,82,.1)" : "#fff7ec",
+        color: p.phoneVerified ? "#0f7a52" : "#8a4d00" }}>
+      <span dir="ltr">0{(p.phone ?? "").slice(3)}</span> · {p.phoneVerified ? "אומת ב-SMS" : "הוקלד ידנית"}
+    </button>
   );
 }
 

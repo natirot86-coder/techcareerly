@@ -40,10 +40,32 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
   const [draft, setDraft] = useState("");
   const [legacyError, setLegacyError] = useState<string | null>(null);
 
-  async function verifyLegacy(c: string): Promise<boolean> {
+  /*
+   * 🐛 **הכניסה בקוד נשברה ב-5.10 ברגע שהוספתי לה תפוגה של 24 שעות.** השרת
+   * דורש `x-coordinator-since`, והבדיקה הזאת מעולם לא שלחה אותו — כי
+   * `saveLegacyCode` (ששומר את החותמת) רץ רק **אחרי** שהאימות הצליח.
+   * כלומר הקוד היה תקין לגמרי והמסך החזיר "קוד שגוי" לכולם. נתפס כשנתי
+   * ניסה להיכנס מחו״ל.
+   *
+   * ⚠️ והלקח: **תפוגה שמסתמכת על ערך שהלקוח שולח חייבת להיבדק גם במסלול
+   * שיוצר אותו.** `since` נשלח כאן כ"עכשיו", וזו האמת — זה בדיוק רגע
+   * הכניסה.
+   */
+  async function verifyLegacy(c: string, since = Date.now()): Promise<boolean> {
     try {
-      const r = await fetch("/api/admin-auth", { headers: { "x-coordinator-code": c } });
+      const r = await fetch("/api/admin-auth", {
+        headers: { "x-coordinator-code": c, "x-coordinator-since": String(since) },
+      });
       if (r.status === 503) { setLegacyError("הקוד עוד לא הוגדר בשרת (COORDINATOR_CODE)"); return false; }
+      /*
+        ⚠️ **ההודעה מהשרת ולא "קוד שגוי" גנרי** (8.10). נתי ניסה להיכנס
+        מחו״ל, קיבל "קוד שגוי", והקוד היה תקין לגמרי — הכשל היה בחותמת
+        שלא נשלחה. **הודעה גנרית שולחת לחפש במקום הלא נכון.**
+      */
+      if (!r.ok) {
+        const j = await r.json().catch(() => null);
+        if (j?.error && j.error !== "unauthorized") setLegacyError(j.error);
+      }
       return r.ok;
     } catch { setLegacyError("שגיאת רשת"); return false; }
   }
@@ -75,7 +97,8 @@ export default function AdminGate({ children }: { children: React.ReactNode }) {
     }
     const saved = localStorage.getItem(LEGACY_KEY);
     if (saved) {
-      const ok = await verifyLegacy(saved);
+      /* בטעינה — החותמת השמורה, אחרת התפוגה לא תתרחש לעולם */
+      const ok = await verifyLegacy(saved, Number(localStorage.getItem("coordinator-code-since") ?? "0"));
       if (ok) { setState("open"); setEmergency(true); return; }
       localStorage.removeItem(LEGACY_KEY);
     }
