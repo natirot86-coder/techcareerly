@@ -29,7 +29,12 @@ export function breakGlassActive(): boolean {
   } catch { return false; }
 }
 
-export type CoordinatorIdentity = { id: string; name: string | null };
+export type CoordinatorIdentity = { id: string; name: string | null; role?: string };
+
+/** האם המזוהה הנוכחי הוא owner — לפריטי תפריט שמיועדים לניהול המוצר בלבד */
+export function isOwnerIdentity(): boolean {
+  return getCoordinatorIdentity()?.role === "owner";
+}
 
 export async function sendCoordinatorOtp(phone: string): Promise<string | null> {
   if (!supabase) return "Supabase לא מוגדר — חסרים משתני סביבה";
@@ -60,7 +65,8 @@ export async function verifyCoordinatorOtp(phone: string, token: string): Promis
 
   const data = await res.json();
   try {
-    localStorage.setItem(IDENTITY_KEY, JSON.stringify({ id: data.coordinatorId, name: data.name }));
+    /* התפקיד נשמר כדי שהתפריט יסתיר פריטים שהשרת ממילא יחסום (8.10) */
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify({ id: data.coordinatorId, name: data.name, role: data.role }));
   } catch { /* ignore */ }
   return null;
 }

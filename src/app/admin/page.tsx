@@ -19,11 +19,11 @@ export default function AdminHome() {
       </div>
       <div className="text-[26px] mb-1" style={{ color: NAVY, ...HEEBO }}>אזור ניהול</div>
       <div className="text-[13.5px] mb-7" style={{ color: "rgba(0,0,0,0.5)" }}>
-        שמונה לוחות — כל אחד עם שער ההזדהות שלו
+        לוחות הניהול — כל אחד עם שער ההזדהות שלו
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-[860px]">
-        {ADMIN_NAV.map((item) => (
+        {ADMIN_NAV.filter(i => !("owner" in i && i.owner)).map((item) => (
           <Link
             key={item.href}
             href={item.href}

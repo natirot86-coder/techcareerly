@@ -986,6 +986,8 @@ export default function CoordinatorPage() {
   */
   const [tab, setTab] = useState<"big" | "queue" | "all" | "meetings">("big");
   const [bigFilter, setBigFilter] = useState<string | null>(null);
+  /* חיפוש ברשימת המשתתפים (נתי, 8.10) — 62 שורות הן יותר מדי לגלילה */
+  const [search, setSearch] = useState("");
   const [showPre, setShowPre] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -1570,11 +1572,39 @@ export default function CoordinatorPage() {
             : data.board!;
           const byApp = new Map((data.quietList ?? []).concat(data.needsAttention)
             .map(p => [(p.phone ?? "").replace(/\D/g, ""), p]));
+          /*
+            ── סדר התצוגה (נתי, 8.10) ────────────────────────────────────────
+            **מי שכבר באפליקציה קודם לכל השאר** — הוא היחיד שיש לו מפת מסע
+            להסתכל עליה, וזה מה שהרכזת באה לראות. אחריו לפי התקדמות בסטטוס,
+            ובתוך כל קבוצה לפי א״ב.
+          */
           const order = ["נרשמ/ה ללימודים", "סיימ/ה תהליך", "בתהליך פעיל", "נשלח קישור", "לפני שיחה ראשונה", "לא מעוניין/ת"];
-          const sorted = [...rows].sort((a, b) =>
-            (order.indexOf(a.status) + 99) % 99 - (order.indexOf(b.status) + 99) % 99 || a.name.localeCompare(b.name, "he"));
+          const rank = (st: string) => { const i = order.indexOf(st); return i < 0 ? order.length : i; };
+          const q = search.trim().toLowerCase();
+          const filtered = !q ? rows : rows.filter(r =>
+            r.name.toLowerCase().includes(q) || (r.phone ?? "").includes(q.replace(/\D/g, "")) ||
+            (r.email ?? "").toLowerCase().includes(q));
+          const sorted = [...filtered].sort((a, b) =>
+            Number(b.inApp) - Number(a.inApp) ||
+            rank(a.status) - rank(b.status) ||
+            a.name.localeCompare(b.name, "he"));
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={`חיפוש בין ${rows.length} משתתפים — שם, טלפון או מייל`}
+                style={{
+                  width: "100%", padding: "10px 14px", borderRadius: 12, fontSize: 13.5,
+                  border: "1px solid rgba(2,62,138,0.16)", background: "#fff",
+                  fontFamily: "'Heebo', sans-serif", color: "#1c1a16", outline: "none",
+                }}
+              />
+              {q && (
+                <div style={{ fontSize: 12.5, color: "#8d867a" }}>
+                  {sorted.length ? `${sorted.length} תוצאות` : "לא נמצא אף אחד — אולי השם כתוב אחרת בלוח"}
+                </div>
+              )}
               {bigFilter && (
                 <button onClick={() => setBigFilter(null)}
                   style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 800, color: NAVY, background: "rgba(2,62,138,0.07)",

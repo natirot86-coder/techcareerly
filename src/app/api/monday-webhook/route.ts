@@ -24,7 +24,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/candidate";
 import { waLink } from "@/lib/waLink";
-import { sendMail, welcomeEmail } from "@/lib/mail";
+import { sendMail, welcomeEmail, emailLooksWrong } from "@/lib/mail";
 import { trackedUrl } from "@/app/api/r/route";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +47,8 @@ const COL_MAIL = "text_mm7tase7";
  * ומחיקת התאריך שולחת שוב — תיקון בלי קוד.
  */
 const COL_MAILED = "date_mm7tvfnx";
+/* הסיבה שהמייל לא יצא — ריק = תקין. נקרא במסך הרכזת ככרטיס */
+const COL_MAILFAIL = "text_mm7yz6ar";
 const LINK_SENT = "נשלח קישור";
 
 /* ── הלוח הראשי: "החלטה סופית" ← שורה בלוח אינטק ────────────────────────────
@@ -278,7 +280,23 @@ export async function maybeSendWelcome(itemId: number) {
   if (cv(COL_MAILED)) return;   // כבר יצא — העובדה שמורה, לא האירוע
 
   const to = cv(COL_MAIL);
-  if (!to || !to.includes("@")) return;
+  if (!to) return;
+
+  /*
+   * ── הכתובת נבדקת לפני השליחה (נתי, 8.10) ────────────────────────────────
+   * Graph מחזיר "נשלח" גם לכתובת שהדומיין שלה לא קיים — הדחייה קורית אחר
+   * כך בשרת של הצד השני. **בלוח נכתב ✅ ובמציאות לא הגיע כלום**, וזו בדיוק
+   * התבנית של ה-webhook החסר: המערכת מדווחת הצלחה על משהו שלא קרה.
+   *
+   * ⚠️ והדיווח **לא במייל לרכזת** — הוא בשורה שהיא כבר עובדת בה. מייל על
+   * כל תקלה הופך לרעש שמפסיקים לפתוח תוך שבועיים.
+   */
+  const wrong = emailLooksWrong(to);
+  if (wrong) {
+    await markMailProblem(itemId, wrong);
+    console.log(`[monday-webhook] mail blocked — ${wrong}`);
+    return;
+  }
 
   const coordName = cv(COL_COORD);
   let calUrl: string | null = null;
@@ -316,12 +334,29 @@ export async function maybeSendWelcome(itemId: number) {
   });
   const sent = await sendMail({ to, subject: mail.subject, html: mail.html });
   console.log(`[monday-webhook] welcome mail → ${to}: ${sent === null ? "disabled" : sent}`);
+  if (sent === false) await markMailProblem(itemId, "השליחה נכשלה — שווה לנסות שוב");
   if (sent) {
+    await markMailProblem(itemId, "");   // יצא — מנקים תקלה קודמת
     const today = new Date().toISOString().slice(0, 10);
     await monday(
       `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
       { b: BOARD, i: itemId, v: JSON.stringify({ [COL_MAILED]: { date: today } }) }
     );
+  }
+}
+
+/**
+ * כותב את סיבת התקלה **בשורה עצמה** + הערה בפיד שלה. זה המקום שבו הרכזת
+ * כבר עובדת, ולכן אין צורך במייל אישי אליה — שהיה הופך לרעש.
+ */
+async function markMailProblem(itemId: number, reason: string) {
+  await monday(
+    `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
+    { b: BOARD, i: itemId, v: JSON.stringify({ [COL_MAILFAIL]: reason }) }
+  );
+  if (reason) {
+    await monday(`mutation ($i: ID!, $b: String!) { create_update(item_id: $i, body: $b) { id } }`,
+      { i: itemId, b: `המייל לא נשלח — ${reason} תיקון הכתובת ישלח אותו מעצמו.` });
   }
 }
 

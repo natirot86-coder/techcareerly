@@ -155,3 +155,44 @@ export function welcomeEmail(p: {
 
   return { subject: `${them ? them + ", " : ""}הקישור לאפליקציה ולפגישה הראשונה — תוכנית אינטק`, html };
 }
+
+/**
+ * ── בדיקת שפיות לכתובת, לפני שליחה (נתי, 8.10) ───────────────────────────────
+ *
+ * המייל של אלינור הסתיים ב-`.con`. Graph החזיר "נשלח" — מבחינתו הוא באמת
+ * שלח — והדחייה קרתה אחר כך, בשרת של גוגל. **בלוח נכתב ✅ ובמציאות היא לא
+ * קיבלה כלום**, בדיוק אותה תבנית כמו ה-webhook החסר: המערכת מדווחת הצלחה
+ * על משהו שלא קרה.
+ *
+ * ⚠️ **לא מנסים לאמת כתובות בכלל** — זה בלתי אפשרי מראש, וכל ניסיון כזה
+ * חוסם בטעות כתובות תקינות. התפיסה כאן צרה בכוונה: **שגיאות הקלדה חוזרות**.
+ * `.con` ליד `.com` במקלדת, `gmial` כהיפוך אותיות. מי שעובר — נשלח כרגיל.
+ */
+const TLD_TYPO: Record<string, string> = {
+  con: "com", cmo: "com", coom: "com", cim: "com", comm: "com", ocm: "com",
+  "co.il": "", net: "", org: "", "ac.il": "", "org.il": "", "co.uk": "",
+};
+const DOMAIN_TYPO: Record<string, string> = {
+  "gmial.com": "gmail.com", "gmai.com": "gmail.com", "gmil.com": "gmail.com",
+  "gmail.co": "gmail.com", "gamil.com": "gmail.com", "hotmai.com": "hotmail.com",
+  "walla.co.i": "walla.co.il", "yaho.com": "yahoo.com",
+};
+
+/** מחזיר הסבר בעברית אם הכתובת נראית שגויה, או null אם היא סבירה */
+export function emailLooksWrong(raw: string): string | null {
+  const e = (raw ?? "").trim().toLowerCase();
+  if (!e) return "אין כתובת מייל";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)) return `הכתובת "${raw}" אינה נראית כמו מייל תקין`;
+
+  const domain = e.split("@")[1];
+  if (DOMAIN_TYPO[domain]) return `"${domain}" — התכוונתם ל-"${DOMAIN_TYPO[domain]}"?`;
+
+  const tld = domain.split(".").slice(1).join(".");
+  if (tld in TLD_TYPO) {
+    const fix = TLD_TYPO[tld];
+    if (fix) return `הכתובת מסתיימת ב-".${tld}" — התכוונתם ל-".${fix}"?`;
+  } else if (!/^[a-z]{2,}(\.[a-z]{2,})?$/.test(tld)) {
+    return `הסיומת ".${tld}" לא מוכרת — שווה לוודא`;
+  }
+  return null;
+}

@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ADMIN_NAV as NAV } from "@/data/adminNav";
-import { coordinatorSignOut, getLoginLabel } from "@/lib/coordinatorAuth";
+import { coordinatorSignOut, getLoginLabel, isOwnerIdentity } from "@/lib/coordinatorAuth";
 
 const NAVY = "#023e8a";
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -26,9 +26,14 @@ function useActive() {
 /** נקרא רק ב-mount, אחרי הידרציה — הזהות יושבת ב-localStorage בלבד */
 function useLoginLabel() {
   const [label, setLabel] = useState<string | null>(null);
-  useEffect(() => { setLabel(getLoginLabel()); }, []);
-  return label;
+  /* ברירת מחדל: מסתירים. עדיף לגלות פריט אחרי טעינה מאשר להבהב כפתור אסור */
+  const [owner, setOwner] = useState(false);
+  useEffect(() => { setLabel(getLoginLabel()); setOwner(isOwnerIdentity()); }, []);
+  return { label, owner };
 }
+
+/** פריטים שמיועדים לניהול המוצר בלבד מוסתרים מרכזות (8.10) */
+const navFor = (owner: boolean) => NAV.filter(i => !("owner" in i && i.owner) || owner);
 
 /*
  * ניווט מלא (לא router.push) בכוונה: AdminGate יושב ב-layout מעל כל מסכי
@@ -44,7 +49,7 @@ async function handleSignOut() {
 /** הגרסה לדסקטופ — עמודה קבועה בצד ימין (RTL), תמיד גלויה */
 export function AdminSidebar() {
   const isActive = useActive();
-  const loginLabel = useLoginLabel();
+  const { label: loginLabel, owner } = useLoginLabel();
   return (
     <aside
       dir="rtl"
@@ -75,7 +80,7 @@ export function AdminSidebar() {
       </div>
 
       <nav className="flex-1 flex flex-col gap-0.5 px-3 py-4">
-        {NAV.map((item) => {
+        {navFor(owner).map((item) => {
           const active = isActive(item.href);
           return (
             <Link
@@ -110,7 +115,7 @@ export function AdminSidebar() {
 /** הגרסה למובייל — פס עליון עם טאבים גוללים, כדי לא לגנוב עוד מסך גובה */
 export function AdminTopBar() {
   const isActive = useActive();
-  const loginLabel = useLoginLabel();
+  const { label: loginLabel, owner } = useLoginLabel();
   return (
     <div dir="rtl" className="md:hidden sticky top-0 z-40" style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
       <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-3">
@@ -130,7 +135,7 @@ export function AdminTopBar() {
         <Link href="/map" className="text-[11px] font-bold shrink-0" style={{ color: "rgba(0,0,0,0.4)" }}>מפת האפליקציה ←</Link>
       </div>
       <nav className="flex gap-1.5 px-3 pb-2.5 overflow-x-auto">
-        {NAV.map((item) => {
+        {navFor(owner).map((item) => {
           const active = isActive(item.href);
           return (
             <Link
