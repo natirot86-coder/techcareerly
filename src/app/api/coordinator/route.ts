@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyCoordinator, canSeeEveryone } from "@/lib/serverCoordinatorAuth";
-import { mondayBoard, type BoardRow } from "@/lib/monday";
+import { mondayBoard, mondaySetCoordinator, type BoardRow } from "@/lib/monday";
 
 export const dynamic = "force-dynamic";
 
@@ -407,7 +407,31 @@ export async function POST(req: NextRequest) {
       { status: missing ? 409 : 500 },
     );
   }
-  return NextResponse.json({ ok: true });
+  /*
+   * ── השיוך נכתב גם ללוח (נתי, 8.10) ────────────────────────────────────────
+   * **הלוח הוא הבעלים של "של מי האדם הזה"**, והמסך הזה הוא שלט רחוק אליו.
+   * לא סנכרון דו-כיווני: שני צדדים שכותבים לאותו שדה ודוחפים זה לזה יוצרים
+   * לולאה, ו**גרוע מכך — אין תשובה לשאלה מי מנצח כששניהם השתנו**. לשדה
+   * "של מי האדם" ערך ישן שמנצח גונב משתתף בשקט.
+   *
+   * ⚠️ כישלון כאן לא מבטל את השמירה ב-DB — האדם כבר משויך, והלוח יתעדכן
+   * בניסיון הבא. אבל הוא מדווח, כדי שלא ייווצר פער שקט בין השניים.
+   */
+  let board: string | null = null;
+  try {
+    const { data: who } = await db.from("candidates").select("phone").eq("id", body.candidateId).maybeSingle();
+    const { data: co } = body.coordinatorId
+      ? await db.from("coordinators").select("name").eq("id", body.coordinatorId).maybeSingle()
+      : { data: null };
+    if (who?.phone) {
+      const res = await mondaySetCoordinator(who.phone, co?.name ?? null);
+      if (res === false) board = "השיוך נשמר, אבל לא נמצאה שורה תואמת בלוח אינטק";
+    } else {
+      board = "השיוך נשמר, אבל אין לאדם הזה טלפון — אי אפשר להתאים לשורה בלוח";
+    }
+  } catch { board = "השיוך נשמר, אבל העדכון ללוח נכשל"; }
+
+  return NextResponse.json({ ok: true, ...(board ? { boardWarning: board } : {}) });
 }
 
 /**

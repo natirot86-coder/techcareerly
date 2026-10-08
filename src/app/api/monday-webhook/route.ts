@@ -123,6 +123,7 @@ export async function POST(req: NextRequest) {
    * נקרא אותו נתיב ישירות (ראה drainPendingWelcome ב-api/roster).
    */
   if (body?.event?.columnId === COL_STATUS || body?.event?.columnId === COL_COORD) {
+    if (body.event.columnId === COL_COORD) await syncCoordinatorToApp(itemId);
     await maybeSendWelcome(itemId);
     return rebuildWa(itemId);
   }
@@ -378,4 +379,37 @@ export async function drainPendingWelcome(coordinatorName: string): Promise<numb
   for (const r of rows) await maybeSendWelcome(Number(r.id));
   if (rows.length) console.log(`[roster] drained ${rows.length} pending welcome mails for ${want}`);
   return rows.length;
+}
+
+/**
+ * לוח → אפליקציה: השיוך שנקבע בלוח נכתב ל-`candidates.coordinator_id`.
+ *
+ * זה **הכיוון היחיד שמסנכרן**. מסך השיוך שלנו כותב ללוח, הלוח מודיע לכאן,
+ * וכאן נכתב ה-DB — מסלול אחד ולא שניים, ולכן אין "מי כתב אחרון".
+ * ⚠️ ההתאמה לפי טלפון בלבד. בלי טלפון באפליקציה אין את מי לעדכן, וזה
+ * נורמלי לגמרי למי שעוד לא נכנס.
+ */
+async function syncCoordinatorToApp(itemId: number) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) return;
+
+  const d = await monday<{ items: { column_values: { id: string; text: string | null }[] }[] }>(
+    `{ items(ids: [${itemId}]) { column_values(ids: ["${COL_PHONE}","${COL_COORD}"]) { id text } } }`
+  );
+  const vals = d?.items?.[0]?.column_values ?? [];
+  const g = (id: string) => (vals.find(c => c.id === id)?.text ?? "").trim();
+  const phone = normalizePhone(g(COL_PHONE));
+  if (!phone) return;
+
+  const db = createClient(url, key, { auth: { persistSession: false } });
+  const name = g(COL_COORD);
+  let coordId: string | null = null;
+  if (name) {
+    const { data } = await db.from("coordinators").select("id").ilike("name", name).limit(1);
+    coordId = data?.[0]?.id ?? null;
+  }
+  const { data: updated } = await db.from("candidates")
+    .update({ coordinator_id: coordId }).eq("phone", phone).select("id");
+  if (updated?.length) console.log(`[monday-webhook] coordinator → app: ${phone} = ${name || "(ריק)"}`);
 }

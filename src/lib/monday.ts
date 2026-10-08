@@ -267,3 +267,38 @@ export async function mondayBoard(coordinatorName?: string | null): Promise<Boar
     /* התאמה לפי שם פרטי מכווץ — "סיון" מול "סיוון", בדיוק כמו בתוויות */
     .filter(r => !want || heKey(r.coordinator.split(/\s+/)[0]) === want);
 }
+
+/**
+ * מעדכן את עמודת הרכז/ת בלוח לפי טלפון. מחזיר true אם נמצאה שורה.
+ *
+ * ─── למה כיוון אחד ולא סנכרון דו-כיווני (נתי, 8.10) ─────────────────────────
+ *
+ * **שני צדדים שכותבים לאותו שדה ושניהם דוחפים זה לזה = לולאה**, ובלי
+ * השתקת הד היא אינסופית. אבל הבעיה החמורה יותר אינה הלולאה אלא השאלה
+ * **מי מנצח כששניהם השתנו** — ולשאלה הזאת אין תשובה בסנכרון דו-כיווני,
+ * רק "מי כתב אחרון". לשדה "של מי האדם הזה" זה אומר שערך ישן יכול לגנוב
+ * משתתף בשקט.
+ *
+ * לכן בעלות אחת: **הלוח מחזיק את השיוך**, והאפליקציה משקפת אותו. מסך
+ * השיוך שלנו הוא **שלט רחוק ללוח** — הוא כותב לכאן, ה-webhook חוזר
+ * וכותב ל-DB, וכך יש מסלול אחד ולא שניים.
+ */
+export async function mondaySetCoordinator(phone: string, coordinatorName: string | null): Promise<boolean | null> {
+  const p = normPhone(phone);
+  if (!p) return false;
+  const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id
+       column_values(ids: ["${COL.phone}"]) { id text } } } } }`
+  );
+  if (!data) return null;
+  const hit = (data.boards?.[0]?.items_page?.items ?? []).find(it => normPhone(cv(it, COL.phone)) === p);
+  if (!hit) return false;
+
+  const label = await resolveCoordLabel(coordinatorName);
+  /* ריק מנקה; שם שאין לו תווית בלוח לא נכתב — עדיף ריק על תווית מומצאת */
+  const ok = await gql(
+    `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
+    { b: BOARD, i: hit.id, v: JSON.stringify({ [COL.coord]: label ? { label } : {} }) }
+  );
+  return !!ok;
+}
