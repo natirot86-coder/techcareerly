@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null) as {
     id?: string; name?: string; location?: string; email?: string; phone?: string; active?: boolean;
-    cal_m1?: string; cal_m2?: string; cal_m3?: string;
+    cal_m1?: string; cal_m2?: string; cal_m3?: string; takes_participants?: boolean;
   } | null;
   if (!body?.id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     cal_m1: body.cal_m1 ?? "",
     cal_m2: body.cal_m2 ?? "",
     cal_m3: body.cal_m3 ?? "",
+    takes_participants: body.takes_participants ?? true,
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

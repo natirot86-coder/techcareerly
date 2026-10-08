@@ -33,6 +33,12 @@ export type CoordinatorProfile = {
    * הזמנה אישי: שדות שמוצגים למי שאין לו בהם שימוש נראים כמו חוסר.
    */
   role?: "coordinator" | "manager" | "owner";
+  /*
+   * ⚠️ **שני צירים ולא אחד** (נתי, 8.10). `role` הוא מה שרואים; זה האם
+   * מלווים אנשים. ההנחה ששניהם זהים נשברה ברגע שמאיה — manager — גם
+   * לקחה משתתפים, והיא נעלמה מבורר השיוך ומשדות היומן.
+   */
+  takes_participants?: boolean;
 };
 
 export const COORDINATOR_ROSTER: CoordinatorProfile[] = [

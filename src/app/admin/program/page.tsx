@@ -21,14 +21,21 @@ import { DOMAIN_LABEL, type Domain } from "@/data/institutions";
 const NAVY = "#023e8a";
 
 /*
-  ── מי שייך לסגל ומי רק מורשה (נתי, 5.10) ────────────────────────────────────
+  ── מי שייך לסגל ומי רק מורשה (נתי, 5.10 · תוקן 8.10) ────────────────────────
   טבלת `coordinators` משרתת שני דברים: **סגל** ו**הרשאות**. לנתי ולישראל חייבת
   להיות שם שורה — היא מה שמזהה אותם באזור הניהול — אבל הם אינם לוקחים מועמדים,
   ולכן הצגתם בין הרכזות הפכה את הרשימה ל"חמישה אנשים" כשבפועל יש שתיים.
-  ושדות שמוצגים למי שאין לו בהם שימוש (יומן Cal, קישור הזמנה אישי) נראים
-  כמו חוסר ולא כמו "לא רלוונטי".
+
+  ⚠️ **אבל הסינון לפי role היה שגוי.** `role` הוא מה שרואים; "האם מלווה" הוא
+  ציר נפרד. מאיה היא manager **וגם** מלווה משתתפים, ולפי הבדיקה הישנה היא
+  נעלמה משדות היומן ומבורר השיוך — כלומר אי אפשר היה בכלל להזין לה קישורי
+  פגישות. `takes_participants` (מיגרציה 013) הוא הציר הנכון.
 */
-const isCoordinator = (c: { role?: string }) => (c.role ?? "coordinator") === "coordinator";
+const takesParticipants = (c: { takes_participants?: boolean }) => c.takes_participants !== false;
+const ROLE_LABEL: Record<string, string> = {
+  manager: "מנהלת · רואה את כולן",
+  owner: "ניהול מוצר · גם אנליטיקות",
+};
 const ORANGE = "#fb8500";
 const ROSTER_KEY = "admin-roster-draft";
 const ASSIGN_KEY = "admin-assignments";
@@ -225,7 +232,7 @@ export default function ProgramAdmin() {
             במקום היחיד שאפשר לתקן אותו בו.
           */}
           {(() => {
-            const missing = roster.filter(c => isCoordinator(c) && c.active && !(c.cal_m1 ?? "").trim());
+            const missing = roster.filter(c => takesParticipants(c) && c.active && !(c.cal_m1 ?? "").trim());
             if (!missing.length) return null;
             return (
               <div className="rounded-2xl px-4 py-3 mb-3 text-[13px] leading-relaxed"
@@ -237,11 +244,23 @@ export default function ProgramAdmin() {
             );
           })()}
           <div className="flex flex-col gap-3">
-            {roster.filter(isCoordinator).map(c => {
+            {roster.filter(takesParticipants).map(c => {
               const count = Object.values(assign).filter(v => v === c.id).length;
               return (
                 <div key={c.id} className="rounded-2xl p-4 flex flex-col gap-3"
                   style={{ background: "#fff", border: `1px solid ${c.active ? "rgba(2,62,138,0.12)" : "rgba(0,0,0,0.08)"}`, opacity: c.active ? 1 : 0.6 }}>
+
+                  {/*
+                    תווית תפקיד למי שגם מנהל/ת וגם מלווה (8.10) — בלעדיה היא
+                    נראית כאן כרכזת רגילה, ואי אפשר לדעת מהמסך שהיא רואה
+                    את כל הרכזות.
+                  */}
+                  {ROLE_LABEL[c.role ?? ""] && (
+                    <span className="self-start text-[11px] font-black px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>
+                      {ROLE_LABEL[c.role ?? ""]}
+                    </span>
+                  )}
 
                   {/* שם + פעילה + מונה משתתפים — שורת הזיהוי, מודגשת יותר משאר השדות */}
                   <div className="flex items-center gap-3">
@@ -341,13 +360,13 @@ export default function ProgramAdmin() {
             אבל הם אינם לוקחים מועמדים ואין להם יומן. שורה אחת לכל אחד, בלי
             שדות שלא ישמשו אותם, כדי שרשימת הרכזות תמשיך לומר כמה רכזות יש.
           */}
-          {roster.some(c => !isCoordinator(c)) && (
+          {roster.some(c => !takesParticipants(c)) && (
             <div className="mt-5">
               <div className="text-[12.5px] font-black mb-2" style={{ color: "rgba(0,0,0,0.4)" }}>
                 גישת ניהול — לא לוקחים מועמדים
               </div>
               <div className="flex flex-col gap-1.5">
-                {roster.filter(c => !isCoordinator(c)).map(c => (
+                {roster.filter(c => !takesParticipants(c)).map(c => (
                   <div key={c.id} className="rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3 flex-wrap"
                     style={{ background: "rgba(0,0,0,0.025)", border: "1px solid rgba(0,0,0,0.07)" }}>
                     <span className="text-[13px] font-bold" style={{ color: NAVY }}>{c.name || c.id}</span>
@@ -442,7 +461,7 @@ export default function ProgramAdmin() {
                           style={{ border: "1px solid rgba(0,0,0,0.1)", background: assign[p.id] ? "rgba(5,150,105,0.06)" : "#fff" }}
                         >
                           <option value="">— לא משויך —</option>
-                          {roster.filter(c => c.active && isCoordinator(c)).map(c => (
+                          {roster.filter(c => c.active && takesParticipants(c)).map(c => (
                             <option key={c.id} value={c.id}>{nameOf(c.id)}</option>
                           ))}
                         </select>
