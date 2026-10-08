@@ -257,6 +257,53 @@ function compact(events: Ev[]): Ev[] {
  */
 const SESSION_GAP = 30 * 60 * 1000;
 
+/*
+  ── עומק הטעימה לכל תחום (נתי, 8.10) ────────────────────────────────────────
+  "טעם דאטה" לא אומר כלום: אפשר לפתוח סימולציה ולצאת אחרי צעד, ואפשר לעבור
+  את כל הארבעה. ארבעת החלקים נגזרים מאירועי שרת:
+    סימולציה      sim_start / sim_step
+    העמקה         taste_done עם step (יום בחיים / תעלומה)
+    כלי החוויה    scct_done — שישה שאלות SCCT
+    סיים את התחום taste_done בלי step
+*/
+type TasteDepth = { domain: string; sim: boolean; learn: boolean; scct: boolean; done: boolean; steps: number };
+
+function tasteDepth(events: Ev[]): TasteDepth[] {
+  const by = new Map<string, TasteDepth>();
+  const get = (d: string) => {
+    if (!by.has(d)) by.set(d, { domain: d, sim: false, learn: false, scct: false, done: false, steps: 0 });
+    return by.get(d)!;
+  };
+  for (const e of events) {
+    const d = s(e.props?.domain);
+    if (!d) continue;
+    const t = get(d);
+    if (e.name === "sim_start") t.sim = true;
+    if (e.name === "sim_step") { t.sim = true; t.steps = Math.max(t.steps, Number(s(e.props?.i)) || 0); }
+    if (e.name === "scct_done") t.scct = true;
+    if (e.name === "taste_done") { if (s(e.props?.step)) t.learn = true; else t.done = true; }
+  }
+  return [...by.values()].sort((a, b) =>
+    (Number(b.done) + Number(b.scct) + Number(b.learn) + Number(b.sim)) -
+    (Number(a.done) + Number(a.scct) + Number(a.learn) + Number(a.sim)));
+}
+
+/*
+  ── כמה הוא מנסה (נתי, 8.10) ────────────────────────────────────────────────
+  ⚠️ **לא "סה״כ דקות"** — מספר שאי אפשר לעשות איתו כלום, והוא גם מעניש את
+  מי שמהיר. שלושה מספרים שאומרים "מנסה" או "נטש", וזו השיחה שהרכזת תעשה.
+  ⚠️ **ולא ממוצע** — ביקור אחד ארוך מטה אותו לגמרי, וביקור עם אירוע אחד
+  הוא 0 דקות שאינן אפס אמיתי. החציון יציב יותר, וגם הוא רק כשיש 3+ ביקורים.
+*/
+function engagement(visits: Ev[][]) {
+  const spans = visits
+    .map(v => +new Date(v[0].at) - +new Date(v[v.length - 1].at))
+    .filter(ms => ms > 0);
+  const sorted = [...spans].sort((a, b) => a - b);
+  const median = sorted.length >= 3 ? sorted[Math.floor(sorted.length / 2)] : null;
+  return { count: visits.length, last: spans[0] ?? null, median };
+}
+
 function sessions(events: Ev[]): Ev[][] {
   const out: Ev[][] = [];
   let run: Ev[] = [];
@@ -576,6 +623,8 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
 
   const rows: Station[][] = [stations.slice(0, 4), stations.slice(4, 8), stations.slice(8, 12)];
   const visits = sessions(p.timeline);
+  const depths = tasteDepth(p.timeline);
+  const eff = engagement(visits);
 
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto" }}>
@@ -670,6 +719,77 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
         )}
       </div>
 
+      {/*
+        ── כמה הוא מנסה (נתי, 8.10) ──────────────────────────────────────────
+        ⚠️ **בלי "סה״כ דקות" ובלי ממוצע.** סה״כ הוא מספר שאי אפשר לעשות איתו
+        כלום; ממוצע מוטה לגמרי מביקור ארוך אחד. ו**זמן אינו מעורבות** — מי
+        שמסיים מהר ייראה בו כמי שלא התאמץ, וזו בדיוק ההטיה שאסור לקודד אצל
+        קהל שתחושת המסוגלות שלו נמוכה מלכתחילה.
+      */}
+      {visits.length > 0 && (
+        <div style={{ background: "#fff", borderRadius: 18, boxShadow: "0 2px 10px rgba(2,62,138,.06)", padding: "18px 24px", marginTop: 20 }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif", marginBottom: 12 }}>כמה הוא/היא מנסה</div>
+          <div style={{ display: "flex", gap: 26, flexWrap: "wrap" }}>
+            {[
+              [String(eff.count), eff.count === 1 ? "ביקור באפליקציה" : "ביקורים באפליקציה"],
+              [eff.last ? minutes(eff.last) : "—", "הביקור האחרון"],
+              [eff.median ? minutes(eff.median) : "—", "ביקור טיפוסי"],
+              [idleDays === null ? "—" : idleDays === 0 ? "היום" : `${idleDays} ימים`, "מאז הכניסה האחרונה"],
+            ].map(([v, label]) => (
+              <div key={label}>
+                <div style={{ fontSize: 21, fontWeight: 900, color: NAVY, lineHeight: 1.2 }}>{v}</div>
+                <div style={{ fontSize: 12, color: "#8d867a", marginTop: 1 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+          {inButStuck && (
+            <div style={{ marginTop: 12, background: "#fff7ec", color: "#8a4d00", borderRadius: 10, padding: "9px 12px", fontSize: 13, lineHeight: 1.65 }}>
+              נכנס/ת שוב ושוב ולא מתקדם/ת — <b>זה מי שתקוע/ה ולא יבקש/תבקש עזרה לבד.</b>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/*
+        ── מה עשה בטעימות ──────────────────────────────────────────────────
+        בתרשים נשאר מספר; כאן רואים **כמה עמוק** נכנס לכל תחום. "טעם דאטה"
+        לא אומר כלום — אפשר לפתוח סימולציה ולצאת אחרי צעד אחד.
+      */}
+      {depths.length > 0 && (
+        <div style={{ background: "#fff", borderRadius: 18, boxShadow: "0 2px 10px rgba(2,62,138,.06)", padding: "18px 24px", marginTop: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>מה עשה/תה בטעימות</div>
+            <div style={{ fontSize: 12, color: "#8d867a" }}>{depths.length} תחומים · {depths.filter(d => d.done).length} הושלמו</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {depths.map(d => (
+              <div key={d.domain} style={{
+                display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+                background: d.done ? "rgba(5,150,105,.05)" : "#fbfaf7",
+                border: `1px solid ${d.done ? "rgba(5,150,105,.2)" : "rgba(0,0,0,.06)"}`,
+                borderRadius: 12, padding: "9px 13px",
+              }}>
+                <span style={{ width: 11, height: 11, borderRadius: 999, background: DOMAIN_DOT[d.domain] ?? "#c4bfb4", flex: "0 0 auto" }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: NAVY, minWidth: 74 }}>{dom(d.domain)}</span>
+                <span style={{ display: "flex", gap: 7, flexWrap: "wrap", flex: 1 }}>
+                  {([["סימולציה", d.sim], ["יום בחיים ותעלומה", d.learn], ["כלי החוויה", d.scct]] as [string, boolean][]).map(([label, on]) => (
+                    <span key={label} style={{
+                      fontSize: 11.5, fontWeight: 700, borderRadius: 999, padding: "3px 10px",
+                      background: on ? "rgba(5,150,105,.12)" : "rgba(0,0,0,.04)",
+                      color: on ? "#0f7a52" : "#a8a195",
+                    }}>
+                      {on ? "✓ " : ""}{label}
+                    </span>
+                  ))}
+                </span>
+                {d.steps > 0 && <span style={{ fontSize: 11.5, color: "#8d867a" }}>הגיע/ה לצעד {d.steps}</span>}
+                {d.done && <span style={{ fontSize: 11.5, fontWeight: 800, color: "#0f7a52" }}>סיים/ה</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* מפת המסע */}
       <div style={{ background: "#fff", borderRadius: 18, boxShadow: "0 2px 10px rgba(2,62,138,.06)", padding: "22px 24px", marginTop: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -712,25 +832,17 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
                   return (
                     <button key={st.id} onClick={() => setOpenId(isOpen ? null : st.id)}
                       style={{ flex: 1, border: "none", background: "none", cursor: "pointer", position: "relative", paddingTop: 30, textAlign: "center", fontFamily: "'Heebo', sans-serif" }}>
-                      {/* מניפת הטעימות של המועמד — ההסתעפות מהדרך (נתי 26.8) */}
+                      {/*
+                        ── הטעימות ירדו מהתרשים (נתי, 8.10) ───────────────────
+                        המניפה דחסה חמישה עיגולי צבע עם תוויות מתחת לתחנה
+                        ברוחב 56 פיקסל — הטקסט נחתך ולא היה אפשר לקרוא איזה
+                        תחום, ובטח לא כמה עמוק הוא נכנס. בתחנה נשאר **מספר**,
+                        והפירוט המלא יושב בבלוק משלו מתחת למפה.
+                      */}
                       {st.id === "taste" && tastedD.length > 0 && (
-                        <span style={{ position: "absolute", top: 92, right: "50%", transform: "translateX(50%)", zIndex: 2 }}>
-                          <svg width={Math.max(tastedD.length * 52, 60)} height="18" style={{ display: "block", margin: "0 auto" }}>
-                            {tastedD.slice(0, 5).map((d, i, arr) => {
-                              const w = Math.max(arr.length * 52, 60);
-                              const x = arr.length === 1 ? w / 2 : 26 + i * ((w - 52) / (arr.length - 1));
-                              return <path key={d} d={`M ${w / 2} 0 C ${w / 2} 10, ${x} 8, ${x} 18`} fill="none" stroke={DOMAIN_DOT[d]} strokeWidth="1.5" strokeDasharray="3 4" opacity="0.6" />;
-                            })}
-                          </svg>
-                          <span style={{ display: "flex", gap: 14, justifyContent: "center", marginTop: 0 }}>
-                            {tastedD.slice(0, 5).map(d => (
-                              <span key={d} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, width: 38 }}>
-                                <span style={{ width: 14, height: 14, borderRadius: 999, background: DOMAIN_DOT[d], boxShadow: "0 0 0 3px #fff" }} />
-                                <span style={{ fontSize: 10, fontWeight: 800, color: "#5b5648", whiteSpace: "nowrap" }}>{dom(d)}</span>
-                              </span>
-                            ))}
-                            {tastedD.length > 5 && <span style={{ fontSize: 10.5, fontWeight: 800, color: "#a8a195", alignSelf: "center" }}>+{tastedD.length - 5}</span>}
-                          </span>
+                        <span style={{ position: "absolute", top: 96, right: "50%", transform: "translateX(50%)",
+                          fontSize: 11, fontWeight: 800, color: "#5b5648", whiteSpace: "nowrap", zIndex: 2 }}>
+                          {tastedD.length} תחומים ↓
                         </span>
                       )}
                       {st.stage && (
