@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, onboarding_completed_at, is_test")
+      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, phone_verified, onboarding_completed_at, is_test")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -265,6 +265,8 @@ export async function GET(req: NextRequest) {
         שהוא היה מלא. מזהה שאף אחד לא מתרגם שווה לשדה ריק.
       */
       coordinatorName: staffNames.get(c.coordinator_id ?? "") ?? null,
+      /* false = הוקלד ביד ולא אומת ב-SMS. ראה מיגרציה 014 */
+      phoneVerified: !!c.phone_verified,
       /* בוגרי טק-קריירה מדלגים על שלב הטעימות — בלי זה הם ייראו לרכזת
          תקועים לנצח בתחנה שאינה שלהם, ותור החילוץ יתמלא ברעש */
       cohort: c.cohort ?? "main",
@@ -391,8 +393,42 @@ export async function POST(req: NextRequest) {
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!url || !secret) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
 
-  const body = await req.json().catch(() => null) as { candidateId?: string; coordinatorId?: string } | null;
+  const body = await req.json().catch(() => null) as
+    { candidateId?: string; coordinatorId?: string; phone?: string } | null;
   if (!body?.candidateId) return NextResponse.json({ error: "candidateId required" }, { status: 400 });
+
+  /*
+   * ── טלפון שהוקלד ביד (נתי, 8.10) ─────────────────────────────────────────
+   * מי שלא הסתדר עם אימות ה-SMS נכנס בלי טלפון, ואז הוא **בלתי נראה לכל
+   * החיבורים**: הזמנת Cal לא מותאמת, השורה בלוח לא מתחברת, והרכזת לא
+   * רואה שהוא בכלל נכנס.
+   *
+   * ⚠️ **נשמר עם `phone_verified = false`.** טלפון מ-OTP הוא הוכחה שהמכשיר
+   * ביד שלו; טלפון שהוקלד הוא טענה. השימוש היחיד שדורש הוכחה הוא שיוך
+   * לקוהורט — שם ניחוש היה מכניס אדם למסע הלא נכון. לכל השאר טענה מספיקה.
+   */
+  if (typeof body.phone === "string") {
+    const digits = body.phone.replace(/\D/g, "");
+    const norm = digits.startsWith("972") ? digits
+      : digits.startsWith("0") ? "972" + digits.slice(1)
+      : digits.length === 9 ? "972" + digits : digits;
+    if (norm && !/^9725\d{8}$/.test(norm)) {
+      return NextResponse.json({ error: "זה לא נראה כמו נייד ישראלי" }, { status: 400 });
+    }
+    const dbp = createClient(url, secret, { auth: { persistSession: false } });
+    if (norm) {
+      const { data: clash } = await dbp.from("candidates")
+        .select("id").eq("phone", norm).neq("id", body.candidateId).limit(1);
+      if (clash?.length) {
+        return NextResponse.json({ error: "המספר הזה כבר משויך למשתתף אחר" }, { status: 409 });
+      }
+    }
+    const { error: pe } = await dbp.from("candidates")
+      .update({ phone: norm || null, phone_verified: false })
+      .eq("id", body.candidateId);
+    if (pe) return NextResponse.json({ error: pe.message }, { status: 500 });
+    if (!body.coordinatorId) return NextResponse.json({ ok: true, phone: norm });
+  }
 
   const db = createClient(url, secret, { auth: { persistSession: false } });
   const { error } = await db
