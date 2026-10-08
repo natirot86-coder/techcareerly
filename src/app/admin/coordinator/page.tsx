@@ -441,6 +441,10 @@ type Person = {
   coordinatorName?: string | null;
   phoneVerified?: boolean;
   cohort?: string;
+  /* השדות הגולמיים לעריכה (8.10) — name/anonymous למעלה נגזרים מהם */
+  firstName?: string | null; lastName?: string | null;
+  gender?: "male" | "female" | "other" | null; age?: number | null;
+  status?: "active" | "at_risk" | "manual_intervention" | null;
   stage: number; domain: string | null; ranked: string[]; lastActive: string | null; lastAction: string | null;
   signals: { severity: 1 | 2 | 3; reason: string; action: string }[];
   checklist: { label: string; done: boolean; detail?: string }[];
@@ -631,12 +635,13 @@ const NODE_COLOR: Record<Station["state"], { bg: string; border: string; icon: s
   future:  { bg: "#fbf9f5", border: "#e2ddd3", icon: "#a8a195" },
 };
 
-function JourneyMap({ p: person, coordName, onBack }: { p: Person; coordName: string; onBack: () => void }) {
+function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coordName: string; onBack: () => void; onSaved: () => void }) {
   /* עדכון אופטימי אחרי הזנת טלפון — כדי שלא צריך לטעון מחדש את כל התור */
   const [phoneOverride, setPhoneOverride] = useState<string | null>(null);
   const p = phoneOverride === null ? person : { ...person, phone: phoneOverride, phoneVerified: false };
   const onPhoneSaved = (ph: string) => setPhoneOverride(ph);
   const stations = useMemo(() => buildStations(p), [p]);
+  const [showEdit, setShowEdit] = useState(false);
 
   /* הפרופיל מאירוע profile — גיל נגזר, שעון זכאות משוחררים נגזר, יו"ה מתנה */
   const profile = useMemo(() => {
@@ -715,6 +720,17 @@ function JourneyMap({ p: person, coordName, onBack }: { p: Person; coordName: st
           <div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
               <span style={{ fontSize: 30, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>{p.name}</span>
+              <button
+                onClick={() => setShowEdit(true)}
+                title="עריכת פרטי המשתתף/ת"
+                style={{
+                  border: "1px solid rgba(2,62,138,0.18)", background: "#fff", color: NAVY,
+                  borderRadius: 999, padding: "4px 12px", fontSize: 12.5, fontWeight: 800,
+                  cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                }}
+              >
+                ✏️ עריכה
+              </button>
               <span style={{ fontSize: 14, fontWeight: 500, color: "#8d867a" }}>
                 {[profile.age ? `גיל ${profile.age}` : null, profile.city || null, p.region].filter(Boolean).join(" · ")}
               </span>
@@ -1135,6 +1151,158 @@ function JourneyMap({ p: person, coordName, onBack }: { p: Person; coordName: st
           })()}
         </div>
       </div>
+
+      {showEdit && (
+        <EditParticipantModal p={p} onClose={() => setShowEdit(false)} onSaved={() => { setShowEdit(false); onSaved(); }} />
+      )}
+    </div>
+  );
+}
+
+const DOMAIN_OPTIONS = Object.keys(DOMAIN_HE);
+
+/**
+ * עריכת פרטי משתתף/ת (8.10) — השדות הגולמיים של candidates בלבד
+ * (שם, מגדר, גיל, אזור, טלפון, תחום, סטטוס). לא כולל שדות שנגזרים
+ * מאירוע profile (עיר, שירות) — אלה לא עמודות, ועריכתם דורשת מנגנון
+ * אחר (כתיבת אירוע מתקן), לא PATCH פשוט על candidates.
+ */
+function EditParticipantModal({ p, onClose, onSaved }: { p: Person; onClose: () => void; onSaved: () => void }) {
+  const [draft, setDraft] = useState<{
+    firstName: string; lastName: string; gender: string; age: string;
+    region: string; domain: string; status: string;
+  }>({
+    firstName: p.firstName ?? "",
+    lastName: p.lastName ?? "",
+    gender: p.gender ?? "",
+    age: p.age != null ? String(p.age) : "",
+    region: p.region ?? "",
+    domain: p.domain ?? "",
+    status: p.status ?? "active",
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prevOverflow; };
+  }, [onClose]);
+
+  async function save() {
+    setSaving(true);
+    setErr("");
+    try {
+      const headers = { "content-type": "application/json", ...(await coordinatorAuthHeaders()) };
+      const r = await fetch("/api/coordinator", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          candidateId: p.id,
+          firstName: draft.firstName,
+          lastName: draft.lastName,
+          gender: draft.gender,
+          age: draft.age,
+          region: draft.region,
+          domain: draft.domain,
+          status: draft.status,
+        }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => null);
+        setErr(j?.error ?? "השמירה נכשלה");
+        return;
+      }
+      onSaved();
+    } catch {
+      setErr("אין חיבור לשרת — השינוי לא נשמר");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const field = (label: string, input: React.ReactNode) => (
+    <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, fontWeight: 700, color: "#8d867a" }}>
+      {label}
+      {input}
+    </label>
+  );
+  const inputStyle: React.CSSProperties = {
+    padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.15)",
+    fontSize: 14, fontFamily: "'Heebo', sans-serif", color: "#1c1a16",
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+    >
+      <div
+        dir="rtl"
+        onClick={e => e.stopPropagation()}
+        style={{ width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto", background: "#fff", borderRadius: 18, padding: 22, display: "flex", flexDirection: "column", gap: 14 }}
+      >
+        <div style={{ fontSize: 18, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>עריכת פרטי משתתף/ת</div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {field("שם פרטי", <input value={draft.firstName} onChange={e => setDraft(d => ({ ...d, firstName: e.target.value }))} style={inputStyle} />)}
+          {field("שם משפחה", <input value={draft.lastName} onChange={e => setDraft(d => ({ ...d, lastName: e.target.value }))} style={inputStyle} />)}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {field("מגדר", (
+            <select value={draft.gender} onChange={e => setDraft(d => ({ ...d, gender: e.target.value }))} style={inputStyle}>
+              <option value="">לא צוין</option>
+              <option value="male">זכר</option>
+              <option value="female">נקבה</option>
+              <option value="other">אחר</option>
+            </select>
+          ))}
+          {field("גיל", <input type="number" value={draft.age} onChange={e => setDraft(d => ({ ...d, age: e.target.value }))} style={inputStyle} />)}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {field("אזור", <input value={draft.region} onChange={e => setDraft(d => ({ ...d, region: e.target.value }))} style={inputStyle} />)}
+          {field("תחום נבחר", (
+            <select value={draft.domain} onChange={e => setDraft(d => ({ ...d, domain: e.target.value }))} style={inputStyle}>
+              <option value="">טרם נבחר</option>
+              {DOMAIN_OPTIONS.map(d => <option key={d} value={d}>{DOMAIN_HE[d]}</option>)}
+            </select>
+          ))}
+        </div>
+
+        {/* הטלפון נערך בתגית ליד השם (נתי 8.10) — יש לו סימון "אומת/הוקלד" שלא שייך לטופס הזה */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
+          {field("סטטוס", (
+            <select value={draft.status} onChange={e => setDraft(d => ({ ...d, status: e.target.value }))} style={inputStyle}>
+              <option value="active">פעיל/ה</option>
+              <option value="at_risk">בסיכון</option>
+              <option value="manual_intervention">דרוש טיפול ידני</option>
+            </select>
+          ))}
+        </div>
+
+        {err && <div style={{ fontSize: 12.5, color: "#dc2626", fontWeight: 700 }}>{err}</div>}
+
+        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+          <button
+            onClick={save}
+            disabled={saving}
+            style={{ flex: 1, padding: "11px", borderRadius: 12, border: "none", background: NAVY, color: "#fff", fontSize: 14.5, fontWeight: 900, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1, fontFamily: "'Heebo', sans-serif" }}
+          >
+            {saving ? "שומר…" : "שמירה"}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            style={{ flex: 1, padding: "11px", borderRadius: 12, border: "1px solid rgba(0,0,0,0.15)", background: "#fff", color: "#5b5648", fontSize: 14.5, fontWeight: 800, cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}
+          >
+            ביטול
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1392,7 +1560,7 @@ export default function CoordinatorPage() {
         {journeyFor && data && (() => {
           const person = [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor);
           if (!person) { setJourneyFor(null); return null; }
-          return <JourneyMap p={person} coordName="" onBack={() => setJourneyFor(null)} />;
+          return <JourneyMap p={person} coordName="" onBack={() => setJourneyFor(null)} onSaved={load} />;
         })()}
 
         {/*
