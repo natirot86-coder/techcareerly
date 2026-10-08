@@ -304,6 +304,74 @@ function engagement(visits: Ev[][]) {
   return { count: visits.length, last: spans[0] ?? null, median };
 }
 
+/*
+  ── פעולות שלא היה חייב (נתי, 8.10) ─────────────────────────────────────────
+  באפליקציה יש תוכן שאיש אינו חייב לגעת בו. מי שנגע — עשה את זה כי באמת
+  מעניין אותו, **וזה לא מעניש מהירות** כמו מדידת זמן.
+*/
+const VOLUNTARY: Record<string, string> = {
+  faq_open: "שאלות ותשובות",
+  paths_research_open: "ערכת החקר",
+  paths_research_done: "סיים/ה את החקר",
+  paths_solution_open: "פתרונות לחסמים",
+  paths_solution_click: "פתרונות לחסמים",
+  track_detail_open: "העמקה במסלול",
+  plan_money_opened: "חשבון הכסף",
+  plan_housing_est: "הערכת דיור",
+  event_click: "אירוע קהילה",
+};
+
+/*
+  ── התנעה מול התמדה (נתי, 8.10) ─────────────────────────────────────────────
+  **לחדש אין כמות.** מי שקיבל קישור לפני יומיים ונכנס פעם אחת נראה במדדי
+  כמות בדיוק כמו מי שנטש אחרי חודש — וזה הפוך מהמציאות. בהתחלה הסיגנל אינו
+  "כמה" אלא **האם הצעד הראשון קרה בכלל, וכמה מהר**.
+  לכן המסך בוחר: עד שבועיים או עד סיום אונבורדינג — סולם ההתנעה; אחר כך
+  משפטי ההתמדה.
+*/
+type Momentum =
+  | { kind: "start"; steps: { label: string; at: string | null }[]; done: number }
+  | { kind: "ongoing"; lines: string[] };
+
+function momentum(p: Person, visits: Ev[][], joinedAt: string | null): Momentum {
+  const at = (name: string, filter?: (e: Ev) => boolean) => {
+    const hit = [...p.timeline].reverse().find(e => e.name === name && (!filter || filter(e)));
+    return hit ? hit.at : null;
+  };
+  const days = joinedAt ? (Date.now() - +new Date(joinedAt)) / DAY_MS : 0;
+  const onboarded = !!at("profile");
+
+  if (!onboarded || days <= 14) {
+    const steps = [
+      { label: "נכנס/ה לראשונה", at: visits.length ? visits[visits.length - 1][0].at : null },
+      { label: "מילא/ה את הפרטים", at: at("profile") },
+      { label: "פתח/ה יומן לפגישה", at: at("meeting_open") },
+      { label: "קבע/ה פגישה", at: at("meeting_booked") },
+      { label: "נגע/ה בתחום ראשון", at: at("sim_start") },
+    ];
+    return { kind: "start", steps, done: steps.filter(st => st.at).length };
+  }
+
+  const lines: string[] = [];
+  const opt = [...new Set(p.timeline.filter(e => VOLUNTARY[e.name]).map(e => VOLUNTARY[e.name]))];
+  if (opt.length) lines.push(`פתח/ה ${opt.length} ${opt.length === 1 ? "דבר" : "דברים"} שלא היה/תה חייב/ת — ${opt.join(", ")}`);
+
+  /* חזר לאותו מקום אחרי הפסקה — התגברות על חיכוך, לא כישלון */
+  const spots = new Map<string, string[]>();
+  for (const e of p.timeline) { const k = spot(e); if (k) (spots.get(k) ?? spots.set(k, []).get(k)!).push(e.at); }
+  for (const [, times] of spots) {
+    if (times.length < 2) continue;
+    const gap = (+new Date(times[0]) - +new Date(times[times.length - 1])) / DAY_MS;
+    if (gap >= 1) { lines.push(`חזר/ה לאותו מקום אחרי ${Math.round(gap)} ימים — התגבר/ה על עצירה`); break; }
+  }
+
+  if (visits.length >= 2) {
+    const half = Math.ceil(visits.length / 2);
+    if (half < visits.length) lines.push(`${visits.length} ביקורים, ${half} מהם לאחרונה — הקצב לא דועך`);
+  }
+  return { kind: "ongoing", lines };
+}
+
 function sessions(events: Ev[]): Ev[][] {
   const out: Ev[][] = [];
   let run: Ev[] = [];
@@ -370,6 +438,7 @@ type Person = {
   id: string; name: string; anonymous: boolean; region: string | null;
   /* המפתח שמחבר שורה בלוח לאדם באפליקציה — ראה mondayBoard ב-lib/monday.ts */
   phone?: string | null;
+  coordinatorName?: string | null;
   cohort?: string;
   stage: number; domain: string | null; ranked: string[]; lastActive: string | null; lastAction: string | null;
   signals: { severity: 1 | 2 | 3; reason: string; action: string }[];
@@ -625,6 +694,7 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
   const visits = sessions(p.timeline);
   const depths = tasteDepth(p.timeline);
   const eff = engagement(visits);
+  const mom = momentum(p, visits, p.timeline.length ? p.timeline[p.timeline.length - 1].at : null);
 
   return (
     <div style={{ maxWidth: 1240, margin: "0 auto" }}>
@@ -642,6 +712,12 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
               <span style={{ fontSize: 30, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>{p.name}</span>
               <span style={{ fontSize: 14, fontWeight: 500, color: "#8d867a" }}>
                 {[profile.age ? `גיל ${profile.age}` : null, profile.city || null, p.region].filter(Boolean).join(" · ")}
+              </span>
+              {/* הרכז/ת — הנתון היה קיים מאז 20.8 ואף מסך לא תרגם אותו לשם (8.10) */}
+              <span style={{ fontSize: 12.5, fontWeight: 800, borderRadius: 999, padding: "3px 11px",
+                background: p.coordinatorName ? "rgba(2,62,138,.07)" : "#fff7ec",
+                color: p.coordinatorName ? NAVY : "#8a4d00" }}>
+                {p.coordinatorName ? `רכז/ת: ${p.coordinatorName}` : "טרם שויך/ה לרכז/ת"}
               </span>
               {profile.birthdaySoon && (
                 <span style={{ background: "#eef3fa", color: NAVY, fontWeight: 800, borderRadius: 999, padding: "2px 10px", fontSize: 12 }}>
@@ -745,6 +821,47 @@ function JourneyMap({ p, coordName, onBack }: { p: Person; coordName: string; on
           {inButStuck && (
             <div style={{ marginTop: 12, background: "#fff7ec", color: "#8a4d00", borderRadius: 10, padding: "9px 12px", fontSize: 13, lineHeight: 1.65 }}>
               נכנס/ת שוב ושוב ולא מתקדם/ת — <b>זה מי שתקוע/ה ולא יבקש/תבקש עזרה לבד.</b>
+            </div>
+          )}
+
+          {/*
+            בהתחלה אין כמות — ולכן מוצג סולם ההתנעה ולא המדדים. חמישה צעדים
+            קטנים, וכל אחד שנדלק הוא חדשות טובות שצריך לשדר לרכזת.
+          */}
+          {mom.kind === "start" ? (
+            <div style={{ marginTop: 14, borderTop: "1px solid rgba(0,0,0,.06)", paddingTop: 13 }}>
+              <div style={{ fontSize: 13, fontWeight: 900, color: NAVY, marginBottom: 9 }}>
+                הצעדים הראשונים — {mom.done} מתוך {mom.steps.length}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {mom.steps.map(st => (
+                  <div key={st.label} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13.5 }}>
+                    <span style={{
+                      width: 17, height: 17, borderRadius: 999, flex: "0 0 auto", display: "grid", placeItems: "center",
+                      background: st.at ? "#059669" : "#f0ece3", color: "#fff", fontSize: 11, fontWeight: 900,
+                    }}>{st.at ? "✓" : ""}</span>
+                    <span style={{ color: st.at ? "#1c1a16" : "#a8a195", fontWeight: st.at ? 700 : 500 }}>{st.label}</span>
+                    {st.at && (
+                      <span style={{ fontSize: 12, color: "#8d867a" }}>
+                        {new Date(st.at).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" })}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 12, color: "#8d867a", marginTop: 10, lineHeight: 1.6 }}>
+                בתחילת הדרך לא מודדים כמה — מודדים <b>האם הצעד הבא קרה</b>.
+              </div>
+            </div>
+          ) : mom.lines.length > 0 && (
+            <div style={{ marginTop: 14, borderTop: "1px solid rgba(0,0,0,.06)", paddingTop: 13,
+              display: "flex", flexDirection: "column", gap: 7 }}>
+              {mom.lines.map((l, i) => (
+                <div key={i} style={{ fontSize: 13.5, lineHeight: 1.65, color: "#3d3a33", display: "flex", gap: 8 }}>
+                  <span style={{ flex: "0 0 auto" }}>{["✨", "🔁", "📈"][i] ?? "•"}</span>
+                  <span>{l}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>

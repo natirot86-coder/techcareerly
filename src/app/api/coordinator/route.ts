@@ -116,6 +116,15 @@ export async function GET(req: NextRequest) {
     ? real.filter(c => !c.coordinator_id || c.coordinator_id === effectiveId)
     : real;
 
+  let staff: { id: string; name: string }[] = [];
+  /* נטען תמיד — גם רכזת צריכה שהמזהה יתורגם לשם על הכרטיס */
+  {
+    const { data } = await db.from("coordinators")
+      .select("id, name").eq("active", true).neq("name", "").order("name");
+    staff = (data ?? []) as { id: string; name: string }[];
+  }
+  const staffNames = new Map(staff.map(c => [c.id, c.name]));
+
   const queue = myCandidates.flatMap(c => {
    try {
     const signals: Signal[] = [];
@@ -250,6 +259,12 @@ export async function GET(req: NextRequest) {
       stage: c.current_stage,
       domain: c.chosen_domain,
       coordinatorId: c.coordinator_id ?? null,
+      /*
+        ⚠️ **השם ולא רק המזהה** (8.10). המזהה הוחזר מאז 20.8 ואף מסך לא
+        הציג אותו — נתי ראה כרטיס מסע בלי רכז/ת והניח שהשיוך חסר, בזמן
+        שהוא היה מלא. מזהה שאף אחד לא מתרגם שווה לשדה ריק.
+      */
+      coordinatorName: staffNames.get(c.coordinator_id ?? "") ?? null,
       /* בוגרי טק-קריירה מדלגים על שלב הטעימות — בלי זה הם ייראו לרכזת
          תקועים לנצח בתחנה שאינה שלהם, ותור החילוץ יתמלא ברעש */
       cohort: c.cohort ?? "main",
@@ -282,12 +297,7 @@ export async function GET(req: NextRequest) {
     השאלה שהרכזת באמת שואלת: **"מי קבע איתי ומתי"**. היומן שלה מלא
     ומסך הניהול הראה יומן ריק — מסך שאי אפשר לסמוך עליו.
   */
-  let staff: { id: string; name: string }[] = [];
-  if (canSeeEveryone(auth.role)) {
-    const { data } = await db.from("coordinators")
-      .select("id, name").eq("active", true).neq("name", "").order("name");
-    staff = (data ?? []) as { id: string; name: string }[];
-  }
+
 
   let myBookings: unknown[] = [];
   try {
