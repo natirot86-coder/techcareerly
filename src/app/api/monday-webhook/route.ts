@@ -25,6 +25,7 @@ import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/candidate";
 import { waLink } from "@/lib/waLink";
 import { sendMail, welcomeEmail } from "@/lib/mail";
+import { trackedUrl } from "@/app/api/r/route";
 
 export const dynamic = "force-dynamic";
 
@@ -245,7 +246,12 @@ export async function rebuildWa(itemId: number) {
     calPath = data?.[0]?.cal_m1 || null;
   }
 
-  const link = waLink({ phone: cv(COL_PHONE), participant: item.name, coordinator: coordName, calPath });
+  const link = waLink({
+    phone: cv(COL_PHONE), participant: item.name, coordinator: coordName, calPath,
+    /* קישורים נמדדים — כדי לדעת **דרך מה** הוא נכנס, לא רק שנכנס */
+    appUrl: trackedUrl(itemId, "app", "wa"),
+    calUrl: trackedUrl(itemId, "cal", "wa"),
+  });
   const value = link
     ? { url: link, text: `וואטסאפ ל${item.name.trim().split(/\s+/)[0]}` }
     : {};   // בלי טלפון תקין אין קישור — ולא קישור שבור
@@ -303,7 +309,11 @@ export async function maybeSendWelcome(itemId: number) {
     return;
   }
 
-  const mail = welcomeEmail({ participant: item.name, coordinator: coordName, calUrl });
+  const mail = welcomeEmail({
+    participant: item.name, coordinator: coordName, calUrl,
+    appUrl: trackedUrl(itemId, "app", "mail"),
+    trackedCalUrl: trackedUrl(itemId, "cal", "mail"),
+  });
   const sent = await sendMail({ to, subject: mail.subject, html: mail.html });
   console.log(`[monday-webhook] welcome mail → ${to}: ${sent === null ? "disabled" : sent}`);
   if (sent) {

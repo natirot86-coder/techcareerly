@@ -89,6 +89,9 @@ export function welcomeEmail(p: {
   participant: string;
   coordinator?: string | null;
   calUrl?: string | null;
+  /* קישורים נמדדים (8.10) — ראה /api/r */
+  appUrl?: string | null;
+  trackedCalUrl?: string | null;
 }): { subject: string; html: string } {
   const them = esc((p.participant ?? "").trim().split(/\s+/)[0] ?? "");
   const me = esc((p.coordinator ?? "").trim() || "צוות אינטק");
@@ -120,13 +123,13 @@ export function welcomeEmail(p: {
         הנה שני הדברים שצריך כדי להתחיל:
       </p>
 
-      ${btn(APP_URL, "כניסה לאפליקציה ←", true)}
+      ${btn(p.appUrl || APP_URL, "כניסה לאפליקציה ←", true)}
       <p style="margin:0 0 20px;font-size:14px;color:#6b6558;line-height:1.7;">
         נכנסים עם מספר הטלפון שלך — זה שאליו הגיעה ההודעה. האפליקציה תלווה
         אותך לאורך כל הדרך, ושם גם תמצא את כל מה שנדבר עליו.
       </p>
 
-      ${cal ? btn(cal, "קביעת הפגישה הראשונה שלנו ←", false) : ""}
+      ${cal ? btn(p.trackedCalUrl || cal, "קביעת הפגישה הראשונה שלנו ←", false) : ""}
       ${cal ? `<p style="margin:0 0 20px;font-size:14px;color:#6b6558;line-height:1.7;">
         בוחרים זמן שנוח לך. נפגשים שעה, מכירים, ובונים תוכנית.
       </p>` : ""}

@@ -32,6 +32,9 @@ export function waMessage(p: {
   participant: string;
   coordinator?: string | null;
   calPath?: string | null;
+  /* קישורים נמדדים (8.10) — ראה /api/r. חסרים ⇒ נופלים לקישור הישיר */
+  appUrl?: string | null;
+  calUrl?: string | null;
 }): string {
   const them = firstName(p.participant);
   const me = (p.coordinator ?? "").trim();
@@ -42,17 +45,18 @@ export function waMessage(p: {
     לקרות כאן הוא שתי לחיצות: להיכנס לאפליקציה, ולקבוע פגישה.
   */
   const lines = [
-    `היי${them ? " " + them : ""}, זו ${me || "הרכזת"} מתוכנית אינטק של טק-קריירה 🙂`,
+    /* בלי אימוג׳ים (נתי, 8.10) — ההודעה מרכזת ולא שיווקית */
+    `היי${them ? " " + them : ""}, זו ${me || "הרכזת"} מתוכנית אינטק של טק-קריירה.`,
     "",
     `נעים להכיר! זה הקישור לאפליקציה שדיברנו עליה — נכנסים עם מספר הטלפון הזה:`,
-    APP_URL,
+    p.appUrl || APP_URL,
     "",
   ];
   if (cal) {
     lines.push("וכאן קובעים את הפגישה הראשונה שלנו, בזמן שנוח לך:",
-      cal.startsWith("http") ? cal : `https://cal.com/${cal}`, "");
+      p.calUrl || (cal.startsWith("http") ? cal : `https://cal.com/${cal}`), "");
   }
-  lines.push("מחכה לראות אותך בפנים 💙");
+  lines.push("מחכה לראות אותך בפנים");
   return lines.join("\n");
 }
 
@@ -62,6 +66,8 @@ export function waLink(p: {
   participant: string;
   coordinator?: string | null;
   calPath?: string | null;
+  appUrl?: string | null;
+  calUrl?: string | null;
 }): string {
   const phone = waPhone(p.phone);
   if (!phone) return "";
