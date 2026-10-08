@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyCoordinator, canSeeEveryone } from "@/lib/serverCoordinatorAuth";
 import { mondayBoard, mondaySetCoordinator, type BoardRow } from "@/lib/monday";
+import { normalizePhone } from "@/lib/candidate";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, onboarding_completed_at, is_test")
+      .select("id, first_name, last_name, gender, age, status, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, onboarding_completed_at, is_test")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -253,6 +254,12 @@ export async function GET(req: NextRequest) {
       id: c.id,
       name,
       anonymous: !c.first_name,
+      /* לעריכה (8.10) — השדות הגולמיים, לצד name/anonymous המחושבים למעלה */
+      firstName: c.first_name,
+      lastName: c.last_name,
+      gender: c.gender,
+      age: c.age,
+      status: c.status,
       region: c.region,
       /* לזיהוי באיזור השיוך (16.9) — אותו טלפון שכבר מוצג לרכזת בכל מקום אחר */
       phone: c.phone || null,
@@ -435,14 +442,18 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * PATCH /api/coordinator — שינוי קוהורט ידני (16.9).
+ * PATCH /api/coordinator — עריכת פרטי מועמד/ת (16.9, הורחב 8.10).
  *
- * רשת הביטחון שמפרט הפיילוט (docs/pilot-alumni-spec.md, סעיף 3, דליפה ד)
- * דורש: "הקוהורט ניתן לשינוי באדמין בלבד, ולא על ידי ביקור חוזר ב-URL".
- * ההתאמה האוטומטית (POST /api/candidate/sync-cohort) יכולה לפספס — מספר
- * שהוקלד לא מדויק ברשימת מאנדיי, או בוגר/ת שנרשמו לפני שהרשימה יובאה.
- * זה הכלי לתקן שיוך שגוי בלי לגעת ב-DB ישירות.
+ * נולד לשינוי קוהורט בלבד (רשת הביטחון שמפרט הפיילוט,
+ * docs/pilot-alumni-spec.md §3 דליפה ד, דורש "ניתן לשינוי באדמין בלבד
+ * ולא ע"י ביקור חוזר ב-URL"). הורחב 8.10 לעריכת שאר פרטי המשתתף/ת —
+ * אותו עיקרון בדיוק: תיקון טעות הקלדה (שם, טלפון, גיל...) לא אמור
+ * לדרוש גישה ישירה ל-DB. כל שדה אופציונלי ונבדק רק אם נשלח, כדי
+ * שקריאות קוהורט-בלבד קיימות (setCohort) ימשיכו לעבוד בלי שינוי.
  */
+const GENDERS = ["male", "female", "other"] as const;
+const STATUSES = ["active", "at_risk", "manual_intervention"] as const;
+
 export async function PATCH(req: NextRequest) {
   const auth = await verifyCoordinator(req);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -451,16 +462,52 @@ export async function PATCH(req: NextRequest) {
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!url || !secret) return NextResponse.json({ error: "SUPABASE_SECRET_KEY not configured" }, { status: 503 });
 
-  const body = await req.json().catch(() => null) as { candidateId?: string; cohort?: string } | null;
+  const body = await req.json().catch(() => null) as {
+    candidateId?: string; cohort?: string;
+    firstName?: string; lastName?: string; gender?: string; age?: number | string;
+    region?: string; phone?: string; domain?: string; status?: string;
+  } | null;
   if (!body?.candidateId) return NextResponse.json({ error: "candidateId required" }, { status: 400 });
-  if (body.cohort !== "main" && body.cohort !== "alumni") {
-    return NextResponse.json({ error: "cohort חייב להיות main או alumni" }, { status: 400 });
+
+  const patch: Record<string, unknown> = {};
+
+  if (body.cohort !== undefined) {
+    if (body.cohort !== "main" && body.cohort !== "alumni") {
+      return NextResponse.json({ error: "cohort חייב להיות main או alumni" }, { status: 400 });
+    }
+    patch.cohort = body.cohort;
   }
+  if (body.firstName !== undefined) patch.first_name = body.firstName.trim();
+  if (body.lastName !== undefined) patch.last_name = body.lastName.trim();
+  if (body.gender !== undefined) {
+    if (body.gender && !GENDERS.includes(body.gender as (typeof GENDERS)[number])) {
+      return NextResponse.json({ error: "gender חייב להיות male/female/other" }, { status: 400 });
+    }
+    patch.gender = body.gender || null;
+  }
+  if (body.age !== undefined) {
+    const n = Number(body.age);
+    if (body.age !== "" && (!Number.isFinite(n) || n <= 0)) {
+      return NextResponse.json({ error: "age חייב להיות מספר חיובי" }, { status: 400 });
+    }
+    patch.age = body.age === "" ? null : n;
+  }
+  if (body.region !== undefined) patch.region = body.region.trim();
+  if (body.phone !== undefined) patch.phone = body.phone.trim() ? normalizePhone(body.phone) : "";
+  if (body.domain !== undefined) patch.chosen_domain = body.domain.trim() || null;
+  if (body.status !== undefined) {
+    if (!STATUSES.includes(body.status as (typeof STATUSES)[number])) {
+      return NextResponse.json({ error: "status חייב להיות active/at_risk/manual_intervention" }, { status: 400 });
+    }
+    patch.status = body.status;
+  }
+
+  if (!Object.keys(patch).length) return NextResponse.json({ error: "אין מה לעדכן" }, { status: 400 });
 
   const db = createClient(url, secret, { auth: { persistSession: false } });
   const { error } = await db
     .from("candidates")
-    .update({ cohort: body.cohort })
+    .update(patch)
     .eq("id", body.candidateId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
