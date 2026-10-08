@@ -1089,12 +1089,12 @@ export default function CoordinatorPage() {
         })()}
 
         {/*
-          בורר הרכזת — **למנהלת בלבד** (4.10). היא רואה את כולן יחד כברירת
-          מחדל, ויכולה לצפות בתצוגה של רכזת מסוימת כדי לשבת לידה ולראות
-          בדיוק את המסך שלה. קודם הדרך היחידה לזה הייתה לחלוק קוד חירום,
-          שמוחק את התיעוד של מי עשה מה.
+          בורר הרכזת — **למנהלת ולבעלים** (4.10, תוקן 8.10). רואים את כולן
+          יחד כברירת מחדל, ויכולים לצפות בתצוגה של רכזת מסוימת כדי לשבת
+          לידה ולראות בדיוק את המסך שלה. קודם הדרך היחידה לזה הייתה לחלוק
+          קוד חירום, שמוחק את התיעוד של מי עשה מה.
         */}
-        {!journeyFor && data?.role === "manager" && !!data.staff?.length && (
+        {!journeyFor && (data?.role === "manager" || data?.role === "owner") && !!data.staff?.length && (
           <div style={{ display: "flex", gap: 7, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
             <span style={{ fontSize: 12.5, fontWeight: 800, color: "#6b6558" }}>צופה בתור:</span>
             {[{ id: "", name: "כל הרכזות" }, ...data.staff].map(c => {

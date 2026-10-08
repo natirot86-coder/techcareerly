@@ -33,6 +33,14 @@ import { normalizePhone } from "./candidate";
  */
 export type Role = "coordinator" | "manager" | "owner";
 export const isOwner = (r: Role) => r === "owner";
+/*
+ * "רואה הכל" (8.10) — owner נולד אחרי manager (מיגרציה 012 אחרי 011),
+ * וכמה מקומות עדיין בדקו `role === "manager"` באופן מילולי: owner נפל
+ * לענף המצומצם, והיה *יותר* נעול ממנהלת רגילה — הפוך מההיררכיה המוצהרת
+ * coordinator ⊂ manager ⊂ owner. נתפס כש-israel@tech-career.org (owner
+ * לפי מיגרציה 012) ביקש לוודא שיש לו גישה לכל המשתתפים וגילה שאין.
+ */
+export const canSeeEveryone = (r: Role) => r === "manager" || r === "owner";
 
 export type CoordinatorAuth =
   | { ok: true; coordinatorId: string | null; name: string | null; role: Role; breakGlass?: boolean }

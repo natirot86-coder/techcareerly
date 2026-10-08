@@ -13,7 +13,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
+import { verifyCoordinator, canSeeEveryone } from "@/lib/serverCoordinatorAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +40,9 @@ export async function POST(req: NextRequest) {
   const db = createClient(url, secret, { auth: { persistSession: false } });
 
   /*
-   * רכזת מסמנת רק פגישות שלה. מנהלת וקוד החירום יכולים לסמן הכל — הם
-   * ממילא רואים הכל, ומי שסימן נשמר ב-outcome_by כדי שתמיד יהיה תיעוד.
+   * רכזת מסמנת רק פגישות שלה. מנהלת/בעלים וקוד החירום יכולים לסמן הכל —
+   * הם ממילא רואים הכל (canSeeEveryone, 8.10 — owner נפל בטעות לענף
+   * המצומצם עד עכשיו), ומי שסימן נשמר ב-outcome_by כדי שתמיד יהיה תיעוד.
    */
   let q = db.from("cal_bookings")
     .update({
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     })
     .eq("id", body.id);
 
-  if (auth.role !== "manager" && auth.coordinatorId) {
+  if (!canSeeEveryone(auth.role) && auth.coordinatorId) {
     q = q.eq("coordinator_id", auth.coordinatorId);
   }
 

@@ -14,7 +14,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyCoordinator } from "@/lib/serverCoordinatorAuth";
+import { verifyCoordinator, canSeeEveryone } from "@/lib/serverCoordinatorAuth";
 import { mondayBoard, type BoardRow } from "@/lib/monday";
 
 export const dynamic = "force-dynamic";
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
   */
   const viewAs = req.nextUrl.searchParams.get("as");
   const effectiveId =
-    auth.role === "manager" ? (viewAs || null) : auth.coordinatorId;
+    canSeeEveryone(auth.role) ? (viewAs || null) : auth.coordinatorId;
 
   const real = (candidates.data ?? []).filter(
     c =>
@@ -283,7 +283,7 @@ export async function GET(req: NextRequest) {
     ומסך הניהול הראה יומן ריק — מסך שאי אפשר לסמוך עליו.
   */
   let staff: { id: string; name: string }[] = [];
-  if (auth.role === "manager") {
+  if (canSeeEveryone(auth.role)) {
     const { data } = await db.from("coordinators")
       .select("id, name").eq("active", true).neq("name", "").order("name");
     staff = (data ?? []) as { id: string; name: string }[];
@@ -358,7 +358,7 @@ export async function GET(req: NextRequest) {
     role: auth.role,
     viewingAs: effectiveId,
     /* המנהלת צריכה את הרשימה כדי לבחור את מי לצפות */
-    staff: auth.role === "manager" ? staff : [],
+    staff: canSeeEveryone(auth.role) ? staff : [],
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
     // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)
