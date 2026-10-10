@@ -35,3 +35,12 @@ campus-cookies.txt
 
 # ארכיוני handoff — התיקיות המחולצות נשמרות, ה-zip מיותר
 *.zip
+
+# פרטי — מחוץ לריפו המשותף (נתי, 11.10)
+# חומרי עסקה, מסמכי צד שלישי, ודפים עם פרטי אנשים אמיתיים.
+reimai/
+docs/meeting-questions.html
+docs/webinar-followup.html
+public/guides/q-*.html
+public/guides/f-*.html
+nati-private/
