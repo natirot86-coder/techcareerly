@@ -1,0 +1,248 @@
+<title>אינטק · טק-קריירה — מצגת להישגים</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --paper:#fbf9f5; --ink:#14161b; --muted:#6b6558; --line:#e6e1d8;
+  --navy:#023e8a; --navy-soft:rgba(2,62,138,.06);
+  --orange:#fb8500; --orange-soft:#fff5e8;
+  --green:#0f7a52; --green-soft:rgba(15,122,82,.09);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{direction:rtl;background:var(--paper);color:var(--ink);
+  font-family:Heebo,Assistant,"Segoe UI",system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;line-height:1.6}
+
+.slide{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:5vh 7vw;border-bottom:1px solid var(--line);position:relative;scroll-snap-align:start}
+@media print{.slide{min-height:auto;page-break-after:always;padding:3vh 5vw}}
+body{scroll-snap-type:y proximity}
+
+.n{position:absolute;top:3vh;left:7vw;font-size:.8rem;color:var(--muted);letter-spacing:.1em}
+.eyebrow{font-size:.85rem;letter-spacing:.12em;color:var(--muted);margin:0 0 .6rem}
+h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.02em}
+h2{font-size:clamp(1.5rem,3.4vw,2.3rem);line-height:1.25;margin:0 0 .8rem;text-wrap:balance;color:var(--navy)}
+h3{font-size:1.05rem;margin:0 0 .3rem;color:var(--navy)}
+p{font-size:clamp(1rem,1.5vw,1.2rem);max-width:46rem;margin:.6rem 0}
+.lead{font-size:clamp(1.1rem,1.9vw,1.45rem);color:var(--muted);max-width:44rem}
+b{font-weight:700}
+.big{font-size:clamp(2.4rem,6vw,4.5rem);font-weight:900;line-height:1;color:var(--navy);letter-spacing:-.03em}
+
+.grid{display:grid;gap:1rem;margin-top:1.6rem}
+.g2{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(12rem,1fr))}
+.card{background:#fff;border:1px solid var(--line);border-radius:1rem;padding:1.1rem 1.3rem}
+.card .k{font-size:1.9rem;font-weight:900;color:var(--navy);line-height:1.1}
+.card .l{font-size:.95rem;color:var(--muted);margin-top:.15rem}
+.card p{font-size:.98rem;margin:.4rem 0 0}
+
+.rows{display:flex;flex-direction:column;gap:.55rem;margin-top:1.4rem}
+.row{display:flex;align-items:center;gap:1rem;background:#fff;border:1px solid var(--line);
+  border-radius:.8rem;padding:.75rem 1.1rem;flex-wrap:wrap}
+.row .stage{font-weight:800;color:var(--navy);min-width:11rem;font-size:1.02rem}
+.row .what{color:var(--ink);font-size:.98rem;flex:1;min-width:14rem}
+.row .tag{font-size:.8rem;font-weight:800;border-radius:999px;padding:.2rem .7rem;white-space:nowrap}
+.tag.has{background:var(--green-soft);color:var(--green)}
+.tag.new{background:var(--orange-soft);color:#8a4d00}
+
+.quote{border-inline-start:4px solid var(--orange);background:#fff;border-radius:.6rem;
+  padding:1rem 1.3rem;margin-top:1.5rem;font-size:clamp(1.05rem,1.7vw,1.3rem);max-width:44rem}
+.note{color:var(--muted);font-size:.95rem;margin-top:1.4rem;max-width:42rem}
+.kicker{display:inline-block;background:var(--navy);color:#fff;border-radius:999px;
+  padding:.25rem .9rem;font-size:.85rem;font-weight:800;margin-bottom:1rem}
+ul{padding-inline-start:1.2rem;max-width:44rem}
+li{font-size:clamp(1rem,1.5vw,1.15rem);margin-bottom:.5rem}
+.sep{height:1px;background:var(--line);margin:1.6rem 0;max-width:44rem}
+footer{font-size:.9rem;color:var(--muted)}
+</style>
+
+<!-- 1 -->
+<section class="slide">
+  <span class="n">1</span>
+  <p class="eyebrow">טק-קריירה · תוכנית אינטק</p>
+  <h1>מה קורה למשתתף<br>בין הפגישות</h1>
+  <p class="lead" style="margin-top:1.4rem">
+    בנינו אפליקציה שמלווה משתתף מהרגע שהוא נרשם ועד שהוא סטודנט —
+    ומראה לרכזת מי צריך אותה היום.
+  </p>
+  <p class="note">אוקטובר 2026</p>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <span class="n">2</span>
+  <p class="eyebrow">מאיפה זה התחיל</p>
+  <h2>הפגישה טובה. מה שאחריה — לא קיים.</h2>
+  <p>משתתף יוצא מפגישה עם רכזת, מלא מוטיבציה, ועם משימה: "תבדוק מסלולים".</p>
+  <p><b>ואז הוא לבד.</b> שבועיים עד הפגישה הבאה, בלי מידע מסודר, בלי מישהו לשאול,
+     ובלי שאף אחד יודע אם הוא זז או נעצר.</p>
+  <div class="quote">
+    <b>הרכזת מגלה שהוא נעלם רק בפגישה הבאה — אם הוא יגיע אליה.</b>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <span class="n">3</span>
+  <p class="eyebrow">מה בנינו</p>
+  <h2>מסע אחד, שזוכר איפה עצרת</h2>
+  <div class="grid g3">
+    <div class="card"><div class="k">6</div><div class="l">שלבים, נפתחים בהדרגה</div></div>
+    <div class="card"><div class="k">9</div><div class="l">תחומים להתנסות</div></div>
+    <div class="card"><div class="k">69</div><div class="l">מוסדות לימוד ממופים</div></div>
+    <div class="card"><div class="k">29</div><div class="l">מלגות ותוכניות מאומתות</div></div>
+  </div>
+  <p class="note">הכל בעברית, בנייד, בלי הורדה ובלי סיסמה — נכנסים עם מספר טלפון.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <span class="n">4</span>
+  <p class="eyebrow">איפה זה נפגש איתכם</p>
+  <h2>חמשת השלבים שלכם — ומה יש לנו לכל אחד</h2>
+  <div class="rows">
+    <div class="row"><span class="stage">האם ללמוד?</span>
+      <span class="what">תוכן על עולם הלימודים והתעסוקה</span>
+      <span class="tag has">יש לכם</span></div>
+    <div class="row"><span class="stage">מה ללמוד?</span>
+      <span class="what"><b>התנסות אמיתית במקצוע</b> — לא תיאור שלו</span>
+      <span class="tag new">זה החלק שלנו</span></div>
+    <div class="row"><span class="stage">איפה ללמוד?</span>
+      <span class="what">מאגר מוסדות, מפה, ומה פותח כל דלת</span>
+      <span class="tag has">יש לכם · ואצלנו לפי המשתתף</span></div>
+    <div class="row"><span class="stage">תנאי קבלה</span>
+      <span class="what"><b>מה חוסם אותו ספציפית — ומה מקטין את זה</b></span>
+      <span class="tag new">זה החלק שלנו</span></div>
+    <div class="row"><span class="stage">איך מתכוננים</span>
+      <span class="what"><b>שכר לימוד מינוס מלגות = הפער, במספרים</b></span>
+      <span class="tag new">זה החלק שלנו</span></div>
+  </div>
+  <p class="note">הכוונה אינה להחליף את מה שיש — אלא להוסיף את מה שקורה <b>בין</b> הפגישות.</p>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <span class="n">5</span>
+  <span class="kicker">מה ללמוד</span>
+  <h2>התנסות, לא הסבר</h2>
+  <p>אפשר לקרוא עשרה עמודים על מה עושה מנתח נתונים — ועדיין לא לדעת
+     אם זה בשבילך.</p>
+  <p><b>אצלנו הוא פותר תעלומה אמיתית בתוך הדפדפן</b>, כותב שאילתה ראשונה,
+     ורואה תוצאה. חמש עשרה דקות.</p>
+  <div class="sep"></div>
+  <h3>ואז נשאלות שש שאלות</h3>
+  <p>לא "אהבת?" — אלא <b>כמה זה עניין אותך · כמה הרגשת שאתה מסוגל ·
+     ומה אתה חושב שייצא מזה.</b> שלושת אלה מנבאים התמדה, והם מה שהרכזת רואה.</p>
+  <p class="note">⚠️ אצלנו תשעת התחומים הם הייטק. <b>המנגנון זהה לכל מקצוע</b> —
+     התוכן הוא מה שמתחלף.</p>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <span class="n">6</span>
+  <span class="kicker">איך מתכוננים</span>
+  <h2>חשבון, במקום הרגעה</h2>
+  <p>הסיבה הכי שקטה לנשירה היא כסף — <b>ואף אחד לא אומר אותה בקול.</b></p>
+  <div class="grid g3" style="max-width:46rem">
+    <div class="card"><div class="k">12,203 ₪</div><div class="l">שכר לימוד לשנה</div></div>
+    <div class="card"><div class="k">− 8,000 ₪</div><div class="l">מלגות שהוא זכאי להן</div></div>
+    <div class="card" style="border-color:var(--orange)"><div class="k" style="color:#8a4d00">4,203 ₪</div><div class="l">הפער האמיתי</div></div>
+  </div>
+  <p style="margin-top:1.4rem">המלגות לחיצות ויורדות מהחשבון. <b>וגם חשבון השעות:</b>
+     מי שצובר שלוש מלגות מתחייב ל-580 שעות התנדבות בשנה — ואז הוא לא נושר ממלגה,
+     <b>הוא נושר מהלימודים.</b></p>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <span class="n">7</span>
+  <span class="kicker">לרכזת</span>
+  <h2>מי צריך אותי היום</h2>
+  <p class="lead">לא טבלה של כולם — <b>רק מי שתקוע, שקט, או פספס פגישה.</b></p>
+  <div class="grid g2" style="max-width:46rem">
+    <div class="card"><h3>הסיגנל במילים</h3>
+      <p>"הגיע לבחירת הכיוון ולא בחר — 4 ימים"</p></div>
+    <div class="card"><h3>שתי שתיקות שונות</h3>
+      <p>"נעלם" מול <b>"נכנס ולא מתקדם"</b> — והשנייה דחופה יותר</p></div>
+    <div class="card"><h3>מפת המסע של כל אדם</h3>
+      <p>איפה הוא עכשיו, מה עבר, ובמה נגע</p></div>
+    <div class="card"><h3>בלי ציונים</h3>
+      <p>המסך משרת התערבות, לא הערכה</p></div>
+  </div>
+  <p class="note">ב-36 מרכזים ו-46 רכזים, השאלה "מי צריך אותי היום" היא שאלה תפעולית אמיתית.</p>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <span class="n">8</span>
+  <p class="eyebrow">מה שלא רואים במסך</p>
+  <h2>רוב העבודה הייתה מחקר, לא קוד</h2>
+  <ul>
+    <li><b>69 מוסדות</b> — עם כתובת, עיר, ומה פותח את הדלת אליהם</li>
+    <li><b>29 מלגות ותוכניות</b> — כמה, למי, ומה התנאי שנופלים עליו</li>
+    <li><b>מטריצת צבירה</b> — אילו מלגות אפשר לשלב ואילו מבטלות זו את זו</li>
+    <li><b>תאריך אימות לכל נתון</b>, ומה שלא אומת מסומן כך בפירוש</li>
+  </ul>
+  <div class="quote">
+    <b>הכלל שהכי שינה את המוצר: לא ממציאים — שואלים.</b><br>
+    <span style="font-size:.95rem;color:var(--muted)">מספר בלי מקור לא נכנס למסך. משתתף שמגיע למוסד עם נתון שגוי מאבד אמון — ולא חוזר.</span>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <span class="n">9</span>
+  <p class="eyebrow">אם נתאים את זה אליכם</p>
+  <h2>מה עובר כמו שהוא, ומה נבנה מחדש</h2>
+  <div class="grid g2">
+    <div class="card" style="border-color:rgba(15,122,82,.3)">
+      <h3 style="color:var(--green)">עובר כמעט כמו שהוא</h3>
+      <p>מנוע בחירת המסלול · מאגר המלגות · חשבון הכסף · מסך החסמים ·
+         מסך הרכזת · מסע וזיכרון מצב</p>
+    </div>
+    <div class="card" style="border-color:rgba(251,133,0,.4)">
+      <h3 style="color:#8a4d00">נבנה מחדש לתחומים שלכם</h3>
+      <p>תשע ההתנסויות — הן הייטק. <b>המנגנון זהה, התוכן מתחלף.</b><br>
+         והחיבור הוא ל-Salesforce ולא למערכת שלנו.</p>
+    </div>
+  </div>
+  <p class="note">ההתאמה היא פרויקט מוגדר, לא "עוד כמה שינויים" — וכדאי שנדבר עליו ככזה.</p>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <span class="n">10</span>
+  <h2>הצעד הבא שאני מציע</h2>
+  <p class="lead">לא להחליט על מערכת — <b>לבדוק הנחה אחת.</b></p>
+  <div class="grid g3" style="max-width:46rem">
+    <div class="card"><div class="k">30</div><div class="l">משתתפים</div></div>
+    <div class="card"><div class="k">3</div><div class="l">חודשים</div></div>
+    <div class="card"><div class="k">1</div><div class="l">מרכז, רכזת אחת</div></div>
+  </div>
+  <p style="margin-top:1.5rem"><b>מה שנדע בסופו:</b> כמה מהם נכנסו · כמה הגיעו לבחירת מסלול ·
+     ומה הרכזת ראתה שהיא לא רואה היום.</p>
+  <div class="sep"></div>
+  <footer>
+    <b>נתי רוטשטיין</b> · תוכנית אינטק, טק-קריירה<br>
+    hasifaapp.vercel.app
+  </footer>
+</section>
+
+<script>
+/* ניווט במקלדת — חיצים ו-PageUp/Down מדלגים בין שקופיות */
+const slides = [...document.querySelectorAll(".slide")];
+let i = 0;
+addEventListener("keydown", e => {
+  const fwd = ["ArrowLeft", "ArrowDown", "PageDown", " "].includes(e.key);
+  const back = ["ArrowRight", "ArrowUp", "PageUp"].includes(e.key);
+  if (!fwd && !back) return;
+  e.preventDefault();
+  i = Math.max(0, Math.min(slides.length - 1, i + (fwd ? 1 : -1)));
+  slides[i].scrollIntoView({ behavior: "smooth" });
+});
+addEventListener("scroll", () => {
+  const mid = scrollY + innerHeight / 2;
+  i = slides.findIndex(s => s.offsetTop <= mid && s.offsetTop + s.offsetHeight > mid);
+  if (i < 0) i = 0;
+}, { passive: true });
+</script>
