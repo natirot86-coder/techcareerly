@@ -75,9 +75,15 @@ footer{font-size:.88rem;color:var(--muted);font-weight:300}
 .srow{position:relative;display:flex;align-items:flex-start;min-height:8.4rem}
 .srow.back{flex-direction:row-reverse}
 .srow .dash{position:absolute;top:2.05rem;right:8%;left:8%;border-top:3px dashed #ddd6c9}
-.arc{position:absolute;top:2.05rem;width:3.2rem;height:6.3rem;border:3px dashed #ddd6c9;border-top:none}
-.arc.l{left:2.5%;border-inline-end:none;border-radius:0 0 0 3.2rem}
-.arc.r{right:2.5%;border-inline-start:none;border-radius:0 0 3.2rem 0}
+/*
+  הקשת היא **חצי עיגול ולא רבע** — "U" שיוצא מקצה הקו העליון, מקיף משמאל,
+  וחוזר בדיוק לקצה הקו התחתון. הגובה שווה לגובה שורה שלמה, כי זה המרחק
+  בין שני הקווים המקווקווים. והימין שלה מיושר ל-8% — בדיוק איפה שהקו נגמר.
+*/
+.arc{position:absolute;top:2.05rem;width:2.6rem;height:8.4rem;
+  border:3px dashed #ddd6c9;border-right:none;
+  border-top-left-radius:2.6rem;border-bottom-left-radius:2.6rem}
+.arc.l{left:calc(8% - 2.6rem)}
 .stn{flex:1;text-align:center;position:relative;z-index:1}
 .dot{width:3.3rem;height:3.3rem;border-radius:999px;display:inline-grid;place-items:center;
   font-size:1.25rem;background:#f0ece3;color:#a8a195;box-shadow:0 0 0 6px var(--paper)}
@@ -296,9 +302,9 @@ footer{font-size:.88rem;color:var(--muted);font-weight:300}
     <div>
       <img src="shots/coord-map.png" alt="מפת המסע של משתתף"
         style="width:100%;border:1px solid var(--line);border-radius:1rem;display:block;box-shadow:0 10px 30px rgba(2,62,138,.08)">
-      <p class="cap">השם והטלפון מטושטשים — זה משתתף אמיתי</p>
+      <p class="cap">שתים-עשרה תחנות: מה הושלם, איפה הוא עכשיו, ומה עוד לפניו</p>
     </div>
-  </div>>
+  </div>
   <p class="note" style="margin-top:.9rem">
     שתי שתיקות שונות: <b>"נעלם" מול "נכנס ולא מתקדם"</b> — והשנייה דחופה יותר,
     כי זה מי שמנסה ולא יבקש עזרה לבד. <b>ובכוונה אין במסך ציונים והשוואות.</b>
