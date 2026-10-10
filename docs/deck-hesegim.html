@@ -68,17 +68,28 @@ li{font-size:clamp(.96rem,1.35vw,1.1rem);margin-bottom:.4rem;font-weight:300}
 .sep{height:1px;background:var(--line);margin:1.2rem 0;max-width:40rem}
 footer{font-size:.88rem;color:var(--muted);font-weight:300}
 
-/* מסע הלקוח */
-.flow{display:flex;align-items:stretch;gap:.35rem;margin-top:1.4rem;overflow-x:auto;padding-bottom:.5rem}
-.step{flex:1;min-width:6.8rem;background:#fff;border:1px solid var(--line);border-radius:.8rem;
-  padding:.7rem .6rem;text-align:center}
-.step .sn{font-size:.7rem;color:var(--muted);font-weight:500}
-.step .st{font-size:.92rem;font-weight:600;color:var(--navy);line-height:1.3;margin-top:.08rem}
-.step.end{background:var(--green-soft);border-color:rgba(15,122,82,.3)}
-.step.end .st{color:var(--green)}
-.meet{flex:0 0 auto;align-self:center;background:var(--orange-soft);color:#8a4d00;
-  border:1px solid rgba(251,133,0,.35);border-radius:999px;padding:.28rem .5rem;
-  font-size:.7rem;font-weight:600;white-space:nowrap}
+/* ── מסע הלקוח — סרפנטינה, באותה שפה ויזואלית כמו המפה שבאפליקציה ───────
+   אותם עיגולים, אותו קו מקווקו ואותן תוויות — אבל **רק השלבים הקונקרטיים**
+   ולא 12 התחנות. מי שיראה אחר כך את המסך האמיתי יזהה אותו מיד. */
+.serp{margin-top:1.4rem;max-width:62rem;align-self:center;width:100%}
+.srow{position:relative;display:flex;align-items:flex-start;min-height:8.4rem}
+.srow.back{flex-direction:row-reverse}
+.srow .dash{position:absolute;top:2.05rem;right:8%;left:8%;border-top:3px dashed #ddd6c9}
+.arc{position:absolute;top:2.05rem;width:3.2rem;height:6.3rem;border:3px dashed #ddd6c9;border-top:none}
+.arc.l{left:2.5%;border-inline-end:none;border-radius:0 0 0 3.2rem}
+.arc.r{right:2.5%;border-inline-start:none;border-radius:0 0 3.2rem 0}
+.stn{flex:1;text-align:center;position:relative;z-index:1}
+.dot{width:3.3rem;height:3.3rem;border-radius:999px;display:inline-grid;place-items:center;
+  font-size:1.25rem;background:#f0ece3;color:#a8a195;box-shadow:0 0 0 6px var(--paper)}
+.dot.done{background:var(--green);color:#fff}
+.dot.goal{background:var(--green-soft);color:var(--green);border:2px solid var(--green)}
+.dot.meet{background:var(--orange-soft);color:#8a4d00;border:2px solid var(--orange);
+  width:2.8rem;height:2.8rem;font-size:1rem;margin-top:.25rem}
+.stn .lbl{display:block;font-size:.86rem;font-weight:600;color:var(--navy);
+  margin-top:.45rem;line-height:1.3;padding:0 .25rem}
+.stn .lbl.m{color:#8a4d00;font-weight:500;font-size:.79rem}
+.stn .pill{display:inline-block;background:var(--navy-soft);color:var(--navy);
+  border-radius:999px;padding:.1rem .55rem;font-size:.7rem;font-weight:600;margin-bottom:.35rem}
 
 /* AI + אדם */
 .duo{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:stretch;
@@ -128,20 +139,8 @@ footer{font-size:.88rem;color:var(--muted);font-weight:300}
     </p>
   </div>
   <div>
-    <svg viewBox="0 0 220 300" width="100%" style="max-width:14rem;display:block;margin:0 auto" role="img" aria-label="גלידה בשלושה טעמים עם כפית טעימה">
-      <path d="M72 166 L110 288 L148 166 Z" fill="#d9a066"/>
-      <path d="M72 166 L110 288 L148 166 Z" fill="none" stroke="#b9854f" stroke-width="2"/>
-      <path d="M84 194 L136 194 M92 220 L128 220 M100 246 L120 246"
-            stroke="#b9854f" stroke-width="2" opacity=".55"/>
-      <circle cx="86" cy="148" r="33" fill="#e8a87c"/>
-      <circle cx="134" cy="148" r="33" fill="#9fc4a8"/>
-      <circle cx="110" cy="106" r="36" fill="#8fa9d4"/>
-      <circle cx="98" cy="96" r="9" fill="#fff" opacity=".35"/>
-      <g transform="rotate(-18 178 120)">
-        <rect x="174" y="110" width="7" height="76" rx="3.5" fill="#c9c3b6"/>
-        <ellipse cx="177.5" cy="106" rx="13" ry="10" fill="#e8a87c"/>
-      </g>
-    </svg>
+    <img src="shots/gelato.jpg" alt="גלידרייה עם שלל טעמים"
+      style="width:100%;border-radius:1.2rem;box-shadow:0 14px 40px rgba(2,62,138,.14);display:block">
     <p class="cap">טעימה אחת שווה עשרה עמודים</p>
   </div>
 </section>
@@ -186,18 +185,34 @@ footer{font-size:.88rem;color:var(--muted);font-weight:300}
   <span class="n">4</span>
   <p class="eyebrow">מה בנינו</p>
   <h2>מסע אחד, שזוכר איפה עצרת</h2>
-  <div class="flow">
-    <div class="step"><div class="sn">1</div><div class="st">פתיחת חשבון</div></div>
-    <div class="step"><div class="sn">2</div><div class="st">היכרות</div></div>
-    <div class="meet">🤝 פגישה</div>
-    <div class="step"><div class="sn">3</div><div class="st">טעימות מקצוע</div></div>
-    <div class="meet">🤝 פגישה</div>
-    <div class="step"><div class="sn">4</div><div class="st">בחירת מסלול ומוסד</div></div>
-    <div class="meet">🤝 פגישה</div>
-    <div class="step"><div class="sn">5</div><div class="st">מלגות והרשמה</div></div>
-    <div class="step end"><div class="sn">6</div><div class="st">סטודנט/ית 🎓</div></div>
+  <div class="serp">
+    <div class="srow">
+      <span class="dash"></span><span class="arc l"></span>
+      <span class="stn"><span class="pill">שלב 1</span><br><span class="dot done">📝</span>
+        <span class="lbl">פתיחת חשבון</span></span>
+      <span class="stn"><span class="pill">שלב 2</span><br><span class="dot done">👋</span>
+        <span class="lbl">היכרות</span></span>
+      <span class="stn"><span class="dot meet">🤝</span>
+        <span class="lbl m">פגישה 1</span></span>
+      <span class="stn"><span class="pill">שלב 3</span><br><span class="dot done">🧪</span>
+        <span class="lbl">טעימות מקצוע</span></span>
+      <span class="stn"><span class="dot meet">🤝</span>
+        <span class="lbl m">פגישה 2 — בחירת תחום</span></span>
+    </div>
+    <!-- בשורה האחרונה אין קשת — אין לאן להמשיך -->
+    <div class="srow back">
+      <span class="dash"></span>
+      <span class="stn"><span class="pill">שלב 4</span><br><span class="dot done">🎓</span>
+        <span class="lbl">בחירת מסלול ומוסד</span></span>
+      <span class="stn"><span class="dot meet">🤝</span>
+        <span class="lbl m">פגישה 3 — נעילת מסלול</span></span>
+      <span class="stn"><span class="pill">שלב 5</span><br><span class="dot done">💰</span>
+        <span class="lbl">מלגות והרשמה</span></span>
+      <span class="stn"><span class="pill">שלב 6</span><br><span class="dot goal">🎓</span>
+        <span class="lbl" style="color:var(--green)">סטודנט/ית</span></span>
+    </div>
   </div>
-  <div class="grid g3" style="max-width:48rem;margin-top:1.5rem">
+  <div class="grid g3" style="max-width:46rem;margin-top:.6rem">
     <div class="card"><div class="k">9</div><div class="l">תחומים להתנסות</div></div>
     <div class="card"><div class="k">69</div><div class="l">מוסדות ממופים</div></div>
     <div class="card"><div class="k">29</div><div class="l">מלגות ותוכניות</div></div>
@@ -276,10 +291,14 @@ footer{font-size:.88rem;color:var(--muted);font-weight:300}
   <h2>מי צריך אותי היום</h2>
   <p class="lead">לא טבלה של כולם — <b>רק מי שתקוע, שקט, או פספס פגישה.</b>
      ולצד זה, מפה של כל משתתף: איפה הוא עכשיו ובמה נגע.</p>
-  <div class="phones" style="margin-top:1.3rem">
-    <div class="phone crop"><img src="shots/coord-big.png" alt="התמונה הגדולה"></div>
-    <div class="phone crop"><img src="shots/coord-journey.png" alt="מפת המסע של משתתף"></div>
-  </div>
+  <div style="margin-top:1.1rem;display:grid;grid-template-columns:auto 1fr;gap:1.2rem;align-items:center">
+    <div class="phone crop" style="width:min(11.5rem,34vw)"><img src="shots/coord-big.png" alt="התמונה הגדולה"></div>
+    <div>
+      <img src="shots/coord-map.png" alt="מפת המסע של משתתף"
+        style="width:100%;border:1px solid var(--line);border-radius:1rem;display:block;box-shadow:0 10px 30px rgba(2,62,138,.08)">
+      <p class="cap">השם והטלפון מטושטשים — זה משתתף אמיתי</p>
+    </div>
+  </div>>
   <p class="note" style="margin-top:.9rem">
     שתי שתיקות שונות: <b>"נעלם" מול "נכנס ולא מתקדם"</b> — והשנייה דחופה יותר,
     כי זה מי שמנסה ולא יבקש עזרה לבד. <b>ובכוונה אין במסך ציונים והשוואות.</b>
