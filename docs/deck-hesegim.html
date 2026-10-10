@@ -1,6 +1,5 @@
 <title>אינטק · טק-קריירה</title>
 <meta name="robots" content="noindex">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -26,50 +25,74 @@ body{direction:rtl;background:var(--paper);color:var(--ink);
 .eyebrow{font-size:.82rem;letter-spacing:.14em;color:var(--muted);margin:0 0 .7rem;font-weight:500}
 h1{font-size:clamp(2.1rem,5.2vw,3.6rem);line-height:1.1;margin:0;text-wrap:balance;
   letter-spacing:-.025em;font-weight:800}
-h2{font-size:clamp(1.5rem,3.4vw,2.35rem);line-height:1.2;margin:0 0 .9rem;text-wrap:balance;
+h2{font-size:clamp(1.45rem,3.3vw,2.3rem);line-height:1.2;margin:0 0 .85rem;text-wrap:balance;
   color:var(--navy);font-weight:700;letter-spacing:-.02em}
 h3{font-size:1.02rem;margin:0 0 .25rem;color:var(--navy);font-weight:600}
-p{font-size:clamp(1rem,1.45vw,1.18rem);max-width:40rem;margin:.55rem 0;font-weight:300}
+p{font-size:clamp(.98rem,1.4vw,1.15rem);max-width:40rem;margin:.55rem 0;font-weight:300}
 p b,li b{font-weight:600}
-.lead{font-size:clamp(1.05rem,1.8vw,1.4rem);color:var(--muted);max-width:40rem;font-weight:300}
+.lead{font-size:clamp(1.05rem,1.75vw,1.35rem);color:var(--muted);max-width:40rem;font-weight:300}
 
-/* ── מסגרת טלפון ─────────────────────────────────────────── */
-.phone{width:min(17rem,74vw);margin:0 auto;border:9px solid #16181d;border-radius:2.2rem;
+.phone{width:min(16.5rem,72vw);margin:0 auto;border:9px solid #16181d;border-radius:2.2rem;
   overflow:hidden;background:#000;box-shadow:0 18px 50px rgba(2,62,138,.16);position:relative}
 .phone::before{content:"";position:absolute;top:0;right:50%;transform:translateX(50%);
-  width:5.2rem;height:1.05rem;background:#16181d;border-radius:0 0 .8rem .8rem;z-index:2}
+  width:5rem;height:1rem;background:#16181d;border-radius:0 0 .8rem .8rem;z-index:2}
 .phone img{display:block;width:100%;height:auto}
 .phone.crop img{margin-top:-4.6rem}
 .phones{display:flex;gap:1.1rem;justify-content:center;flex-wrap:wrap}
-.phones .phone{width:min(13.5rem,42vw)}
-.cap{text-align:center;font-size:.82rem;color:var(--muted);margin-top:.6rem}
+.phones .phone{width:min(13rem,42vw)}
+.cap{text-align:center;font-size:.82rem;color:var(--muted);margin-top:.6rem;font-weight:300}
 
-.grid{display:grid;gap:.9rem;margin-top:1.4rem}
+.grid{display:grid;gap:.9rem;margin-top:1.3rem}
 .g2{grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))}
 .g3{grid-template-columns:repeat(auto-fit,minmax(10rem,1fr))}
 .card{background:#fff;border:1px solid var(--line);border-radius:1rem;padding:1rem 1.2rem}
-.card .k{font-size:1.85rem;font-weight:800;color:var(--navy);line-height:1.1;letter-spacing:-.02em}
-.card .l{font-size:.92rem;color:var(--muted);margin-top:.1rem;font-weight:400}
-.card p{font-size:.95rem;margin:.35rem 0 0}
+.card .k{font-size:1.8rem;font-weight:800;color:var(--navy);line-height:1.1;letter-spacing:-.02em}
+.card .l{font-size:.9rem;color:var(--muted);margin-top:.1rem;font-weight:400}
+.card p{font-size:.94rem;margin:.35rem 0 0}
 
-.rows{display:flex;flex-direction:column;gap:.5rem;margin-top:1.3rem;max-width:44rem}
+.rows{display:flex;flex-direction:column;gap:.5rem;margin-top:1.2rem;max-width:44rem}
 .row{display:flex;align-items:center;gap:1rem;background:#fff;border:1px solid var(--line);
   border-radius:.75rem;padding:.7rem 1.05rem}
 .row .stage{font-weight:600;color:var(--navy);min-width:9.5rem;font-size:1rem}
-.row .what{color:var(--muted);font-size:.95rem;flex:1;font-weight:300}
+.row .what{color:var(--muted);font-size:.94rem;flex:1;font-weight:300}
 .row .blank{flex:0 0 7.5rem;border-bottom:1.5px dashed #c9c3b6;height:1.3rem}
 
 .quote{border-inline-start:4px solid var(--orange);background:#fff;border-radius:.6rem;
-  padding:.9rem 1.2rem;margin-top:1.3rem;font-size:clamp(1rem,1.6vw,1.22rem);max-width:40rem;font-weight:300}
-.note{color:var(--muted);font-size:.92rem;margin-top:1.2rem;max-width:38rem;font-weight:300}
+  padding:.85rem 1.15rem;margin-top:1.2rem;font-size:clamp(1rem,1.55vw,1.2rem);
+  max-width:40rem;font-weight:300}
+.note{color:var(--muted);font-size:.9rem;margin-top:1.1rem;max-width:38rem;font-weight:300}
 .kicker{display:inline-block;background:var(--navy);color:#fff;border-radius:999px;
-  padding:.22rem .85rem;font-size:.8rem;font-weight:600;margin-bottom:.9rem}
-ul{padding-inline-start:1.15rem;max-width:40rem;margin:.6rem 0}
-li{font-size:clamp(.98rem,1.4vw,1.12rem);margin-bottom:.45rem;font-weight:300}
-.sep{height:1px;background:var(--line);margin:1.3rem 0;max-width:40rem}
-footer{font-size:.9rem;color:var(--muted);font-weight:300}
-.scoops{display:flex;gap:.5rem;align-items:center;margin-bottom:1rem}
-.scoop{width:1.5rem;height:1.5rem;border-radius:50%}
+  padding:.2rem .8rem;font-size:.78rem;font-weight:600;margin-bottom:.85rem}
+ul{padding-inline-start:1.15rem;max-width:40rem;margin:.55rem 0}
+li{font-size:clamp(.96rem,1.35vw,1.1rem);margin-bottom:.4rem;font-weight:300}
+.sep{height:1px;background:var(--line);margin:1.2rem 0;max-width:40rem}
+footer{font-size:.88rem;color:var(--muted);font-weight:300}
+
+/* מסע הלקוח */
+.flow{display:flex;align-items:stretch;gap:.35rem;margin-top:1.4rem;overflow-x:auto;padding-bottom:.5rem}
+.step{flex:1;min-width:6.8rem;background:#fff;border:1px solid var(--line);border-radius:.8rem;
+  padding:.7rem .6rem;text-align:center}
+.step .sn{font-size:.7rem;color:var(--muted);font-weight:500}
+.step .st{font-size:.92rem;font-weight:600;color:var(--navy);line-height:1.3;margin-top:.08rem}
+.step.end{background:var(--green-soft);border-color:rgba(15,122,82,.3)}
+.step.end .st{color:var(--green)}
+.meet{flex:0 0 auto;align-self:center;background:var(--orange-soft);color:#8a4d00;
+  border:1px solid rgba(251,133,0,.35);border-radius:999px;padding:.28rem .5rem;
+  font-size:.7rem;font-weight:600;white-space:nowrap}
+
+/* AI + אדם */
+.duo{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:stretch;
+  margin-top:1.3rem;max-width:46rem}
+@media (max-width:48rem){.duo{grid-template-columns:1fr}}
+.duo .side{background:#fff;border:1px solid var(--line);border-radius:1rem;padding:1rem 1.15rem}
+.duo .side.ai{border-color:rgba(2,62,138,.3)}
+.duo .side.hi{border-color:rgba(251,133,0,.45)}
+.duo .link{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:.3rem;color:var(--muted);font-size:.78rem;font-weight:500}
+.duo .ring{width:2.8rem;height:2.8rem;border-radius:50%;border:2px dashed #c9c3b6;
+  display:grid;place-items:center;font-size:1.2rem}
+.duo ul{margin:0;padding-inline-start:1rem}
+.duo li{font-size:.9rem;margin-bottom:.2rem}
 </style>
 
 <!-- 1 · פתיחה -->
@@ -82,26 +105,44 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
       אפליקציה שמלווה משתתף מהשאלון הראשון ועד שהוא סטודנט,
       ונותנת לו <b>להתנסות במקצוע לפני שהוא בוחר בו</b>.
     </p>
-    <p class="note">טק-קריירה מכשירה יוצאי אתיופיה להייטק מאז 2013. אוקטובר 2026.</p>
+    <p class="note">טק-קריירה · אוקטובר 2026</p>
   </div>
   <div class="phone"><img src="shots/journey.png" alt="מסך המסע באפליקציה"></div>
 </section>
 
 <!-- 2 · איך זה התחיל -->
-<section class="slide">
+<section class="slide split">
   <span class="n">2</span>
-  <p class="eyebrow">איך זה התחיל</p>
-  <div class="scoops">
-    <span class="scoop" style="background:#e8a87c"></span>
-    <span class="scoop" style="background:#9fc4a8"></span>
-    <span class="scoop" style="background:#8fa9d4"></span>
+  <div>
+    <p class="eyebrow">איך זה התחיל</p>
+    <h2>בגלידרייה טועמים לפני שקונים</h2>
+    <p>ככה הסברנו את התוכנית למשתתפים שלנו. <b>בעולם הייעוץ וההכוונה יש היום
+       המון שאלונים והמון פגישות — ומעט מאוד טעימה.</b></p>
+    <p>אדם שלא ראה מימיו מה עושה מנתח נתונים לא באמת יכול להחליט
+       אם זה מה שהוא רוצה לעשות בעשר השנים הבאות.</p>
+    <div class="quote">אף אחד לא בוחר טעם מתוך תפריט.</div>
+    <p class="note">
+      <b>העברנו את תוכנית אינטק עם התנסות אמיתית ליותר מ-600 משתתפים</b> —
+      בהרצאות ובמשימות בית. <b>עכשיו שדרגנו את זה לאפליקציה</b>, כדי שההתנסות
+      תהיה זמינה לכל אחד, בכל שעה, מהנייד.
+    </p>
   </div>
-  <h2>בגלידרייה טועמים לפני שקונים</h2>
-  <p>ככה הסברנו את התוכנית למשתתפים שלנו — <b>ואז הבנו שאנחנו לא באמת נותנים לטעום.</b></p>
-  <p>היו שאלונים, היו פגישות, והיה הרבה מידע טוב. אבל אדם שלא ראה מימיו מה עושה
-     מנתח נתונים — <b>לא באמת יכול לבחור אם זה מה שהוא רוצה לעשות בעשר השנים הבאות.</b></p>
-  <div class="quote">
-    אף אחד לא בוחר טעם מתוך תפריט.
+  <div>
+    <svg viewBox="0 0 220 300" width="100%" style="max-width:14rem;display:block;margin:0 auto" role="img" aria-label="גלידה בשלושה טעמים עם כפית טעימה">
+      <path d="M72 166 L110 288 L148 166 Z" fill="#d9a066"/>
+      <path d="M72 166 L110 288 L148 166 Z" fill="none" stroke="#b9854f" stroke-width="2"/>
+      <path d="M84 194 L136 194 M92 220 L128 220 M100 246 L120 246"
+            stroke="#b9854f" stroke-width="2" opacity=".55"/>
+      <circle cx="86" cy="148" r="33" fill="#e8a87c"/>
+      <circle cx="134" cy="148" r="33" fill="#9fc4a8"/>
+      <circle cx="110" cy="106" r="36" fill="#8fa9d4"/>
+      <circle cx="98" cy="96" r="9" fill="#fff" opacity=".35"/>
+      <g transform="rotate(-18 178 120)">
+        <rect x="174" y="110" width="7" height="76" rx="3.5" fill="#c9c3b6"/>
+        <ellipse cx="177.5" cy="106" rx="13" ry="10" fill="#e8a87c"/>
+      </g>
+    </svg>
+    <p class="cap">טעימה אחת שווה עשרה עמודים</p>
   </div>
 </section>
 
@@ -110,16 +151,29 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
   <span class="n">3</span>
   <p class="eyebrow">העיקרון</p>
   <h2>מה שמכונה עושה טוב, ומה שרק אדם יכול</h2>
-  <div class="grid g2" style="max-width:44rem">
-    <div class="card">
-      <h3>האפליקציה</h3>
-      <p>נותנת להתנסות · זמינה ב-2 בלילה · זוכרת איפה הוא עצר ·
-         מחשבת מלגות · ומראה לרכזת מה קרה</p>
+  <div class="duo">
+    <div class="side ai">
+      <h3>🤖 האפליקציה</h3>
+      <ul>
+        <li>נותנת להתנסות</li>
+        <li>זמינה ב-2 בלילה</li>
+        <li>זוכרת איפה הוא עצר</li>
+        <li>מחשבת מלגות ופערים</li>
+      </ul>
     </div>
-    <div class="card" style="border-color:rgba(251,133,0,.4)">
-      <h3 style="color:#8a4d00">הרכזת</h3>
-      <p>רואה אותו · מאמינה בו · יודעת מתי ללחוץ ומתי לתת מרחב ·
-         <b>וזה מה שגורם לו להמשיך</b></p>
+    <div class="link">
+      <span style="font-size:.74rem">מה שהוא עשה</span>
+      <span class="ring">⇄</span>
+      <span style="font-size:.74rem">במה להתמקד</span>
+    </div>
+    <div class="side hi">
+      <h3 style="color:#8a4d00">🫱 הרכזת</h3>
+      <ul>
+        <li>רואה אותו באמת</li>
+        <li>מאמינה בו</li>
+        <li>יודעת מתי ללחוץ ומתי לתת מרחב</li>
+        <li><b>וזה מה שגורם לו להמשיך</b></li>
+      </ul>
     </div>
   </div>
   <div class="quote">
@@ -132,8 +186,18 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
   <span class="n">4</span>
   <p class="eyebrow">מה בנינו</p>
   <h2>מסע אחד, שזוכר איפה עצרת</h2>
-  <div class="grid g3" style="max-width:48rem">
-    <div class="card"><div class="k">6</div><div class="l">שלבים, נפתחים בהדרגה</div></div>
+  <div class="flow">
+    <div class="step"><div class="sn">1</div><div class="st">פתיחת חשבון</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">היכרות</div></div>
+    <div class="meet">🤝 פגישה</div>
+    <div class="step"><div class="sn">3</div><div class="st">טעימות מקצוע</div></div>
+    <div class="meet">🤝 פגישה</div>
+    <div class="step"><div class="sn">4</div><div class="st">בחירת מסלול ומוסד</div></div>
+    <div class="meet">🤝 פגישה</div>
+    <div class="step"><div class="sn">5</div><div class="st">מלגות והרשמה</div></div>
+    <div class="step end"><div class="sn">6</div><div class="st">סטודנט/ית 🎓</div></div>
+  </div>
+  <div class="grid g3" style="max-width:48rem;margin-top:1.5rem">
     <div class="card"><div class="k">9</div><div class="l">תחומים להתנסות</div></div>
     <div class="card"><div class="k">69</div><div class="l">מוסדות ממופים</div></div>
     <div class="card"><div class="k">29</div><div class="l">מלגות ותוכניות</div></div>
@@ -155,9 +219,14 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
        TechFlow? הוא כותב שאילתה ראשונה בחייו, ורואה את התשובה מופיעה.
        <b>חמש עשרה דקות.</b></p>
     <div class="sep"></div>
-    <h3>ואז נשאלות שש שאלות</h3>
-    <p>לא "אהבת?" — אלא <b>כמה זה עניין אותך · כמה הרגשת שאתה מסוגל ·
-       ומה אתה חושב שייצא מזה.</b> שלושת אלה מנבאים התמדה, וזה מה שהרכזת רואה.</p>
+    <h3>ואז שלוש שאלות</h3>
+    <p style="margin-top:.3rem">
+      <b>כמה זה עניין אותך?</b> · <b>כמה הרגשת שאתה מסוגל?</b> ·
+      <b>מה לדעתך ייצא מזה בסוף?</b>
+    </p>
+    <p class="note" style="margin-top:.5rem">
+      לא "אהבת?" — שלושת אלה הם מה שמנבא התמדה במחקר, והם מה שהרכזת רואה.
+    </p>
   </div>
   <div class="phone"><img src="shots/taste.png" alt="תעלומת SQL"></div>
 </section>
@@ -172,7 +241,7 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
        <b>מסונן לפי מה שהמשתתף עצמו ענה</b> — לא קטלוג שצריך לחפש בו.</p>
     <p>וכל נתון נושא <b>תאריך אימות</b>. מה שלא אומת מסומן כך בפירוש,
        כדי שרכזת תדע על מה אפשר להישען.</p>
-    <div class="quote" style="font-size:1.05rem">
+    <div class="quote" style="font-size:1.02rem">
       ידע על מוסדות ומלגות מתיישן תוך שנה.
       <b>הערך אינו הרשימה — הוא המקום שמחזיק אותה מעודכנת.</b>
     </div>
@@ -194,7 +263,7 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
       <div class="card" style="border-color:var(--orange)">
         <div class="k" style="color:#8a4d00">4,203 ₪</div><div class="l">הפער</div></div>
     </div>
-    <p style="margin-top:1.1rem"><b>וגם חשבון השעות:</b> מי שצובר שלוש מלגות
+    <p style="margin-top:1rem"><b>וגם חשבון השעות:</b> מי שצובר שלוש מלגות
        מתחייב ל-580 שעות התנדבות בשנה — <b>ואז הוא לא נושר ממלגה, הוא נושר מהלימודים.</b></p>
   </div>
   <div class="phone"><img src="shots/money.png" alt="חשבון המלגות"></div>
@@ -207,11 +276,11 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
   <h2>מי צריך אותי היום</h2>
   <p class="lead">לא טבלה של כולם — <b>רק מי שתקוע, שקט, או פספס פגישה.</b>
      ולצד זה, מפה של כל משתתף: איפה הוא עכשיו ובמה נגע.</p>
-  <div class="phones" style="margin-top:1.4rem">
+  <div class="phones" style="margin-top:1.3rem">
     <div class="phone crop"><img src="shots/coord-big.png" alt="התמונה הגדולה"></div>
     <div class="phone crop"><img src="shots/coord-journey.png" alt="מפת המסע של משתתף"></div>
   </div>
-  <p class="note" style="margin-top:1rem">
+  <p class="note" style="margin-top:.9rem">
     שתי שתיקות שונות: <b>"נעלם" מול "נכנס ולא מתקדם"</b> — והשנייה דחופה יותר,
     כי זה מי שמנסה ולא יבקש עזרה לבד. <b>ובכוונה אין במסך ציונים והשוואות.</b>
   </p>
@@ -260,19 +329,19 @@ footer{font-size:.9rem;color:var(--muted);font-weight:300}
   </p>
 </section>
 
-<!-- 11 · הצעד הבא -->
+<!-- 11 · ומכאן -->
 <section class="slide">
   <span class="n">11</span>
-  <h2>הצעד שאני מציע</h2>
-  <p class="lead">לא להחליט על מערכת. <b>לשבת עם שתיים-שלוש רכזות.</b></p>
-  <div class="grid g3" style="max-width:36rem">
-    <div class="card"><div class="k">45</div><div class="l">דקות</div></div>
-    <div class="card"><div class="k">2–3</div><div class="l">רכזות</div></div>
-    <div class="card"><div class="k">0 ₪</div><div class="l">ובלי מחויבות</div></div>
-  </div>
-  <p style="margin-top:1.4rem">
-    אני מעביר להן את זה בעצמי, והן אומרות מה הן חושבות.
-    <b>מה שהן יגידו שווה יותר מכל מה שאני יכול לומר כאן.</b>
+  <p class="eyebrow">ומכאן</p>
+  <h1 style="font-size:clamp(1.9rem,4.4vw,3rem)">איך את רואה<br>את הצעד הבא?</h1>
+  <p class="lead" style="margin-top:1.2rem">
+    אני לא בא עם הצעה מוכנה. <b>אני רוצה להבין מה יהיה נכון מבחינתכם.</b>
+  </p>
+  <div class="sep" style="margin-top:2rem"></div>
+  <p class="note" style="margin-top:0">
+    ואם יעזור — אחת האפשרויות שקל להתחיל בה:
+    <b>45 דקות עם שתיים-שלוש רכזות, אני מעביר להן את זה בעצמי, בלי מחויבות.</b>
+    מה שהן יגידו שווה יותר מכל מה שאני יכול לומר כאן.
   </p>
   <div class="sep"></div>
   <footer>
