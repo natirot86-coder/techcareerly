@@ -347,7 +347,15 @@ export async function GET(req: NextRequest) {
    */
   let board: (BoardRow & { inApp: boolean; nextMeeting: string | null })[] | null = null;
   try {
-    const rows = await mondayBoard(auth.role === "coordinator" ? auth.name : null);
+    /*
+     * ⚠️ **הבורר "צפייה בתור" לא הגיע עד לכאן** (נתי, 11.10). הפגישות סוננו
+     * לפי effectiveId והלוח לפי תפקיד בלבד — אז כל רכזת שנבחרה הציגה את
+     * הפגישות שלה ואת **כל** הלוח. מסך שחצי ממנו מסונן גרוע מכלום.
+     * ושם שלא נמצא בסגל ⇒ רשימה ריקה, לא הכל: אנשים של רכזת אחרת גרועים מריק.
+     */
+    const boardFor = auth.role === "coordinator" ? auth.name
+      : effectiveId ? (staffNames.get(effectiveId) ?? "\u0000") : null;
+    const rows = await mondayBoard(boardFor);
     if (rows) {
       const appPhones = new Set(
         (candidates.data ?? []).map(c => String(c.phone ?? "").replace(/\D/g, "")).filter(Boolean)

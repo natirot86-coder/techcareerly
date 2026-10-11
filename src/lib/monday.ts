@@ -239,6 +239,17 @@ export type BoardRow = {
 
 const COL_EXTRA = { src: "color_mm7tee80", track: "color_mm7tahjd" } as const;
 
+/*
+ * ⚠️ **בוגרי הקורס שסיון דיברה איתם באוגוסט — לפני התוכנית** (נתי, 11.10).
+ * 13 שורות, כולן "סיימ/ה תהליך". הן בלוח כי זה התיעוד, ולא במסך הניהול
+ * כי הן לא תהליך: הרכזת הייתה רואה 13 "סיימו" ובטוחה שזה ההישג של
+ * אינטק. אותו עיקרון כמו PROGRAM_START בפגישות.
+ *
+ * הסינון לפי **הערוץ ולא לפי המסלול**: שלושה מ"בוגרים — תואר בלבד"
+ * הגיעו מהוובינר והם בתהליך פעיל — סינון לפי מסלול היה מעלים אותם.
+ */
+const PRE_PROGRAM_SOURCE = "בוגר שסיון דיברה איתו";
+
 /** כל השורות בלוח. `coordinatorName` ריק ⇒ הכל (מנהלת/owner) */
 export async function mondayBoard(coordinatorName?: string | null): Promise<BoardRow[] | null> {
   const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track]
@@ -264,6 +275,7 @@ export async function mondayBoard(coordinatorName?: string | null): Promise<Boar
     }))
     /* דיווח בלבד אינו משתתף — ראה STATUS.reportOnly */
     .filter(r => r.status !== STATUS.reportOnly)
+    .filter(r => r.source !== PRE_PROGRAM_SOURCE)
     /* התאמה לפי שם פרטי מכווץ — "סיון" מול "סיוון", בדיוק כמו בתוויות */
     .filter(r => !want || heKey(r.coordinator.split(/\s+/)[0]) === want);
 }
