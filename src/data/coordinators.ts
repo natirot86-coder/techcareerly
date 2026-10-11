@@ -61,8 +61,3 @@ export const COORDINATOR_ROSTER: CoordinatorProfile[] = [
     active: true,
   },
 ];
-
-/** הרכזת של מועמד. עד שיש שדה שיוך ב-candidates — כולם אצל הראשונה הפעילה */
-export function coordinatorProfileFor(_candidateId?: string | null): CoordinatorProfile {
-  return COORDINATOR_ROSTER.find(c => c.active) ?? COORDINATOR_ROSTER[0];
-}

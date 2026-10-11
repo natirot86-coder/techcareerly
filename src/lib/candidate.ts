@@ -658,45 +658,48 @@ export async function savePathsAnswers(patch: {
 }
 
 /**
- * הרכזת של המועמד — מה-DB (טבלת coordinators + השיוך בשורת המועמד).
- * בלי שיוך — הרכזת הפעילה הראשונה. RLS מתיר למועמד לקרוא רכזות פעילות.
+ * הרכז/ת של המשתתף/ת — **נקבע/ת בשרת** (/api/candidate/my-coordinator).
+ *
+ * ⚠️ עד 11.10 זה נבחר כאן, בדפדפן: בלי שיוך — "הרכז/ת הפעיל/ה הראשון/ה
+ * בטבלה", כלומר נתי, שלא מלווה משתתפים. משתתפת של סיון ראתה את היומן ואת
+ * השם שלו. השרת בודק שיוך ⇐ טלפון בלוח אינטק ⇐ רכז/ת קליטה, ולעולם לא
+ * בוחר מי שלא מלווה. null = לא ידוע — והמסך אומר את זה ולא מנחש.
  */
 export type MyCoordinator = {
+  id: string;
   name: string;
+  /** "פגישה ראשונה עם סיון" — שם פרטי בלבד */
+  firstName: string;
   phone: string;
-  /** קישורי Cal פר-פגישה (מה שאחרי cal.com/). ריק = לרכזת אין יומן משלה — נופלים לברירת המחדל */
+  /** קישורי Cal פר-פגישה (מה שאחרי cal.com/). ריק = לרכז/ת אין עדיין יומן לפגישה הזאת */
   calLinks: { 1: string; 2: string; 3: string };
 };
 
+let coordinatorCache: Promise<MyCoordinator | null> | null = null;
+
 export async function myCoordinator(): Promise<MyCoordinator | null> {
   if (!supabase) return null;
-  try {
-    const candidateId = await ensureCandidateId();
-    if (!candidateId) return null;
-    const { data: rows } = await supabase
-      .from("coordinators")
-      .select("id, name, phone, cal_m1, cal_m2, cal_m3")
-      .eq("active", true)
-      .order("created_at");
-    if (!rows?.length) return null;
-    const { data: cand } = await supabase
-      .from("candidates")
-      .select("coordinator_id")
-      .eq("id", candidateId)
-      .maybeSingle();
-    const mine = cand?.coordinator_id ? rows.find(r => r.id === cand.coordinator_id) : null;
-    const row = mine ?? rows[0];
-    /* נרמול לוואטסאפ: מקבלים 050... או 972... — ומחזירים תמיד בינלאומי */
-    const digits = (row.phone ?? "").replace(/\D/g, "");
-    const phone = digits.startsWith("0") ? "972" + digits.slice(1) : digits;
-    return {
-      name: row.name ?? "",
-      phone,
-      calLinks: { 1: row.cal_m1 ?? "", 2: row.cal_m2 ?? "", 3: row.cal_m3 ?? "" },
-    };
-  } catch {
-    return null;
-  }
+  /* כמה מסכים שואלים באותה טעינה — קריאה אחת לשרת */
+  if (coordinatorCache) return coordinatorCache;
+  coordinatorCache = (async () => {
+    try {
+      await ensureCandidateId();
+      const { data: { session } } = await supabase!.auth.getSession();
+      if (!session?.access_token) return null;
+      const r = await fetch("/api/candidate/my-coordinator", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!r.ok) return null;
+      const j = await r.json();
+      return (j.coordinator ?? null) as MyCoordinator | null;
+    } catch {
+      return null;
+    }
+  })();
+  const res = await coordinatorCache;
+  /* כישלון לא נשמר — הניסיון הבא ינסה שוב */
+  if (!res) coordinatorCache = null;
+  return res;
 }
 
 /**

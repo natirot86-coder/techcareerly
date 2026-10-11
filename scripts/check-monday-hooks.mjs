@@ -13,7 +13,11 @@ const WANT = {
     "__create_item": "שורה חדשה → קישור",
     "__change_name": "שינוי שם → קישור",
   },
-  "18396761860": { "color_mm4ms1kq": "החלטה סופית → יצירת שורה באינטק" },
+  "18396761860": {
+    "color_mm4ms1kq": "החלטה סופית → יצירת שורה באינטק",
+    /* שורה מהטופס נולדת עם החלטה מלאה ולא מפיקה אירוע שינוי (11.10) */
+    "__create_item": "שורה חדשה (טופס) → יצירת שורה באינטק",
+  },
 };
 async function gql(q){const r=await fetch("https://api.monday.com/v2",{method:"POST",
  headers:{Authorization:MT,"Content-Type":"application/json","API-Version":"2024-10"},body:JSON.stringify({query:q})});

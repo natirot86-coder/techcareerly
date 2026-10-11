@@ -25,6 +25,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { coordinatorByLabel, calUrl } from "@/lib/coordinatorLookup";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,27 @@ export async function GET(req: NextRequest) {
   let dest = APP_URL;
 
   try {
+    /*
+     * ── שכבה 1: הקישור לאפליקציה נושא את הרכז/ת (נתי, 11.10) ─────────────
+     * מי שהגיע מהלוח נרשם עד היום **בלי שיוך** — השיוך מגיע מהלוח רק כשמשנים
+     * את עמודת הרכז/ת, ואצלו היא כבר הייתה מלאה לפני שנרשם. ולכן ראה את
+     * היומן ואת השם של נתי. `?coord=` נקלט ב-ResumeTracker ונכתב בהרשמה —
+     * אותו מנגנון כמו קישור ההרשמה האישי של רכזת.
+     */
+    if (item && target === "app") {
+      const d = await monday<{ items: { column_values: { id: string; text: string | null }[] }[] }>(
+        `{ items(ids: [${item}]) { column_values(ids: ["${COL.coord}"]) { id text } } }`
+      );
+      const coordName = (d?.items?.[0]?.column_values?.[0]?.text ?? "").trim();
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.SUPABASE_SECRET_KEY;
+      if (coordName && url && key) {
+        const db = createClient(url, key, { auth: { persistSession: false } });
+        const c = await coordinatorByLabel(db, coordName);
+        if (c) dest = `${APP_URL}/?coord=${encodeURIComponent(c.id)}`;
+      }
+    }
+
     if (item && target === "cal") {
       const d = await monday<{ items: { column_values: { id: string; text: string | null }[] }[] }>(
         `{ items(ids: [${item}]) { column_values(ids: ["${COL.coord}"]) { id text } } }`
@@ -72,10 +94,8 @@ export async function GET(req: NextRequest) {
       const key = process.env.SUPABASE_SECRET_KEY;
       if (coordName && url && key) {
         const db = createClient(url, key, { auth: { persistSession: false } });
-        const { data } = await db.from("coordinators").select("cal_m1").ilike("name", coordName).limit(1);
-        const p = (data?.[0]?.cal_m1 ?? "").trim();
         /* בלי יומן — לאפליקציה. עדיף שיגיע למשהו מאשר לדף שגיאה */
-        if (p) dest = p.startsWith("http") ? p : `https://cal.com/${p}`;
+        dest = calUrl((await coordinatorByLabel(db, coordName))?.cal_m1) ?? dest;
       }
     }
 

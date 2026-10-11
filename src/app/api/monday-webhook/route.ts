@@ -26,6 +26,8 @@ import { normalizePhone } from "@/lib/candidate";
 import { waLink } from "@/lib/waLink";
 import { sendMail, welcomeEmail, emailLooksWrong } from "@/lib/mail";
 import { trackedUrl } from "@/app/api/r/route";
+import { coordinatorByLabel, calUrl as calUrlOf } from "@/lib/coordinatorLookup";
+import { heKey } from "@/lib/monday";
 
 export const dynamic = "force-dynamic";
 
@@ -171,7 +173,7 @@ const norm = (raw: unknown): string => {
   return d.length === 9 ? "972" + d : d;
 };
 
-async function promoteFromMain(itemId: number) {
+export async function promoteFromMain(itemId: number) {
   const ids = [...Object.values(MAIN), ...Object.values(MAIN_EXTRA)].map(c => `"${c}"`).join(", ");
   const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
     `{ items(ids: [${itemId}]) { name column_values(ids: [${ids}]) { id text } } }`
@@ -245,8 +247,7 @@ export async function rebuildWa(itemId: number) {
   const key = process.env.SUPABASE_SECRET_KEY;
   if (coordName && url && key) {
     const db = createClient(url, key, { auth: { persistSession: false } });
-    const { data } = await db.from("coordinators").select("cal_m1").ilike("name", coordName).limit(1);
-    calPath = data?.[0]?.cal_m1 || null;
+    calPath = (await coordinatorByLabel(db, coordName))?.cal_m1 || null;
   }
 
   const link = waLink({
@@ -305,9 +306,7 @@ export async function maybeSendWelcome(itemId: number) {
   const key = process.env.SUPABASE_SECRET_KEY;
   if (coordName && url && key) {
     const db = createClient(url, key, { auth: { persistSession: false } });
-    const { data } = await db.from("coordinators").select("cal_m1").ilike("name", coordName).limit(1);
-    const p = data?.[0]?.cal_m1 || "";
-    calUrl = p ? (p.startsWith("http") ? p : `https://cal.com/${p}`) : null;
+    calUrl = calUrlOf((await coordinatorByLabel(db, coordName))?.cal_m1);
   }
 
   /*
@@ -374,7 +373,9 @@ export async function drainPendingWelcome(coordinatorName: string): Promise<numb
   );
   const rows = (d?.boards?.[0]?.items_page?.items ?? []).filter(it => {
     const g = (id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
-    return g(COL_STATUS) === LINK_SENT && !g(COL_MAILED) && g(COL_COORD) === want;
+    /* לפי שם פרטי ולא שם מלא — "שי איאסו" בסגל הוא "שי אדמקה" בלוח (11.10) */
+    return g(COL_STATUS) === LINK_SENT && !g(COL_MAILED)
+      && heKey(g(COL_COORD).split(/s+/)[0]) === heKey(want.split(/s+/)[0]);
   });
   for (const r of rows) await maybeSendWelcome(Number(r.id));
   if (rows.length) console.log(`[roster] drained ${rows.length} pending welcome mails for ${want}`);
@@ -406,8 +407,13 @@ async function syncCoordinatorToApp(itemId: number) {
   const name = g(COL_COORD);
   let coordId: string | null = null;
   if (name) {
-    const { data } = await db.from("coordinators").select("id").ilike("name", name).limit(1);
-    coordId = data?.[0]?.id ?? null;
+    coordId = (await coordinatorByLabel(db, name))?.id ?? null;
+    /*
+      ⚠️ תווית שלא תורגמה **אינה** "בלי רכז/ת". עד 11.10 כל כישלון תרגום
+      כתב null ומחק שיוך קיים בשקט — כך שכל משתתף של שי איבד את השיוך
+      שלו בכל שינוי בלוח. ריק בלוח מנקה; תווית שלא זוהתה לא נוגעת.
+    */
+    if (!coordId) { console.warn(`[monday-webhook] coordinator label not matched: ${name}`); return; }
   }
   const { data: updated } = await db.from("candidates")
     .update({ coordinator_id: coordId }).eq("phone", phone).select("id");

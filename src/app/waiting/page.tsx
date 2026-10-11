@@ -33,8 +33,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { track as trackEvent } from "@vercel/analytics";
-import { coordinatorFor } from "@/data/meetings";
-import { logEvent, cachedCohort } from "@/lib/candidate";
+import { logEvent, cachedCohort, myCoordinator } from "@/lib/candidate";
 import { type CohortId } from "@/data/journey";
 import { WhyDegreeCard, WhyDegreeDone, WHY_DEGREE_TOTAL } from "./WhyDegree";
 import BottomNav from "@/components/ui/BottomNav";
@@ -117,8 +116,14 @@ export default function WaitingPage() {
   const [passed, setPassed] = useState(false);
   const [hasDate, setHasDate] = useState(false);
 
-  const coordinator = coordinatorFor();
-  const who = coordinator.firstName;
+  /*
+    השם של הרכז/ת המשויך/ת, מהשרת. עד 11.10 היה כאן coordinatorFor() — שהחזיר
+    את נתי לכל משתתף/ת, כי נכתב כשהיה רכז אחד. עד שהשם נטען: "הרכז/ת שלך".
+  */
+  const [who, setWho] = useState("הרכז/ת שלך");
+  useEffect(() => {
+    myCoordinator().then(c => { if (c?.firstName) setWho(c.firstName); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     try {
@@ -956,7 +961,7 @@ function IntroPeople({ who, onNext }: { who: string; onNext: () => void }) {
         </a>
       ))}
       <p style={{ fontSize: 14.5, color: MUTED, lineHeight: 1.6, marginTop: 12 }}>
-        {who} ליוותה אנשים כאלה בדיוק — וזה מה שמחכה לך בפגישה.
+        {who} מלווה אנשים בדיוק כאלה — וזה מה שמחכה לך בפגישה.
       </p>
       {introNextBtn(onNext, "סיימתי את המבוא ✓")}
     </>
@@ -991,7 +996,7 @@ function IntroDone({ who, onPrep, onHome }: { who: string; onPrep: () => void; o
       <div style={{ background: "#fff3e2", borderRadius: 24, padding: 20, marginTop: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: "#7a4100" }}>שווה להביא לפגישה</div>
         <p style={{ fontSize: 15, color: "#7a4100", lineHeight: 1.6, marginTop: 6 }}>
-          מה הפתיע אותך מכל מה שראית? תגיד את זה ל{who} — זו פתיחה מצוינת לשיחה.
+          מה הפתיע אותך מכל מה שראית? תגיד את זה בפגישה — זו פתיחה מצוינת לשיחה.
         </p>
       </div>
 
@@ -1085,7 +1090,7 @@ function Prep({ who, booked, onHome }: { who: string; booked: boolean; onHome: (
         <div style={{ fontSize: 14, color: FAINT, marginTop: 2, marginBottom: 12 }}>בראש. לא צריך לכתוב.</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
-            `מה בא לך ש${who} ידע עליך?`,
+            `מה בא לך לספר על עצמך בפגישה?`,
             "מה עשית פעם ונהנית ממנו — לא חייב מחשבים.",
             "מה הכי בא לך לשאול אותו?",
           ].map(t => (

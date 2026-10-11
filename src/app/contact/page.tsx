@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Link from "next/link";
-import { calLinkFor, currentMeeting, MEETING_META, genderMeetingWhat, type MeetingNum } from "@/data/meetings";
+import { currentMeeting, MEETING_META, genderMeetingWhat, type MeetingNum } from "@/data/meetings";
 import { logEvent, myCoordinator } from "@/lib/candidate";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -267,10 +267,30 @@ export default function ContactPage() {
 
       {/* Cal.com embed */}
       <div className="flex-1 max-w-[900px] mx-auto w-full px-4 md:px-12 pb-24">
-        {meeting && assignedCal !== null && (
+        {/*
+          ⚠️ **אין יותר יומן גיבוי** (נתי, 11.10). עד היום, בלי יומן משויך נפתח
+          היומן של נתי — ומשתתפת של סיון קבעה כמעט פגישה עם מי שלא מלווה אותה.
+          פגישה אצל הרכז/ת הלא נכון/ה גרועה ממסך שאומר "עוד רגע": אותה צריך
+          לבטל, ולהסביר, ואת האמון אי אפשר להחזיר. השרת כבר נופל לרכז/ת הקליטה,
+          אז ריק כאן אומר "לרכז/ת שלך עוד אין יומן לפגישה הזאת" — ונאמר במילים.
+        */}
+        {meeting && assignedCal === "" && (
+          <div className="rounded-2xl px-5 py-6 text-center"
+            style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)" }}>
+            <div className="text-[16px] font-extrabold" style={{ color: "#023e8a" }}>
+              היומן לפגישה הזאת עוד לא פתוח
+            </div>
+            <div className="text-[13.5px] mt-2 leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
+              {coord
+                ? <>אפשר לכתוב ל{coord.name.split(" ")[0]} בוואטסאפ ולקבוע ישירות.</>
+                : <>נחזור אליך לקביעת מועד. אפשר לנסות שוב בעוד כמה דקות.</>}
+            </div>
+          </div>
+        )}
+        {meeting && assignedCal && (
           <Cal
             namespace="contact"
-            calLink={assignedCal || calLinkFor(meeting)}
+            calLink={assignedCal}
             style={{ width: "100%", minHeight: "600px", borderRadius: "16px", overflow: "hidden" }}
             config={{ layout: "month_view", theme: "light", ...prefill }}
           />

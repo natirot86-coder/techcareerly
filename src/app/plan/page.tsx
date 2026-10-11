@@ -37,7 +37,6 @@ import {
 } from "@/data/plan";
 import { INSTITUTIONS } from "@/data/institutions";
 
-import { coordinatorProfileFor } from "@/data/coordinators";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -1728,7 +1727,8 @@ function CoordView({
    * ישירות לרכזת — המספר נמשך מסגל הרכזות לפי השיוך של המועמד במסד
    * (coordinator_id, מיגרציה 003). בלי שיוך — הרכזת הפעילה הראשונה.
    */
-  const [coordPhone, setCoordPhone] = useState(coordinatorProfileFor().phone);
+  /* ריק עד שהשרת עונה — לא ממלאים מראש מרשימה קשיחה (11.10) */
+  const [coordPhone, setCoordPhone] = useState("");
   useEffect(() => {
     // המספר האמיתי מגיע מטבלת הרכזות ב-DB, לפי השיוך של המועמד
     myCoordinator()

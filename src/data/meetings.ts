@@ -1,41 +1,15 @@
 /**
- * שלוש הפגישות עם רכז/ת החשיפה.
+ * שלוש הפגישות עם רכז/ת החשיפה — מה קורה בכל אחת, ואיזו רלוונטית עכשיו.
  *
- * המבנה מכוון לכך שהוספת רכזות תהיה **החלפת נתון ולא שינוי קוד**: כשיגיע
- * הגוגל-שיטס, הוא ימלא את COORDINATORS ו-DEFAULT_COORDINATOR ייקבע לפי
- * השיוך של המועמד. עד אז יש רכזת אחת, והכל מצביע אליה.
- *
- * calLink הוא מה שבא **אחרי** cal.com/ — כולל שם המשתמש והסלאג.
+ * ⚠️ **כאן אין יותר רכזים ולא קישורי יומן** (נתי, 11.10). היו כאן רכז אחד
+ * קשיח (נתי), `coordinatorFor()` שהחזיר אותו לכולם ו-`calLinkFor()` שנפל
+ * ליומן שלו — שרידים מהתקופה שהיה רכז אחד, שהפכו לבאג ברגע שהיו ארבעה:
+ * משתתפת של סיון ראתה את היומן ואת השם של נתי. הרכז/ת והיומן מגיעים
+ * עכשיו רק מ-`myCoordinator()` (שרת). **לא להחזיר ברירת מחדל קשיחה** —
+ * גיבוי שקט הוא בדיוק מה שהסתיר את הבאג.
  */
 
 export type MeetingNum = 1 | 2 | 3;
-
-export type Coordinator = {
-  id: string;
-  name: string;
-  /**
-   * שם פרטי בלבד — כך הוא מופיע למועמד. "פגישה ראשונה עם נתי" הוא משפט אחר
-   * לגמרי מ"פגישה ראשונה עם הרכזת", והחום הזה שווה שדה נפרד.
-   */
-  firstName: string;
-  /** calLink לכל אחת משלוש הפגישות */
-  links: Record<MeetingNum, string>;
-};
-
-export const COORDINATORS: Record<string, Coordinator> = {
-  "nati-rotstein": {
-    id: "nati-rotstein",
-    name: "נתי רוטשטיין",
-    firstName: "נתי",
-    links: {
-      1: "nati-rotstein-cpehqd/פגישה-עם-רכז-ת-החשיפה-היכרות-תוכנית-עבודה-ויציאה-לחקר-תחומי-הייטק",
-      2: "nati-rotstein-cpehqd/פגישה-עם-רכז-ת-החשיפה-בחירת-תחום-הייטק-ויציאה-לחקר-מסלולי-לימוד",
-      3: "nati-rotstein-cpehqd/פגישה-עם-רכז-ת-החשיפה-בחירת-מסלול-לימודים-והכנה-להרשמה-ללימודים",
-    },
-  },
-};
-
-export const DEFAULT_COORDINATOR = "nati-rotstein";
 
 /** מה קורה בכל פגישה — הטקסט שמוצג למועמד לפני הבחירה ביומן */
 /**
@@ -85,19 +59,6 @@ export const MEETING_META: Record<MeetingNum, { title: string; sub: string; what
     bring: "תביא/י את רשימת המוסדות והשאלות שהכנת בשלב מסלולי הלימוד.",
   },
 };
-
-export function calLinkFor(meeting: MeetingNum, coordinatorId = DEFAULT_COORDINATOR): string {
-  return (COORDINATORS[coordinatorId] ?? COORDINATORS[DEFAULT_COORDINATOR]).links[meeting];
-}
-
-/**
- * הרכז/ת שמשויכ/ת למועמד. כרגע יש אחד לכולם, ולכן זו החזרה של ברירת המחדל —
- * אבל כל מי שצריך שם קורא דרך כאן, כך שכשיגיע השיוך האמיתי (שדה ב-candidates
- * או הגוגל-שיטס) זה שינוי במקום אחד.
- */
-export function coordinatorFor(_candidateId?: string | null): Coordinator {
-  return COORDINATORS[DEFAULT_COORDINATOR];
-}
 
 /**
  * איזו פגישה רלוונטית עכשיו, לפי מה שהמועמד כבר עשה.
