@@ -16,6 +16,10 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { touchActivity, syncTasteProgress, updateCurrentStage } from "@/lib/candidate";
+import { pullState, pushState } from "@/lib/stateSync";
+
+/* משיכה מהשרת פעם אחת לכל טעינת דף; משם והלאה רק שליחת הפרשים */
+let pulledThisLoad = false;
 
 /**
  * גזירת השלב — הועברה לכאן מהדשבורד כשהוא בוטל (נתי 25.8): הוא היה
@@ -73,9 +77,25 @@ export default function ResumeTracker() {
       }
     } catch { /* ignore */ }
 
-    if (pathname === "/") return; // נקודת מעבר, לא מיקום לחזור אליו
-    localStorage.setItem(LAST_LOCATION_KEY, qs ? `${pathname}?${qs}` : pathname);
+    if (pathname !== "/") localStorage.setItem(LAST_LOCATION_KEY, qs ? `${pathname}?${qs}` : pathname);
+
+    /*
+      השרת הוא מקור ההתקדמות (12.10) — ראה stateSync.ts. כאן כי זה הרכיב
+      היחיד שרואה כל ניווט. אחרי שמירת המיקום, כדי שגם הוא יעלה: מכשיר אחר
+      יחזור **לאותו מסך**, לא רק לאותו שלב.
+    */
+    if (!pulledThisLoad) { pulledThisLoad = true; void pullState(); }
+    else void pushState();
   }, [pathname, search]);
+
+  /* יציאה מהאפליקציה (מעבר לוואטסאפ, נעילת מסך) — הרגע שבו שינוי אחרון הולך לאיבוד */
+  useEffect(() => {
+    const flushable = () => !SKIP.some(p => window.location.pathname.startsWith(p));
+    const onHide = () => { if (document.visibilityState === "hidden" && flushable()) void pushState(); };
+    document.addEventListener("visibilitychange", onHide);
+    const t = setInterval(() => { if (flushable()) void pushState(); }, 30_000);
+    return () => { document.removeEventListener("visibilitychange", onHide); clearInterval(t); };
+  }, []);
 
   return null;
 }

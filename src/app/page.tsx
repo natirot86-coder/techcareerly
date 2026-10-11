@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
 import { deriveStage, STAGE_CTA } from "@/components/ui/BottomNav";
 import { restoreProgressFromServer } from "@/lib/candidate";
+import { pullState } from "@/lib/stateSync";
 
 // /dashboard בוטל (נתי 25.8) ומפנה עכשיו בחזרה ל-"/" — מי שיש לו עדיין את
 // הדף הזה שמור כמיקום אחרון (כל מי שביקר שם לפני הביטול) היה נכנס ללולאת
@@ -35,9 +36,17 @@ export default function Home() {
       הטלפון בדפדפן אחר ונשלח מכאן לאונבורדינג — כי הבדיקה הייתה רק מקומית.
       קודם שואלים את השרת; רק מי שאין לו הרשמה שם הוא באמת חדש.
     */
-    restoreProgressFromServer().then(ok => {
+    (async () => {
+      /*
+        1. ההתקדמות המלאה מהשרת (12.10) — כולל המסך האחרון, אז חוזרים בדיוק לשם.
+        2. מי שעוד לא סונכרן אף פעם: השחזור החלקי מהאירועים (11.10).
+      */
+      await pullState();
+      const back = localStorage.getItem(LAST_LOCATION_KEY);
+      if (back && back !== "/" && !RETIRED_LOCATIONS.some(r => back.startsWith(r))) { router.replace(back); return; }
+      const ok = !!localStorage.getItem("user-name") || await restoreProgressFromServer();
       router.replace(ok ? STAGE_CTA[deriveStage()].href : "/onboarding");
-    });
+    })();
   }, [router]);
 
   return null;

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady, restoreProgressFromServer, claimRecordByPhone } from "@/lib/candidate";
+import { pullState } from "@/lib/stateSync";
 import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -186,7 +187,9 @@ export default function LoginPage() {
     /* מחזירים את המקום, לא רק את הזהות — אחרת דפדפן חדש = אונבורדינג (11.10) */
     /* קודם איחוד (רשומה שנרשמה על הטלפון בלי אימות), ואז שחזור — 12.10 */
     await claimRecordByPhone();
-    await restoreProgressFromServer();
+    /* ההתקדמות המלאה מהשרת; מי שעוד לא סונכרן — השחזור החלקי מהאירועים */
+    await pullState();
+    if (!localStorage.getItem("user-name")) await restoreProgressFromServer();
     setLoading(false);
     goAfterLogin();
   }
