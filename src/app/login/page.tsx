@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady } from "@/lib/candidate";
+import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady, restoreProgressFromServer } from "@/lib/candidate";
 import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -125,7 +125,8 @@ export default function LoginPage() {
   // מי שנזרק ל-login מסך פנימי (טוקן שפג באמצע /paths למשל) חוזר לאותו מסך.
   function goAfterLogin() {
     const last = localStorage.getItem(LAST_LOCATION_KEY);
-    router.push(last && last !== "/" ? last : "/dashboard");
+    /* /dashboard בוטל ומפנה ל-"/" — ושם קורה השחזור לדפדפן ריק (11.10) */
+    router.push(last && last !== "/" ? last : "/");
   }
 
   async function handleSendOtp() {
@@ -160,7 +161,7 @@ export default function LoginPage() {
   // אותה מטרה כמו goAfterLogin, אבל כתובת מלאה — ה-redirect חוזר מגוגל כטעינת דף מחדש
   function afterLoginUrl(): string {
     const last = localStorage.getItem(LAST_LOCATION_KEY);
-    return `${window.location.origin}${last && last !== "/" ? last : "/dashboard"}`;
+    return `${window.location.origin}${last && last !== "/" ? last : "/"}`;
   }
 
   async function handleGoogleLogin() {
@@ -181,8 +182,10 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     const err = await verifyPhoneOtp(toE164(phone), code.trim());
+    if (err) { setLoading(false); setError(err); return; }
+    /* מחזירים את המקום, לא רק את הזהות — אחרת דפדפן חדש = אונבורדינג (11.10) */
+    await restoreProgressFromServer();
     setLoading(false);
-    if (err) { setError(err); return; }
     goAfterLogin();
   }
 

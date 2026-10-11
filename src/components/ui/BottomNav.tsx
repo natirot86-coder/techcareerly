@@ -20,15 +20,17 @@ import { useEvents, whenText } from "@/components/ui/EventsList";
 export function deriveStage(): number {
   const flag = (k: string) => localStorage.getItem(k) === "true";
   const has = (k: string) => !!localStorage.getItem(k);
+  /* waiting כותב "yes"/"missed" ולא "true" — הבדיקה הישנה לא התאימה אף פעם (11.10) */
+  const attended = () => ["yes", "true"].includes(localStorage.getItem("meeting-1-attended") ?? "");
   /* לבוגרים אין שלב טעימות: אחרי פגישת ההיכרות הם ישר בשלב המסלול */
   if (cachedCohort() === "alumni" && !has("paths-quiz") && !has("paths-journey")
       && !has("plan-tasks") && !has("plan-intro-seen") && !has("enrollment-doc-path")) {
-    return flag("meeting-1-attended") ? 4 : flag("meeting-1-booked") ? 2 : 1;
+    return attended() ? 4 : flag("meeting-1-booked") ? 2 : 1;
   }
   return has("enrollment-doc-path") ? 6
     : has("plan-tasks") || has("plan-intro-seen") ? 5
     : has("paths-quiz") || has("paths-journey") ? 4
-    : has("waiting-taste") && flag("meeting-1-attended") ? 3
+    : has("waiting-taste") && attended() ? 3
     : flag("meeting-1-booked") ? 2
     : 1;
 }

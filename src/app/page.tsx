@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
 import { deriveStage, STAGE_CTA } from "@/components/ui/BottomNav";
+import { restoreProgressFromServer } from "@/lib/candidate";
 
 // /dashboard בוטל (נתי 25.8) ומפנה עכשיו בחזרה ל-"/" — מי שיש לו עדיין את
 // הדף הזה שמור כמיקום אחרון (כל מי שביקר שם לפני הביטול) היה נכנס ללולאת
@@ -28,7 +29,15 @@ export default function Home() {
       return;
     }
     const onboarded = !!localStorage.getItem("onboarding") || !!localStorage.getItem("user-name");
-    router.replace(onboarded ? STAGE_CTA[deriveStage()].href : "/onboarding");
+    if (onboarded) { router.replace(STAGE_CTA[deriveStage()].href); return; }
+    /*
+      ⚠️ **דפדפן ריק אינו "אדם חדש"** (סיון, 11.10). משתתף בפגישה 2 נכנס עם
+      הטלפון בדפדפן אחר ונשלח מכאן לאונבורדינג — כי הבדיקה הייתה רק מקומית.
+      קודם שואלים את השרת; רק מי שאין לו הרשמה שם הוא באמת חדש.
+    */
+    restoreProgressFromServer().then(ok => {
+      router.replace(ok ? STAGE_CTA[deriveStage()].href : "/onboarding");
+    });
   }, [router]);
 
   return null;

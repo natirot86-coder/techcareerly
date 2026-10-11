@@ -819,3 +819,32 @@ export async function syncPlanApplications(apps: Record<string, string>): Promis
     .upsert(rows, { onConflict: "candidate_id,funding_id" });
   if (error) console.error("syncPlanApplications failed", error);
 }
+
+/**
+ * שחזור ההתקדמות לדפדפן ריק (סיון, 11.10) — ראה /api/candidate/restore.
+ *
+ * משתתף בפגישה 2 נכנס עם הטלפון בדפדפן אחר ונזרק לאונבורדינג: הכניסה
+ * החזירה זהות ולא מקום, כי המקום חי ב-localStorage. כאן מושכים מהשרת את
+ * המפתחות שהמסכים קוראים, ו**כותבים רק את מה שחסר** — מצב מקומי תמיד גובר.
+ * מחזיר true אם יש הרשמה שהושלמה בשרת (כלומר: לא לשלוח לאונבורדינג).
+ */
+export async function restoreProgressFromServer(): Promise<boolean> {
+  if (!supabase || typeof window === "undefined") return false;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return false;
+    const r = await fetch("/api/candidate/restore", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!r.ok) return false;
+    const j = await r.json() as { restored: boolean; keys: Record<string, string> };
+    if (!j.restored) return false;
+    for (const [k, v] of Object.entries(j.keys)) {
+      if (v && localStorage.getItem(k) === null) localStorage.setItem(k, v);
+    }
+    logEvent("progress_restored", { keys: String(Object.keys(j.keys).length) });
+    return true;
+  } catch {
+    return false;
+  }
+}
