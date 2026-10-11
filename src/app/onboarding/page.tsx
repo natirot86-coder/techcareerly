@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import { saveOnboarding, logEvent, sendPhoneOtp, verifyPhoneOtp, supabaseReady } from "@/lib/candidate";
 import { journeyFor, type CohortId } from "@/data/journey";
 import { cachedCohort } from "@/lib/candidate";
+import SmsHelp from "@/components/SmsHelp";
 
 // שמות השלבים — מ-src/data/journey.ts בלבד, אין כאן רשימה שנייה
 /* השלבים נגזרים מהקוהורט — הרשימה מגיעה מהקורא, לא מקבוע במודול */
@@ -951,6 +952,11 @@ function StepPhone({ firstName, gender, onDone }: {
           </>
         )}
 
+        {/*
+          קודם אדם, ורק אז דילוג (12.10). הדילוג נשאר עד שישראל מאשר לסגור
+          את הכניסה האנונימית — ואז הוא נמחק, והעזרה היא הדרך היחידה.
+        */}
+        {escape && <SmsHelp phone={phone} name={firstName} where="הרשמה" />}
         {/* מופיע רק אחרי כישלון אמיתי — ראה ההסבר בראש הקומפוננטה */}
         {escape && (
           <button

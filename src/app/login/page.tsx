@@ -5,6 +5,7 @@ import Link from "next/link";
 import Button from "@/components/ui/Button";
 import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady, restoreProgressFromServer, claimRecordByPhone } from "@/lib/candidate";
 import { pullState } from "@/lib/stateSync";
+import SmsHelp from "@/components/SmsHelp";
 import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -119,6 +120,17 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, [resendCooldown]);
 
+  /*
+    "לא מגיע קוד?" — רק אחרי כישלון אמיתי: שגיאת שליחה, או 45 שניות בלי
+    אימות. SMS הוא הדרך היחידה להיכנס, אז כישלון נגמר באדם ולא במבוי סתום.
+  */
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    if (step !== "otp" || stuck) return;
+    const t = setTimeout(() => setStuck(true), 45_000);
+    return () => clearTimeout(t);
+  }, [step, stuck]);
+
   const phoneValid = phone.replace(/\D/g, "").length >= 9;
   const codeValid = code.trim().length >= 4;
 
@@ -140,7 +152,7 @@ export default function LoginPage() {
     setError(null);
     const err = await sendPhoneOtp(toE164(phone));
     setLoading(false);
-    if (err) { setError(err); return; }
+    if (err) { setError(err); setStuck(true); return; }
     setStep("otp");
     setResendCooldown(30);
   }
@@ -220,6 +232,7 @@ export default function LoginPage() {
             <label className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>מספר טלפון</label>
             <PhoneInput value={phone} onChange={setPhone} />
             {error && <div className="text-[12.5px]" style={{ color: "#c0392b" }}>{error}</div>}
+            {stuck && <SmsHelp phone={phone} where="כניסה" />}
             <Button variant="orange" onClick={handleSendOtp} disabled={!phoneValid || loading || !supabaseReady}>
               {loading ? "שולח..." : "שלח קוד אימות"}
             </Button>
@@ -270,6 +283,7 @@ export default function LoginPage() {
                 שינוי מספר טלפון
               </button>
             </div>
+            {stuck && <SmsHelp phone={phone} where="כניסה" />}
           </>
         )}
 
