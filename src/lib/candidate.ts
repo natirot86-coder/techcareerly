@@ -103,6 +103,11 @@ export async function ensureCandidateId(): Promise<string | null> {
             method: "POST",
             headers: { Authorization: `Bearer ${session.access_token}` },
           }).catch(() => { /* ignore — לא קריטי לאונבורדינג עצמו */ });
+          /* רשומה שנרשמה על הטלפון הזה בלי אימות עוברת לזהות המאומתת (12.10) */
+          fetch("/api/candidate/claim", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }).catch(() => { /* ignore — /login קורא לזה שוב, והוא אידמפוטנטי */ });
         }
       }
     } catch { /* ignore */ }
@@ -844,6 +849,28 @@ export async function restoreProgressFromServer(): Promise<boolean> {
     }
     logEvent("progress_restored", { keys: String(Object.keys(j.keys).length) });
     return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * איחוד: מי שאימת טלפון מקבל את הרשומה שנרשמה עליו בלי אימות (12.10).
+ * ראה /api/candidate/claim ומיגרציה 016. נקרא **לפני** השחזור — אחרת
+ * השחזור קורא שורה ריקה. אידמפוטנטי, ולכן בטוח בכל כניסה.
+ */
+export async function claimRecordByPhone(): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token || session.user?.is_anonymous) return false;
+    const r = await fetch("/api/candidate/claim", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!r.ok) return false;
+    const j = await r.json() as { claimed?: boolean };
+    return !!j.claimed;
   } catch {
     return false;
   }

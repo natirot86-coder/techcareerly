@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
 
   const phone = normalizePhone(user.phone);
   const db = createClient(url, secret, { auth: { persistSession: false } });
+  /* הטלפון הגיע מ-OTP ⇒ מאומת. עד 12.10 אף קוד לא כתב true, ומסך הרכזת הראה "הוקלד ידנית" למי שאימת */
+  await db.from("candidates").update({ phone_verified: true }).eq("id", user.id);
 
   const { data: rosterRow, error: rosterError } = await db
     .from("alumni_roster")
