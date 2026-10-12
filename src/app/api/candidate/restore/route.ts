@@ -58,7 +58,18 @@ export async function GET(req: NextRequest) {
   const { data: evs } = await db.from("funnel_events")
     .select("name, props, created_at")
     .eq("candidate_id", user.id)
-    .in("name", ["profile", "meeting_booked", "meeting1_checkin", "intro_done", "taste_done"])
+    .in("name", [
+      "profile", "meeting_booked", "meeting1_checkin", "intro_done", "taste_done",
+      /*
+        12.10 — חסרו פה: מי שכבר עבר פגישה 2 (ולפעמים 3) שוחזר רק עד שלב 3
+        (waiting-taste + meeting-1-attended), כי אף אחד מהאירועים של שלב 4
+        לא נשאל בכלל. deriveStage() (BottomNav.tsx) בודק has("paths-quiz")
+        כדי להגיע לשלב 4 — בלי האירועים האלה אין שום דרך לדעת שהוא כבר שם,
+        והוא נשלח ל-/explore (טעימות) במקום ל-/paths. זה בדיוק מה שקרה לרמי
+        טדלה: הגיע לפגישה 2, נכנס ממכשיר/דפדפן אחר, ונזרק אחורה לטעימות.
+      */
+      "meeting2_checkin", "meeting3_checkin", "domain_committed", "paths_quiz_done",
+    ])
     .order("created_at", { ascending: true })
     .limit(1000);
   const events = (evs ?? []) as Ev[];
@@ -86,6 +97,27 @@ export async function GET(req: NextRequest) {
   const checkin = last("meeting1_checkin");
   if (p(checkin, "result") === "yes" || p(checkin, "result") === "missed") {
     keys["meeting-1-attended"] = p(checkin, "result");
+  }
+
+  /*
+    פגישות 2 ו-3, ושלב 4 (12.10) — אותו עיקרון כמו פגישה 1 למעלה, כי
+    deriveStage לא מבחין "כמעט שוחזר" מ"שוחזר": בלי הדגלים האלה מי שכבר
+    עבר פגישה 2 נראה זהה למי שרק סיים טעימות.
+  */
+  if (events.some(e => e.name === "meeting_booked" && p(e, "n") === "2")) keys["meeting-2-booked"] = "true";
+  if (events.some(e => e.name === "meeting_booked" && p(e, "n") === "3")) keys["meeting-3-booked"] = "true";
+  const checkin2 = last("meeting2_checkin");
+  if (p(checkin2, "result") === "yes" || p(checkin2, "result") === "missed") {
+    keys["meeting-2-attended"] = p(checkin2, "result");
+  }
+  /*
+    הגעה לשלב 4 בפועל — לא התשובות עצמן (אלה לא חוזרות, כמו שכתוב למטה),
+    רק הסימון שהוא כבר שם. אובייקט ריק מספיק ל-has("paths-quiz") ולא
+    מתנגש עם שום קריאה: /paths קורא JSON.parse ומתייחס לשדות חסרים
+    כ"עוד לא נענה", בדיוק כמו משתתף שרק התחיל את השאלון.
+  */
+  if (events.some(e => e.name === "domain_committed" || e.name === "paths_quiz_done")) {
+    keys["paths-quiz"] = "{}";
   }
 
   const intro = last("intro_done");
