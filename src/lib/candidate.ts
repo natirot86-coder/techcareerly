@@ -27,6 +27,8 @@ export type OnboardingInput = {
   gender: "male" | "female" | "other";
   age: number;
   region: string;
+  /** עיר מגורים — עמודה מ-16.10, כדי שהאפליקציה תהיה הבעלים שלה ותשקף ללוח */
+  city?: string;
   techInterestScore: number;
   blockers: string[];
 };
@@ -201,6 +203,7 @@ export async function saveOnboarding(input: OnboardingInput): Promise<void> {
     gender: input.gender,
     age: input.age,
     region: input.region,
+    ...(input.city ? { city: input.city } : {}),
     tech_interest_score: input.techInterestScore,
     blockers: input.blockers,
     onboarding_completed_at: new Date().toISOString(),

@@ -1017,6 +1017,7 @@ export default function OnboardingPage() {
       gender: gender || "other",
       age: derivedAge,
       region,
+      city: city.trim(),
       techInterestScore: score,
       blockers,
     });

@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { FUNDING } from "@/data/scholarships";
 import Link from "next/link";
+import ParticipantEdit from "./ParticipantEdit";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { isPreProgram } from "@/data/meetings";
 
@@ -642,6 +643,8 @@ function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coor
   const onPhoneSaved = (ph: string) => setPhoneOverride(ph);
   const stations = useMemo(() => buildStations(p), [p]);
   const [showEdit, setShowEdit] = useState(false);
+  /* סטטוס ליווי וגיל — נפרד מהפרטים: אלה לא עוברים ללוח (16.10) */
+  const [showStatus, setShowStatus] = useState(false);
 
   /* הפרופיל מאירוע profile — גיל נגזר, שעון זכאות משוחררים נגזר, יו"ה מתנה */
   const profile = useMemo(() => {
@@ -729,7 +732,18 @@ function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coor
                   cursor: "pointer", fontFamily: "'Heebo', sans-serif",
                 }}
               >
-                ✏️ עריכה
+                ✏️ עריכת פרטים
+              </button>
+              <button
+                onClick={() => setShowStatus(true)}
+                title="סטטוס הליווי (פעיל / בסיכון / דרוש טיפול) וגיל"
+                style={{
+                  border: "1px solid rgba(0,0,0,0.12)", background: "#fff", color: "#6b6558",
+                  borderRadius: 999, padding: "4px 12px", fontSize: 12.5, fontWeight: 800,
+                  cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                }}
+              >
+                סטטוס ליווי
               </button>
               <span style={{ fontSize: 14, fontWeight: 500, color: "#8d867a" }}>
                 {[profile.age ? `גיל ${profile.age}` : null, profile.city || null, p.region].filter(Boolean).join(" · ")}
@@ -1152,8 +1166,12 @@ function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coor
         </div>
       </div>
 
+      {/* הפרטים — טופס אחד ללוח ולאפליקציה, השרת מחליט לאן נכתב (16.10) */}
       {showEdit && (
-        <EditParticipantModal p={p} onClose={() => setShowEdit(false)} onSaved={() => { setShowEdit(false); onSaved(); }} />
+        <ParticipantEdit candidateId={p.id} onClose={() => setShowEdit(false)} onSaved={() => { setShowEdit(false); onSaved(); }} />
+      )}
+      {showStatus && (
+        <EditParticipantModal p={p} onClose={() => setShowStatus(false)} onSaved={() => { setShowStatus(false); onSaved(); }} />
       )}
     </div>
   );
@@ -1199,14 +1217,15 @@ function EditParticipantModal({ p, onClose, onSaved }: { p: Person; onClose: () 
       const r = await fetch("/api/coordinator", {
         method: "PATCH",
         headers,
+        /*
+          16.10: שם ומגדר עברו ל-ParticipantEdit (נכתבים גם ללוח), והתחום
+          הוא בחירה של המשתתף/ת — לא נערך ע"י הצוות (נתי). כאן נשאר מה
+          ששייך לליווי עצמו ולא קיים בלוח.
+        */
         body: JSON.stringify({
           candidateId: p.id,
-          firstName: draft.firstName,
-          lastName: draft.lastName,
-          gender: draft.gender,
           age: draft.age,
           region: draft.region,
-          domain: draft.domain,
           status: draft.status,
         }),
       });
@@ -1244,33 +1263,14 @@ function EditParticipantModal({ p, onClose, onSaved }: { p: Person; onClose: () 
         onClick={e => e.stopPropagation()}
         style={{ width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto", background: "#fff", borderRadius: 18, padding: 22, display: "flex", flexDirection: "column", gap: 14 }}
       >
-        <div style={{ fontSize: 18, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>עריכת פרטי משתתף/ת</div>
+        <div style={{ fontSize: 18, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>סטטוס ליווי</div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {field("שם פרטי", <input value={draft.firstName} onChange={e => setDraft(d => ({ ...d, firstName: e.target.value }))} style={inputStyle} />)}
-          {field("שם משפחה", <input value={draft.lastName} onChange={e => setDraft(d => ({ ...d, lastName: e.target.value }))} style={inputStyle} />)}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {field("מגדר", (
-            <select value={draft.gender} onChange={e => setDraft(d => ({ ...d, gender: e.target.value }))} style={inputStyle}>
-              <option value="">לא צוין</option>
-              <option value="male">זכר</option>
-              <option value="female">נקבה</option>
-              <option value="other">אחר</option>
-            </select>
-          ))}
           {field("גיל", <input type="number" value={draft.age} onChange={e => setDraft(d => ({ ...d, age: e.target.value }))} style={inputStyle} />)}
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {field("אזור", <input value={draft.region} onChange={e => setDraft(d => ({ ...d, region: e.target.value }))} style={inputStyle} />)}
-          {field("תחום נבחר", (
-            <select value={draft.domain} onChange={e => setDraft(d => ({ ...d, domain: e.target.value }))} style={inputStyle}>
-              <option value="">טרם נבחר</option>
-              {DOMAIN_OPTIONS.map(d => <option key={d} value={d}>{DOMAIN_HE[d]}</option>)}
-            </select>
-          ))}
         </div>
 
         {/* הטלפון נערך בתגית ליד השם (נתי 8.10) — יש לו סימון "אומת/הוקלד" שלא שייך לטופס הזה */}
@@ -1450,6 +1450,8 @@ export default function CoordinatorPage() {
   } | null>(null);
   /* מנהלת בלבד: באיזו רכזת היא צופה כרגע. ריק = כולן יחד */
   const [viewAs, setViewAs] = useState<string>("");
+  /* עריכת שורה מהלוח — גם למי שעוד לא נכנס לאפליקציה (16.10) */
+  const [editRow, setEditRow] = useState<string | null>(null);
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
   /*
     ── הטאב הראשי (נתי, 5.10) ──────────────────────────────────────────────────
@@ -2109,6 +2111,12 @@ export default function CoordinatorPage() {
                         ? <span style={{ color: "#0f7a52", fontWeight: 700 }}>· באפליקציה ✓</span>
                         : <span style={{ color: "#8a4d00" }}>· עוד לא נכנס/ה לאפליקציה</span>}
                     </div>
+                    <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+                    <button onClick={() => setEditRow(r.id)}
+                      style={{ fontSize: 12, fontWeight: 800, color: "#6b6558", background: "none", border: "none",
+                        padding: 0, cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
+                      ✏️ עריכת פרטים
+                    </button>
                     {linked && (
                       <button onClick={() => setJourneyFor(linked.id)}
                         style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 800, color: NAVY,
@@ -2117,6 +2125,7 @@ export default function CoordinatorPage() {
                         מפת המסע שלו/ה ←
                       </button>
                     )}
+                    </div>
                   </div>
                 );
               })}
@@ -2186,6 +2195,10 @@ export default function CoordinatorPage() {
             );
           });
         })()}
+
+        {editRow && (
+          <ParticipantEdit itemId={editRow} onClose={() => setEditRow(null)} onSaved={() => { setEditRow(null); load(); }} />
+        )}
 
         {data && (
           <button onClick={() => load()} style={{ marginTop: 8, fontSize: 12.5, fontWeight: 700, padding: "8px 16px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.14)", background: "#fff", color: NAVY, cursor: "pointer" }}>
