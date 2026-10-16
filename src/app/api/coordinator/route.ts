@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
   /* נטען תמיד — גם רכזת צריכה שהמזהה יתורגם לשם על הכרטיס */
   {
     const { data } = await db.from("coordinators")
-      .select("id, name").eq("active", true).neq("name", "").order("name");
+      .select("id, name").eq("active", true).neq("takes_participants", false).neq("name", "").order("name"); /* "צופה בתור" רק מי שמלווה (QA 16.10) */
     staff = (data ?? []) as { id: string; name: string }[];
   }
   const staffNames = new Map(staff.map(c => [c.id, c.name]));

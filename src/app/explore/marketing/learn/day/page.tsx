@@ -305,25 +305,25 @@ export default function MarketingDayPage() {
                   role: "מנהל/ת קמפיינים (PPC)", co: "סוכנויות דיגיטל, עסקים בינוניים",
                   desc: "מנהלת מודעות ממומנות בגוגל ובפייסבוק לכמה לקוחות במקביל — בדיוק מה שתעשי היום. תפקיד הכניסה הנפוץ ביותר.",
                   badge: "כניסה: קורס + קמפיין ראשון להצגה",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=%D7%9E%D7%A0%D7%94%D7%9C+%D7%A7%D7%9E%D7%A4%D7%99%D7%99%D7%A0%D7%99%D7%9D",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=%D7%9E%D7%A0%D7%94%D7%9C+%D7%A7%D7%9E%D7%A4%D7%99%D7%99%D7%A0%D7%99%D7%9D",
                 },
                 {
                   role: "מנהל/ת סושיאל", co: "מותגים, סוכנויות, עסקים מקומיים",
                   desc: "תוכן, קהילה ומודעות ברשתות החברתיות. מתאים למי שאוהבת גם לכתוב וגם למדוד.",
                   badge: "כניסה: תיק עבודות — גם עמוד שניהלת בהתנדבות נחשב",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=%D7%9E%D7%A0%D7%94%D7%9C+%D7%A1%D7%95%D7%A9%D7%99%D7%90%D7%9C",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=%D7%9E%D7%A0%D7%94%D7%9C+%D7%A1%D7%95%D7%A9%D7%99%D7%90%D7%9C",
                 },
                 {
                   role: "שיווק בתוך עסק (In-house)", co: "חברות טק, רשתות, קליניקות",
                   desc: "אחראית על כל השיווק הדיגיטלי של עסק אחד — קרובה להנהלה ולהחלטות, רואה את התמונה המלאה.",
                   badge: "בדרך כלל אחרי ניסיון ראשון בסוכנות או כעצמאית",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=%D7%A9%D7%99%D7%95%D7%95%D7%A7+%D7%93%D7%99%D7%92%D7%99%D7%98%D7%9C%D7%99",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=%D7%A9%D7%99%D7%95%D7%95%D7%A7+%D7%93%D7%99%D7%92%D7%99%D7%98%D7%9C%D7%99",
                 },
                 {
                   role: "Growth / Performance", co: "סטארטאפים",
                   desc: "הצד המדעי של השיווק — ניסויים, משפכים, אופטימיזציה. הדלת של עולם השיווק אל תוך ההייטק עצמו.",
                   badge: "אחרי ניסיון בקמפיינים + חיבה אמיתית לדאטה",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Performance+Marketing",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Performance+Marketing",
                 },
               ].map((item, i) => (
                 <div key={i} className="rounded-xl p-3.5" style={{ background: "rgba(249,115,22,0.04)", border: "1px solid rgba(249,115,22,0.12)" }}>

@@ -559,25 +559,25 @@ export default function DayPage() {
                   role: "NOC Technician", co: "בזק, Partner, HOT",
                   desc: "מוקד ניטור 24/7 — בודקת dashboards, מגיבה לalerts, פותחת tickets. זה תפקיד הכניסה הכי נפוץ. משמרות, עבודת צוות, ולמידה מהירה.",
                   badge: "כניסה: CompTIA Network+‏ · 6 חודשים",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=NOC+technician",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=NOC+technician",
                 },
                 {
                   role: "Network Engineer", co: "Intel, Amdocs, בנקים",
                   desc: "תכנון ובנייה של תשתיות — מגדירה רשתות, בונה VPN, מנהלת switches ו-routers. עובדת על פרויקטים ולא רק תגובה לתקלות.",
                   badge: "אחרי 2–3 שנות ניסיון: CCNA",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Network+Engineer",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Network+Engineer",
                 },
                 {
                   role: "Cloud Network Architect", co: "AWS, Azure, חברות SaaS",
                   desc: "רשתות ענן בסקייל עולמי — VPC, subnets, load balancers, CDN. המקצוע הכי מבוקש ב-2024 עם שכר גבוה במיוחד.",
                   badge: "אחרי 4–6 שנות ניסיון + AWS/Azure cert",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Cloud+Network",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Cloud+Network",
                 },
                 {
                   role: "Security Network Engineer", co: "Check Point, ClearSky, IDF",
                   desc: "Firewall, VPN, IDS/IPS — שמירה על הרשת מפני פורצים. חוצה בין רשתות לסייבר, אחד מהתחומים הכי חמים בישראל.",
                   badge: "אחרי ניסיון ברשתות + Security cert",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Network+Security+Engineer",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Network+Security+Engineer",
                 },
               ].map((item, i) => (
                 <div key={i} className="rounded-xl p-3.5" style={{ background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.12)" }}>

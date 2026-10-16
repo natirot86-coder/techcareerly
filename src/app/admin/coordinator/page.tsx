@@ -59,7 +59,7 @@ function MondayCard() {
       background: "#fff", border: `1px solid rgba(2,62,138,0.14)`, borderRadius: 14,
       padding: "15px 17px", display: "flex", flexDirection: "column", gap: 11,
     }}>
-      <div style={{ fontSize: 14, fontWeight: 900, color: NAVY }}>שני דברים שרק את יודעת</div>
+      <div style={{ fontSize: 14, fontWeight: 900, color: NAVY }}>שני דברים שרק את/ה יודע/ת</div>
       <Row n={1} title="סטטוס משתתף">
         אחרי השיחה הראשונה: <b>נשלח קישור</b> אם הוא מעוניין וקיבל את המייל,
         או <b>לא מעוניין/ת</b> אם לא. <b>בתהליך פעיל</b> נכתב מעצמו ברגע שהוא
@@ -1542,7 +1542,7 @@ export default function CoordinatorPage() {
           <div style={{ fontSize: 26, marginTop: 8, ...HEEBO }}>מי צריך אותי היום</div>
           {data && (
             <div style={{ fontSize: 12.5, marginTop: 5, opacity: 0.7 }}>
-              {data.needsAttention.length} דורשים תשומת לב · {data.quiet} בסדר גמור · {data.total} סה״כ
+              באפליקציה: {data.needsAttention.length} דורשים תשומת לב · {data.quiet} בסדר גמור · {data.total} סה״כ
             </div>
           )}
         </div>
