@@ -14,12 +14,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 async function call(body: Record<string, unknown>) {
-  if (!supabase) return null;
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) return null;
+  /* בלי זהות זה תקין — זה בדיוק המצב שבו התיבה מופיעה (QA 16.10) */
+  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
   const r = await fetch("/api/candidate/sms-help", {
     method: "POST",
-    headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+    headers: {
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(body),
   });
   if (!r.ok) return null;

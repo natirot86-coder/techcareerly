@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   const { data: staff } = await db.from("coordinators").select("id, name")
     .eq("active", true).neq("takes_participants", false).neq("name", "").order("name");
   const coord = r.cand?.coordinator_id
-    ?? (staff ?? []).find(c => r.row && heKey(c.name.split(/s+/)[0]) === heKey(r.row.coordinator.split(/s+/)[0]))?.id
+    ?? (staff ?? []).find(c => r.row && heKey(c.name.split(/\s+/)[0]) === heKey(r.row.coordinator.split(/\s+/)[0]))?.id
     ?? null;
   return NextResponse.json({
     itemId: r.row?.id ?? null, candidateId: r.cand?.id ?? null,

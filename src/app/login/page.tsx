@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady, restoreProgressFromServer, claimRecordByPhone } from "@/lib/candidate";
+import { sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, supabaseReady, restoreProgressFromServer, claimRecordByPhone, isIsraeliMobile } from "@/lib/candidate";
 import { pullState } from "@/lib/stateSync";
 import SmsHelp from "@/components/SmsHelp";
 import { LAST_LOCATION_KEY } from "@/components/ResumeTracker";
@@ -131,7 +131,9 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, [step, stuck]);
 
-  const phoneValid = phone.replace(/\D/g, "").length >= 9;
+  /* נייד ישראלי בלבד (QA 16.10) */
+  const phoneValid = isIsraeliMobile(phone);
+  const phoneHint = phone.replace(/\D/g, "").length >= 9 && !phoneValid;
   const codeValid = code.trim().length >= 4;
 
   // אחרי אימות מוצלח — חוזרים בדיוק לאיפה שהיו (כמו דף הבית), לא תמיד לדשבורד.
@@ -231,6 +233,7 @@ export default function LoginPage() {
           <>
             <label className="text-[13px] font-bold" style={{ color: "rgba(0,0,0,0.55)" }}>מספר טלפון</label>
             <PhoneInput value={phone} onChange={setPhone} />
+            {phoneHint && !error && <div className="text-[12.5px]" style={{ color: "#b45309" }}>מספר נייד מתחיל ב-05 — כדאי לבדוק את המספר</div>}
             {error && <div className="text-[12.5px]" style={{ color: "#c0392b" }}>{error}</div>}
             {stuck && <SmsHelp phone={phone} where="כניסה" />}
             <Button variant="orange" onClick={handleSendOtp} disabled={!phoneValid || loading || !supabaseReady}>
