@@ -128,7 +128,7 @@ export async function PATCH(req: NextRequest) {
   if (!canSeeEveryone(auth.role)) {
     const mine = (cand && cand.coordinator_id === auth.coordinatorId)
       || (row && auth.name && heKey(row.coordinator.split(/\s+/)[0]) === heKey(auth.name.split(/\s+/)[0]));
-    if (!mine) return NextResponse.json({ error: "אפשר לערוך רק משתתפים שמשויכים אלייך" }, { status: 403 });
+    if (!mine) return NextResponse.json({ error: "אפשר לערוך רק משתתפים שמשויכים אליך/אלייך" }, { status: 403 });
     if (body.coordinatorId !== undefined) {
       return NextResponse.json({ error: "העברה לרכז/ת אחר/ת — רק מנהלת" }, { status: 403 });
     }
