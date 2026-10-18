@@ -139,7 +139,7 @@ export const INSTITUTIONS: Institution[] = [
     track: "degree",
     why: "המסלול הייעודי הקונקרטי ביותר בארץ: פסיכומטרי עד 100 נקודות מתחת לסף עדיין נשקל, רכז ייעודי לאורך כל התואר, קרן דוד עד 12,000 ₪, סבסוד מעונות והחזרי נסיעות. פארק ההייטק גב-ים צמוד לקמפוס עם צינור התמחויות אמיתי.",
     tag: "מסלול ייעודי", tagColor: ORANGE,
-    link: "https://www.bgu.ac.il/welcome/ba/scholarship-lobby/sicket/",
+    link: "https://www.bgu.ac.il/welcome/scholarship/sicket-program/",
     location: "באר שבע",
     city: "באר שבע",
     address: "שדרות בן גוריון 1, באר שבע",
@@ -576,7 +576,7 @@ export const INSTITUTIONS: Institution[] = [
     track: "mahat",
     why: "הנדסת תוכנה עם התמחויות ב-AI וסייבר. משנה ג׳ הסטודנטים מתחילים לעבוד בפיתוח.",
     tag: "מסלול לעבודה", tagColor: "#db2777",
-    link: "https://www.shenkar.ac.il/he/departments/software-engineering",
+    link: "https://www.shenkar.ac.il/he/departments/engineering-software-department/",
     location: "רמת גן",
     city: "רמת גן",
     address: "אנה פרנק 12, רמת גן",
@@ -1342,7 +1342,8 @@ export const INSTITUTIONS: Institution[] = [
     track: "bootcamp",
     why: "זרוע ההדרכה של אלעד מערכות (1,200+ עובדים) — כלומר מאחוריה מעסיק אמיתי. קורסי ערב שני וחמישי 17:00–21:00, מתאים למי שעובד.",
     tag: "ערב", tagColor: "#2563eb",
-    link: "https://netcraftacademy.co.il/",
+    /* האתר מחזיר 404 גם בעמוד הבית (QA 16.10) — קישור מת נראה כמו מוסד שנסגר. לאמת שהם עוד פעילים */
+    link: "",
     location: "לא אומת",
     city: "בני ברק",
     address: "הירקון 23, בני ברק", // האתר חוסם (403); הכתובת מרישום Waze — לאמת

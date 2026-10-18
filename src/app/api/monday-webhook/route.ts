@@ -375,7 +375,7 @@ export async function drainPendingWelcome(coordinatorName: string): Promise<numb
     const g = (id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
     /* לפי שם פרטי ולא שם מלא — "שי איאסו" בסגל הוא "שי אדמקה" בלוח (11.10) */
     return g(COL_STATUS) === LINK_SENT && !g(COL_MAILED)
-      && heKey(g(COL_COORD).split(/s+/)[0]) === heKey(want.split(/s+/)[0]);
+      && heKey(g(COL_COORD).split(/\s+/)[0]) === heKey(want.split(/\s+/)[0]);
   });
   for (const r of rows) await maybeSendWelcome(Number(r.id));
   if (rows.length) console.log(`[roster] drained ${rows.length} pending welcome mails for ${want}`);

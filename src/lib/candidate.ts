@@ -27,6 +27,8 @@ export type OnboardingInput = {
   gender: "male" | "female" | "other";
   age: number;
   region: string;
+  /** עיר מגורים — עמודה מ-16.10, כדי שהאפליקציה תהיה הבעלים שלה ותשקף ללוח */
+  city?: string;
   techInterestScore: number;
   blockers: string[];
 };
@@ -201,6 +203,7 @@ export async function saveOnboarding(input: OnboardingInput): Promise<void> {
     gender: input.gender,
     age: input.age,
     region: input.region,
+    ...(input.city ? { city: input.city } : {}),
     tech_interest_score: input.techInterestScore,
     blockers: input.blockers,
     onboarding_completed_at: new Date().toISOString(),
@@ -304,10 +307,28 @@ function translatePhoneAuthError(error: { code?: string; message?: string } | nu
     case "sms_send_failed":
     case "phone_provider_disabled":
       return "שליחת ה-SMS נכשלה — אפשר לנסות שוב בעוד רגע";
-    default:
-      // שגיאה לא מוכרת מוצגת כמו שהיא — עדיף אנגלית גולמית על הסתרת מידע
-      return error.message ?? "שגיאה לא ידועה";
+    case "validation_failed":
+    case "phone_invalid":
+      return "המספר לא נראה כמו נייד ישראלי — כדאי לבדוק אותו";
+    default: {
+      /*
+        ⚠️ QA 16.10: משתתף ראה "{}" — Supabase החזיר message שאינו מחרוזת
+        (אובייקט ריק). "עדיף אנגלית גולמית" נכון לנו, לא למשתתף: מה שמוצג
+        חייב להיות משפט שאפשר לפעול לפיו. הגולמי נשאר בקונסול.
+      */
+      console.error("phone auth error", error);
+      const m = typeof error.message === "string" ? error.message.trim() : "";
+      if (m && m !== "{}" && /[א-ת]/.test(m)) return m;
+      return "לא הצלחנו לשלוח קוד למספר הזה. כדאי לבדוק שהמספר נכון ולנסות שוב";
+    }
   }
+}
+
+/** נייד ישראלי: 05X-XXXXXXX, עם או בלי 0 / 972 בהתחלה */
+export function isIsraeliMobile(raw: string): boolean {
+  const d = raw.replace(/\D/g, "");
+  const national = d.startsWith("972") ? d.slice(3) : d.startsWith("0") ? d.slice(1) : d;
+  return /^5\d{8}$/.test(national);
 }
 
 /**

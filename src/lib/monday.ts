@@ -235,9 +235,15 @@ export type BoardRow = {
   status: string;
   source: string;
   track: string;
+  /* לעריכה במסך הניהול (16.10) — הערכים כפי שהם בלוח */
+  gender: string;
+  city: string;
 };
 
-const COL_EXTRA = { src: "color_mm7tee80", track: "color_mm7tahjd" } as const;
+const COL_EXTRA = {
+  src: "color_mm7tee80", track: "color_mm7tahjd",
+  gender: "color_mm7twyz4", city: "text_mm7tafps",
+} as const;
 
 /*
  * ⚠️ **בוגרי הקורס שסיון דיברה איתם באוגוסט — לפני התוכנית** (נתי, 11.10).
@@ -252,7 +258,8 @@ const PRE_PROGRAM_SOURCE = "בוגר שסיון דיברה איתו";
 
 /** כל השורות בלוח. `coordinatorName` ריק ⇒ הכל (מנהלת/owner) */
 export async function mondayBoard(coordinatorName?: string | null): Promise<BoardRow[] | null> {
-  const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track]
+  const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
+    COL_EXTRA.gender, COL_EXTRA.city]
     .map(c => `"${c}"`).join(", ");
   const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
     `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
@@ -272,6 +279,8 @@ export async function mondayBoard(coordinatorName?: string | null): Promise<Boar
       /* "מאיפה הגיע/ה" הוא הערוץ; "איך הגיע/ה?" הוא העקבות המלאות */
       source: cv(it, COL_EXTRA.src) || cv(it, COL.source),
       track: cv(it, COL_EXTRA.track),
+      gender: cv(it, COL_EXTRA.gender),
+      city: cv(it, COL_EXTRA.city),
     }))
     /* דיווח בלבד אינו משתתף — ראה STATUS.reportOnly */
     .filter(r => r.status !== STATUS.reportOnly)
@@ -311,6 +320,77 @@ export async function mondaySetCoordinator(phone: string, coordinatorName: strin
   const ok = await gql(
     `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
     { b: BOARD, i: hit.id, v: JSON.stringify({ [COL.coord]: label ? { label } : {} }) }
+  );
+  return !!ok;
+}
+
+/**
+ * כותב פרטים לשורה בלוח אינטק (16.10) — מסך הניהול הוא מקום העריכה היחיד.
+ *
+ * למי שעוד לא באפליקציה — **זה** העדכון (הלוח הבעלים). למי שכבר אימת
+ * טלפון — זה **עותק** של מה שנשמר אצלנו. אותה פונקציה בשני המקרים, כדי
+ * שהלוח ייראה אותו דבר לא משנה מי הבעלים.
+ *
+ * ⚠️ מגדר: רשימה סגורה בלוח (זכר/נקבה). "אחר" לא נכתב — עדיף שדה כמו
+ * שהוא על תווית ש-create_labels_if_missing היה ממציא.
+ * מחזיר true אם נכתב, false אם נכשל, null אם אין טוקן.
+ */
+export async function mondayWriteDetails(itemId: string, d: {
+  name?: string; phone?: string; email?: string; gender?: string | null; city?: string;
+}): Promise<boolean | null> {
+  if (!process.env.MONDAY_TOKEN) return null;
+  const vals: Record<string, unknown> = {};
+  if (d.name !== undefined && d.name.trim()) vals.name = d.name.trim();
+  if (d.phone !== undefined) vals[COL.phone] = normPhone(d.phone);
+  if (d.email !== undefined) vals[COL.email] = d.email.trim();
+  if (d.city !== undefined) vals[COL_EXTRA.city] = d.city.trim();
+  const g = d.gender === "male" ? "זכר" : d.gender === "female" ? "נקבה" : null;
+  if (g) vals[COL_EXTRA.gender] = { label: g };
+  if (!Object.keys(vals).length) return true;
+  const ok = await gql(
+    `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
+    { b: BOARD, i: itemId, v: JSON.stringify(vals) }
+  );
+  return !!ok;
+}
+
+/** שורה אחת בלוח לפי מזהה — לעריכה ולבדיקת הרשאה */
+export async function mondayRow(itemId: string): Promise<BoardRow | null> {
+  const rows = await mondayBoardAll();
+  return rows?.find(r => r.id === itemId) ?? null;
+}
+
+/** כל השורות בלי סינוני התצוגה (דיווח בלבד / בוגרי אוגוסט) — לשימוש פנימי */
+async function mondayBoardAll(): Promise<BoardRow[] | null> {
+  const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
+    COL_EXTRA.gender, COL_EXTRA.city].map(c => `"${c}"`).join(", ");
+  const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
+       column_values(ids: [${ids}]) { id text } } } } }`
+  );
+  if (!data) return null;
+  return (data.boards?.[0]?.items_page?.items ?? []).map(it => ({
+    id: it.id, name: it.name.trim(), phone: normPhone(cv(it, COL.phone)), email: cv(it, COL.email),
+    coordinator: cv(it, COL.coord), status: cv(it, COL.status),
+    source: cv(it, COL_EXTRA.src) || cv(it, COL.source), track: cv(it, COL_EXTRA.track),
+    gender: cv(it, COL_EXTRA.gender), city: cv(it, COL_EXTRA.city),
+  }));
+}
+
+export { mondayBoardAll };
+
+/**
+ * רכז/ת לשורה לפי מזהה השורה (16.10) — למי שאין לו עדיין טלפון בלוח,
+ * ולכן mondaySetCoordinator (שמחפש לפי טלפון) לא מוצא אותו. התווית
+ * מתורגמת מול הקיימות ולא ממציאים חדשה. null בשם ⇒ מנקה.
+ */
+export async function mondaySetCoordinatorById(itemId: string, coordinatorName: string | null): Promise<boolean | null> {
+  if (!process.env.MONDAY_TOKEN) return null;
+  const label = coordinatorName ? await resolveCoordLabel(coordinatorName) : null;
+  if (coordinatorName && !label) return false;
+  const ok = await gql(
+    `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
+    { b: BOARD, i: itemId, v: JSON.stringify({ [COL.coord]: label ? { label } : null }) }
   );
   return !!ok;
 }

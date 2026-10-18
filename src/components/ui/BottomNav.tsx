@@ -52,7 +52,7 @@ const TABS = [
      במקומו — שאלות ותשובות סגורות על התהליך, שכל מילה בהן נכתבה ידנית */
   { href: "/faq", label: "שאלות", icon: "?" },
   { href: "/squad", label: "קהילה", icon: "◈" },
-  { href: "/contact", label: "רכזת", icon: "◉" },
+  { href: "/contact", label: "רכז/ת", icon: "◉" },
 ];
 
 export default function BottomNav() {

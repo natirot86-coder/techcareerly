@@ -132,8 +132,10 @@ export default function WaitingPage() {
       setPreviewing(new URLSearchParams(window.location.search).has("demo"));
       setBooked(localStorage.getItem("meeting-1-booked") === "true" ||
                 localStorage.getItem("meeting-booked") === "true");
+      /* "onboarding" כבר לא נכתב — ההרשמה כותבת user-name. בלי הגיבוי "היי," היה ריק לכולם (QA 16.10) */
       const ob = JSON.parse(localStorage.getItem("onboarding") || "{}");
-      if (ob.firstName) setName(ob.firstName);
+      const nm = ob.firstName || localStorage.getItem("user-name") || "";
+      if (nm) setName(nm);
 
       const a = localStorage.getItem("meeting-1-attended");
       if (a === "yes" || a === "missed") setAttended(a);

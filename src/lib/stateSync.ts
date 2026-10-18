@@ -127,12 +127,19 @@ export async function pullState(): Promise<number> {
       .select("key, value").eq("candidate_id", uid);
     if (error || !data) return 0;
     const meta = readMeta(uid);
+    /*
+      ⚠️ **זהות חדשה בדפדפן הזה ⇒ השרת גובר** (QA 16.10). מה שנכתב כאן לפני
+      הכניסה נכתב בזהות אחרת (אנונימית) — למשל last-location="/onboarding"
+      מהרגע שדפדפן ריק נשלח להרשמה. כשהמקומי גבר, המשתתף נחת בהרשמה **ודחף
+      אותה לשרת**, כך שגם המכשיר הישן שלו היה שולח אותו לשם.
+    */
+    const freshIdentity = Object.keys(meta.v).length === 0;
     let wrote = 0;
     for (const { key, value } of data as { key: string; value: string }[]) {
       if (!included(key)) continue;
       const local = localStorage.getItem(key);
       /* השתנה כאן ועוד לא נשלח ⇒ הפעולה האחרונה של האדם במכשיר הזה גוברת */
-      const dirty = local !== null && local !== meta.v[key] && local !== value;
+      const dirty = !freshIdentity && local !== null && local !== meta.v[key] && local !== value;
       if (dirty) continue;
       if (local !== value) { localStorage.setItem(key, value); wrote++; }
       meta.v[key] = value;

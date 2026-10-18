@@ -77,7 +77,12 @@ export default function ResumeTracker() {
       }
     } catch { /* ignore */ }
 
-    if (pathname !== "/") localStorage.setItem(LAST_LOCATION_KEY, qs ? `${pathname}?${qs}` : pathname);
+    /*
+      נקודות כניסה אינן מקום לחזור אליו. ⚠️ /onboarding נוסף ב-QA 16.10: דפדפן
+      ריק נשלח להרשמה, היא נשמרה כ"מיקום אחרון", ואחרי הכניסה המשתתף חזר
+      להרשמה — ודחף אותה לשרת, כך שגם המכשיר הישן שלו נשלח לשם.
+    */
+    if (!["/", "/onboarding"].includes(pathname)) localStorage.setItem(LAST_LOCATION_KEY, qs ? `${pathname}?${qs}` : pathname);
 
     /*
       השרת הוא מקור ההתקדמות (12.10) — ראה stateSync.ts. כאן כי זה הרכיב

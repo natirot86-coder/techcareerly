@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
-import { saveOnboarding, logEvent, sendPhoneOtp, verifyPhoneOtp, supabaseReady } from "@/lib/candidate";
+import { saveOnboarding, logEvent, sendPhoneOtp, verifyPhoneOtp, supabaseReady, isIsraeliMobile } from "@/lib/candidate";
 import { journeyFor, type CohortId } from "@/data/journey";
 import { cachedCohort } from "@/lib/candidate";
+import { pullState } from "@/lib/stateSync";
 import SmsHelp from "@/components/SmsHelp";
 
 // שמות השלבים — מ-src/data/journey.ts בלבד, אין כאן רשימה שנייה
@@ -223,7 +224,7 @@ const TOUR_SLIDES: TourSlideDef[] = [
     icon: "meeting",
     hero: "/tour/northstar.jpeg",
     headline: "שתי מטרות. זהו.",
-    body: "לעזור לך לגלות איזה תחום הייטק באמת מתאים לך — ולוודא שתצא/י מפה רשומ/ה למסלול הלימודים הנכון עבורך. כל מסך באפליקציה משרת את זה, ורכזת אמיתית מלווה אותך מהפגישה הראשונה ועד האישור ביד.",
+    body: "לעזור לך לגלות איזה תחום הייטק באמת מתאים לך — ולוודא שתצא/י מפה רשומ/ה למסלול הלימודים הנכון עבורך. כל מסך באפליקציה משרת את זה, ורכז/ת אמיתי/ת מלווים אותך מהפגישה הראשונה ועד האישור ביד.",
   },
   {
     tag: "טעימות הייטק — איך תדע/י מה מתאים לך",
@@ -451,7 +452,7 @@ function Step0({ onNext }: { onNext: () => void }) {
           <span style={{ color: "#fb8500" }}>&quot;הייטק זה לא בשבילך&quot;?</span>
         </div>
         <div className="text-[15px] leading-relaxed" style={{ opacity: 0.8 }}>
-          אנחנו כאן בדיוק בשביל זה. תהליך מובנה, רכזת אישית, ומסלול לימודים שמתאים לך — לא לכולם.
+          אנחנו כאן בדיוק בשביל זה. תהליך מובנה, רכז/ת אישי/ת, ומסלול לימודים שמתאים לך — לא לכולם.
         </div>
       </div>
 
@@ -465,7 +466,7 @@ function Step0({ onNext }: { onNext: () => void }) {
         </div>
 
         <div className="text-[13px]" style={{ color: "rgba(0,0,0,0.45)" }}>
-          כל שלב בקצב שלך, עם רכזת לאורך כל הדרך
+          כל שלב בקצב שלך, עם רכז/ת לאורך כל הדרך
         </div>
 
         <Button variant="orange" onClick={onNext}>יאללה, מתחילים</Button>
@@ -512,7 +513,7 @@ function Step1({
       <div>
         <div className="text-[24px] text-navy mb-1" style={HEEBO}>{title}</div>
         <div className="text-[14px]" style={{ color: "rgba(0,0,0,0.5)" }}>
-          שלוש שאלות קצרות ואנחנו בדרך
+          כמה פרטים קצרים ואנחנו בדרך
         </div>
       </div>
 
@@ -842,7 +843,9 @@ function StepPhone({ firstName, gender, onDone }: {
   }, [stage, escape]);
 
 
-  const phoneValid = phone.replace(/\D/g, "").length >= 9;
+  /* נייד ישראלי בלבד — "000000000" הגיע עד Supabase והחזיר "{}" (QA 16.10) */
+  const phoneValid = isIsraeliMobile(phone);
+  const phoneHint = phone.replace(/\D/g, "").length >= 9 && !phoneValid;
   const codeValid = code.trim().length >= 4;
 
   async function handleSend() {
@@ -883,14 +886,14 @@ function StepPhone({ firstName, gender, onDone }: {
 
       <div>
         <div className="text-[24px] text-navy" style={HEEBO}>
-          {stage === "phone" ? "עוד דבר אחד, " + firstName : "הזן/י את הקוד שקיבלת"}
+          {stage === "phone" ? "עוד דבר אחד, " + firstName : g(gender, "הזן את הקוד שקיבלת", "הזיני את הקוד שקיבלת", "הזן/י את הקוד שקיבלת")}
         </div>
         <div className="text-[14px] mt-2" style={{ color: "rgba(0,0,0,0.5)" }}>
           {stage === "phone"
             ? g(gender,
-                "מספר הטלפון שומר לך את המקום — כדי שתחזור בדיוק לאיפה שהיית, ושהרכזת תמצא אותך",
-                "מספר הטלפון שומר לך את המקום — כדי שתחזרי בדיוק לאיפה שהיית, ושהרכזת תמצא אותך",
-                "מספר הטלפון שומר את המקום — כדי לחזור בדיוק לאיפה שהיית, ושהרכזת תמצא אותך")
+                "מספר הטלפון שומר לך את המקום — כדי שתחזור בדיוק לאיפה שהיית, ושנמצא אותך",
+                "מספר הטלפון שומר לך את המקום — כדי שתחזרי בדיוק לאיפה שהיית, ושנמצא אותך",
+                "מספר הטלפון שומר את המקום — כדי לחזור בדיוק לאיפה שהיית, ושנמצא אותך")
             : `שלחנו קוד אימות למספר ${phoneToE164(phone)}`}
         </div>
       </div>
@@ -923,6 +926,7 @@ function StepPhone({ firstName, gender, onDone }: {
                 style={{ borderColor: phone ? "rgba(2,62,138,0.35)" : "rgba(2,62,138,0.18)", color: "#1c1c1c" }}
               />
             </div>
+            {phoneHint && !error && <div className="text-[12.5px] text-right" style={{ color: "#b45309" }}>מספר נייד מתחיל ב-05 — כדאי לבדוק את המספר</div>}
             {error && <div className="text-[12.5px] text-right" style={{ color: "#c0392b" }}>{error}</div>}
             <Button variant="primary" onClick={handleSend} disabled={!phoneValid || loading || !supabaseReady}>
               {loading ? "שולח..." : "שליחת קוד אימות"}
@@ -978,6 +982,37 @@ export default function OnboardingPage() {
   const [score, setScore] = useState(5);
   const [blockers, setBlockers] = useState<string[]>([]);
 
+  /*
+    ── טיוטה: טעינה מחדש לא מוחקת את ההרשמה (QA 16.10) ──────────────────────
+    מסך הטלפון הוא בדיוק הרגע שבו יוצאים לקרוא את ה-SMS — ובטלפון, ובמיוחד
+    בדפדפן של וואטסאפ, הדף נטען מחדש כשחוזרים. עד היום זה החזיר למסך הפתיחה
+    עם כל השדות ריקים. הטיוטה נשמרת בכל שינוי ונמחקת בסיום (handleDone).
+  */
+  const DRAFT = "onboarding-draft";
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("onboarding-done") && !new URLSearchParams(window.location.search).has("step")) {
+        const d = JSON.parse(localStorage.getItem(DRAFT) ?? "null");
+        if (d) {
+          setFirstName(d.firstName ?? ""); setLastName(d.lastName ?? ""); setGender(d.gender ?? "");
+          setAge(d.age ?? ""); setService(d.service ?? ""); setDischarge(d.discharge ?? "");
+          setMiluim(!!d.miluim); setCity(d.city ?? ""); setRegion(d.region ?? "");
+          setScore(d.score ?? 5); setBlockers(d.blockers ?? []);
+          if (typeof d.step === "number" && d.step > 0) setStep(d.step as Step);
+        }
+      }
+    } catch { /* טיוטה פגומה — מתחילים נקי */ }
+    setDraftLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      if (localStorage.getItem("onboarding-done")) return;
+      localStorage.setItem(DRAFT, JSON.stringify({ step, firstName, lastName, gender, age, service, discharge, miluim, city, region, score, blockers }));
+    } catch { /* ignore */ }
+  }, [draftLoaded, step, firstName, lastName, gender, age, service, discharge, miluim, city, region, score, blockers]);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const q = new URLSearchParams(window.location.search);
@@ -986,19 +1021,35 @@ export default function OnboardingPage() {
         return;
       }
       // קפיצה ישירה למסך לבדיקה — ?step=6 מגיע ישר לאימות טלפון (כמו ?demo בשאר המסכים)
-      const jump = Number(q.get("step"));
+      /*
+        ⚠️ QA 16.10: Number(null) הוא 0 — כלומר בלי ?step זה "קפץ" לשלב 0 בכל
+        טעינה וחזר מכאן. לכן הטיוטה התאפסה, **וההפניה של משתתף רשום אף פעם לא
+        רצה** — רשום שנחת כאן ראה "יאללה, מתחילים". קופצים רק כשיש ?step.
+      */
+      const jumpRaw = q.get("step");
+      const jump = jumpRaw === null ? -1 : Number(jumpRaw);
       if (jump >= 0 && jump <= 6) {
         setStep(jump as Step);
         return;
       }
       if (localStorage.getItem("onboarding-done")) {
-        router.replace("/dashboard");
+        router.replace("/");
+        return;
       }
+      /*
+        ⚠️ דפדפן ריק אינו אדם חדש (QA 16.10). משתתף רשום שהגיע לכאן מדפדפן
+        אחר ראה "יאללה, מתחילים" — ואם היה ממלא שוב, היה דורס את הפרטים שלו.
+        אם יש זהות, שואלים את השרת לפני שמציגים הרשמה.
+      */
+      pullState().then(() => {
+        if (localStorage.getItem("onboarding-done") || localStorage.getItem("user-name")) router.replace("/");
+      }).catch(() => {});
     }
   }, [router]);
 
   function handleDone() {
     localStorage.setItem("onboarding-done", "1");
+    localStorage.removeItem(DRAFT);
     localStorage.setItem("user-name", firstName.trim());
     const derivedAge = Math.floor((Date.now() - new Date(age).getTime()) / (365.25 * 24 * 3600 * 1000));
     try {
@@ -1017,6 +1068,7 @@ export default function OnboardingPage() {
       gender: gender || "other",
       age: derivedAge,
       region,
+      city: city.trim(),
       techInterestScore: score,
       blockers,
     });
@@ -1096,7 +1148,7 @@ export default function OnboardingPage() {
               <span style={{ color: "#fb8500" }}>&quot;הייטק זה לא בשבילך&quot;?</span>
             </div>
             <div className="text-[16px] leading-relaxed mb-8" style={{ opacity: 0.75 }}>
-              אנחנו כאן בדיוק בשביל זה. תהליך מובנה, רכזת אישית, ומסלול לימודים שמתאים לך — לא לכולם.
+              אנחנו כאן בדיוק בשביל זה. תהליך מובנה, רכז/ת אישי/ת, ומסלול לימודים שמתאים לך — לא לכולם.
             </div>
           </div>
           {/* Right: journey + CTA */}
@@ -1109,7 +1161,7 @@ export default function OnboardingPage() {
                 <JourneyMap stages={obStages} />
               </div>
               <div className="text-[13px] mb-8" style={{ color: "rgba(0,0,0,0.45)" }}>
-                כל שלב בקצב שלך, עם רכזת לאורך כל הדרך
+                כל שלב בקצב שלך, עם רכז/ת לאורך כל הדרך
               </div>
               <Button variant="orange" onClick={() => setStep(1)}>יאללה, מתחילים</Button>
               <Link

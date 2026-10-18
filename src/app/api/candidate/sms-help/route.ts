@@ -24,20 +24,27 @@ import { sendMail } from "@/lib/mail";
 export const dynamic = "force-dynamic";
 
 const sentAt = new Map<string, number>();
+const ipHits = new Map<string, number[]>();
 
+/*
+  ⚠️ **בלי זיהוי — בכוונה** (QA 16.10). התיבה מופיעה כשה-SMS נכשל, כלומר
+  **בדיוק כשאין עדיין זהות**. כשהנקודה דרשה זהות היא נכשלה תמיד במצב שבשבילו
+  נבנתה, והתיבה הופיעה בלי רכז/ת ובלי וואטסאפ — מבוי סתום. בבדיקה של 12.10 זה
+  "עבד" רק כי הדפדפן כבר היה מזוהה.
+  מה שמוגן במקום זיהוי: המייל לרכז/ת — פעם בשעה לטלפון, 5 בשעה ל-IP.
+*/
 export async function POST(req: NextRequest) {
   const auth = req.headers.get("authorization");
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
-  if (!token) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!url || !anon || !secret) return NextResponse.json({ error: "not configured" }, { status: 503 });
 
-  /* גם משתמש אנונימי — זה בדיוק מי שנתקע כאן */
-  const { data: { user } } = await createClient(url, anon).auth.getUser(token);
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  /* זהות אם יש — רק כדי לרשום את האירוע אצלו. לא תנאי */
+  const user = token ? (await createClient(url, anon).auth.getUser(token)).data.user : null;
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
 
   const body = await req.json().catch(() => ({})) as { phone?: string; name?: string; where?: string; notify?: boolean };
   const phone = normPhone(body.phone ?? "");
@@ -58,9 +65,12 @@ export async function POST(req: NextRequest) {
   const waPhone = digits.startsWith("0") ? "972" + digits.slice(1) : digits;
 
   if (body.notify) {
-    const key = phone || user.id;
+    const key = phone || user?.id || ip;
     const last = sentAt.get(key) ?? 0;
-    if (Date.now() - last > 60 * 60 * 1000) {
+    const hour = Date.now() - 60 * 60 * 1000;
+    const hits = (ipHits.get(ip) ?? []).filter(t => t > hour);
+    if (Date.now() - last > 60 * 60 * 1000 && hits.length < 5) {
+      ipHits.set(ip, [...hits, Date.now()]);
       sentAt.set(key, Date.now());
       const { data: c } = await db.from("coordinators").select("email").eq("id", coord.id).maybeSingle();
       const esc = (s: unknown) => String(s ?? "").replace(/[<>&"]/g, "");
@@ -78,7 +88,7 @@ export async function POST(req: NextRequest) {
             <p style="color:#888;font-size:13px">נשלח מהאפליקציה · ${esc(body.where) || ""}</p></div>`,
         });
       }
-      await db.from("funnel_events").insert({ candidate_id: user.id, name: "sms_help", props: { where: body.where ?? "" } });
+      if (user) await db.from("funnel_events").insert({ candidate_id: user.id, name: "sms_help", props: { where: body.where ?? "" } });
     }
   }
 

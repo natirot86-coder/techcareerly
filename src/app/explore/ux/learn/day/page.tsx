@@ -453,19 +453,19 @@ export default function UxDayPage() {
                   role: "מעצב/ת מוצר (Product Designer)", co: "סטארטאפים, בנקים, וולט, מאנדיי",
                   desc: "התפקיד הרחב ביותר — אחראית על כל החוויה: מהרעיון, דרך הסקיצות, ועד בדיקת מה שנבנה. עובדת צמוד למנהלי מוצר ומתכנתים.",
                   badge: "הכניסה דרך תיק עבודות חזק",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Product+Designer",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Product+Designer",
                 },
                 {
                   role: "חוקר/ת חוויית משתמש (UX Researcher)", co: "חברות גדולות, מכוני מחקר",
                   desc: "מתמחה בצד של הבנת האנשים — ראיונות, צפיות במשתמשים, ניתוח התנהגות. פחות מציירת מסכים, יותר מגלה למה אנשים עושים מה שהם עושים.",
                   badge: "מתאים למי שאוהבת לשאול שאלות",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=UX+Researcher",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=UX+Researcher",
                 },
                 {
                   role: "מעצב/ת ממשק (UI Designer)", co: "סוכנויות דיגיטל, סטודיואים",
                   desc: "מתמחה בצד הוויזואלי — צבעים, טיפוגרפיה, אנימציות קטנות. הופכת סקיצה אפורה למסך שנעים להסתכל עליו.",
                   badge: "מתאים למי שיש לה עין חזותית",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=UI+Designer",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=UI+Designer",
                 },
               ].map((item, i) => (
                 <div key={i} className="rounded-xl p-3.5" dir="rtl" style={{ background: "rgba(219,39,119,0.04)", border: "1px solid rgba(219,39,119,0.12)" }}>

@@ -354,25 +354,25 @@ export default function AiDayPage() {
                   role: "מיישם/ת AI לעסקים", co: "סוכנויות דיגיטל, פרילנס, עסקים קטנים",
                   desc: "בונים עוזרי AI ואוטומציות לעסקים — בדיוק מה שתעשי היום. תפקיד כניסה שנפתח דרך תיק עבודות.",
                   badge: "כניסה: תיק עבודות + היכרות עם כלי AI",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=AI",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=AI",
                 },
                 {
                   role: "כותב/ת פרומפטים (Prompt Engineer)", co: "חברות טק, סטארטאפים",
                   desc: "מנסחים את התדריכים שמאחורי מוצרי AI — בודקים, משווים גרסאות, ומודדים איזו עובדת טוב יותר.",
                   badge: "כניסה: כתיבה מדויקת + הבנת מגבלות AI",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Prompt",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Prompt",
                 },
                 {
                   role: "מטמיע/ת אוטומציות", co: "סוכנויות אוטומציה, מחלקות תפעול",
                   desc: "מחברים AI למערכות של העסק — וואטסאפ, יומן, מערכת הזמנות — כך שהכול זורם בלי ידיים.",
                   badge: "כניסה: כלי אוטומציה (כמו Make) — נלמדים בקורסים קצרים",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=%D7%90%D7%95%D7%98%D7%95%D7%9E%D7%A6%D7%99%D7%94",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=%D7%90%D7%95%D7%98%D7%95%D7%9E%D7%A6%D7%99%D7%94",
                 },
                 {
                   role: "מאמן/ת ובודק/ת מודלים (AI Trainer)", co: "חברות AI, חברות דאטה",
                   desc: "בודקים תשובות של מודלים, מסמנים טעויות ומלמדים אותם לענות טוב יותר — עבודה שדורשת עין חדה ושפה טובה.",
                   badge: "כניסה: דיוק לשוני + סבלנות לפרטים",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=AI+Trainer",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=AI+Trainer",
                 },
               ].map((item, i) => (
                 <div key={i} className="rounded-xl p-3.5" style={{ background: "rgba(124,58,237,0.04)", border: "1px solid rgba(124,58,237,0.12)" }}>

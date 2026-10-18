@@ -164,7 +164,7 @@ function TasteJourney({ id, color, title, steps }: {
                       </span>
                       {highlight && (
                         <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                          style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                          style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>מתחילים כאן</span>
                       )}
                     </div>
                     <div className="mt-0.5">
@@ -456,7 +456,7 @@ function CodeContent() {
                         </span>
                         {highlight && (
                           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>מתחילים כאן</span>
                         )}
                       </div>
                       <div className="mt-0.5">
@@ -808,7 +808,7 @@ function CyberContent() {
                         </span>
                         {highlight && (
                           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>מתחילים כאן</span>
                         )}
                       </div>
                       <div className="mt-0.5">
@@ -1325,8 +1325,8 @@ function DataContent() {
             {
               num: "1",
               emoji: "📊",
-              title: "טעימה — חשבי כמו אנליסטית",
-              sub: "CSV עם נתונים אמיתיים · 8 שלבים · ~10 דק'",
+              title: "טעימה — לחשוב כמו אנליסט/ית",
+              sub: "CSV עם נתונים אמיתיים · 7 שלבים · ~10 דק'",
               href: "/explore/data/sim",
               doneKey: "sim" as const,
               lockedBy: null,
@@ -1409,7 +1409,7 @@ function DataContent() {
                             className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
                             style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}
                           >
-                            התחלי כאן
+                            מתחילים כאן
                           </span>
                         )}
                       </div>
@@ -1961,7 +1961,7 @@ function NetworksContent() {
                         </span>
                         {highlight && (
                           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>מתחילים כאן</span>
                         )}
                       </div>
                       <div className="mt-0.5">
@@ -2264,7 +2264,7 @@ function QAContent() {
                         </span>
                         {highlight && (
                           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                            style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>מתחילים כאן</span>
                         )}
                       </div>
                       <div className="mt-0.5">

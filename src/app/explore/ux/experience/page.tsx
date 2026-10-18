@@ -194,7 +194,8 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
 
   let headline = "", subtext = "", heroEmoji = "";
 
-  if (avg >= 4) {
+  /* העניין קובע, לא הממוצע (QA 16.10): עניין 1 + ביטחון 4 + עתיד 4 יצא "יש ניצוץ". הכלל: דירוג לפי עניין, לא לפי מסוגלות */
+  if (avg >= 4 && interestScore >= 4) {
     heroEmoji = "🎯";
     headline = "יש לך חיבור אמיתי לעיצוב מוצר";
     subtext = "שלושת הסימנים — עניין, ביטחון, ותמונה עתידית — נדלקו. כדאי לשוחח עם הרכזת על מסלול עיצוב UX/UI, כולל מה נדרש כדי לבנות תיק עבודות — כי בתחום הזה התיק הוא שער הכניסה.";
@@ -204,7 +205,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
     subtext = isFemale
       ? "את מרגישה חיבור לתחום, אבל עוד לא בטוחה ביכולת. זה בדיוק מה שמסלול לימודים טוב עושה — בונה את הביטחון צעד אחר צעד."
       : "אתה מרגיש חיבור לתחום, אבל עוד לא בטוח ביכולת. זה בדיוק מה שמסלול לימודים טוב עושה — בונה את הביטחון צעד אחר צעד.";
-  } else if (avg >= 2.5) {
+  } else if (avg >= 2.5 && interestScore >= 3) {
     heroEmoji = "💡";
     headline = "יש ניצוץ — כדאי להעמיק";
     subtext = "ראית משהו מעניין. הטעימה הזו היא רק ההתחלה — עם ליווי נכון ניתן לפתח עניין לכיוון ממשי.";
@@ -287,7 +288,7 @@ function Summary({ answers, gender }: { answers: Answers; gender: Gender | null 
           מה הלאה
         </div>
         <div className="text-[13px] leading-[1.65]" style={{ color: "rgba(0,0,0,0.65)" }}>
-          הרכזת תראה את התוצאות האלה לפני הפגישה הבאה שלכן.{" "}
+          התוצאות האלה יגיעו לרכז/ת לפני הפגישה הבאה שלכם.{" "}
           <span className="font-bold" style={{ color: NAVY }}>יחד תבחרו את הכיוון הנכון.</span>
         </div>
       </div>
@@ -314,6 +315,15 @@ export default function UxExperiencePage() {
   const [gender, setGender]   = useState<Gender | null>(() => loadSavedState().gender ?? null);
   const [answers, setAnswers] = useState<Answers>(() => loadSavedState().answers ?? {});
   const [tapped, setTapped]   = useState<number | null>(null);
+
+  /* המגדר כבר נשאל בהרשמה — לא שואלים שוב (QA 16.10). השאלה נשארת רק למי ש"אחר" או בלי הרשמה */
+  useEffect(() => {
+    if (phase !== "gender") return;
+    try {
+      const g = localStorage.getItem("user-gender");
+      if (g === "male" || g === "female") { setGender(g as Gender); setPhase("interest_scale"); }
+    } catch { /* ignore */ }
+  }, [phase]);
 
   useEffect(() => {
     try { localStorage.setItem("ux-experience-state", JSON.stringify({ phase, gender, answers })); } catch {/* ignore */}
@@ -397,7 +407,7 @@ export default function UxExperiencePage() {
               שש שאלות קצרות יעזרו לך להבין מה זה אמר לך — על העניין שלך, על הביטחון שלך, ועל האופן שבו את רואה את עצמך בתחום.
             </div>
             <div className="mt-2 text-[11.5px]" style={{ color: "rgba(0,0,0,0.38)" }}>
-              הרכזת תראה את התשובות לפני הפגישה הבאה · לוקח כחמש דקות
+              התשובות יגיעו לרכז/ת לפני הפגישה הבאה · לוקח כחמש דקות
             </div>
           </div>
           <div className="text-[20px] font-black mb-2" style={{ color: NAVY, ...HEEBO }}>איך לפנות אליך?</div>

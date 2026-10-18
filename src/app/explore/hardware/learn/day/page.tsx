@@ -323,25 +323,25 @@ export default function HardwareDayPage() {
                   role: "טכנאי/ת מעבדה", co: "חברות מכשור, תעשייה ביטחונית",
                   desc: "תפקיד הכניסה הנפוץ — הרכבה, מדידות, הרצת בדיקות ותיקוני לוחות. לומדים את המקצוע מהידיים.",
                   badge: "כניסה: הנדסאי אלקטרוניקה או ניסיון מעשי",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=%D7%98%D7%9B%D7%A0%D7%90%D7%99+%D7%90%D7%9C%D7%A7%D7%98%D7%A8%D7%95%D7%A0%D7%99%D7%A7%D7%94",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=%D7%98%D7%9B%D7%A0%D7%90%D7%99+%D7%90%D7%9C%D7%A7%D7%98%D7%A8%D7%95%D7%A0%D7%99%D7%A7%D7%94",
                 },
                 {
                   role: "הנדסאי/ת אלקטרוניקה", co: "אלביט, רפאל, תעשייה אווירית, מכשור רפואי",
                   desc: "אבחון, בדיקות ואינטגרציה של מערכות אלקטרוניות. עמוד השדרה של התעשייה הביטחונית והמכשור.",
                   badge: "כניסה: מסלול הנדסאי מה״ט — כשנתיים",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=%D7%94%D7%A0%D7%93%D7%A1%D7%90%D7%99+%D7%90%D7%9C%D7%A7%D7%98%D7%A8%D7%95%D7%A0%D7%99%D7%A7%D7%94",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=%D7%94%D7%A0%D7%93%D7%A1%D7%90%D7%99+%D7%90%D7%9C%D7%A7%D7%98%D7%A8%D7%95%D7%A0%D7%99%D7%A7%D7%94",
                 },
                 {
                   role: "מהנדס/ת חומרה (Board Design)", co: "Intel, Mobileye, סטארטאפים",
                   desc: "תכנון לוחות אלקטרוניים — בחירת רכיבים, שרטוט, ליווי ייצור ובדיקות. הגרסה המלאה של מה שתראי היום.",
                   badge: "כניסה: תואר הנדסת חשמל / אלקטרוניקה",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Hardware+Engineer",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Hardware+Engineer",
                 },
                 {
                   role: "מהנדס/ת Validation", co: "Intel, Nvidia, Apple",
                   desc: "בודקים ששבב חדש באמת עושה מה שתוכנן — כתיבת בדיקות, ניתוח כשלים, עבודה עם צוותי התכן.",
                   badge: "כניסה: תואר הנדסה · דלת נפוצה לענף השבבים",
-                  link: "https://www.alljobs.co.il/Search/Upload/2/0/0/0?txt=Validation+Engineer",
+                  link: "https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=Validation+Engineer",
                 },
               ].map((item, i) => (
                 <div key={i} className="rounded-xl p-3.5" style={{ background: "rgba(124,45,18,0.04)", border: "1px solid rgba(124,45,18,0.12)" }}>

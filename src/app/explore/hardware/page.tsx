@@ -494,7 +494,7 @@ export default function HardwareDomainPage() {
                           </span>
                           {highlight && (
                             <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full"
-                              style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>התחלי כאן</span>
+                              style={{ background: "rgba(255,255,255,0.25)", color: "#fff" }}>מתחילים כאן</span>
                           )}
                         </div>
                         <div className="mt-0.5">

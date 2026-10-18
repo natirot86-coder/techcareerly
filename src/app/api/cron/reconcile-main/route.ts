@@ -18,6 +18,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { promoteFromMain } from "@/app/api/monday-webhook/route";
+import { createClient } from "@supabase/supabase-js";
+import { mondayBoardAll, mondayWriteDetails, normPhone } from "@/lib/monday";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -105,5 +107,42 @@ export async function GET(req: NextRequest) {
     מי שאין לו טלפון ולא מייל לא ייווצר לעולם — אי אפשר לבדוק כפילות בלי
     מזהה. הוא נשאר ברשימה הזאת כל יום, וזה בכוונה: מישהו צריך להשלים לו פרטים.
   */
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped });
+  const mirror = await mirrorAppToBoard(req.nextUrl.searchParams.has("dry"));
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror });
+}
+
+/*
+  ── הכיוון ההפוך: האפליקציה ⇐ הלוח (נתי, 16.10) ─────────────────────────────
+  מרגע שמשתתף/ת אימת/ה טלפון, האפליקציה בעלת הפרטים והלוח מראה. העריכה
+  במסך הניהול כותבת ללוח מיד — אבל אם מאנדיי לא היה זמין, או שמישהו ערך
+  בלוח ישירות, הלוח סוטה. כאן מיישרים אותו לאפליקציה.
+  ⚠️ **ערך ריק באפליקציה לעולם לא מוחק ערך בלוח** — ריק אצלנו אומר "לא
+  ידוע", לא "אין". ⚠️ `?dry` מחזיר מה *היה* משתנה בלי לכתוב.
+*/
+async function mirrorAppToBoard(dry: boolean) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !secret) return { skipped: "no db" };
+  const db = createClient(url, secret, { auth: { persistSession: false } });
+  const { data: cands } = await db.from("candidates")
+    .select("first_name, last_name, gender, city, phone")
+    .eq("phone_verified", true).not("phone", "is", null);
+  const board = await mondayBoardAll();
+  if (!board) return { skipped: "monday unavailable" };
+  const byPhone = new Map(board.filter(r => r.phone).map(r => [r.phone, r]));
+
+  const diffs: { item: string; field: string; board: string; app: string }[] = [];
+  for (const c of cands ?? []) {
+    const row = byPhone.get(normPhone(c.phone));
+    if (!row) continue;
+    const name = [c.first_name, c.last_name].map(x => String(x ?? "").trim()).filter(Boolean).join(" ");
+    const gender = c.gender === "male" ? "זכר" : c.gender === "female" ? "נקבה" : "";
+    const city = String(c.city ?? "").trim();
+    const d: Parameters<typeof mondayWriteDetails>[1] = {};
+    if (name && name !== row.name) { d.name = name; diffs.push({ item: row.id, field: "name", board: row.name, app: name }); }
+    if (gender && gender !== row.gender) { d.gender = c.gender; diffs.push({ item: row.id, field: "gender", board: row.gender, app: gender }); }
+    if (city && city !== row.city) { d.city = city; diffs.push({ item: row.id, field: "city", board: row.city, app: city }); }
+    if (!dry && Object.keys(d).length) await mondayWriteDetails(row.id, d);
+  }
+  return { dry, changes: diffs.length, diffs };
 }

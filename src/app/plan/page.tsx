@@ -769,7 +769,7 @@ function PlanView({
                   className="w-full p-4 rounded-2xl flex items-center justify-between"
                   style={{ background: "#f6f3ec", border: "1px dashed #ddd6c8" }}
                 >
-                  <span className="text-[14px]" style={{ color: "#7a746a" }}>{items.length} משימות</span>
+                  <span className="text-[14px]" style={{ color: "#7a746a" }}>{items.length === 1 ? "משימה אחת" : `${items.length} משימות`}</span>
                   <span className="text-[14px] font-bold" style={{ color: NAVY }}>לפתוח</span>
                 </button>
               ) : (
@@ -1287,7 +1287,7 @@ function HousingCard({ inst, monthly, onMonthly }: {
     <div className="p-[18px] rounded-[18px]" style={{ background: "#fff", border: `1px solid ${BORDER}` }}>
       <div className="text-[16px] font-extrabold mb-1" style={{ color: NAVY }}>🏠 מגורים — ההחלטה השנייה בגודלה</div>
       <p className="text-[13.5px] mb-3" style={{ color: "#5c574e", lineHeight: 1.65 }}>
-        {short} נמצא ב{inst.city}{homeCity ? ` ואת/ה מ${homeCity}` : ""} — אז מגורים הם חלק מהחשבון.
+        {short} ב{inst.city}{homeCity ? `, ואת/ה מ${homeCity}` : ""} — אז מגורים הם חלק מהחשבון.
         אין לנו מחיר מעונות מאומת ל{short}, ולכן זו <b>שאלה מצוינת לרכזת וליום הפתוח</b>:
         כמה עולים המעונות, ומה עדיפות הקבלה אליהם. חלק מהמלגות (כמו יואל בבר-אילן) כוללות סיוע במגורים.
       </p>

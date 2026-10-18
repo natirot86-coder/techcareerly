@@ -73,7 +73,7 @@ function buildStages(): { stages: Stage[]; current: number } {
       stops: [
         { label: "קבעת את פגישת ההיכרות", done: flag("meeting-1-booked"), href: "/contact?m=1" },
         { label: "עברת את המבוא לעולם ההייטק", done: has("waiting-taste"), href: "/waiting" },
-        { label: "נפגשת עם הרכזת", done: m1, meeting: true },
+        { label: "נפגשת עם הרכז/ת", done: m1, meeting: true },
       ],
     },
     {
@@ -91,7 +91,7 @@ function buildStages(): { stages: Stage[]; current: number } {
       stops: [
         ...(cohort === "alumni"
           ? []
-          : [{ label: "נפגשת עם הרכזת — פגישה 2", done: get("meeting-2-attended") === "yes", meeting: true }]),
+          : [{ label: "נפגשת עם הרכז/ת — פגישה 2", done: get("meeting-2-attended") === "yes", meeting: true }]),
         { label: "בחרת את הכיוון שלך", done: has("paths-domains"), href: "/paths" },
         { label: "ענית על שאלון המסלולים", done: has("paths-quiz"), href: "/paths" },
         { label: "חקרת מוסדות ושמרת רשימה", done: has("paths-shortlist"), href: "/paths" },

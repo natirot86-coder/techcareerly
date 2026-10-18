@@ -213,7 +213,7 @@ const TRACK_META: Record<Track, { emoji: string; label: string; duration: string
   mahat: {
     emoji: "🏫",
     label: "מה\"ט / הנדסאי",
-    duration: "שנתיים ביום · שלוש בערב",
+    duration: "שנתיים ביום · שלוש במשולב",
     cost: "כ-9,300–11,100 ₪ לשנה לפני מלגות (יסוד + נלווים)",
     entry: "בגרות מלאה עם מתמטיקה — כמעט מה שתואר דורש",
     pros: [
@@ -302,7 +302,7 @@ const RESULT_CARD: Record<Track, {
     mini: { income: "ג'וניור מיד בסיום", cost: "980–6,000 ₪", entry: "בלי דרישות קדם" },
   },
   mahat: {
-    emoji: "⚙️", label: "הנדסאי (מה\"ט)", tagA: "שנתיים ביום · שלוש בערב", tagB: "משלב עבודה",
+    emoji: "⚙️", label: "הנדסאי (מה\"ט)", tagA: "שנתיים ביום · שלוש במשולב", tagB: "משלב עבודה",
     income: "עבודה במקביל ללימודי ערב",
     cost: "כ-9,300–11,100 ₪ לפני מלגות, ולחיילים משוחררים האגף מממן 90%",
     entry: "בגרות חלקית מספיקה, בלי פסיכומטרי",
@@ -453,7 +453,7 @@ const BLOCKERS: Blocker[] = [
     heading: "יש מוסדות טובים קרוב אליך",
     lead: "לא צריך לעבור למרכז. חלק מהמסלולים החזקים ביותר לקהילה נמצאים דווקא בדרום ובצפון, וחלקם מסבסדים מעונות ונסיעות.",
     solutions: [
-      { name: "בן-גוריון — באר שבע", detail: "תוכנית סיקט מסבסדת מעונות ומחזירה הוצאות נסיעה, ופארק ההייטק גב-ים צמוד לקמפוס.", link: "https://www.bgu.ac.il/welcome/ba/scholarship-lobby/sicket/" },
+      { name: "בן-גוריון — באר שבע", detail: "תוכנית סיקט מסבסדת מעונות ומחזירה הוצאות נסיעה, ופארק ההייטק גב-ים צמוד לקמפוס.", link: "https://www.bgu.ac.il/welcome/scholarship/sicket-program/" },
       { name: "ספיר — שדרות · אשקלון · SCE", detail: "שלושה מוסדות בדרום עם סף קבלה נגיש ושכר לימוד מתוקצב." },
       {
         name: "מלגת פריפריה 45 — שנה א׳ במימון מלא",
@@ -964,6 +964,12 @@ export default function PathsPage() {
         else if (attended === "missed") m2Done = false;     // אמר שלא — נשאר סגור
         else if (since > WEEK) m2Done = true;               // שכבה 3 — רשת ביטחון
         else if (since > HOUR) ask = true;                  // עברה שעה — שואלים
+        /*
+          ⚠️ אין מועד בכלל (QA 16.10): הפגישה נקבעה מחוץ לאפליקציה — הרכזת קבעה,
+          או קישור מוואטסאפ. בלי זה לא הייתה שאלה ולא רשת ביטחון, והמשתתף נשאר
+          נעול לתמיד. מי שאין לנו מועד שלו — פשוט שואלים.
+        */
+        else if (!at) ask = true;
       } catch { }
       setAskMeeting2(ask);
       if (params.has("demo")) m2Done = true;
@@ -1405,7 +1411,7 @@ export default function PathsPage() {
               איפה את/ה נמצא/ת עכשיו
             </div>
             <div className="text-[13px] leading-[1.8]" style={{ color: "rgba(0,0,0,0.62)" }}>
-              טעמת כמה תחומים. נפגשת עם הרכזת. יש לך כיוון.
+              טעמת כמה תחומים. נפגשת עם הרכז/ת. יש לך כיוון.
               <br /><br />
               עד עכשיו שאלנו <span className="font-bold">מה מעניין אותך</span>.
               <br />
@@ -1859,9 +1865,30 @@ export default function PathsPage() {
             <div className="rounded-2xl p-5 mb-5" style={{ background: "rgba(2,62,138,0.04)", border: "1.5px solid rgba(2,62,138,0.12)" }}>
               <div className="text-[15px] mb-2" style={{ ...HEEBO, color: NAVY }}>עד כאן ההכנה — ואת ההמשך פותחים יחד 🎯</div>
               <div className="text-[12.5px] leading-[1.8] mb-3" style={{ color: "rgba(0,0,0,0.6)" }}>
-                בפגישה תבחרו תחום עם הרכזת, ומיד אחריה ייפתחו כאן המוסדות, החסמים
+                בפגישה תבחרו תחום יחד, ומיד אחריה ייפתחו כאן המוסדות, החסמים
                 וההכנה לפגישה השלישית. אתה מגיע אליה מוכן — עם האילוצים ממופים ושלוש הדרכים מוכרות.
               </div>
+              {/*
+                ⚠️ QA 16.10: מי שפגישת הכיוון שלו נקבעה מחוץ לאפליקציה (הרכזת קבעה,
+                קישור מוואטסאפ) נעצר כאן לתמיד — השאלה "הפגישה כבר הייתה?" גרה רק
+                במסכים שאחרי, ולמצב הכנה אין אליהם דרך. מכאן אפשר לענות בעצמו.
+              */}
+              {askMeeting2 && (
+                <button
+                  onClick={() => {
+                    localStorage.setItem(`meeting-${gateN}-attended`, "yes");
+                    trackEvent(`meeting${gateN}_checkin`, { result: "yes" });
+                    logEvent(`meeting${gateN}_checkin`, { result: "yes" });
+                    setAskMeeting2(false);
+                    setPrepMode(false);
+                    goToPhase("domain");
+                  }}
+                  className="w-full py-3 rounded-xl text-white text-[13px] font-black mb-3"
+                  style={{ background: ORANGE }}
+                >
+                  הפגישה כבר הייתה? כן, נפגשנו — להמשיך ←
+                </button>
+              )}
               <Link
                 href="/explore"
                 className="block text-center text-[12px] font-bold"
@@ -2080,7 +2107,8 @@ export default function PathsPage() {
                         {group}
                       </div>
                     )}
-                    <div className="grid gap-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                    {/* minmax(0,1fr) ולא 1fr: תוכן ארוך מתח את המסך ל-447px בטלפון (QA 16.10) */}
+                    <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
                       {items.map(sol => <SolutionTile key={sol.name} s={sol} blockerId={b.id} />)}
                     </div>
                   </div>
@@ -2098,7 +2126,7 @@ export default function PathsPage() {
             <div className="text-[12.5px] leading-[1.8]" style={{ color: "rgba(0,0,0,0.6)" }}>
               אף אחד לא מסדר את כל זה לבד. וגם לא צריך.
               <br />
-              הרכזת עושה את זה כל יום — היא תדע לאיזו מלגה את/ה זכאי/ת ומה להגיש קודם.
+              הרכז/ת שלך עושים את זה כל יום, ויודעים לאיזו מלגה את/ה זכאי/ת ומה להגיש קודם.
               <span className="font-bold"> את/ה רק צריך/ה להגיע.</span>
             </div>
           </div>
@@ -2320,7 +2348,7 @@ export default function PathsPage() {
                   )}
                   <div className="flex gap-2">
                     <a
-                      href={inst.link}
+                      href={inst.link || undefined}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11.5px] font-bold px-3 py-1.5 rounded-lg"
@@ -2468,7 +2496,7 @@ export default function PathsPage() {
                             ✉️ מייל
                           </a>
                         )}
-                        <a href={inst.link} target="_blank" rel="noopener noreferrer"
+                        <a href={inst.link || undefined} target="_blank" rel="noopener noreferrer"
                           className="text-[11.5px] font-bold px-3 py-1.5 rounded-lg" style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>
                           אתר ↗
                         </a>
@@ -2479,7 +2507,7 @@ export default function PathsPage() {
                       אין לנו עדיין איש קשר ישיר כאן. אפשר להתחיל מהאתר —
                       <span className="font-bold"> ולבקש מהרכזת בפגישה את המספר של יחידת התמיכה</span>, לא של מדור הרישום.
                       <div className="mt-2">
-                        <a href={inst.link} target="_blank" rel="noopener noreferrer"
+                        <a href={inst.link || undefined} target="_blank" rel="noopener noreferrer"
                           className="inline-block text-[11.5px] font-bold px-3 py-1.5 rounded-lg" style={{ background: "rgba(2,62,138,0.08)", color: NAVY }}>
                           לאתר המוסד ↗
                         </a>
@@ -3308,7 +3336,7 @@ function DegreeDetail({ degree: d, have, list, onToggleList }: {
                 {unmapped.map(i => (
                   <a
                     key={i.id}
-                    href={i.link?.startsWith("http") ? i.link : `https://${i.link}`}
+                    href={!i.link ? undefined : i.link.startsWith("http") ? i.link : `https://${i.link}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded-xl px-3 py-2 flex items-baseline justify-between gap-2"
