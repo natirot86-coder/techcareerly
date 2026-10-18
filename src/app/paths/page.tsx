@@ -1188,18 +1188,56 @@ export default function PathsPage() {
           </div>
           <div className="text-[13px] leading-[1.85] mb-6" style={{ color: "rgba(0,0,0,0.58)" }}>
             את התחום בוחרים <b>יחד עם הרכזת</b> בפגישה — ומשם נפתחים המוסדות,
-            החסמים וההכנה לפגישה השלישית.
+            החסמים וההכנה לפגישה {lockN === 3 ? "השלישית" : "השנייה"}.
             <br />
             מה שכן פתוח כבר עכשיו: השאלון והיכרות עם שלוש הדרכים — ככה מגיעים
             לפגישה עם תמונה מלאה.
           </div>
-          <button
-            onClick={() => goToPhase("intro")}
-            className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
-            style={{ background: ORANGE, ...HEEBO }}
-          >
-            להכנה — השאלון ושלוש הדרכים ←
-          </button>
+          {/*
+            ⚠️ באג שנתפס (18.10): המסך הזה הציג כפתור קדימה יחיד — "להכנה",
+            שמחזיר לשאלון שכבר מולא — ולינק קביעת-פגישה הופיע **רק** אחרי
+            שמישהו כבר ענה "לא הגעתי" לשאלת השער. מי שמעולם לא קבע את הפגישה
+            הזו (המקרה הנפוץ) לא ראה שום דרך להזיז את עצמו קדימה — מסך מת
+            בדיוק במובן שהמשתמש תיאר: "אין אפשרות להמשיך מפה". עכשיו קביעת
+            הפגישה היא הפעולה הראשית תמיד, לא רק אחרי "פספסתי".
+          */}
+          {localStorage.getItem(`meeting-${gateN}-at`) ? (
+            <>
+              <button
+                onClick={() => goToPhase("intro")}
+                className="w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+                style={{ background: ORANGE, ...HEEBO }}
+              >
+                להכנה — השאלון ושלוש הדרכים ←
+              </button>
+              {localStorage.getItem(`meeting-${gateN}-attended`) === "missed" && (
+                <Link
+                  href={`/contact?m=${gateN}`}
+                  className="block text-center w-full mt-4 py-3.5 rounded-2xl text-[14px] font-black"
+                  style={{ background: "#fff3e2", color: "#7a4100" }}
+                >
+                  לקבוע מועד חדש לפגישה ←
+                </Link>
+              )}
+            </>
+          ) : (
+            <>
+              <Link
+                href={`/contact?m=${gateN}`}
+                className="block text-center w-full py-4 rounded-2xl text-white text-[15px] font-black active:scale-[0.98] transition-transform"
+                style={{ background: ORANGE, ...HEEBO }}
+              >
+                לקביעת הפגישה ←
+              </Link>
+              <button
+                onClick={() => goToPhase("intro")}
+                className="w-full mt-3 py-3.5 rounded-2xl text-[14px] font-bold"
+                style={{ background: "#fff", border: "1.5px solid rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.6)" }}
+              >
+                להכנה — השאלון ושלוש הדרכים ←
+              </button>
+            </>
+          )}
           <Link
             href="/explore"
             className="block text-center w-full mt-3 text-[12px] font-bold"
@@ -1207,16 +1245,6 @@ export default function PathsPage() {
           >
             רוצה לטעום עוד תחום לפני הפגישה? ←
           </Link>
-          {/* מי שאמר "לא הגעתי" — הדרך חזרה, לא מסך מת */}
-          {localStorage.getItem(`meeting-${gateN}-attended`) === "missed" && (
-            <Link
-              href={`/contact?m=${gateN}`}
-              className="block text-center w-full mt-4 py-3.5 rounded-2xl text-[14px] font-black"
-              style={{ background: "#fff3e2", color: "#7a4100" }}
-            >
-              לקבוע מועד חדש לפגישה ←
-            </Link>
-          )}
           </>
           )}
         </div>
