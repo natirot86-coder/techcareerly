@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import BottomNav from "@/components/ui/BottomNav";
 import { saveSimulationProgress, updateTask, logEvent } from "@/lib/candidate";
+import { G, GenderProvider, gt, useGender, useStoredGender, type Gender } from "@/lib/gender";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -3205,7 +3206,7 @@ const QA2: SequenceStep = {
   context: (
     <div>
       <p className="text-[13.5px] leading-[1.7] mb-4" style={{ color: "rgba(0,0,0,0.62)" }}>
-        גילית שכפתור <span className="font-bold">"שלחי"</span> לא מגיב במובייל. מה קורה מהרגע הזה?
+        גילית שכפתור <span className="font-bold">"שליחה"</span> לא מגיב במובייל. מה קורה מהרגע הזה?
       </p>
       <div className="rounded-xl p-4" style={{ background: "rgba(217,119,6,0.05)", border: "1px solid rgba(217,119,6,0.15)" }}>
         <div className="text-[11.5px] leading-[1.9]" style={{ color: "rgba(0,0,0,0.6)" }}>
@@ -3234,7 +3235,7 @@ const QA2: SequenceStep = {
       />
     </div>
   ),
-  instruction: "סדרי את שלבי מחזור חיי הבאג — לחצי לפי הסדר הנכון:",
+  instruction: "[[סדר|סדרי]] את שלבי מחזור חיי הבאג — [[לחץ|לחצי]] לפי הסדר הנכון:",
   items: ["אימות התיקון (Verify)", "דיווח הבאג (Report)", "תיקון בקוד (Fix)", "מיון ותיעדוף (Triage)"],
   correctOrder: [1, 3, 2, 0],
   okMsg: "מדויק! Report → Triage → Fix → Verify. בלי הסדר הזה, באגים נעלמים בתוך התהליך — או מתוקנים בלי שאף אחת בדקה שהתיקון באמת עבד.",
@@ -3897,7 +3898,7 @@ function SequenceInteraction({
               fontFamily: theme.fontUI,
             }}
           >
-            {complete ? "בדקי את הסדר ✓" : `בחרי עוד ${step.items.length - sequence.length}`}
+            {complete ? <><G m="בדוק" f="בדקי" n="לבדוק" /> את הסדר ✓</> : <><G m="בחר" f="בחרי" n="לבחור" /> עוד {step.items.length - sequence.length}</>}
           </button>
         </div>
       )}
@@ -4136,6 +4137,7 @@ function TypeInteraction({
   theme: SimTheme;
 }) {
   const t = theme;
+  const gender = useGender();
   const [value, setValue] = useState(initialValue ?? "");
   const [revealed, setRevealed] = useState(Boolean(initialValue));
   const [wasCorrect, setWasCorrect] = useState(() =>
@@ -4169,7 +4171,7 @@ function TypeInteraction({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
-        placeholder={step.placeholder ?? "הקלידי כאן..."}
+        placeholder={step.placeholder ?? gt("[[הקלד|הקלידי|להקליד]] כאן...", gender)}
         className="w-full rounded-xl px-4 py-[14px] text-[14px] font-mono mb-2 outline-none"
         style={{
           background: t.cardBg,
@@ -4208,7 +4210,7 @@ function TypeInteraction({
             fontFamily: t.fontUI,
           }}
         >
-          בדקי
+          <G m="בדוק" f="בדקי" n="לבדוק" />
         </button>
       )}
       {revealed && !wasCorrect && (
@@ -4310,7 +4312,7 @@ const DOMAIN_META: Record<string, {
   },
   qa: {
     simTitle: "טעימה — QA",
-    heroTexts: ["חשבת כמו בודקת QA!", "בדרך הנכונה לאיכות!", "ניצחת את השלב הראשון!"],
+    heroTexts: ["חשבת כמו [[בודק|בודקת]] QA!", "בדרך הנכונה לאיכות!", "ניצחת את השלב הראשון!"],
     skills: [
       { label: "חשיבה ביקורתית", val: 78 },
       { label: "זיהוי מקרי קצה", val: 72 },
@@ -4319,7 +4321,7 @@ const DOMAIN_META: Record<string, {
       { label: "בדיקות רגרסיה", val: 62 },
     ],
     careerText: "כל מה שבדקת היום — QA Engineers ב-Wix, Monday.com, Fiverr ו-Riskified עושות גרסאות מתקדמות שלו כל יום. הדס עברה מהוראה ל-QA אחרי קורס בן 4 חודשים — ואחרי חצי שנה קיבלה עבודה.",
-    missionTitle: "ה-release יוצא הערב. כל שלב שאת עוברת — עוד פריט ברשימת הבדיקה שמאושר לפני שהוא יוצא.",
+    missionTitle: "ה-release יוצא הערב. כל שלב [[שאתה עובר|שאת עוברת|שעוברים]] — עוד פריט ברשימת הבדיקה שמאושר לפני שהוא יוצא.",
   },
   hardware: {
     simTitle: "טעימה — חומרה",
@@ -4335,7 +4337,7 @@ const DOMAIN_META: Record<string, {
   },
 };
 
-function getSteps(domain: string): Step[] {
+function rawSteps(domain: string): Step[] {
   if (domain === "data") return STEPS_DATA;
   if (domain === "marketing") return STEPS_MARKETING;
   if (domain === "ai") return STEPS_AI;
@@ -4346,8 +4348,33 @@ function getSteps(domain: string): Step[] {
   return STEPS_CODE; // default (code)
 }
 
-function getDomainMeta(domain: string) {
-  return DOMAIN_META[domain] ?? DOMAIN_META.code;
+// פותר את סימוני [[זכר|נקבה]] בכל מחרוזות השלב. accepted (תשובות מקובלות
+// בהקלדה) לא נוגעים — הם ערכי בדיקה, לא טקסט. ו-concept נשלח לאנליטיקות,
+// אז לא כותבים בו סימונים — אחרת אותו צעד ייספר כשניים.
+function localizeStep(st: Step, gender: Gender | null): Step {
+  const t = (x: string) => gt(x, gender);
+  const base = { tag: t(st.tag), okMsg: t(st.okMsg), errMsg: t(st.errMsg), learned: t(st.learned) };
+  switch (st.kind) {
+    case "choice":   return { ...st, ...base, question: t(st.question), options: st.options.map(t) };
+    case "sequence": return { ...st, ...base, instruction: t(st.instruction), items: st.items.map(t) };
+    case "match":    return { ...st, ...base, instruction: t(st.instruction), pairs: st.pairs.map(p => ({ left: t(p.left), right: t(p.right) })) };
+    case "type":     return { ...st, ...base, question: t(st.question), placeholder: st.placeholder && t(st.placeholder) };
+  }
+}
+
+function getSteps(domain: string, gender: Gender | null = null): Step[] {
+  return rawSteps(domain).map(st => localizeStep(st, gender));
+}
+
+function getDomainMeta(domain: string, gender: Gender | null = null) {
+  const m = DOMAIN_META[domain] ?? DOMAIN_META.code;
+  const t = (x: string) => gt(x, gender);
+  return {
+    ...m,
+    heroTexts: m.heroTexts.map(t) as [string, string, string],
+    careerText: t(m.careerText),
+    missionTitle: m.missionTitle && t(m.missionTitle),
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4357,8 +4384,9 @@ function getDomainMeta(domain: string) {
 function ResultScreen({ score, answers, nextDomain, domain }: { score: number; answers: boolean[]; nextDomain: string | null; domain: string }) {
   const theme = getTheme(domain);
   const playful = PLAYFUL_DOMAINS.has(domain);
-  const steps = getSteps(domain);
-  const meta = getDomainMeta(domain);
+  const gender = useGender();
+  const steps = getSteps(domain, gender);
+  const meta = getDomainMeta(domain, gender);
   const pct = Math.round((score / steps.length) * 100);
 
   const skills = meta.skills;
@@ -4594,8 +4622,9 @@ function SimFlow({
 }) {
   const theme = getTheme(domain);
   const playful = PLAYFUL_DOMAINS.has(domain);
-  const steps = getSteps(domain);
-  const meta = getDomainMeta(domain);
+  const gender = useGender();
+  const steps = getSteps(domain, gender);
+  const meta = getDomainMeta(domain, gender);
 
   /*
    * חוזרים בדיוק לשאלה שבה נעצרנו, עם התשובות שכבר ניתנו — לא רק הסיום.
@@ -4854,7 +4883,7 @@ function SimFlow({
             className="w-full py-[14px] rounded-xl text-white font-bold text-[15px] mb-4"
             style={{ background: theme.accentGradient, fontFamily: theme.fontUI, boxShadow: playful ? "0 6px 16px rgba(95,61,255,.3)" : undefined }}
           >
-            {stepIndex < steps.length - 1 ? "הבא ←" : "סיימתי — תראי תוצאות"}
+            {stepIndex < steps.length - 1 ? "הבא ←" : gt("סיימתי — [[תראה|תראי|לתוצאות]] תוצאות", gender)}
           </button>
         </div>
       )}
@@ -4892,8 +4921,9 @@ export default function SimPage() {
   const [nextDomain, setNextDomain] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-  const steps = getSteps(domainStr);
-  const meta = getDomainMeta(domainStr);
+  const gender = useStoredGender();
+  const steps = getSteps(domainStr, gender);
+  const meta = getDomainMeta(domainStr, gender);
 
   if (!IMPLEMENTED_DOMAINS.has(domainStr)) {
     return (
@@ -4979,6 +5009,7 @@ export default function SimPage() {
   );
 
   return (
+    <GenderProvider value={gender}>
     <div className="min-h-screen flex flex-col" style={{ background: theme.pageBg, fontFamily: theme.fontUI }}>
       {playful ? (
         <div className="md:hidden px-[22px] pt-[16px] pb-1 shrink-0">
@@ -5060,5 +5091,6 @@ export default function SimPage() {
 
       <BottomNav />
     </div>
+    </GenderProvider>
   );
 }

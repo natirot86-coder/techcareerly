@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import { G, GenderProvider, gt, useGender } from "@/lib/gender";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const AMBER = "#d97706";
@@ -97,12 +98,12 @@ const TEST_CASES = [
 ];
 
 const TOGGLE_ACTIONS = [
-  { id: "report_critical", label: "דווחי מיד על באג התשלום הקריטי",              correct: true,  wrongMsg: "נכון! חיוב שגוי ללקוחות = כסף אמיתי, זו הבעיה הכי דחופה כרגע" },
-  { id: "rewrite_cases",   label: "שכתבי את מקרי הבדיקה המעורפלים בבירור",        correct: true,  wrongMsg: "נכון! מקרה בדיקה מעורפל לא באמת בודק כלום — הוא רק נראה כאילו כן" },
-  { id: "ignore_flaky",    label: "התעלמי מהטסט שנכשל לסירוגין — בטח flaky",       correct: false, wrongMsg: "לא — טסט לא-יציב יכול להסתיר באג אמיתי. בודקים לפני שמתעלמים" },
-  { id: "add_regression",  label: "הוסיפי מקרה בדיקה לרגרסיה על חישוב הסכום",      correct: true,  wrongMsg: "נכון! מונע שהבאג הזה בדיוק יחזור בגרסה הבאה בלי שאף אחת תשים לב" },
-  { id: "skip_review",     label: "דלגי על בדיקת מקרי הבדיקה — אין זמן היום",      correct: false, wrongMsg: "לא — מקרי בדיקה מעורפלים נשארים מעורפלים לנצח אם אף אחת לא עוצרת לתקן" },
-  { id: "alert_team",      label: "עדכני את הצוות על ממצאי הבדיקה בסלאק",          correct: true,  wrongMsg: "נכון! שקיפות עם הצוות היא חלק מהתפקיד, לא רק כתיבת מקרי בדיקה" },
+  { id: "report_critical", label: "[[דווח|דווחי]] מיד על באג התשלום הקריטי",              correct: true,  wrongMsg: "נכון! חיוב שגוי ללקוחות = כסף אמיתי, זו הבעיה הכי דחופה כרגע" },
+  { id: "rewrite_cases",   label: "[[שכתב|שכתבי]] את מקרי הבדיקה המעורפלים בבירור",        correct: true,  wrongMsg: "נכון! מקרה בדיקה מעורפל לא באמת בודק כלום — הוא רק נראה כאילו כן" },
+  { id: "ignore_flaky",    label: "[[התעלם|התעלמי]] מהטסט שנכשל לסירוגין — בטח flaky",       correct: false, wrongMsg: "לא — טסט לא-יציב יכול להסתיר באג אמיתי. בודקים לפני שמתעלמים" },
+  { id: "add_regression",  label: "[[הוסף|הוסיפי|הוספת]] מקרה בדיקה לרגרסיה על חישוב הסכום",      correct: true,  wrongMsg: "נכון! מונע שהבאג הזה בדיוק יחזור בגרסה הבאה בלי שאף אחת תשים לב" },
+  { id: "skip_review",     label: "[[דלג|דלגי]] על בדיקת מקרי הבדיקה — אין זמן היום",      correct: false, wrongMsg: "לא — מקרי בדיקה מעורפלים נשארים מעורפלים לנצח אם אף אחת לא עוצרת לתקן" },
+  { id: "alert_team",      label: "[[עדכן|עדכני]] את הצוות על ממצאי הבדיקה בסלאק",          correct: true,  wrongMsg: "נכון! שקיפות עם הצוות היא חלק מהתפקיד, לא רק כתיבת מקרי בדיקה" },
 ];
 
 const TERM_QUESTIONS = [
@@ -154,6 +155,11 @@ function loadSavedState(): SavedDayState {
 }
 
 export default function QADay() {
+  return <GenderProvider><QADayInner /></GenderProvider>;
+}
+
+function QADayInner() {
+  const gender = useGender();
   const savedRef = useRef<SavedDayState | null>(null);
   if (savedRef.current === null) savedRef.current = loadSavedState();
   const saved = savedRef.current;
@@ -371,7 +377,7 @@ export default function QADay() {
         {Header}
         <div className="max-w-[720px] mx-auto w-full px-[22px] pt-6">
           <div className="text-[22px] leading-tight mb-1" style={{ color: NAVY, ...HEEBO }}>מה באמת עושה QA Engineer?</div>
-          <div className="text-[13px] mb-4" style={{ color: "rgba(0,0,0,0.42)" }}>לפני שנצלול לתקרית אמיתית — בואי נבין את התפקיד</div>
+          <div className="text-[13px] mb-4" style={{ color: "rgba(0,0,0,0.42)" }}>לפני שנצלול לתקרית אמיתית — <G m="בוא" f="בואי" /> נבין את התפקיד</div>
 
           <div className="rounded-2xl overflow-hidden mb-5" style={{ boxShadow: "0 2px 14px rgba(0,0,0,0.12)" }}>
             <img src="/domains/domain-qa.jpeg" alt="" className="w-full object-cover" style={{ height: "200px" }} />
@@ -403,7 +409,7 @@ export default function QADay() {
                 {[
                   "נקודת כניסה מהירה להייטק — לא חובה רקע בקוד",
                   "חשיבה בלשית — מוצאות דברים שאחרים פספסו",
-                  "אחריות ממשית — את שומרת שהמוצר באמת עובד ללקוחות",
+                  gt("אחריות ממשית — [[אתה שומר|את שומרת]] שהמוצר באמת עובד ללקוחות", gender),
                   "נתיב טבעי להתקדם ל-Automation / SDET עם הזמן",
                   "שכר מתחיל של 11,000–16,000 ₪ כבר בשנה הראשונה",
                 ].map((p, i) => <li key={i} className="flex gap-2"><span style={{ color: AMBER }}>✓</span>{p}</li>)}
@@ -494,7 +500,7 @@ export default function QADay() {
 
             <div className="text-[22px] font-black mb-1" style={{ color: NAVY, ...HEEBO }}>יום שלישי, 11:42</div>
             <div className="text-[13px] mb-5" style={{ color: "rgba(0,0,0,0.5)" }}>
-              ארבעה tickets נפתחו בו-זמנית. את ה-QA Engineer שרואה את זה ראשונה.
+              ארבעה tickets נפתחו בו-זמנית. <G m="אתה" f="את" /> ה-QA Engineer שרואה את זה <G m="ראשון" f="ראשונה" />.
             </div>
 
             <div className="rounded-2xl overflow-hidden mb-5" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }}>
@@ -524,7 +530,7 @@ export default function QADay() {
             <button type="button" onClick={() => go("priority")}
               className="w-full py-4 rounded-2xl text-[14.5px] font-black transition-all active:scale-[0.98]"
               style={{ background: AMBER, color: "#fff", ...HEEBO }}>
-              קחי את הcase ←
+              <G m="קח" f="קחי" /> את ה-case ←
             </button>
           </>
         )}
@@ -546,7 +552,7 @@ export default function QADay() {
               <GlossaryChip term="test plan" explanation="מסמך שמתאר מה בכוונתן לבדוק ובאיזו שיטה — לא קוד, אלא תכנון." />
             </div>
 
-            <div className="text-[12px] font-bold mb-3" style={{ color: "rgba(0,0,0,0.45)" }}>לחצי לפי סדר הטיפול (1 = ראשון):</div>
+            <div className="text-[12px] font-bold mb-3" style={{ color: "rgba(0,0,0,0.45)" }}><G m="לחץ" f="לחצי" /> לפי סדר הטיפול (1 = ראשון):</div>
 
             <div className="flex flex-col gap-2 mb-4">
               {TICKETS_FOR_PRIORITY.map((a) => {
@@ -578,7 +584,7 @@ export default function QADay() {
               <button type="button" onClick={submitPriority} disabled={priorityOrder.length < TICKETS_FOR_PRIORITY.length}
                 className="w-full py-3.5 rounded-2xl text-[14px] font-black transition-all"
                 style={{ background: priorityOrder.length === TICKETS_FOR_PRIORITY.length ? AMBER : "rgba(0,0,0,0.06)", color: priorityOrder.length === TICKETS_FOR_PRIORITY.length ? "#fff" : "rgba(0,0,0,0.3)", ...HEEBO }}>
-                {priorityOrder.length < TICKETS_FOR_PRIORITY.length ? `בחרי עוד ${TICKETS_FOR_PRIORITY.length - priorityOrder.length}` : "אשרי סדר עדיפויות"}
+                {priorityOrder.length < TICKETS_FOR_PRIORITY.length ? gt(`[[בחר|בחרי]] עוד ${TICKETS_FOR_PRIORITY.length - priorityOrder.length}`, gender) : gt("[[אשר|אשרי]] סדר עדיפויות", gender)}
               </button>
             ) : (
               <>
@@ -589,7 +595,7 @@ export default function QADay() {
                 <button type="button" onClick={() => go("review")}
                   className="w-full py-4 rounded-2xl text-[14.5px] font-black transition-all"
                   style={{ background: AMBER, color: "#fff", ...HEEBO }}>
-                  המשיכי ל-test case review ←
+                  <G m="המשך" f="המשיכי" /> ל-test case review ←
                 </button>
               </>
             )}
@@ -612,7 +618,7 @@ export default function QADay() {
               <GlossaryChip term="false confidence" explanation="תחושת ביטחון כוזבת: יש 'טסט' לפיצ'ר — אבל הוא לא בודק את מה שבאמת חשוב." />
             </div>
 
-            <div className="text-[12px] font-bold mb-2" style={{ color: "rgba(0,0,0,0.45)" }}>login.suite.md — סמני מקרי בדיקה מעורפלים:</div>
+            <div className="text-[12px] font-bold mb-2" style={{ color: "rgba(0,0,0,0.45)" }}>login.suite.md — <G m="סמן" f="סמני" /> מקרי בדיקה מעורפלים:</div>
 
             <div className="rounded-2xl overflow-hidden mb-4" style={{ border: "1px solid rgba(0,0,0,0.08)" }}>
               {TEST_CASES.map((tc) => {
@@ -645,7 +651,7 @@ export default function QADay() {
               <button type="button" onClick={() => { setReviewSubmitted(true); setScore(s => s + 1); }} disabled={selectedCases.size === 0}
                 className="w-full py-3.5 rounded-2xl text-[14px] font-black transition-all"
                 style={{ background: selectedCases.size > 0 ? AMBER : "rgba(0,0,0,0.06)", color: selectedCases.size > 0 ? "#fff" : "rgba(0,0,0,0.3)", ...HEEBO }}>
-                שלחי — {selectedCases.size} מקרים מסומנים
+                <G m="שלח" f="שלחי" /> — {selectedCases.size} מקרים מסומנים
               </button>
             ) : (
               <>
@@ -656,7 +662,7 @@ export default function QADay() {
                 <button type="button" onClick={() => go("toggles")}
                   className="w-full py-4 rounded-2xl text-[14.5px] font-black transition-all"
                   style={{ background: AMBER, color: "#fff", ...HEEBO }}>
-                  המשיכי לתגובה ←
+                  <G m="המשך" f="המשיכי" /> לתגובה ←
                 </button>
               </>
             )}
@@ -671,7 +677,7 @@ export default function QADay() {
 
             <div className="rounded-xl px-4 py-3 mb-3 text-[12px] leading-[1.6]"
               style={{ background: "rgba(2,62,138,0.05)", border: "1px solid rgba(2,62,138,0.12)", color: "rgba(0,0,0,0.65)" }}>
-              <strong style={{ color: NAVY }}>עיקרון:</strong> דווחי מיד על מה שדחוף, ותקני את תשתית הבדיקות לצד זה — לא במקומו.
+              <strong style={{ color: NAVY }}>עיקרון:</strong> <G m="דווח" f="דווחי" /> מיד על מה שדחוף, <G m="ותקן" f="ותקני" /> את תשתית הבדיקות לצד זה — לא במקומו.
             </div>
 
             <div className="mb-4">
@@ -679,7 +685,7 @@ export default function QADay() {
               <GlossaryChip term="triage" explanation="מיון ראשוני של דיווחים — מה דחוף, מה אמיתי, מה אפשר לדחות." />
             </div>
 
-            <div className="text-[12px] font-bold mb-3" style={{ color: "rgba(0,0,0,0.45)" }}>בחרי אילו פעולות לבצע:</div>
+            <div className="text-[12px] font-bold mb-3" style={{ color: "rgba(0,0,0,0.45)" }}><G m="בחר" f="בחרי" /> אילו פעולות לבצע:</div>
 
             <div className="flex flex-col gap-2 mb-4">
               {TOGGLE_ACTIONS.map((action) => {
@@ -696,7 +702,7 @@ export default function QADay() {
                         style={{ left: isOn ? "26px" : "4px", boxShadow: "0 1px 4px rgba(0,0,0,0.2)" }} />
                     </div>
                     <div className="flex-1 text-right">
-                      <div className="text-[12.5px] font-bold" style={{ color: NAVY }}>{action.label}</div>
+                      <div className="text-[12.5px] font-bold" style={{ color: NAVY }}>{gt(action.label, gender)}</div>
                       {togglesSubmitted && (
                         <div className="text-[11px] mt-0.5" style={{ color: isCorrect ? "#15803d" : "#b91c1c" }}>
                           {isCorrect ? (isOn ? "✓ נכון" : "✓ נכון לא להפעיל") : action.wrongMsg}
@@ -712,7 +718,7 @@ export default function QADay() {
               <button type="button" onClick={() => { setTogglesSubmitted(true); setScore(s => s + 1); }}
                 className="w-full py-3.5 rounded-2xl text-[14px] font-black transition-all"
                 style={{ background: AMBER, color: "#fff", ...HEEBO }}>
-                אשרי פעולות ←
+                <G m="אשר" f="אשרי" /> פעולות ←
               </button>
             ) : (
               <>
@@ -723,7 +729,7 @@ export default function QADay() {
                 <button type="button" onClick={() => go("terminal")}
                   className="w-full py-4 rounded-2xl text-[14.5px] font-black transition-all"
                   style={{ background: AMBER, color: "#fff", ...HEEBO }}>
-                  הריצי את ה-test suite ←
+                  <G m="הרץ" f="הריצי" /> את ה-test suite ←
                 </button>
               </>
             )}
@@ -803,7 +809,7 @@ export default function QADay() {
               <button type="button" onClick={() => { markDone(); go("done"); }}
                 className="w-full py-4 rounded-2xl text-[14.5px] font-black mt-4 transition-all"
                 style={{ background: AMBER, color: "#fff", ...HEEBO }}>
-                סיום — ראי את הסיכום ←
+                סיום — <G m="ראה" f="ראי" /> את הסיכום ←
               </button>
             )}
           </>
@@ -835,7 +841,7 @@ function TermAnswer({ opt, idx, termAns, setTermAns, onNext }: {
       {showResult && isCorrect && isPicked && (
         <button type="button" onClick={onNext} className="w-full py-3.5 rounded-2xl text-[14px] font-black transition-all"
           style={{ background: AMBER, color: "#fff", fontFamily: "'Heebo', sans-serif", fontWeight: 900 }}>
-          המשיכי ל-Post-Mortem ←
+          <G m="המשך" f="המשיכי" /> ל-Post-Mortem ←
         </button>
       )}
     </div>
