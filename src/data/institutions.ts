@@ -142,6 +142,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.bgu.ac.il/welcome/scholarship/sicket-program/",
     location: "באר שבע",
     city: "באר שבע",
+    priority44: false, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026 — רק קמפוס אילת ברשימה
     address: "שדרות בן גוריון 1, באר שבע",
     tuition: "12,203 ₪ לשנה לפני מלגות (מתוקצב, תשפ״ז)",
     admission: "הנדסת תוכנה: סכם 670 / פסיכומטרי 590. הנדסת חשמל ומחשבים: סכם 535 — הדלת ההנדסית הנגישה ביותר באוניברסיטאות",
@@ -252,6 +253,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.sapir.ac.il/ba/computer_science",
     location: "שדרות",
     city: "שדרות",
+    priority44: true, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026
     address: "כביש 232, מ.א. שער הנגב · ד.נ. חוף אשקלון",
     tuition: "12,203 ₪ לשנה (מתוקצב, תשפ״ז). שנה ראשונה חינם לחיילים משוחררים",
     admission: "ארבעה מסלולים: בגרות 80 + מתמטיקה + פסיכומטרי 550 · בגרות 90 + ראיון · בגרות 95 בלבד · הנדסאי 80 + פסיכומטרי 550",
@@ -389,6 +391,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.aac.ac.il/exact-sciences/",
     location: "אשקלון",
     city: "אשקלון",
+    priority44: true, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026
     address: "בן צבי 12, אשקלון 78211", // אומת מאתר המכללה
     tuition: "12,203 ₪ לשנה (מתוקצב, תשפ״ז). שנה ראשונה חינם לחיילים משוחררים בחלון 5 שנים",
     admission: "ממוצע בגרות 85 · סכם כמותי 570 · מתמטיקה 4 יח׳ 70",
@@ -539,6 +542,7 @@ export const INSTITUTIONS: Institution[] = [
     why: "מכללה אקדמית להנדסה — תואר מלא, לא הנדסאים. מהמוסדות עם ריכוז הסטודנטים יוצאי אתיופיה הגבוה בדרום, וממוסדות התואר של TechLeaders.",
     location: "באר שבע",
     city: "באר שבע",
+    priority44: true, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026
     address: "ביאליק 56, באר שבע",
     notes: "פוצל 19.8.2026 מרשומת SCE אחת: ייעוד 44 נקבעת לפי מיקום הקמפוס, ולכן שני הקמפוסים הם שתי תשובות שונות לאותו מועמד. תוקן 13.8: היה מסווג בטעות כמה״ט — זו מכללה אקדמית לתואר הנדסי מלא. האתר חוסם גישה אוטומטית — עדיפות ראשונה לבדיקה ידנית.",
     verified: "לא אומת",
@@ -1165,6 +1169,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.jmc.ac.il/",
     location: "ירושלים",
     city: "ירושלים",
+    priority44: true, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026
     address: "הנביאים 37, ירושלים",
     tuition: "12,203 ₪ לשנה לפני מלגות (מתוקצב, תשפ״ז)",
     admission: "לא אומת",
@@ -1188,6 +1193,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.jce.ac.il/",
     location: "ירושלים",
     city: "ירושלים",
+    priority44: true, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026
     address: "יעקב שרייבום 26, רמת בית הכרם, ירושלים",
     tuition: "12,203 ₪ לשנה לפני מלגות (מתוקצב, תשפ״ז)",
     admission: "לא אומת",
@@ -1777,6 +1783,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://w3.braude.ac.il/",
     location: "כרמיאל",
     city: "כרמיאל",
+    priority44: true, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026
     address: "סנונית 51, כרמיאל",
     tuition: "12,203 ₪ לשנה לפני מלגות (מתוקצב, תשפ״ז)",
     admission: "לא אומת",
@@ -1826,6 +1833,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.telhai.ac.il/",
     location: "קריית שמונה / גליל עליון",
     city: "קריית שמונה",
+    priority44: false, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026 — מתשפ״ז תל-חי היא אוניברסיטה ואינה מזכה
     address: "קמפוס תל-חי, ד.נ. גליל עליון · ליד קריית שמונה",
     tuition: "12,203 ₪ לשנה לפני מלגות (מתוקצב, תשפ״ז)",
     admission: "לא אומת. יש מכינה ייעודית למדעי המחשב",
@@ -1848,6 +1856,7 @@ export const INSTITUTIONS: Institution[] = [
     link: "https://www.kinneret.ac.il/",
     location: "עמק הירדן",
     city: "צמח",
+    priority44: true, // רשימת משרד הביטחון לייעוד 44, נבדק 22.10.2026
     address: "ד.נ. עמק הירדן, צמח 1513200",
     tuition: "לא אומת",
     admission: "לא אומת",

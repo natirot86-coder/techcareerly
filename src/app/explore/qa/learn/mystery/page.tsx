@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
+import { G, GenderProvider, gt, useGender } from "@/lib/gender";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const AMBER = "#d97706";
@@ -84,6 +85,11 @@ function loadSavedState(): { phase?: Phase; score?: number } {
 }
 
 export default function QAMystery() {
+  return <GenderProvider><QAMysteryInner /></GenderProvider>;
+}
+
+function QAMysteryInner() {
+  const gender = useGender();
   const [phase, setPhase] = useState<Phase>(() => loadSavedState().phase ?? "intro");
   const [score, setScore] = useState(() => loadSavedState().score ?? 0);
 
@@ -199,7 +205,7 @@ export default function QAMystery() {
 
             <div className="rounded-2xl p-4 mb-5" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)" }}>
               <div className="text-[13px] leading-[1.7]" style={{ color: "rgba(0,0,0,0.65)" }}>
-                יש לך <span className="font-bold" style={{ color: NAVY }}>3 רמזים פשוטים</span>. כל רמז — סיפור קצר ושאלה אחת. בסוף תחליטי מה באמת קרה.
+                יש לך <span className="font-bold" style={{ color: NAVY }}>3 רמזים פשוטים</span>. כל רמז — סיפור קצר ושאלה אחת. בסוף <G m="תחליט" f="תחליטי" /> מה באמת קרה.
               </div>
             </div>
 
@@ -242,7 +248,7 @@ export default function QAMystery() {
               options={["התחברות לאתר", "תשלום עם קוד הנחה שלא קיים", "הוספת מוצר לעגלה"]}
               correct={1}
               okMsg="✓ נכון! בדיוק המקרה הזה לא היה ברשימת הבדיקות."
-              errMsg="✗ לא בדיוק. תראי שוב את הרשימה — לשלושה יש ✅. לרביעי אין."
+              errMsg={gt("✗ לא בדיוק. [[תסתכל|תסתכלי]] שוב ברשימה — לשלושה יש ✅. לרביעי אין.", gender)}
               onAnswer={answered}
               nextLabel="רמז שני ←"
               onNext={() => go("clue2")}
@@ -316,7 +322,7 @@ export default function QAMystery() {
             <div className="text-[13px] mb-5" style={{ color: "rgba(0,0,0,0.5)" }}>שלושת הרמזים מספיקים כדי לענות.</div>
 
             <Question
-              q="בחרי את התשובה הנכונה:"
+              q={gt("[[בחר|בחרי]] את התשובה הנכונה:", gender)}
               options={[
                 "המתכנתת שכתבה את הקוד לא הייתה מספיק טובה",
                 "בדיקה חשובה דולגה 'זמנית' כי הייתה בעייתית — ואף אחת לא חזרה אליה",
@@ -326,7 +332,7 @@ export default function QAMystery() {
               okMsg="✓ מדויק! זו לא אשמת אדם אחד — זה מה שקורה כשמשהו 'זמני' נשכח. בדיוק בשביל זה QA טובה עוקבת גם אחרי בדיקות שדולגו, לא רק כותבת בדיקות חדשות."
               errMsg="✗ לא בדיוק. התשובה: בדיקה חשובה דולגה זמנית בגלל בעיה, ואף אחת לא חזרה אליה אחר כך — זה קרה בתהליך, לא באדם אחד."
               onAnswer={answered}
-              nextLabel="סיום — ראי את הסיכום ←"
+              nextLabel={gt("סיום — [[ראה|ראי]] את הסיכום ←", gender)}
               onNext={() => { markDone(); go("done"); }}
             />
           </>

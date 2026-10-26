@@ -929,6 +929,7 @@ function TaskRow({
         {task.note && (
           <div className="text-[13px]" style={{ color: "#5c574e", lineHeight: 1.55 }}>{task.note}</div>
         )}
+        {task.id.endsWith("-olim") && <OlimCheck onNo={() => onRemove(task.id)} />}
         <div className="flex items-center gap-2 mt-0.5">
           <span className="px-2.5 py-[3px] rounded-full text-[11px] font-bold" style={{ background: "#f4f1ea", color: "#7a746a" }}>
             {AREA_LABEL[task.area]}
@@ -937,6 +938,42 @@ function TaskRow({
             למחוק
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/*
+  ── המינהל לסטודנטים עולים: שאלה אחת, רק כאן (22.10) ─────────────────────────
+  המשימה הופיעה לכולם, והיא רק לעולים. ליוצאי אתיופיה הכלל מקל במיוחד — עד 15
+  שנים מקבלת המעמד (בלי שנות השירות) ועד גיל 28 לתואר ראשון — אבל מי שנולד
+  בארץ אינו עולה. שאלה בהרשמה הייתה חיכוך לכולם בשביל חלק; כאן היא נשאלת רק
+  כשהיא רלוונטית. "לא" מסיר את המשימה; "כן" נשמר כדי שלא תישאל שוב.
+*/
+function OlimCheck({ onNo }: { onNo: () => void }) {
+  const [answered, setAnswered] = useState(false);
+  useEffect(() => {
+    try { setAnswered(localStorage.getItem("olim-eligible") === "yes"); } catch { /* ignore */ }
+  }, []);
+  if (answered) return null;
+  const btn = "px-3 py-1.5 rounded-lg text-[12.5px] font-bold";
+  return (
+    <div className="mt-1 p-2.5 rounded-lg" style={{ background: "#f4f1ea" }}>
+      <div className="text-[13px] font-bold mb-1.5" style={{ color: "#1c1a16" }}>
+        עלית לארץ ב-15 השנים האחרונות (לא כולל שנות השירות)?
+      </div>
+      <div className="text-[12px] mb-2" style={{ color: "#7a746a", lineHeight: 1.5 }}>
+        המינהל מיועד לעולים. ליוצאי אתיופיה — עד 15 שנה מקבלת המעמד, ועד גיל 28 לתואר ראשון.
+      </div>
+      <div className="flex gap-2">
+        <button className={btn} style={{ background: NAVY, color: "#fff" }}
+          onClick={() => { try { localStorage.setItem("olim-eligible", "yes"); } catch { /* ignore */ } setAnswered(true); }}>
+          כן
+        </button>
+        <button className={btn} style={{ background: "#fff", color: "#5c574e", border: `1px solid ${BORDER}` }}
+          onClick={() => { try { localStorage.setItem("olim-eligible", "no"); } catch { /* ignore */ } onNo(); }}>
+          לא — המשימה לא בשבילי
+        </button>
       </div>
     </div>
   );
@@ -1062,15 +1099,32 @@ function MoneyView() {
   const relevantTo = (f: Scholarship): boolean => {
     if (f.tracks && !f.tracks.includes(track)) return false;
     if (inst && f.institutions && f.institutions.length > 0 && !f.institutions.includes(inst.id)) return false;
+    /*
+      ייעוד 44 — לפי מיקום **המוסד** ברשימת משרד הביטחון, לא לפי מגורים (22.10).
+      עד היום הוצגה "רלוונטית לבן-גוריון" ואיפסה את החשבון — ובן-גוריון באר
+      שבע בכלל לא ברשימה (רק קמפוס אילת). `priority44` חסר ⇐ לא מזכה.
+    */
+    if (f.id === "yeud44" && inst && !inst.priority44) return false;
     return true;
   };
   const relevant = SCHOLARSHIPS.filter(relevantTo);
   const others = SCHOLARSHIPS.filter(f => !relevantTo(f));
 
+  /*
+    מלגה שהמועד שלה כבר עבר השנה (22.10): נשארת ברשימה ומסומנת "לשנה הבאה",
+    אבל **לא נספרת בחשבון**. כשנספרה, משתתף שמתחיל עכשיו ראה "0 ₪" על סמך
+    מלגה שכבר לא יקבל. הסתרה גמורה הייתה גרועה יותר — למי שמתחיל בשנה הבאה
+    היא רלוונטית, ומלגה מוסתרת היא מלגה שלא ידע עליה.
+  */
+  const missedThisYear = (f: Scholarship) => {
+    if (!f.closesAt) return false;
+    return nextOccurrence(f.closesAt.d, f.closesAt.m).getFullYear() > new Date().getFullYear();
+  };
   const pickedItems = picked
     .map(id => SCHOLARSHIPS.find(f => f.id === id))
     .filter((f): f is Scholarship => !!f);
-  const covered = pickedItems.reduce((sum, f) => sum + (f.amount ?? 0), 0);
+  const missedPicked = pickedItems.filter(missedThisYear);
+  const covered = pickedItems.filter(f => !missedThisYear(f)).reduce((sum, f) => sum + (f.amount ?? 0), 0);
   const unknownAmount = pickedItems.filter(f => !f.amount);
   const gap = Math.max(0, base - covered);
 
@@ -1125,8 +1179,8 @@ function MoneyView() {
         <div className="text-[13.5px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>{f.what}</div>
         {missedWindow && closes && (
           <div className="text-[13px] mt-1.5 px-2.5 py-2 rounded-lg" style={{ background: "#fff7ec", color: "#8a4d00", lineHeight: 1.55 }}>
-            החלון לשנה הזאת נסגר ב-{f.closesAt!.d}.{f.closesAt!.m} — הבא נפתח ב{MONTHS[f.closesAt!.m - 1]} {closes.getFullYear()}.
-            {" "}שווה לשאול את הרכזת אם יש חריגה או מסלול אחר.
+            לשנה הבאה: המועד השנה עבר ב-{f.closesAt!.d}.{f.closesAt!.m}, והבא ב-{f.closesAt!.d} ב{MONTHS[f.closesAt!.m - 1]} {closes.getFullYear()}.
+            {" "}אם מתחילים ללמוד השנה — היא לא נספרת בחשבון. שווה לשאול את הרכז/ת אם יש חריגה או מסלול אחר.
           </div>
         )}
         {f.windowNote && <div className="text-[13px] mt-1.5" style={{ color: "#8a8377" }}>{f.windowNote}</div>}
@@ -1190,6 +1244,15 @@ function MoneyView() {
                 ))}
               </div>
             )}
+            {missedPicked.length > 0 && (
+              <div className="text-[12.5px] mt-2 flex flex-col gap-1" style={{ color: "#8a4d00", lineHeight: 1.6 }}>
+                {missedPicked.map(f => (
+                  <div key={f.id}>
+                    <span className="font-bold">{f.name.split(" — ")[0]}</span> — המועד השנה כבר עבר, לכן אינה בחשבון. רלוונטית אם מתחילים ללמוד בשנה הבאה.
+                  </div>
+                ))}
+              </div>
+            )}
             {pickedItems.length === 0 && (
               <div className="text-[13px] mt-2.5" style={{ color: "#8a8377" }}>
                 עוד לא בחרת מלגות — לחצו על מלגה ברשימה למטה והחשבון יתעדכן.
@@ -1237,7 +1300,11 @@ function MoneyView() {
         </div>
         <div className="text-[14px]" style={{ color: "#4b4740", lineHeight: 1.6 }}>
           חלק מהן חוסמות אחת את השנייה — אם תבחרו שתיים כאלה, נגיד לכם. הצירוף
-          שעובד למועמד טיפוסי: <b>{RECOMMENDED_STACK.map(id => SCHOLARSHIPS.find(f => f.id === id)?.name).join(" ← ")}</b>.
+          שעובד למועמד טיפוסי: <b>{RECOMMENDED_STACK
+            .map(id => SCHOLARSHIPS.find(f => f.id === id))
+            /* ייעוד 44 תלויה במוסד (22.10) — לא מציעים אותה למי שהמוסד שלו לא ברשימה */
+            .filter((f): f is Scholarship => !!f && relevantTo(f))
+            .map(f => f.name).join(" ← ")}</b>.
         </div>
       </div>
 

@@ -16,7 +16,7 @@
  * המקור לתאריכים ולכללי הצבירה: docs/research-findings.md, חלק א׳.
  */
 
-import type { Track } from "./institutions";
+import { INSTITUTIONS, type Track } from "./institutions";
 import { FUNDING, RECOMMENDED_STACK, type Funding } from "./scholarships";
 
 /**
@@ -182,7 +182,12 @@ export function buildPlan(
   // — מלגות. רק מה שרלוונטי למסלול, ורק מה שהחלון שלו עוד לפנינו —
   for (const s of SCHOLARSHIPS) {
     if (s.tracks && track && !s.tracks.includes(track)) continue;
-    if (s.id === "yeud44" && !inPeriphery) continue;
+    /*
+      ⚠️ ייעוד 44 נקבעת לפי מיקום **המוסד** (רשימת משרד הביטחון), לא לפי מגורים
+      (תוקן 22.10). עד היום המשימה נוצרה למי שענה "פריפריה" בשאלון — כלומר
+      משתתף מלוד שבחר בספיר לא קיבל אותה, ומי שגר בדרום ובחר בתל אביב כן.
+    */
+    if (s.id === "yeud44" && !shortlist.some(x => INSTITUTIONS.find(i => i.name === x.name)?.priority44)) continue;
     if (s.id === "yeud46") continue; // רק לבוגרי מכינה — נכנס ידנית
 
     if (s.opensAt) {
@@ -197,6 +202,17 @@ export function buildPlan(
         });
         continue;
       }
+    }
+    /* ייעוד 44: אין מועד הגשה לפני הלימודים — חותמים אחרי שמתחילים שנה א׳ (22.10) */
+    if (s.id === "yeud44") {
+      add({
+        id: "s-sign-yeud44",
+        title: "ייעוד 44 — כשמתחילים שנה א׳: לחתום על כתב ההתחייבות (15.5–15.8)",
+        note: s.catch ?? s.what,
+        area: "scholarship",
+        due: null,
+      });
+      continue;
     }
     if (s.closesAt) {
       const closes = nextOccurrence(s.closesAt.d, s.closesAt.m, today);
