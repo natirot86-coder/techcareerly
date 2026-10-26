@@ -1128,10 +1128,29 @@ export default function PathsPage() {
       ? [chosenDomain]
       : topDomains.slice(0, 3).map(d => d.id);
 
+  /*
+   * ⚠️ נתפס (26.10): "ואפשר לשנות בכל רגע" (מסך ה-intro) היה נכון רק
+   * עד שהתוצאה חושבה — result/routes/blockers/institutions/prep/research/done
+   * לא הובילו לשום דרך חזרה לשאלון. המשתתף שדיווח כבר היה בתוך מוסדות/מלגות
+   * ונתקע בלי שום כפתור "אחורה". נקודת כניסה אחת, בהדר המשותף לכל השלבים,
+   * כדי שלא יהיו שבע נקודות נפרדות שעלולות להישכח בבנייה הבאה.
+   */
+  const EDITABLE_PHASES: Phase[] = ["result", "routes", "blockers", "institutions", "prep", "research", "done"];
   const Header = (
     <div className="text-white px-[22px] pt-[26px] pb-[30px] shrink-0" style={{ background: NAVY }}>
       <div className="max-w-[720px] mx-auto">
-        <Link href="/dashboard" className="text-[12px] font-bold block mb-5" style={{ opacity: 0.6 }}>← חזרה למסע</Link>
+        <div className="flex items-center justify-between mb-5">
+          <Link href="/dashboard" className="text-[12px] font-bold" style={{ opacity: 0.6 }}>← חזרה למסע</Link>
+          {EDITABLE_PHASES.includes(phase) && (
+            <button
+              onClick={() => { setQIndex(0); goToPhase("quiz"); }}
+              className="text-[12px] font-bold"
+              style={{ opacity: 0.75 }}
+            >
+              ✏️ לשנות תשובות לשאלון
+            </button>
+          )}
+        </div>
         <div className="text-[28px] leading-tight" style={HEEBO}>מסלול לימודים</div>
         <div className="text-[13px] mt-[6px]" style={{ opacity: 0.72 }}>שלב 4 — בחירת הדרך שלך להייטק</div>
       </div>
