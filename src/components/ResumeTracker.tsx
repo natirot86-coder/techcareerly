@@ -20,6 +20,13 @@ import { pullState, pushState } from "@/lib/stateSync";
 
 /* משיכה מהשרת פעם אחת לכל טעינת דף; משם והלאה רק שליחת הפרשים */
 let pulledThisLoad = false;
+/*
+  ⚠️ ניווט שני שמגיע *בזמן* שהמשיכה הראשונה עדיין באוויר (SPA, שניות
+  ספורות) חייב להמתין לה ולא לדלג ישר ל-pushState (26.10) — push עם
+  meta מלפני שהמשיכה סיימה למזג היה יכול לדרוס בחזרה פעולה טרייה
+  שהיא עצמה דאגה לשמור. ה-promise חי רק בזמן שהמשיכה בדרך.
+*/
+let pullPromise: Promise<number> | null = null;
 
 /**
  * גזירת השלב — הועברה לכאן מהדשבורד כשהוא בוטל (נתי 25.8): הוא היה
@@ -89,8 +96,14 @@ export default function ResumeTracker() {
       היחיד שרואה כל ניווט. אחרי שמירת המיקום, כדי שגם הוא יעלה: מכשיר אחר
       יחזור **לאותו מסך**, לא רק לאותו שלב.
     */
-    if (!pulledThisLoad) { pulledThisLoad = true; void pullState(); }
-    else void pushState();
+    if (!pulledThisLoad) {
+      pulledThisLoad = true;
+      pullPromise = pullState().finally(() => { pullPromise = null; });
+    } else if (pullPromise) {
+      void pullPromise.then(() => pushState());
+    } else {
+      void pushState();
+    }
   }, [pathname, search]);
 
   /* יציאה מהאפליקציה (מעבר לוואטסאפ, נעילת מסך) — הרגע שבו שינוי אחרון הולך לאיבוד */

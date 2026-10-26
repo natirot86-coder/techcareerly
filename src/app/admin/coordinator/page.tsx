@@ -605,7 +605,22 @@ function buildStations(p: Person): Station[] {
 
   // התחנה הפתוחה הראשונה היא "כאן עכשיו" — או "עצר כאן" אם יש ראיית עמידה
   /* תחנות שאינן של הקוהורט נעלמות — אחרת בוגר נראה תקוע לנצח בטעימות */
-  const mine = def.filter(d => !("only" in d) || (d.only as readonly string[]).includes(cohort));
+  const mineRaw = def.filter(d => !("only" in d) || (d.only as readonly string[]).includes(cohort));
+
+  /*
+    ⚠️ באג שנתפס (26.10, משתתף שכבר אחרי פגישה 3): כל תחנה נגזרת מאירוע
+    צר משלה (meeting1_checkin result=yes, domain_committed וכו'), וזה
+    נכון לתוכן שלה — אבל המסע הוא **רציף**: אי אפשר להגיע לבחירת מסלול
+    (שלב 4) בלי לעבור פגישה 1, גם אם ה-checkin הספציפי "איך היה" מעולם
+    לא נלחץ (למשל כש-m2Done נגזר משכבת הביטחון/picked.length ב-paths,
+    לא מ-attended==="yes"). בלי תיקון, תחנה מוקדמת שהאירוע הצר שלה חסר
+    מוצגת כ"כאן עכשיו" או "עוד לא הגיע" — גם כשתחנות מאוחרות ממנה כבר
+    ירוקות. אותה תבנית בדיוק כמו "שתי רשימות מקבילות יוצאות מסנכרון":
+    כאן זו לא רשימה שנייה, אלא ההנחה שתחנה N יודעת על עצמה בלי להביט
+    על N+1. **תחנה מאוחרת שהושלמה היא הוכחה שכל מה שלפניה קרה בפועל.**
+  */
+  const lastDoneIdx = mineRaw.reduce((acc, d, i) => (d.done ? i : acc), -1);
+  const mine = mineRaw.map((d, i) => (i < lastDoneIdx && !d.done ? { ...d, done: true } : d));
 
   let currentIdx = mine.findIndex(d => !d.done);
   if (currentIdx === -1) currentIdx = mine.length - 1;
@@ -636,7 +651,7 @@ const NODE_COLOR: Record<Station["state"], { bg: string; border: string; icon: s
   future:  { bg: "#fbf9f5", border: "#e2ddd3", icon: "#a8a195" },
 };
 
-function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coordName: string; onBack: () => void; onSaved: () => void }) {
+function JourneyMap({ p: person, onBack, onSaved }: { p: Person; onBack: () => void; onSaved: () => void }) {
   /* עדכון אופטימי אחרי הזנת טלפון — כדי שלא צריך לטעון מחדש את כל התור */
   const [phoneOverride, setPhoneOverride] = useState<string | null>(null);
   const p = phoneOverride === null ? person : { ...person, phone: phoneOverride, phoneVerified: false };
@@ -645,6 +660,23 @@ function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coor
   const [showEdit, setShowEdit] = useState(false);
   /* סטטוס ליווי וגיל — נפרד מהפרטים: אלה לא עוברים ללוח (16.10) */
   const [showStatus, setShowStatus] = useState(false);
+  const [docError, setDocError] = useState<string | null>(null);
+  const [docLoading, setDocLoading] = useState(false);
+  const downloadEnrollmentDoc = async () => {
+    setDocError(null);
+    setDocLoading(true);
+    try {
+      const headers = await coordinatorAuthHeaders();
+      const r = await fetch(`/api/enrollment-doc?candidate=${encodeURIComponent(p.id)}`, { headers });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.url) { setDocError(data.error || "לא הצלחנו להביא את הקובץ"); return; }
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch {
+      setDocError("שגיאת רשת — נסו שוב");
+    } finally {
+      setDocLoading(false);
+    }
+  };
 
   /* הפרופיל מאירוע profile — גיל נגזר, שעון זכאות משוחררים נגזר, יו"ה מתנה */
   const profile = useMemo(() => {
@@ -807,7 +839,9 @@ function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coor
               const main = String(pr.main ?? "").split(" — ")[0];
               return pr.backup ? `${main} · גיבוי: ${String(pr.backup).split(" — ")[0]}` : main;
             })()],
-            ["רכזת מלווה", coordName || "—"],
+            // ⚠️ עד 26.10 קרא פרופ coordName שנשלח קשיח כ-"" — תמיד "—",
+            // בזמן שהתגית למעלה כבר הציגה נכון מ-p.coordinatorName. עכשיו מקור אחד.
+            ["רכזת מלווה", p.coordinatorName || "—"],
             ["שירות", profile.serviceLabel ? `${profile.serviceLabel}${profile.miluim ? " · מילואים פעיל ✓" : ""}` : "—"],
             ...(profile.clock ? [["שעון זכאות משוחררים", profile.clock] as [string, string]] : []),
             ["שלב במסע", `שלב ${p.stage || 1} מתוך 6`],
@@ -819,21 +853,28 @@ function JourneyMap({ p: person, coordName, onBack, onSaved }: { p: Person; coor
           ))}
         </div>
         {/* האסמכתא למשרד העבודה — קישור חתום מצד השרת, כי הקובץ בתיקייה אישית.
-            קישור <a> רגיל לא יכול לשאת Authorization header, ולכן זו הסיבה
-            שה-?code= ממשיך לעבוד רק עם הגיבוי הישן — כניסה אישית דורשת
-            שקוד הגיבוי יהיה מוזן גם הוא, עד שהקישור הזה יהפוך להורדה דרך fetch */}
+            ⚠️ עד 26.10 היה <a href> עם ?code= הישן בלבד — רכזת שנכנסה עם
+            OTP אישי (הדרך הרגילה) לא שולחת כלום שם וקיבלה 401 בשקט. עכשיו
+            fetch עם אותם headers כמו כל קריאת ניהול אחרת, ואז פתיחת הקישור
+            החתום שחוזר. */}
         {p.timeline.some(e => e.name === "enrollment_doc_uploaded") && (
-          <a
-            href={`/api/enrollment-doc?candidate=${encodeURIComponent(p.id)}&code=${encodeURIComponent(typeof window !== "undefined" ? localStorage.getItem("coordinator-code") ?? "" : "")}`}
-            target="_blank" rel="noopener noreferrer"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 8, marginTop: 14,
-              background: "#e8f6ef", color: "#04543a", borderRadius: 12,
-              padding: "9px 14px", fontSize: 13.5, fontWeight: 800, textDecoration: "none",
-            }}
-          >
-            🎓 הורדת אישור הלימודים — האסמכתא למשרד העבודה
-          </a>
+          <div style={{ marginTop: 14 }}>
+            <button
+              onClick={downloadEnrollmentDoc}
+              disabled={docLoading}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: "#e8f6ef", color: "#04543a", borderRadius: 12,
+                padding: "9px 14px", fontSize: 13.5, fontWeight: 800, border: "none",
+                cursor: docLoading ? "default" : "pointer", opacity: docLoading ? 0.7 : 1,
+              }}
+            >
+              🎓 {docLoading ? "טוען..." : "הורדת אישור הלימודים — האסמכתא למשרד העבודה"}
+            </button>
+            {docError && (
+              <div style={{ color: "#dc2626", fontSize: 12.5, fontWeight: 700, marginTop: 6 }}>{docError}</div>
+            )}
+          </div>
         )}
       </div>
 
@@ -1562,7 +1603,7 @@ export default function CoordinatorPage() {
         {journeyFor && data && (() => {
           const person = [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor);
           if (!person) { setJourneyFor(null); return null; }
-          return <JourneyMap p={person} coordName="" onBack={() => setJourneyFor(null)} onSaved={load} />;
+          return <JourneyMap p={person} onBack={() => setJourneyFor(null)} onSaved={load} />;
         })()}
 
         {/*

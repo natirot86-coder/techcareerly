@@ -123,6 +123,11 @@ export async function pullState(): Promise<number> {
   try {
     const uid = await currentUid();
     if (!uid) return 0;
+    /*
+      ⚠️ תמונת מצב לפני הקריאה לשרת — ראה ההערה על changedWhileFetching
+      למטה. חייב להילקח *כאן*, לפני ה-await, ולא אחריו.
+    */
+    const pre = snapshot();
     const { data, error } = await supabase.from("candidate_state")
       .select("key, value").eq("candidate_id", uid);
     if (error || !data) return 0;
@@ -138,8 +143,17 @@ export async function pullState(): Promise<number> {
     for (const { key, value } of data as { key: string; value: string }[]) {
       if (!included(key)) continue;
       const local = localStorage.getItem(key);
+      /*
+        ⚠️ נתפס (26.10, "הטעימות לא נשמרות כשנכנסת מחדש"): הבקשה הזאת
+        התחילה, ו*בזמן* שהיא הייתה בדרך המשתתף/ת פעל/ה — למשל נכנס/ה
+        טרי ומיד השלים/ה צעד טעימה. freshIdentity היה גובר על כל בדיקה
+        ומוחק בשקט את הפעולה הטרייה ביותר, בלי שום עקבה. ה-pre, שנלקח
+        *לפני* ה-await, חושף את זה: המקומי השתנה מאז שהבקשה נשלחה ⇒
+        הוא גובר תמיד, גם בזהות טרייה.
+      */
+      const changedWhileFetching = local !== (pre[key] ?? null);
       /* השתנה כאן ועוד לא נשלח ⇒ הפעולה האחרונה של האדם במכשיר הזה גוברת */
-      const dirty = !freshIdentity && local !== null && local !== meta.v[key] && local !== value;
+      const dirty = changedWhileFetching || (!freshIdentity && local !== null && local !== meta.v[key] && local !== value);
       if (dirty) continue;
       if (local !== value) { localStorage.setItem(key, value); wrote++; }
       meta.v[key] = value;

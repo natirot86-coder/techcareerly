@@ -4607,6 +4607,15 @@ function SimFlow({
   const [showMission, setShowMission] = useState(false);
   const feedbackRef = React.useRef<HTMLDivElement>(null);
 
+  /*
+   * ⚠️ עד 26.10 חסר כאן — ל-cyber ול-networks יש sim/page.tsx נפרד ששולח
+   * sim_start, אבל שאר שבעת התחומים (code, data, qa, ai, ux, marketing,
+   * hardware) עוברים דרך הדף המשותף הזה ושלחו רק sim_step. תחנת "טעימות
+   * הייטק" ברכזת (sim_start + scct_done + taste_done בלבד) לא ראתה אף
+   * מי שפתח סימולציה ויצא לפני שהשלים — "טעם קוד" נראה כאילו לא קרה.
+   */
+  React.useEffect(() => { logEvent("sim_start", { domain }); }, [domain]);
+
   React.useEffect(() => {
     try { localStorage.setItem(`${domain}-sim-progress`, JSON.stringify({ stepIndex, responses })); } catch {/* ignore */}
   }, [domain, stepIndex, responses]);

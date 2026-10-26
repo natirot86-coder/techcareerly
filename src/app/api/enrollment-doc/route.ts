@@ -13,10 +13,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   /*
-   * הקישור נפתח כ-<a href> רגיל ולא יכול לשאת Authorization header —
-   * לכן כניסה אישית (OTP) עדיין לא נתמכת כאן, רק ?code= הישן
-   * (verifyCoordinator בודק אותו כחלק מהגיבוי המשותף). הצעד הבא: להפוך
-   * את הקישור להורדה דרך fetch כדי שגם טוקן אישי יעבוד.
+   * ⚠️ עד 26.10 זה החזיר redirect ישירות מ-<a href> — ולכן נתמך רק ?code=
+   * הישן; רכזת שנכנסה עם OTP אישי (הדרך הרגילה, לא הגיבוי) לא שולחת כלום
+   * ב-?code= וקיבלה 401 בשקט. הלקוח עכשיו שולח Authorization header דרך
+   * fetch ומבקש JSON עם הקישור החתום, בדיוק כמו שאר קריאות הניהול.
    */
   const auth = await verifyCoordinator(req);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -39,5 +39,5 @@ export async function GET(req: NextRequest) {
   const { data: signed, error: sErr } = await db.storage.from("enrollment-docs")
     .createSignedUrl(`${candidateId}/${files[0].name}`, 60 * 10);
   if (sErr || !signed) return NextResponse.json({ error: sErr?.message ?? "sign failed" }, { status: 500 });
-  return NextResponse.redirect(signed.signedUrl);
+  return NextResponse.json({ url: signed.signedUrl });
 }
