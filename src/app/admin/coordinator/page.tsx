@@ -1491,6 +1491,11 @@ export default function CoordinatorPage() {
   } | null>(null);
   /* מנהלת בלבד: באיזו רכזת היא צופה כרגע. ריק = כולן יחד */
   const [viewAs, setViewAs] = useState<string>("");
+  /* קישור ישיר לתצוגה של רכז/ת: ?as=<מזהה>. השרת בודק שהצופה מנהל/ת או בעלים */
+  useEffect(() => {
+    const as = new URLSearchParams(window.location.search).get("as");
+    if (as) setViewAs(as);
+  }, []);
   /* עריכת שורה מהלוח — גם למי שעוד לא נכנס לאפליקציה (16.10) */
   const [editRow, setEditRow] = useState<string | null>(null);
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
