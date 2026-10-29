@@ -1488,6 +1488,8 @@ export default function CoordinatorPage() {
       id: number; title: string; start_time: string; attendee_name: string;
       attendee_phone: string; attendee_email: string; trigger: string; candidate_id: string | null;
       outcome: string | null; outcome_at: string | null; outcome_note: string | null;
+      /* אותו אדם בפגישות אחרות — לפי טלפון/מייל, לא לפי שם (29.10) */
+      ctx?: { canonical: string | null; attempt: number; prevNoShow: boolean; metOn: string | null };
     }[];
     board?: {
       id: string; name: string; phone: string; email: string; coordinator: string;
@@ -1943,7 +1945,13 @@ export default function CoordinatorPage() {
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
                   <span style={{ fontSize: 14.5, fontWeight: 800, color: NAVY, textDecoration: cancelled ? "line-through" : "none" }}>
-                    {b.attendee_name || "ללא שם"}
+                    {b.ctx?.canonical || b.attendee_name || "ללא שם"}
+                    {/* השם בלוח הוא הקנוני; מה שהוקלד ב-Cal — לידו, כדי שיהיה ברור שזה אותו אדם */}
+                    {b.ctx?.canonical && b.attendee_name && b.ctx.canonical.trim() !== b.attendee_name.trim() && (
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#8d867a", marginInlineStart: 6 }}>
+                        (בהזמנה: {b.attendee_name})
+                      </span>
+                    )}
                   </span>
                   <span style={{ fontSize: 12.5, color: "#6b6558", fontWeight: 700 }}>
                     {when.toLocaleString("he-IL", { weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -1952,6 +1960,23 @@ export default function CoordinatorPage() {
                 <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3, lineHeight: 1.55 }}>
                   {b.title ? b.title.split(/ between | בין /)[0] : "—"}
                 </div>
+                {/*
+                  ההקשר שהרכז/ת צריכ/ה לפני השיחה (29.10). "כבר נפגשתם" גובר על
+                  "ניסיון שני": מי שכבר נפגש/ה ונכנס/ה ליומן של פגישה 1 כנראה
+                  התכוון/ה לפגישה הבאה — ואת זה צריך לתקן, לא רק לדעת.
+                */}
+                {!cancelled && b.ctx && (b.ctx.metOn || b.ctx.attempt > 1) && (
+                  <div style={{
+                    marginTop: 6, fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 8,
+                    display: "inline-block",
+                    background: b.ctx.metOn ? "#fff7ec" : "rgba(2,62,138,0.07)",
+                    color: b.ctx.metOn ? "#8a4d00" : NAVY,
+                  }}>
+                    {b.ctx.metOn
+                      ? `⚠️ כבר נפגשתם ב-${new Date(b.ctx.metOn).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" })} — אולי התכוון/ה לפגישה הבאה?`
+                      : `ניסיון ${b.ctx.attempt} לפגישה 1${b.ctx.prevNoShow ? " · בקודם לא הגיע/ה" : ""}`}
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 7, marginTop: 7, flexWrap: "wrap", alignItems: "center" }}>
                   {/*
                     ⚠️ **זה אינו כפתור "שליחת הקישור"** (נתי, 5.10). ההודעה הראשונה —

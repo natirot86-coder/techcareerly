@@ -25,6 +25,7 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { normPhone } from "@/lib/monday";
+import { clusterPeople } from "@/lib/personIdentity";
 import { matchCoordinator, type CoordinatorRow } from "@/lib/coordinatorLookup";
 import { BEFORE_FIRST_CALL, COL_FIRST_CALL, COL_STATUS, COL_COORD, ilDate } from "@/lib/intechHistory";
 
@@ -123,16 +124,18 @@ async function boardItems(): Promise<BoardItem[] | null> {
 async function starts(db: SupabaseClient, now: Date): Promise<Event[]> {
   const { data } = await db.from("cal_bookings")
     .select("trigger, title, start_time, coordinator_id, attendee_phone, attendee_email");
+  const valid = (data ?? []).filter(b =>
+    b.trigger !== "BOOKING_CANCELLED" && b.start_time &&
+    !(b.title ?? "").includes("ראיון קורס") &&
+    Date.parse(b.start_time) <= now.getTime() &&
+    (b.attendee_phone || b.attendee_email));
+  /* אדם = טלפון *או* מייל (personIdentity) — מי שקבע פעם עם טלפון ופעם בלי לא נספר פעמיים */
+  const people = clusterPeople(valid.map(b => ({ phone: b.attendee_phone, email: b.attendee_email })));
   const first = new Map<string, { at: string; coord: string | null }>();
-  for (const b of data ?? []) {
-    if (b.trigger === "BOOKING_CANCELLED" || !b.start_time) continue;
-    if ((b.title ?? "").includes("ראיון קורס")) continue;
-    if (Date.parse(b.start_time) > now.getTime()) continue;
-    const person = normPhone(b.attendee_phone) || (b.attendee_email ?? "").trim().toLowerCase();
-    if (!person) continue;
-    const cur = first.get(person);
-    if (!cur || b.start_time < cur.at) first.set(person, { at: b.start_time, coord: b.coordinator_id });
-  }
+  valid.forEach((b, i) => {
+    const cur = first.get(people[i]);
+    if (!cur || b.start_time < cur.at) first.set(people[i], { at: b.start_time, coord: b.coordinator_id });
+  });
   return [...first].map(([person, v]) => ({ person, month: monthOf(v.at), coord: v.coord }));
 }
 

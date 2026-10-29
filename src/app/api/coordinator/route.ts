@@ -13,9 +13,10 @@
  * לכולם (אחרת שיוך חסר = מועמד/ת שנעלם/ת בלי שאיש רואה).
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyCoordinator, canSeeEveryone } from "@/lib/serverCoordinatorAuth";
 import { mondayBoard, mondaySetCoordinator, type BoardRow } from "@/lib/monday";
+import { clusterPeople, meetingKind } from "@/lib/personIdentity";
 
 export const dynamic = "force-dynamic";
 
@@ -391,6 +392,19 @@ export async function GET(req: NextRequest) {
     }
   } catch { /* מאנדיי לא זמין — המסך ממשיך בלעדיו */ }
 
+  /*
+   * ── אותו אדם, שמות שונים (נתי, 29.10) ──────────────────────────────────────
+   * "נתן" ו"נתן קבדה" קבעו שתי פגישות 1 — אותו טלפון. בדיקה ב-29.10: ל-7
+   * מתוך 22 אנשים יש פגישה 1 כפולה, ורובן אינן טעות: לא הגיע/ה וקבע/ה שוב,
+   * או **כבר נפגשו ונכנס/ה ליומן של פגישה 1 במקום 2**. הרכז/ת צריכ/ה לדעת
+   * את זה לפני השיחה. הזהות לפי טלפון/מייל (personIdentity), על **כל**
+   * הפגישות — גם אצל רכז/ת אחר/ת — והשם הקנוני מלוח אינטק.
+   * ⚠️ לא ממזגים ולא מוחקים. התגית אומרת "זה אותו אדם"; ההחלטה של הרכז/ת.
+   */
+  try {
+    myBookings = await withPersonContext(db, myBookings as Booking[]);
+  } catch (e) { console.error("[coordinator] person context failed:", e); }
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     board,
@@ -576,4 +590,64 @@ export async function PATCH(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
+}
+
+/* ── הקשר אדם לכל פגישה (ראה ההערה ב-GET) ───────────────────────────────── */
+
+type Booking = {
+  id: number; title?: string | null; start_time: string; attendee_name?: string | null;
+  attendee_phone?: string | null; attendee_email?: string | null; trigger?: string | null;
+  outcome?: string | null;
+};
+type AllBooking = Booking & { uid?: string | null; puid?: string | null; movedFrom?: string | null };
+
+export type PersonContext = {
+  /** השם בלוח אינטק, כשנמצאה התאמה בטלפון/מייל */
+  canonical: string | null;
+  /** פגישה 1 בפעם ה-N של אותו אדם (1 = רגיל) */
+  attempt: number;
+  /** בניסיון הקודם לפגישה 1 — סומן "לא הגיע/ה" */
+  prevNoShow: boolean;
+  /** כבר נפגשו לפני הפגישה הזו — אולי התכוון/ה לפגישה הבאה */
+  metOn: string | null;
+};
+
+async function withPersonContext(db: SupabaseClient, mine: Booking[]) {
+  if (!mine.length) return mine;
+  const { data, error } = await db.from("cal_bookings")
+    .select("id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, outcome, uid:raw->>uid, puid:raw->payload->>uid, movedFrom:raw->payload->>rescheduleUid")
+    .neq("trigger", "BOOKING_CANCELLED");
+  if (error) throw new Error(error.message);
+  const raw = (data ?? []) as AllBooking[];
+  const moved = new Set(raw.map(b => b.movedFrom).filter(Boolean));
+  const all = raw.filter(b => !moved.has(b.uid ?? b.puid ?? ""));
+  const board = (await mondayBoard(null)) ?? [];
+
+  /* פגישות ושורות לוח באותו אשכול — השורה בלוח נותנת את השם הקנוני */
+  const ids = clusterPeople([
+    ...all.map(b => ({ phone: b.attendee_phone, email: b.attendee_email })),
+    ...board.map(r => ({ phone: r.phone, email: r.email })),
+  ]);
+  const personOf = new Map(all.map((b, i) => [b.id, ids[i]]));
+  const nameOf = new Map<string, string>();
+  board.forEach((r, j) => { if (r.name) nameOf.set(ids[all.length + j], r.name); });
+  const byPerson = new Map<string, AllBooking[]>();
+  all.forEach((b, i) => byPerson.set(ids[i], [...(byPerson.get(ids[i]) ?? []), b]));
+
+  return mine.map(b => {
+    const person = personOf.get(b.id);
+    if (!person) return b;
+    const prior = (byPerson.get(person) ?? []).filter(x => x.id !== b.id && x.start_time < b.start_time);
+    const kind = meetingKind(b.title);
+    const priorM1 = prior.filter(x => meetingKind(x.title) === 1);
+    const met = prior.filter(x => x.outcome === "happened" || (meetingKind(x.title) ?? 0) > 1)
+      .sort((a, c) => a.start_time.localeCompare(c.start_time))[0];
+    const ctx: PersonContext = {
+      canonical: nameOf.get(person) ?? null,
+      attempt: kind === 1 ? priorM1.length + 1 : 1,
+      prevNoShow: kind === 1 && priorM1.at(-1)?.outcome === "no_show",
+      metOn: kind === 1 && met ? met.start_time : null,
+    };
+    return { ...b, ctx };
+  });
 }
