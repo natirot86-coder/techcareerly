@@ -309,15 +309,30 @@ export async function GET(req: NextRequest) {
 
   let myBookings: unknown[] = [];
   try {
-    let qb = db
-      .from("cal_bookings")
-      .select("id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, candidate_id, coordinator_id, outcome, outcome_at, outcome_note")
-      .order("start_time", { ascending: false })
-      .limit(200);
-    /* רכזת רואה את שלה; מנהל התוכנית (בלי זיהוי רכזת) רואה הכל */
-    if (effectiveId) qb = qb.eq("coordinator_id", effectiveId);
-    const { data } = await qb;
-    myBookings = data ?? [];
+    const BASE = "id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, candidate_id, coordinator_id, outcome, outcome_at, outcome_note";
+    const query = (cols: string) => {
+      let qb = db.from("cal_bookings").select(cols).order("start_time", { ascending: false }).limit(200);
+      /* רכזת רואה את שלה; מנהל התוכנית (בלי זיהוי רכזת) רואה הכל */
+      if (effectiveId) qb = qb.eq("coordinator_id", effectiveId);
+      return qb;
+    };
+    let { data, error } = await query(`${BASE}, uid:raw->>uid, puid:raw->payload->>uid, movedFrom:raw->payload->>rescheduleUid`);
+    /* אם שליפת השדות מה-raw נכשלת — בלי סינון המעברים, אבל לא מסך פגישות ריק */
+    if (error) {
+      console.error("[coordinator] bookings with uids failed:", error.message);
+      ({ data, error } = await query(BASE));
+    }
+    /*
+      שינוי מועד ב-Cal מגיע כשורה **חדשה** (BOOKING_RESCHEDULED) שמצביעה על
+      הישנה, והישנה נשארת עם המועד הקודם. בלי הסינון הזה היא הופכת ל"פגישה
+      שעברה ולא סומנה" — פגישה שמעולם לא התקיימה, ואין מה לסמן בה (29.10).
+    */
+    type B = { uid?: string | null; puid?: string | null; movedFrom?: string | null };
+    const rows = (data ?? []) as B[];
+    const moved = new Set(rows.map(b => b.movedFrom).filter(Boolean));
+    myBookings = rows
+      .filter(b => !moved.has(b.uid ?? b.puid ?? ""))
+      .map(({ uid: _u, puid: _p, movedFrom: _m, ...rest }) => rest);
   } catch { /* הטבלה או העמודה עוד לא קיימות — לא שוברים את המסך */ }
 
   let unmatched: unknown[] = [];

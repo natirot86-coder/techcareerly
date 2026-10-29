@@ -18,6 +18,14 @@ import ParticipantEdit from "./ParticipantEdit";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { isPreProgram } from "@/data/meetings";
 
+/*
+  פגישה "עברה" — ואפשר לסמן מה קרה בה — רק כשהיא הסתיימה, לא כשהתחילה.
+  אחרת פגישה שמתקיימת עכשיו נספרת "ממתינה לסימון" באמצע השיחה (29.10).
+  שעה = הפגישה הארוכה ביומנים של הרכזים.
+*/
+const MEETING_LENGTH_MS = 60 * 60 * 1000;
+const meetingOver = (startIso: string, now: number) => +new Date(startIso) + MEETING_LENGTH_MS < now;
+
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -1683,7 +1691,7 @@ export default function CoordinatorPage() {
           const bk = (data.myBookings ?? []).filter(b => b.trigger !== "BOOKING_CANCELLED");
           const live = bk.filter(b => !isPreProgram(b.start_time));
           const thisWeek = bk.filter(b => +new Date(b.start_time) >= now && +new Date(b.start_time) <= week);
-          const unmarked = live.filter(b => +new Date(b.start_time) < now && !b.outcome);
+          const unmarked = live.filter(b => meetingOver(b.start_time, now) && !b.outcome);
           const by = (s: string) => board.filter(r => r.status === s);
 
           const cards: { n: number; label: string; hint: string; key: string; warn?: boolean }[] = [
@@ -1913,7 +1921,7 @@ export default function CoordinatorPage() {
         {!journeyFor && tab === "meetings" && data && (() => {
           const all = data.myBookings ?? [];
           const now = Date.now();
-          const upcoming = all.filter(b => +new Date(b.start_time) >= now && b.trigger !== "BOOKING_CANCELLED")
+          const upcoming = all.filter(b => !meetingOver(b.start_time, now) && b.trigger !== "BOOKING_CANCELLED")
             .sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time));
           /*
             פגישות שקדמו לתוכנית (אוגוסט) — סבב השיחות עם בוגרי הקורס.
@@ -1921,7 +1929,7 @@ export default function CoordinatorPage() {
             חלק מהמסע, ו-15 שורות "ממתינות לסימון" שאיש לא יסמן הופכות את
             המונה לרעש שמלמדים להתעלם ממנו. ראה PROGRAM_START ב-meetings.ts.
           */
-          const pastAll = all.filter(b => +new Date(b.start_time) < now || b.trigger === "BOOKING_CANCELLED");
+          const pastAll = all.filter(b => meetingOver(b.start_time, now) || b.trigger === "BOOKING_CANCELLED");
           const pre = pastAll.filter(b => isPreProgram(b.start_time));
           const past = pastAll.filter(b => !isPreProgram(b.start_time));
 
@@ -2014,17 +2022,30 @@ export default function CoordinatorPage() {
             לא כדי לנדנד, אלא כי בלי הסימון אי אפשר להבדיל בין מי שנפגש
             והתקדם למי שנפגש ונעלם.
           */
-          const unmarked = past.filter(b => b.trigger !== "BOOKING_CANCELLED" && !b.outcome).length;
+          const unmarkedList = past.filter(b => b.trigger !== "BOOKING_CANCELLED" && !b.outcome);
+          const unmarked = unmarkedList.length;
+          /*
+            סינון "רק מה שמחכה לסימון" (נתי, 29.10). בלעדיו היה צריך לגלול
+            ולחפש — וגרוע מזה: הרשימה מציגה רק את 30 האחרונות, אז פגישה ישנה
+            שלא סומנה **נספרה במונה ולא הופיעה בשום מקום**. במצב הסינון אין
+            תקרה, והסדר מהוותיקה — היא זו שהכי קרוב שתישכח.
+          */
+          const onlyUnmarked = bigFilter === "unmarked";
+          const pastShown = onlyUnmarked
+            ? [...unmarkedList].sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time))
+            : [...past].sort((a, b) => +new Date(b.start_time) - +new Date(a.start_time)).slice(0, 30);
 
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {unmarked > 0 && (
-                <div style={{
+              {unmarked > 0 && !onlyUnmarked && (
+                <div onClick={() => setBigFilter("unmarked")} role="button" style={{
+                  cursor: "pointer",
                   background: "#fff7ec", border: "1px solid rgba(180,83,9,0.22)",
                   borderRadius: 12, padding: "10px 13px", fontSize: 13.5, lineHeight: 1.6, color: "#8a4d00",
                 }}>
                   <b>{unmarked} פגישות שעברו וטרם סומנו.</b> שתי לחיצות לכל אחת —
                   התקיימה או לא הגיע/ה — ומי שנפגש ונעלם מפסיק להיראות כמו מי שנפגש אתמול.
+                  <span style={{ fontWeight: 900, marginInlineStart: 6 }}>להציג רק אותן ←</span>
                 </div>
               )}
               <MondayCard />
@@ -2041,12 +2062,30 @@ export default function CoordinatorPage() {
 
               {past.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#8d867a", marginBottom: 8 }}>
-                    שהיו ({past.length})
+                  <div style={{ display: "flex", gap: 7, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+                    {([[false, `שהיו (${past.length})`], [true, `ממתינות לסימון (${unmarked})`]] as const).map(([v, label]) => {
+                      const on = onlyUnmarked === v;
+                      return (
+                        <button key={String(v)} onClick={() => setBigFilter(v ? "unmarked" : null)}
+                          style={{
+                            fontSize: 12.5, fontWeight: 800, padding: "5px 12px", borderRadius: 999,
+                            cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                            background: on ? (v ? "#b45309" : NAVY) : "#fff", color: on ? "#fff" : "#4a463e",
+                            border: `1px solid ${on ? "transparent" : "rgba(0,0,0,0.12)"}`,
+                          }}>
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {past.sort((a, b) => +new Date(b.start_time) - +new Date(a.start_time)).slice(0, 30).map(Row)}
-                  </div>
+                  {onlyUnmarked && !unmarked ? (
+                    <div style={{ fontSize: 13.5, color: "#0f7a52", fontWeight: 700 }}>הכל מסומן ✓</div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{pastShown.map(Row)}</div>
+                  )}
+                  {!onlyUnmarked && past.length > 30 && (
+                    <div style={{ fontSize: 12, color: "#8d867a", marginTop: 6 }}>מוצגות 30 האחרונות.</div>
+                  )}
                 </div>
               )}
 
