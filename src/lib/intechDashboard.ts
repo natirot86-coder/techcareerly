@@ -44,8 +44,8 @@ const TARGET = { starts: 1600, enrolled: 800 };
  */
 type ColKey = "month" | "coord" | "starts" | "startsQuota" | "startsGap" | "enrolled" | "enrollQuota"
   | "enrollGap" | "firstCalls" | "medianWait" | "waitingNow" | "noAnswerNow" | "oldestWait"
-  | "nextStartsQuota" | "nextEnrollQuota" | "locked" | "updated";
-const TARGET_BOARD: Record<"team" | "coords", { board: string; group: string; col: Record<ColKey, string> }> = {
+  | "nextStartsQuota" | "nextEnrollQuota" | "locked" | "updated" | "unassignedWaiting";
+const TARGET_BOARD: Record<"team" | "coords", { board: string; group: string; col: Partial<Record<ColKey, string>> }> = {
   team: {
     board: "18437652475", group: "group_mm8kjmxr",
     col: {
@@ -56,6 +56,8 @@ const TARGET_BOARD: Record<"team" | "coords", { board: string; group: string; co
       waitingNow: "numeric_mm8km7k7", noAnswerNow: "numeric_mm8kv6c9", oldestWait: "numeric_mm8k7f6r",
       nextStartsQuota: "numeric_mm8k1j5q", nextEnrollQuota: "numeric_mm8k2pss",
       locked: "boolean_mm8kf45a", updated: "text_mm8kn6dj",
+      /* ממתינים בלי רכז/ת — מאיה משייכת מתצוגת "ממתינים לשיוך" בלוח אינטק (29.10) */
+      unassignedWaiting: "numeric_mm8kh4jg",
     },
   },
   coords: {
@@ -260,6 +262,8 @@ export async function computeDashboard(now = new Date()) {
         enrollGap: round1(doneThrough.e - pace.e * (i + 1)),
         firstCalls: callsIn().length, medianWait: median(callsIn().map(c => c.wait)),
         ...snapshot(),
+        /* מי שלא משויך/ת לאף אחד/ת לא נכנס/ת למכסה של אף אחד/ת — אף אחד לא מרגיש אחראי */
+        unassignedWaiting: isCur ? waiting.filter(w => w.coord === null).length : null,
         nextStartsQuota: isCur ? round1(nextQuota.s) : null, nextEnrollQuota: isCur ? round1(nextQuota.e) : null,
         locked: !isCur, updated: stamp,
       },
@@ -284,6 +288,7 @@ export async function computeDashboard(now = new Date()) {
           enrolled: count(enrollEv, m, c.id), enrollQuota: round1(teamQuota.e * sh), enrollGap: round1(gapE),
           firstCalls: callsIn(c.id).length, medianWait: median(callsIn(c.id).map(x => x.wait)),
           ...snapshot(c.id),
+          unassignedWaiting: null,
           nextStartsQuota: isCur ? round1(nextQuota.s * sh) : null, nextEnrollQuota: isCur ? round1(nextQuota.e * sh) : null,
           locked: !isCur, updated: stamp,
         },
@@ -308,6 +313,7 @@ function columnValues(r: DashRow) {
   const col = TARGET_BOARD[r.group].col;
   for (const [k, val] of Object.entries(r.values) as [ColKey, DashRow["values"][ColKey]][]) {
     const id = col[k];
+    if (!id) continue;
     if (k === "month") out[id] = { date: val };
     else if (k === "coord") out[id] = { label: val };
     else if (k === "locked") out[id] = val ? { checked: "true" } : null;
