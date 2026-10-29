@@ -28,6 +28,7 @@ import { sendMail, welcomeEmail, emailLooksWrong } from "@/lib/mail";
 import { trackedUrl } from "@/app/api/r/route";
 import { coordinatorByLabel, calUrl as calUrlOf } from "@/lib/coordinatorLookup";
 import { heKey } from "@/lib/monday";
+import { stampFromWebhook } from "@/lib/intechHistory";
 
 export const dynamic = "force-dynamic";
 
@@ -90,7 +91,11 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null) as {
     challenge?: string;
-    event?: { pulseId?: number; boardId?: number; columnId?: string };
+    event?: {
+      pulseId?: number; boardId?: number; columnId?: string;
+      value?: { label?: { text?: string } } | null;
+      previousValue?: { label?: { text?: string } } | null;
+    };
   } | null;
 
   /* לחיצת היד של מאנדיי ברישום — חייבת לחזור כמו שהיא, ולפני בדיקת הסוד
@@ -126,6 +131,11 @@ export async function POST(req: NextRequest) {
    */
   if (body?.event?.columnId === COL_STATUS || body?.event?.columnId === COL_COORD) {
     if (body.event.columnId === COL_COORD) await syncCoordinatorToApp(itemId);
+    /* "שיחה ראשונה" — נחתם ברגע שהסטטוס יוצא מ"לפני שיחה ראשונה" (נתי, 29.10).
+       בלי ערך קודם בגוף הבקשה לא מנחשים: הבדיקה היומית משלימה מהיומן */
+    if (body.event.columnId === COL_STATUS) {
+      await stampFromWebhook(itemId, body.event.previousValue?.label?.text, body.event.value?.label?.text);
+    }
     await maybeSendWelcome(itemId);
     return rebuildWa(itemId);
   }

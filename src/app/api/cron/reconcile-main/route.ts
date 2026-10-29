@@ -20,6 +20,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { promoteFromMain } from "@/app/api/monday-webhook/route";
 import { createClient } from "@supabase/supabase-js";
 import { mondayBoardAll, mondayWriteDetails, normPhone } from "@/lib/monday";
+import { syncIntechHistory } from "@/app/api/cron/intech-history/route";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -108,7 +109,9 @@ export async function GET(req: NextRequest) {
     מזהה. הוא נשאר ברשימה הזאת כל יום, וזה בכוונה: מישהו צריך להשלים לו פרטים.
   */
   const mirror = await mirrorAppToBoard(req.nextUrl.searchParams.has("dry"));
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror });
+  /* היסטוריית הלוח: יומן הפעילות נשמר במאנדיי 90 יום בלבד — נקלט כל בוקר */
+  const history = await syncIntechHistory({ dry: req.nextUrl.searchParams.has("dry") });
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history });
 }
 
 /*
