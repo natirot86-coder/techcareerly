@@ -20,7 +20,7 @@
  * במסע הבוגרים לא מוחזר ל-main אוטומטית — זה משנה לו את מספר השלבים על
  * המסך באמצע, וזו החלטה של רכזת.
  */
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/candidate";
 import { waLink } from "@/lib/waLink";
@@ -29,9 +29,11 @@ import { trackedUrl } from "@/app/api/r/route";
 import { coordinatorByLabel, calUrl as calUrlOf } from "@/lib/coordinatorLookup";
 import { heKey } from "@/lib/monday";
 import { stampFromWebhook } from "@/lib/intechHistory";
-import { guardLinkSent, PENDING_NO_COORD } from "@/lib/linkSentGuard";
+import { guardLinkSent, flushNotices, NOTICE_QUIET_MS, PENDING_NO_COORD } from "@/lib/linkSentGuard";
 
 export const dynamic = "force-dynamic";
+/* ההמתנה לשקט לפני הודעת "נשלח קישור" (45 שניות) רצה אחרי התשובה למאנדיי */
+export const maxDuration = 60;
 
 const BOARD = process.env.MONDAY_INTECH_BOARD ?? "18433888639";
 const COL_PHONE = "text_mm7tmnqc";
@@ -144,7 +146,13 @@ export async function POST(req: NextRequest) {
     */
     if (body.event.columnId === COL_STATUS && body.event.value?.label?.text === LINK_SENT
         && body.event.previousValue?.label?.text !== LINK_SENT) {
-      if (await guardLinkSent(itemId, body.event.userId) === "assigned") return rebuildWa(itemId);
+      const g = await guardLinkSent(itemId, body.event.userId);
+      if (g.result === "assigned") return rebuildWa(itemId);
+      /* התשובה למאנדיי לא מחכה; ההודעה המאוחדת יוצאת אחרי 45 שניות של שקט */
+      if (g.result === "queued") {
+        const email = g.email;
+        after(async () => { await new Promise(r => setTimeout(r, NOTICE_QUIET_MS)); await flushNotices(email); });
+      }
     }
     await maybeSendWelcome(itemId);
     return rebuildWa(itemId);

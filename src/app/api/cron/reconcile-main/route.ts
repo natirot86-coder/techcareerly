@@ -22,6 +22,7 @@ import { createClient } from "@supabase/supabase-js";
 import { mondayBoardAll, mondayWriteDetails, normPhone } from "@/lib/monday";
 import { syncIntechHistory } from "@/app/api/cron/intech-history/route";
 import { ensureAllVerifiedOnBoard } from "@/lib/ensureBoardRows";
+import { flushStaleNotices } from "@/lib/linkSentGuard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -127,7 +128,9 @@ export async function GET(req: NextRequest) {
       .from("coordinators").select("name").eq("active", true).eq("takes_participants", true);
     for (const c of staff ?? []) drained += await drainPendingWelcome(String(c.name));
   }
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained });
+  /* הודעות "נשלח קישור בלי רכז/ת" שהשליחה הדחויה שלהן נקטעה */
+  const notices = req.nextUrl.searchParams.has("dry") ? 0 : await flushStaleNotices();
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices });
 }
 
 /*
