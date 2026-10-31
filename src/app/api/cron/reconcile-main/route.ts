@@ -21,6 +21,7 @@ import { promoteFromMain } from "@/app/api/monday-webhook/route";
 import { createClient } from "@supabase/supabase-js";
 import { mondayBoardAll, mondayWriteDetails, normPhone } from "@/lib/monday";
 import { syncIntechHistory } from "@/app/api/cron/intech-history/route";
+import { ensureAllVerifiedOnBoard } from "@/lib/ensureBoardRows";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -111,7 +112,12 @@ export async function GET(req: NextRequest) {
   const mirror = await mirrorAppToBoard(req.nextUrl.searchParams.has("dry"));
   /* היסטוריית הלוח: יומן הפעילות נשמר במאנדיי 90 יום בלבד — נקלט כל בוקר */
   const history = await syncIntechHistory({ dry: req.nextUrl.searchParams.has("dry") });
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history });
+  /* מי שנרשם/ה ישירות ואימת/ה טלפון — שורה בלוח, גם אם הקריאה אחרי ההרשמה התפספסה (31.10) */
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SECRET_KEY;
+  const direct = url && key
+    ? await ensureAllVerifiedOnBoard(createClient(url, key, { auth: { persistSession: false } }), { dry: req.nextUrl.searchParams.has("dry") })
+    : { skipped: "no db" };
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct });
 }
 
 /*

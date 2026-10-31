@@ -217,6 +217,67 @@ export async function mondayMarkActive(p: {
   return ok ? "created" : null;
 }
 
+/**
+ * ── מי שנרשם/ה ישירות באפליקציה מקבל/ת שורה בלוח (נתי, 31.10) ──────────────
+ *
+ * עד היום שורה נוצרה רק מהלוח הראשי ("חשיפה") או מקביעת פגישה ב-Cal
+ * (`mondayMarkActive`). מי שנכנס/ה מקישור שהועבר ישירות, נרשם/ה, אימת/ה
+ * טלפון **ולא קבע/ה** — לא היה/תה בשום לוח. ומסך הרכז/ת נבנה מהלוח, אז
+ * היא הייתה בלתי נראית בדיוק ברגע שבו צריך להרים אליה טלפון (פקדו, 26.10).
+ *
+ * נקרא אחרי שמירת ההרשמה **וגם** בבדיקת הבוקר — אותה פונקציה, כי כל אירוע
+ * יכול להתפספס. לא נוגע/ת בשורה קיימת: מרגע שיש שורה, הלוח הוא הבית שלה.
+ */
+export const CHANNEL_DIRECT = "נרשם ישירות מהאפליקציה";
+
+export async function mondayEnsureParticipant(p: {
+  phone: string; email?: string | null; name?: string | null;
+  coordinatorName?: string | null; gender?: string | null; city?: string | null; when?: string | null;
+  /** בודק בדיוק כמו היצירה האמיתית, בלי לכתוב */
+  dry?: boolean;
+}): Promise<{ result: "exists" | "created" | "skipped" | "would-create"; itemId?: string } | null> {
+  if (!process.env.MONDAY_TOKEN) return null;
+  const phone = normPhone(p.phone);
+  const email = (p.email ?? "").trim().toLowerCase();
+  if (!phone) return { result: "skipped" };
+
+  const data = await gql<{ boards: { items_page: { cursor: string | null; items: Item[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { cursor items { id name
+       column_values(ids: ["${COL.phone}","${COL.email}"]) { id text } } } } }`
+  );
+  const page = data?.boards?.[0]?.items_page;
+  /* לוח שלא נקרא במלואו ⇒ לא יוצרים: "לא מצאתי" בחצי לוח הוא כפילות שמחכה */
+  if (!page || page.cursor) return null;
+  const hit = page.items.find(it => normPhone(cv(it, COL.phone)) === phone
+    || (email && cv(it, COL.email).toLowerCase() === email));
+  if (hit) return { result: "exists", itemId: hit.id };
+  if (p.dry) return { result: "would-create" };
+
+  const coord = await resolveCoordLabel(p.coordinatorName);
+  const name = (p.name ?? "").trim();
+  const vals: Record<string, unknown> = {
+    [COL.status]: { label: STATUS.beforeCall },
+    [COL.channel]: { label: CHANNEL_DIRECT },
+    [COL.source]: `נרשם/ה באפליקציה${p.when ? " · " + p.when.slice(0, 10) : ""}`,
+    [COL.phone]: phone,
+  };
+  if (email) vals[COL.email] = email;
+  if (coord) vals[COL.coord] = { label: coord };
+  if (p.city?.trim()) vals[COL_EXTRA.city] = p.city.trim();
+  const g = p.gender === "male" ? "זכר" : p.gender === "female" ? "נקבה" : null;
+  if (g) vals[COL_EXTRA.gender] = { label: g };
+  /* כמו ב-mondayMarkActive: שורה שנולדת עם רכז/ת לא מפיקה אירוע שינוי, אז הקישור נבנה כאן */
+  const wa = waLink({ phone, participant: name, coordinator: coord });
+  if (wa) vals[COL.wa] = { url: wa, text: `וואטסאפ ל${name.split(/\s+/)[0]}` };
+
+  const r = await gql<{ create_item: { id: string } }>(
+    `mutation ($b: ID!, $n: String!, $v: JSON!) { create_item(board_id: $b, item_name: $n,
+       column_values: $v, create_labels_if_missing: true) { id } }`,
+    { b: BOARD, n: name || phone, v: JSON.stringify(vals) }
+  );
+  return r ? { result: "created", itemId: r.create_item.id } : null;
+}
+
 /* ── הרשימה של הרכזת מגיעה מהלוח (נתי, 5.10) ──────────────────────────────────
  *
  * עד היום מסך הרכזת שאב את רשימת המשתתפים מ-`candidates`, כלומר **רק ממי
