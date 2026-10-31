@@ -24,6 +24,9 @@ import { isPreProgram } from "@/data/meetings";
   שעה = הפגישה הארוכה ביומנים של הרכזים.
 */
 const MEETING_LENGTH_MS = 60 * 60 * 1000;
+/* תקועים ב"נשלח קישור" (נתי, 31.10): מופיע אחרי יום, כתום מ-4 ימים */
+const STUCK_SHOW_DAYS = 1;
+const STUCK_ORANGE_DAYS = 4;
 const meetingOver = (startIso: string, now: number) => +new Date(startIso) + MEETING_LENGTH_MS < now;
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
@@ -1494,6 +1497,9 @@ export default function CoordinatorPage() {
     board?: {
       id: string; name: string; phone: string; email: string; coordinator: string;
       status: string; source: string; track: string; inApp: boolean; nextMeeting: string | null;
+      mailedAt?: string;
+      /* תקוע/ה ב"נשלח קישור" — איפה ומאז מתי (31.10). null למי שבסטטוס אחר */
+      linkSent?: { stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string } | null;
     }[] | null;
     role?: "coordinator" | "manager" | "owner";
     viewingAs?: string | null;
@@ -1755,6 +1761,49 @@ export default function CoordinatorPage() {
                   </button>
                 ))}
               </div>
+
+              {(() => {
+                /*
+                  ── תקועים ב"נשלח קישור" (נתי, 31.10) ──────────────────────────
+                  הרכז/ת חשב/ה שהוא מתאים ושלח/ה — ואין עדות שהתקדם. שלוש קבוצות כי
+                  לכל אחת פעולה אחרת. ספים (נתי): מופיע אחרי יום, כתום מ-4 ימים.
+                  ימים לא ידועים (עבר ל"נשלח קישור" לפני שההיסטוריה נשמרה) — מופיע.
+                */
+                const stuck = board.filter(r => r.linkSent && (r.linkSent.days === null || r.linkSent.days >= STUCK_SHOW_DAYS));
+                const groups = ([
+                  ["noclick", "לא לחצו על הקישור", "ההודעה לא נראתה — או לא נשלחה"],
+                  ["clicked", "לחצו, לא נרשמו", "נתקעו בהרשמה"],
+                  ["registered", "נרשמו, לא קבעו", "נתקעו ביומן"],
+                ] as const).map(([stage, label, hint]) => {
+                  const list = stuck.filter(r => r.linkSent!.stage === stage);
+                  return { key: `ls_${stage}`, label, hint, n: list.length, old: list.filter(r => (r.linkSent!.days ?? 0) >= STUCK_ORANGE_DAYS).length };
+                });
+                if (!stuck.length) return null;
+                return (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 900, color: NAVY, marginBottom: 7 }}>
+                      תקועים ב״נשלח קישור״ ({stuck.length})
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 9 }}>
+                      {groups.map(g => (
+                        <button key={g.key} disabled={!g.n}
+                          onClick={() => { setBigFilter(g.key); setTab("all"); }}
+                          style={{
+                            background: g.old ? "#fff7ec" : "#fff", textAlign: "right", cursor: g.n ? "pointer" : "default",
+                            border: `1px solid ${g.old ? "rgba(180,83,9,0.25)" : "rgba(2,62,138,0.12)"}`,
+                            borderRadius: 14, padding: "13px 15px", fontFamily: "'Heebo', sans-serif", opacity: g.n ? 1 : 0.55,
+                          }}>
+                          <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.1, color: g.old ? "#b45309" : NAVY }}>{g.n}</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: "#3d3a33", marginTop: 2 }}>{g.label}</div>
+                          <div style={{ fontSize: 11.5, color: "#8d867a", marginTop: 1 }}>
+                            {g.old ? `${g.old} מהם ${STUCK_ORANGE_DAYS}+ ימים` : g.hint}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)", borderRadius: 14, padding: "15px 17px" }}>
                 <div style={{ fontSize: 13.5, fontWeight: 900, color: NAVY, marginBottom: 2 }}>המסע שלהם</div>
@@ -2154,6 +2203,9 @@ export default function CoordinatorPage() {
             ? data.board!.filter(r => !r.source || r.source === "לא ידוע עדיין")
             : bigFilter === "stuck"
             ? data.board!.filter(r => r.status === "נשלח קישור" && !r.coordinator)
+            : bigFilter?.startsWith("ls_")
+            ? data.board!.filter(r => r.linkSent && `ls_${r.linkSent.stage}` === bigFilter
+                && (r.linkSent.days === null || r.linkSent.days >= STUCK_SHOW_DAYS))
             : data.board!;
           const byApp = new Map((data.quietList ?? []).concat(data.needsAttention)
             .map(p => [(p.phone ?? "").replace(/\D/g, ""), p]));
@@ -2170,6 +2222,7 @@ export default function CoordinatorPage() {
             r.name.toLowerCase().includes(q) || (r.phone ?? "").includes(q.replace(/\D/g, "")) ||
             (r.email ?? "").toLowerCase().includes(q));
           const sorted = [...filtered].sort((a, b) =>
+            (bigFilter?.startsWith("ls_") ? (b.linkSent?.days ?? 999) - (a.linkSent?.days ?? 999) : 0) ||
             Number(b.inApp) - Number(a.inApp) ||
             rank(a.status) - rank(b.status) ||
             a.name.localeCompare(b.name, "he"));
@@ -2208,6 +2261,20 @@ export default function CoordinatorPage() {
                         background: r.status === "בתהליך פעיל" ? "rgba(15,122,82,.1)" : "rgba(2,62,138,0.07)",
                         color: r.status === "בתהליך פעיל" ? "#0f7a52" : NAVY }}>{r.status || "ללא סטטוס"}</span>
                     </div>
+                    {r.linkSent && (r.linkSent.days === null || r.linkSent.days >= STUCK_SHOW_DAYS) && (
+                      <div style={{ fontSize: 12, fontWeight: 700, display: "flex", gap: 8, flexWrap: "wrap",
+                        color: (r.linkSent.days ?? 0) >= STUCK_ORANGE_DAYS ? "#b45309" : "#6b6558" }}>
+                        <span>
+                          {r.linkSent.days === null ? "ב״נשלח קישור״ — לא ידוע ממתי" : `${r.linkSent.days} ימים ב״נשלח קישור״`}
+                          {" · "}{r.linkSent.stage === "registered" ? "נרשם/ה ולא קבע/ה" : r.linkSent.stage === "clicked" ? "לחץ/ה ולא נרשם/ה" : "לא לחץ/ה על הקישור"}
+                        </span>
+                        {r.linkSent.stage === "noclick" && (
+                          <span style={{ color: r.linkSent.mailFail ? "#a33" : "#8d867a" }}>
+                            {r.linkSent.mailFail ? `⚠️ מייל הפתיחה לא יצא: ${r.linkSent.mailFail}` : r.mailedAt ? "מייל הפתיחה יצא" : "מייל הפתיחה לא יצא"}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div style={{ fontSize: 12, color: "#8d867a", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                       {r.phone && <span dir="ltr">+{r.phone}</span>}
                       {r.source && <span>· {r.source}</span>}

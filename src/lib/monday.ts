@@ -301,6 +301,10 @@ export type BoardRow = {
   city: string;
   /** תאריך הלחיצה הראשונה על הקישור מההודעה, או "" */
   clickedAt: string;
+  /** מתי יצא מייל הפתיחה, או "" */
+  mailedAt: string;
+  /** למה מייל הפתיחה לא יצא, או "" */
+  mailFail: string;
 };
 
 const COL_EXTRA = {
@@ -308,6 +312,8 @@ const COL_EXTRA = {
   gender: "color_mm7twyz4", city: "text_mm7tafps",
   /* "לחץ על הקישור" — נכתב מ-/api/r בלחיצה הראשונה (8.10). המדד היחיד ל"פתח" ברמת אדם */
   clicked: "date_mm7ye5aa",
+  /* מייל הפתיחה: מתי יצא, ולמה לא (ריק = תקין) — "לא לחץ" אינו "לא קיבל" (31.10) */
+  mailed: "date_mm7tvfnx", mailFail: "text_mm7yz6ar",
 } as const;
 
 /*
@@ -324,7 +330,7 @@ const PRE_PROGRAM_SOURCE = "בוגר שסיון דיברה איתו";
 /** כל השורות בלוח. `coordinatorName` ריק ⇒ הכל (מנהלת/owner) */
 export async function mondayBoard(coordinatorName?: string | null): Promise<BoardRow[] | null> {
   const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
-    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked]
+    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked, COL_EXTRA.mailed, COL_EXTRA.mailFail]
     .map(c => `"${c}"`).join(", ");
   const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
     `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
@@ -347,6 +353,8 @@ export async function mondayBoard(coordinatorName?: string | null): Promise<Boar
       gender: cv(it, COL_EXTRA.gender),
       city: cv(it, COL_EXTRA.city),
       clickedAt: cv(it, COL_EXTRA.clicked),
+      mailedAt: cv(it, COL_EXTRA.mailed),
+      mailFail: cv(it, COL_EXTRA.mailFail),
     }))
     /* דיווח בלבד אינו משתתף — ראה STATUS.reportOnly */
     .filter(r => r.status !== STATUS.reportOnly)
@@ -429,7 +437,7 @@ export async function mondayRow(itemId: string): Promise<BoardRow | null> {
 /** כל השורות בלי סינוני התצוגה (דיווח בלבד / בוגרי אוגוסט) — לשימוש פנימי */
 async function mondayBoardAll(): Promise<BoardRow[] | null> {
   const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
-    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked].map(c => `"${c}"`).join(", ");
+    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked, COL_EXTRA.mailed, COL_EXTRA.mailFail].map(c => `"${c}"`).join(", ");
   const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
     `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
        column_values(ids: [${ids}]) { id text } } } } }`
@@ -440,6 +448,7 @@ async function mondayBoardAll(): Promise<BoardRow[] | null> {
     coordinator: cv(it, COL.coord), status: cv(it, COL.status),
     source: cv(it, COL_EXTRA.src) || cv(it, COL.source), track: cv(it, COL_EXTRA.track),
     gender: cv(it, COL_EXTRA.gender), city: cv(it, COL_EXTRA.city), clickedAt: cv(it, COL_EXTRA.clicked),
+    mailedAt: cv(it, COL_EXTRA.mailed), mailFail: cv(it, COL_EXTRA.mailFail),
   }));
 }
 

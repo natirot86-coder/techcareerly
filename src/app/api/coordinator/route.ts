@@ -361,7 +361,7 @@ export async function GET(req: NextRequest) {
    *
    * ⚠️ בלי MONDAY_TOKEN מחזיר null והמסך נופל חזרה להתנהגות הקודמת בדיוק.
    */
-  let board: (BoardRow & { inApp: boolean; nextMeeting: string | null })[] | null = null;
+  let board: (BoardRow & { inApp: boolean; nextMeeting: string | null; linkSent: LinkSent | null })[] | null = null;
   try {
     /*
      * ⚠️ **הבורר "צפייה בתור" לא הגיע עד לכאן** (נתי, 11.10). הפגישות סוננו
@@ -384,11 +384,11 @@ export async function GET(req: NextRequest) {
         const cur = nextBy.get(ph);
         if (!cur || b.start_time < cur) nextBy.set(ph, b.start_time);
       }
-      board = rows.map(r => ({
-        ...r,
-        inApp: !!r.phone && appPhones.has(r.phone),
-        nextMeeting: nextBy.get(r.phone) ?? null,
-      }));
+      const sentAt = await linkSentDates(db, rows.filter(r => r.status === "נשלח קישור").map(r => r.id));
+      board = rows.map(r => {
+        const inApp = !!r.phone && appPhones.has(r.phone);
+        return { ...r, inApp, nextMeeting: nextBy.get(r.phone) ?? null, linkSent: linkSentState(r, inApp, sentAt.get(r.id)) };
+      });
     }
   } catch { /* מאנדיי לא זמין — המסך ממשיך בלעדיו */ }
 
@@ -401,6 +401,21 @@ export async function GET(req: NextRequest) {
    * הפגישות — גם אצל רכז/ת אחר/ת — והשם הקנוני מלוח אינטק.
    * ⚠️ לא ממזגים ולא מוחקים. התגית אומרת "זה אותו אדם"; ההחלטה של הרכז/ת.
    */
+  /*
+   * נרשם/ה ולא קבע/ה, ב"נשלח קישור" יום או יותר — סיגנל בתור "מי צריך אותי
+   * היום" (31.10). הכרטיסים מראים את התמונה; התור הוא מה שגורם להרים טלפון.
+   * רק מי שבאפליקציה נמצא בתור, ולכן רק השלב הזה — את השאר מראים הכרטיסים.
+   */
+  for (const r of board ?? []) {
+    const ls = r.linkSent;
+    if (!ls || ls.stage !== "registered" || ls.days === null || ls.days < 1) continue;
+    const q = queue.find(x => String(x.phone ?? "").replace(/[^0-9]/g, "") === r.phone);
+    if (!q) continue;
+    q.signals.push({ severity: ls.days >= 4 ? 1 : 2, reason: `קיבל/ה קישור לפני ${ls.days} ימים, נרשם/ה ולא קבע/ה פגישה`, action: "call" });
+    q.signals.sort((a, b) => a.severity - b.severity);
+    q.topSeverity = Math.min(...q.signals.map(s => s.severity));
+  }
+
   try {
     myBookings = await withPersonContext(db, myBookings as Booking[]);
   } catch (e) { console.error("[coordinator] person context failed:", e); }
@@ -650,4 +665,35 @@ async function withPersonContext(db: SupabaseClient, mine: Booking[]) {
     };
     return { ...b, ctx };
   });
+}
+
+/* ── תקועים ב"נשלח קישור" (נתי, 31.10) ─────────────────────────────────────
+ * מי שקבע פגישה עובר ל"בתהליך פעיל" מעצמו (webhook של Cal), ולכן כל מי
+ * שנשאר ב"נשלח קישור" לא קבע. השאלה היא **איפה** נתקע — וכל שלב דורש פעולה
+ * אחרת: לא לחץ (ההודעה לא נראתה/לא נשלחה) · לחץ ולא נרשם (חסם בהרשמה) ·
+ * נרשם ולא קבע (חסם ביומן). ⚠️ נרשם גובר על "לא לחץ": הלחיצה נמדדת רק
+ * מ-8.10 ורק בקישורים המתועדים. ספים (נתי): יום כדי להופיע, 4 לכתום.
+ */
+type LinkSent = { stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string };
+
+/** הפעם האחרונה שהסטטוס הפך ל"נשלח קישור", מההיסטוריה (intech_status_log) */
+async function linkSentDates(db: SupabaseClient, itemIds: string[]) {
+  const out = new Map<string, string>();
+  if (!itemIds.length) return out;
+  const { data } = await db.from("intech_status_log").select("item_id, changed_at")
+    .eq("column_id", "color_mm7t1s7a").eq("to_value", "נשלח קישור")
+    .in("item_id", itemIds.map(Number)).order("changed_at");
+  for (const r of data ?? []) out.set(String(r.item_id), r.changed_at as string);
+  return out;
+}
+
+function linkSentState(r: BoardRow, inApp: boolean, loggedAt: string | undefined): LinkSent | null {
+  if (r.status !== "נשלח קישור") return null;
+  /* ההיסטוריה נקלטת כל בוקר — שינוי של היום עוד לא בה, ואז מייל הפתיחה הוא העדות */
+  const since = [loggedAt, r.mailedAt].filter(Boolean).sort().at(-1) ?? null;
+  const days = since ? Math.floor((Date.now() - Date.parse(since)) / 864e5) : null;
+  return {
+    stage: inApp ? "registered" : r.clickedAt ? "clicked" : "noclick",
+    since, days, mailFail: r.mailFail,
+  };
 }
