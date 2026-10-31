@@ -31,6 +31,11 @@ import { BEFORE_FIRST_CALL, COL_FIRST_CALL, COL_STATUS, COL_COORD, ilDate } from
 
 const INTECH_BOARD = process.env.MONDAY_INTECH_BOARD ?? "18433888639";
 const COL_PHONE = "text_mm7tmnqc";
+const COL_EMAIL = "text_mm7tase7";
+/* סטטוסים שאומרים "התחיל/ה" גם בלי פגישה ב-Cal (31.10) */
+const STARTED_STATUSES = ["בתהליך פעיל", "סיימ/ה תהליך", "נרשמ/ה ללימודים"];
+/* החשבון שהאפליקציה כותבת דרכו ללוח (הטוקן של נתי) */
+const APP_MONDAY_USER = 33064689;
 const REPORT_ONLY = "נרשמו ללימודים — דיווח בלבד";
 const ENROLLED = "נרשמ/ה ללימודים";
 const NO_ANSWER_PREFIX = "אין מענה";
@@ -115,13 +120,20 @@ type BoardItem = { id: string; created_at: string; column_values: { id: string; 
 
 async function boardItems(): Promise<BoardItem[] | null> {
   const d = await gql<{ boards: { items_page: { cursor: string | null; items: BoardItem[] } }[] }>(
-    `{ boards(ids: ${INTECH_BOARD}) { items_page(limit: 500) { cursor items { id created_at column_values(ids: ["${COL_STATUS}","${COL_COORD}","${COL_PHONE}","${COL_FIRST_CALL}"]) { id text } } } } }`);
+    `{ boards(ids: ${INTECH_BOARD}) { items_page(limit: 500) { cursor items { id created_at column_values(ids: ["${COL_STATUS}","${COL_COORD}","${COL_PHONE}","${COL_EMAIL}","${COL_FIRST_CALL}"]) { id text } } } } }`);
   const p = d?.boards[0]?.items_page;
   if (!p || p.cursor) return null;   // יותר מ-500 שורות — לא מחשבים חצי לוח בשקט
   return p.items;
 }
 
-async function starts(db: SupabaseClient, now: Date): Promise<Event[]> {
+/*
+ * "התחיל/ה" = המוקדם מבין שניים (נתי, 31.10):
+ *   1. פגישה ראשונה ב-Cal שכבר קרתה (נזקפת לבעל/ת היומן);
+ *   2. הפעם הראשונה שהסטטוס בלוח הגיע ל"בתהליך פעיל" או הלאה (מההיסטוריה,
+ *      נזקפת לרכז/ת בשורה) — 3 פעילים נפגשו מחוץ ל-Cal ולא נספרו לעולם.
+ * "דיווח בלבד" לעולם לא כאן (נתי: רק בדוח למאיה, לא באפליקציה).
+ */
+async function starts(db: SupabaseClient, now: Date, items: BoardItem[], coords: Coord[]): Promise<{ events: Event[]; undated: number }> {
   const { data } = await db.from("cal_bookings")
     .select("trigger, title, start_time, coordinator_id, attendee_phone, attendee_email");
   const valid = (data ?? []).filter(b =>
@@ -129,14 +141,35 @@ async function starts(db: SupabaseClient, now: Date): Promise<Event[]> {
     !(b.title ?? "").includes("ראיון קורס") &&
     Date.parse(b.start_time) <= now.getTime() &&
     (b.attendee_phone || b.attendee_email));
-  /* אדם = טלפון *או* מייל (personIdentity) — מי שקבע פעם עם טלפון ופעם בלי לא נספר פעמיים */
-  const people = clusterPeople(valid.map(b => ({ phone: b.attendee_phone, email: b.attendee_email })));
+
+  const v = (it: BoardItem, id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
+  const started = items.filter(it => STARTED_STATUSES.includes(v(it, COL_STATUS)));
+  /* ⚠️ רק שינוי של אדם. "בתהליך פעיל" נכתב אוטומטית ברגע הקביעה ב-Cal (מחשבון
+     האפליקציה) — ספירה שלו הייתה מקדימה את ההתחלה מהפגישה לקביעה */
+  const { data: log } = await db.from("intech_status_log").select("item_id, changed_at")
+    .eq("column_id", COL_STATUS).in("to_value", STARTED_STATUSES).neq("user_id", APP_MONDAY_USER).order("changed_at");
+  const firstLog = new Map<string, string>();
+  for (const r of log ?? []) if (!firstLog.has(String(r.item_id))) firstLog.set(String(r.item_id), r.changed_at as string);
+
+  /* אדם = טלפון *או* מייל (personIdentity) — פגישות ושורות לוח באותו אשכול */
+  const people = clusterPeople([
+    ...valid.map(b => ({ phone: b.attendee_phone, email: b.attendee_email })),
+    ...started.map(it => ({ phone: v(it, COL_PHONE), email: v(it, COL_EMAIL) })),
+  ]);
   const first = new Map<string, { at: string; coord: string | null }>();
-  valid.forEach((b, i) => {
-    const cur = first.get(people[i]);
-    if (!cur || b.start_time < cur.at) first.set(people[i], { at: b.start_time, coord: b.coordinator_id });
+  const put = (p: string, at: string, coord: string | null) => {
+    const cur = first.get(p);
+    if (!cur || at < cur.at) first.set(p, { at, coord });
+  };
+  valid.forEach((b, i) => put(people[i], b.start_time, b.coordinator_id));
+  let undated = 0;
+  started.forEach((it, j) => {
+    const p = people[valid.length + j];
+    const at = firstLog.get(it.id);
+    if (at) put(p, at, matchCoordinator(coords, v(it, COL_COORD))?.id ?? null);
+    else if (!first.has(p)) undated++;   // הסטטוס נקבע לפני שההיסטוריה נשמרה (4.10) ואין פגישה ב-Cal
   });
-  return [...first].map(([person, v]) => ({ person, month: monthOf(v.at), coord: v.coord }));
+  return { events: [...first].map(([person, x]) => ({ person, month: monthOf(x.at), coord: x.coord })), undated };
 }
 
 async function enrollments(db: SupabaseClient, items: BoardItem[], coords: Coord[]): Promise<{ events: Event[]; undated: number }> {
@@ -199,7 +232,8 @@ export async function computeDashboard(now = new Date()) {
   const v = (it: BoardItem, id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
   const coordOf = (it: BoardItem) => matchCoordinator(coords, v(it, COL_COORD))?.id ?? null;
 
-  const startEv = (await starts(db, now)).filter(e => yearMonths.includes(e.month));
+  const startRes = await starts(db, now, live, coords);
+  const startEv = startRes.events.filter(e => yearMonths.includes(e.month));
   const enroll = await enrollments(db, live, coords);
   const enrollEv = enroll.events.filter(e => yearMonths.includes(e.month));
 
@@ -302,7 +336,7 @@ export async function computeDashboard(now = new Date()) {
   return {
     rows,
     notes: {
-      startsInYear: startEv.length, startsUnassigned: startEv.filter(e => !staff.some(c => c.id === e.coord)).length,
+      startsInYear: startEv.length, startsUndated: startRes.undated, startsUnassigned: startEv.filter(e => !staff.some(c => c.id === e.coord)).length,
       enrolledInYear: enrollEv.length, enrolledUndated: enroll.undated,
       firstCalls: calls.length, waitingNow: waiting.length,
     },
