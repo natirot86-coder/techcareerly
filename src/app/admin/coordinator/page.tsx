@@ -1499,7 +1499,7 @@ export default function CoordinatorPage() {
       status: string; source: string; track: string; inApp: boolean; nextMeeting: string | null;
       mailedAt?: string;
       /* תקוע/ה ב"נשלח קישור" — איפה ומאז מתי (31.10). null למי שבסטטוס אחר */
-      linkSent?: { stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string; where?: string | null } | null;
+      linkSent?: { stage: "noclick" | "clicked" | "arrived" | "registered"; since: string | null; days: number | null; mailFail: string; where?: string | null } | null;
     }[] | null;
     role?: "coordinator" | "manager" | "owner";
     viewingAs?: string | null;
@@ -1772,7 +1772,8 @@ export default function CoordinatorPage() {
                 const stuck = board.filter(r => r.linkSent && (r.linkSent.days === null || r.linkSent.days >= STUCK_SHOW_DAYS));
                 const groups = ([
                   ["noclick", "לא לחצו על הקישור", "ההודעה לא נראתה — או לא נשלחה"],
-                  ["clicked", "לחצו, לא נרשמו", "נתקעו בהרשמה"],
+                  ["clicked", "רק לחיצה", "ייתכן סורק מייל או תצוגה מקדימה"],
+                  ["arrived", "הגיעו לאפליקציה, לא נרשמו", "נעצרו בהרשמה"],
                   ["registered", "נרשמו, לא קבעו", "נתקעו ביומן"],
                 ] as const).map(([stage, label, hint]) => {
                   const list = stuck.filter(r => r.linkSent!.stage === stage);
@@ -2266,7 +2267,7 @@ export default function CoordinatorPage() {
                         color: (r.linkSent.days ?? 0) >= STUCK_ORANGE_DAYS ? "#b45309" : "#6b6558" }}>
                         <span>
                           {r.linkSent.days === null ? "ב״נשלח קישור״ — לא ידוע ממתי" : `${r.linkSent.days} ימים ב״נשלח קישור״`}
-                          {" · "}{r.linkSent.stage === "registered" ? "נרשם/ה ולא קבע/ה" : r.linkSent.stage === "clicked" ? "לחץ/ה ולא נרשם/ה" : "לא לחץ/ה על הקישור"}
+                          {" · "}{r.linkSent.stage === "registered" ? "נרשם/ה ולא קבע/ה" : r.linkSent.stage === "arrived" ? "הגיע/ה לאפליקציה ולא נרשם/ה" : r.linkSent.stage === "clicked" ? "לחיצה בלבד, בלי עדות להגעה" : "לא לחץ/ה על הקישור"}
                         </span>
                         {/* איפה בהרשמה עצר/ה — מאירועי ההרשמה (31.10) */}
                         {r.linkSent.where && <span style={{ color: "#8a4d00" }}>{r.linkSent.where}</span>}

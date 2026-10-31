@@ -23,6 +23,7 @@ import { mondayBoardAll, mondayWriteDetails, normPhone } from "@/lib/monday";
 import { syncIntechHistory } from "@/app/api/cron/intech-history/route";
 import { ensureAllVerifiedOnBoard } from "@/lib/ensureBoardRows";
 import { flushStaleNotices } from "@/lib/linkSentGuard";
+import { scanBounces } from "@/lib/bounces";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -130,7 +131,9 @@ export async function GET(req: NextRequest) {
   }
   /* הודעות "נשלח קישור בלי רכז/ת" שהשליחה הדחויה שלהן נקטעה */
   const notices = req.nextUrl.searchParams.has("dry") ? 0 : await flushStaleNotices();
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices });
+  /* מיילי פתיחה שחזרו — "נשלח" אינו "הגיע" (1.11) */
+  const bounces = await scanBounces({ days: 3, dry: req.nextUrl.searchParams.has("dry") });
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces });
 }
 
 /*

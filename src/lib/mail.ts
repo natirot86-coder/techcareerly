@@ -42,6 +42,14 @@ async function token(c: Credentials): Promise<string | null> {
 }
 
 /** מחזיר true אם נשלח, false אם נכשל, null אם האינטגרציה כבויה */
+/** טוקן ל-Graph ותיבת השולח — לקריאת החזרות (bounces.ts). null = לא מוגדר */
+export async function graphAccess(): Promise<{ token: string; mailbox: string } | null> {
+  const c = creds();
+  if (!c) return null;
+  const t = await token(c);
+  return t ? { token: t, mailbox: c.from } : null;
+}
+
 export async function sendMail(p: {
   to: string; subject: string; html: string; cc?: string;
 }): Promise<boolean | null> {

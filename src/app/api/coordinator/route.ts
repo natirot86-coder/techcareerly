@@ -389,7 +389,11 @@ export async function GET(req: NextRequest) {
       board = rows.map(r => {
         const inApp = !!r.phone && appPhones.has(r.phone);
         const ls = linkSentState(r, inApp, sentAt.get(r.id));
-        return { ...r, inApp, nextMeeting: nextBy.get(r.phone) ?? null, linkSent: ls && { ...ls, where: inApp ? null : stoppedAt.get(r.id) ?? null } };
+        const where = inApp ? null : stoppedAt.get(r.id) ?? null;
+        /* אירוע הרשמה עם מזהה השורה = אדם הגיע לאפליקציה (31.10). לחיצה בלבד
+           יכולה להיות סורק מייל או תצוגה מקדימה של וואטסאפ */
+        const stage = ls && where && ls.stage !== "registered" ? "arrived" as const : ls?.stage;
+        return { ...r, inApp, nextMeeting: nextBy.get(r.phone) ?? null, linkSent: ls && { ...ls, stage: stage!, where } };
       });
     }
   } catch { /* מאנדיי לא זמין — המסך ממשיך בלעדיו */ }
@@ -677,7 +681,7 @@ async function withPersonContext(db: SupabaseClient, mine: Booking[]) {
  * מ-8.10 ורק בקישורים המתועדים. ספים (נתי): יום כדי להופיע, 4 לכתום.
  */
 type LinkSent = {
-  stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string;
+  stage: "noclick" | "clicked" | "arrived" | "registered"; since: string | null; days: number | null; mailFail: string;
   /** איפה בהרשמה עצר/ה — מאירועי ההרשמה שנושאים את מזהה השורה (31.10). null = אין עדות */
   where?: string | null;
 };
