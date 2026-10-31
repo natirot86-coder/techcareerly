@@ -120,15 +120,18 @@ export async function GET(req: NextRequest) {
    * ממשיך להיות בדיוק מה שהוא היה, והפיילוט נוסף ולא מערבב.
    */
   const wanted = (req.nextUrl.searchParams.get("cohort") ?? "main").toLowerCase();
-  const { data: people } = await db.from("candidates").select("id, cohort");
+  const { data: people } = await db.from("candidates").select("id, cohort, is_test");
   const cohortOf = new Map<string, string>((people ?? []).map(p => [String(p.id), String(p.cohort ?? "main")]));
+  /* אירועים של משתמשי בדיקה (צוות, QA) לא נספרים — אחרת כל בדיקה מזיזה את המשפך (31.10) */
+  const testIds = new Set((people ?? []).filter(p => p.is_test).map(p => String(p.id)));
 
   const cohortCounts: Record<string, number> = {};
   for (const c of cohortOf.values()) cohortCounts[c] = (cohortCounts[c] ?? 0) + 1;
 
   /* מי שאינו בטבלה (אירוע יתום) נחשב main — כמו ברירת המחדל ב-DB */
-  const events = wanted === "all" ? all
-    : all.filter(e => (cohortOf.get(String(e.candidate_id)) ?? "main") === wanted);
+  const real = all.filter(e => !testIds.has(String(e.candidate_id)));
+  const events = wanted === "all" ? real
+    : real.filter(e => (cohortOf.get(String(e.candidate_id)) ?? "main") === wanted);
 
   /*
    * נטישה בסימולציה: לכל תחום, כמה אנשים הגיעו לכל צעד.
@@ -163,10 +166,31 @@ export async function GET(req: NextRequest) {
   try { program = await programFunnel(db, wanted); }
   catch (e) { console.error("[funnel] program funnel failed:", e); }
 
+  /*
+   * איפה נעצרים בהרשמה (31.10) — כמה אנשים שונים הגיעו לכל שלב. "הגיע לשלב N"
+   * = היה בו לפחות פעם אחת, ולכן מי שחזר אחורה נספר בשלב הרחוק שאליו הגיע.
+   */
+  const stepPeople = new Map<string, Set<string>>();
+  for (const e of events) {
+    if (e.name !== "onboarding_step" || !e.candidate_id) continue;
+    const k = s(e.props?.name);
+    if (!stepPeople.has(k)) stepPeople.set(k, new Set());
+    stepPeople.get(k)!.add(e.candidate_id);
+  }
+  const sentOk = new Set(events.filter(e => e.name === "otp_sent" && e.props?.ok === true && e.candidate_id).map(e => e.candidate_id));
+  const sentFail = new Set(events.filter(e => e.name === "otp_sent" && e.props?.ok === false && e.candidate_id).map(e => e.candidate_id));
+  const registration = {
+    steps: Object.fromEntries([...stepPeople].map(([k, v]) => [k, v.size])),
+    otpSent: sentOk.size, otpSendFailed: sentFail.size,
+    otpWrong: peopleWith(events, "otp_failed"), otpVerified: peopleWith(events, "otp_verified"),
+    helpShown: peopleWith(events, "otp_help_shown"),
+  };
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     cohort: wanted,
     program,
+    registration,
     cohortCounts,
     sampled: events.length,
     sampledAll: all.length,

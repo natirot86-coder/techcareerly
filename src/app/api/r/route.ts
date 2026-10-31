@@ -83,6 +83,12 @@ export async function GET(req: NextRequest) {
         const c = await coordinatorByLabel(db, coordName);
         if (c) dest = `${APP_URL}/?coord=${encodeURIComponent(c.id)}`;
       }
+      /*
+       * מזהה השורה בלוח נוסע עם הקישור (31.10). עד שהאדם מאמת טלפון אין לנו
+       * דרך לדעת מי הוא — ו"לחץ ולא נרשם" נשאר בלי תשובה לשאלה איפה עצר.
+       * עם ref, אירועי ההרשמה מתחברים לשורה שלו. מזהה פריט בלבד, בלי פרטים.
+       */
+      dest += (dest.includes("?") ? "&" : "/?") + `ref=${encodeURIComponent(String(item))}`;
     }
 
     if (item && target === "cal") {

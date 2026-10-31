@@ -1499,7 +1499,7 @@ export default function CoordinatorPage() {
       status: string; source: string; track: string; inApp: boolean; nextMeeting: string | null;
       mailedAt?: string;
       /* תקוע/ה ב"נשלח קישור" — איפה ומאז מתי (31.10). null למי שבסטטוס אחר */
-      linkSent?: { stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string } | null;
+      linkSent?: { stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string; where?: string | null } | null;
     }[] | null;
     role?: "coordinator" | "manager" | "owner";
     viewingAs?: string | null;
@@ -2268,6 +2268,8 @@ export default function CoordinatorPage() {
                           {r.linkSent.days === null ? "ב״נשלח קישור״ — לא ידוע ממתי" : `${r.linkSent.days} ימים ב״נשלח קישור״`}
                           {" · "}{r.linkSent.stage === "registered" ? "נרשם/ה ולא קבע/ה" : r.linkSent.stage === "clicked" ? "לחץ/ה ולא נרשם/ה" : "לא לחץ/ה על הקישור"}
                         </span>
+                        {/* איפה בהרשמה עצר/ה — מאירועי ההרשמה (31.10) */}
+                        {r.linkSent.where && <span style={{ color: "#8a4d00" }}>{r.linkSent.where}</span>}
                         {r.linkSent.stage === "noclick" && (
                           <span style={{ color: r.linkSent.mailFail ? "#a33" : "#8d867a" }}>
                             {r.linkSent.mailFail ? `⚠️ מייל הפתיחה לא יצא: ${r.linkSent.mailFail}` : r.mailedAt ? "מייל הפתיחה יצא" : "מייל הפתיחה לא יצא"}

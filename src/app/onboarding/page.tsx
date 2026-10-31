@@ -14,6 +14,21 @@ import SmsHelp from "@/components/SmsHelp";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/*
+  ── איפה נעצרים בהרשמה (נתי, 31.10) ─────────────────────────────────────────
+  8 מתוך 24 שקיבלו קישור לחצו ולא נרשמו — ולא היה אף אירוע שאומר באיזה שלב
+  עצרו: בשאלות, במסך הטלפון, או אחרי שקיבלו קוד. כל אחד מהם דורש תיקון אחר.
+  נטישה לא נרשמת, היא מוסקת מהשלב האחרון שהגיעו אליו. `board-ref` (מהקישור
+  בלוח, דרך /api/r) מחבר את האירועים לשורה של האדם עוד לפני אימות הטלפון.
+  ⚠️ בלי טלפון ובלי קוד באירוע — רק השלב והתוצאה.
+*/
+const STEP_NAMES = ["welcome", "details", "interest", "blockers", "summary", "tour", "phone"] as const;
+function obEvent(name: string, props: Record<string, unknown> = {}) {
+  let ref: string | null = null;
+  try { ref = localStorage.getItem("board-ref"); } catch { /* ignore */ }
+  logEvent(name, ref ? { ...props, ref } : props);
+}
 type Gender = "male" | "female" | "other" | "";
 
 const REGION_OPTIONS = ["מרכז", "צפון", "דרום", "ירושלים", "אחר"];
@@ -836,6 +851,7 @@ function StepPhone({ firstName, gender, onDone }: {
     ולישראל אחרי שלושה כשלונות ברצף.
   */
   const [escape, setEscape] = useState(false);
+  useEffect(() => { if (escape) obEvent("otp_help_shown", { stage }); }, [escape]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (stage !== "otp" || escape) return;
     const t = setTimeout(() => setEscape(true), 45_000);
@@ -854,6 +870,7 @@ function StepPhone({ firstName, gender, onDone }: {
     setError(null);
     const err = await sendPhoneOtp(phoneToE164(phone));
     setLoading(false);
+    obEvent("otp_sent", err ? { ok: false, error: String(err).slice(0, 80) } : { ok: true });
     if (err) { setError(err); setEscape(true); return; }
     setStage("otp");
   }
@@ -868,7 +885,8 @@ function StepPhone({ firstName, gender, onDone }: {
     setError(null);
     const err = await verifyPhoneOtp(phoneToE164(phone), code.trim());
     setLoading(false);
-    if (err) { setError(err); return; }
+    if (err) { obEvent("otp_failed", { error: String(err).slice(0, 80) }); setError(err); return; }
+    obEvent("otp_verified");
     onDone();
   }
 
@@ -967,6 +985,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
   const obStages = useJourneyStages();
+  useEffect(() => { obEvent("onboarding_step", { step, name: STEP_NAMES[step] }); }, [step]);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");

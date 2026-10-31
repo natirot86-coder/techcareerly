@@ -384,10 +384,12 @@ export async function GET(req: NextRequest) {
         const cur = nextBy.get(ph);
         if (!cur || b.start_time < cur) nextBy.set(ph, b.start_time);
       }
-      const sentAt = await linkSentDates(db, rows.filter(r => r.status === "נשלח קישור").map(r => r.id));
+      const sentIds = rows.filter(r => r.status === "נשלח קישור").map(r => r.id);
+      const [sentAt, stoppedAt] = await Promise.all([linkSentDates(db, sentIds), registrationStops(db, sentIds)]);
       board = rows.map(r => {
         const inApp = !!r.phone && appPhones.has(r.phone);
-        return { ...r, inApp, nextMeeting: nextBy.get(r.phone) ?? null, linkSent: linkSentState(r, inApp, sentAt.get(r.id)) };
+        const ls = linkSentState(r, inApp, sentAt.get(r.id));
+        return { ...r, inApp, nextMeeting: nextBy.get(r.phone) ?? null, linkSent: ls && { ...ls, where: inApp ? null : stoppedAt.get(r.id) ?? null } };
       });
     }
   } catch { /* מאנדיי לא זמין — המסך ממשיך בלעדיו */ }
@@ -674,7 +676,11 @@ async function withPersonContext(db: SupabaseClient, mine: Booking[]) {
  * נרשם ולא קבע (חסם ביומן). ⚠️ נרשם גובר על "לא לחץ": הלחיצה נמדדת רק
  * מ-8.10 ורק בקישורים המתועדים. ספים (נתי): יום כדי להופיע, 4 לכתום.
  */
-type LinkSent = { stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string };
+type LinkSent = {
+  stage: "noclick" | "clicked" | "registered"; since: string | null; days: number | null; mailFail: string;
+  /** איפה בהרשמה עצר/ה — מאירועי ההרשמה שנושאים את מזהה השורה (31.10). null = אין עדות */
+  where?: string | null;
+};
 
 /** הפעם האחרונה שהסטטוס הפך ל"נשלח קישור", מההיסטוריה (intech_status_log) */
 async function linkSentDates(db: SupabaseClient, itemIds: string[]) {
@@ -696,4 +702,43 @@ function linkSentState(r: BoardRow, inApp: boolean, loggedAt: string | undefined
     stage: inApp ? "registered" : r.clickedAt ? "clicked" : "noclick",
     since, days, mailFail: r.mailFail,
   };
+}
+
+/*
+ * איפה בהרשמה עצר/ה מי שלחץ/ה ולא נרשם/ה (31.10). האירועים נושאים `ref` =
+ * מזהה השורה בלוח (הגיע דרך /api/r). הקוד והתוצאה שלו גוברים על מספר השלב:
+ * "קיבל/ה קוד ולא הזין/ה" אומר לרכז/ת הרבה יותר מ"הגיע/ה למסך 6".
+ */
+const STEP_LABEL: Record<string, string> = {
+  welcome: "מסך הפתיחה", details: "פרטים אישיים", interest: "שאלת העניין",
+  blockers: "מה עוצר אותך", summary: "הסיכום", tour: "הסיור באפליקציה", phone: "מסך הטלפון",
+};
+async function registrationStops(db: SupabaseClient, itemIds: string[]) {
+  const out = new Map<string, string>();
+  if (!itemIds.length) return out;
+  const { data } = await db.from("funnel_events").select("name, props, created_at")
+    .in("name", ["onboarding_step", "otp_sent", "otp_failed", "otp_help_shown"])
+    .in("props->>ref", itemIds).order("created_at");
+  const by = new Map<string, { name: string; props: Record<string, unknown> }[]>();
+  for (const e of (data ?? []) as { name: string; props: Record<string, unknown> }[]) {
+    const ref = String(e.props?.ref ?? "");
+    by.set(ref, [...(by.get(ref) ?? []), e]);
+  }
+  for (const [ref, evs] of by) {
+    const sent = evs.filter(e => e.name === "otp_sent");
+    const lastSent = sent.at(-1);
+    let where: string;
+    if (evs.some(e => e.name === "otp_failed")) where = "הזין/ה קוד שגוי";
+    else if (lastSent && lastSent.props?.ok === false) where = "שליחת הקוד נכשלה";
+    else if (lastSent) where = "קיבל/ה קוד ולא הזין/ה";
+    else {
+      const steps = evs.filter(e => e.name === "onboarding_step").map(e => Number(e.props?.step) || 0);
+      const max = Math.max(...steps, 0);
+      const name = evs.find(e => e.name === "onboarding_step" && Number(e.props?.step) === max)?.props?.name as string | undefined;
+      where = `עצר/ה ב: ${STEP_LABEL[name ?? ""] ?? `שלב ${max}`}`;
+    }
+    if (evs.some(e => e.name === "otp_help_shown")) where += " · ראה/תה את עזרת ה-SMS";
+    out.set(ref, where);
+  }
+  return out;
 }

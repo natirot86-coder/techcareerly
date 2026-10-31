@@ -77,6 +77,8 @@ type Funnels = {
   tasksReopened: Record<string, number>;
   /* משפך התוכנית — אנשים ולא דפדפנים (31.10). null אם הלוח/המסד לא זמינים */
   program: { inProgram: number; clickedLink: number; registered: number; m1: number; m2: number; m3: number } | null;
+  /* איפה נעצרים בהרשמה — נמדד מ-31.10 */
+  registration?: { steps: Record<string, number>; otpSent: number; otpSendFailed: number; otpWrong: number; otpVerified: number; helpShown: number };
 };
 
 const SCCT_Q: Record<string, string> = {
@@ -230,6 +232,37 @@ export default function AdminAnalyticsPage() {
             ]}
             live={!!f?.program}
           />
+        </Card>
+
+        <Card
+          full
+          title="איפה נעצרים בהרשמה"
+          q="מי שפתח את ההרשמה — עד איזה מסך הגיע, ומה קרה עם קוד ה-SMS?"
+          why="8 מתוך 24 שקיבלו קישור לחצו ולא נרשמו, ולא ידענו איפה עצרו. כל נקודה דורשת תיקון אחר: שאלה מרתיעה, חשש למסור טלפון, או קוד שלא הגיע או לא הוזן."
+          threshold="none"
+          thresholdText="נמדד מ-31.10. אנשים = סשנים שונים: מי שפתח בשני דפדפנים נספר פעמיים, עד שיאמת טלפון."
+          needs="funnel_events · onboarding_step · otp_*"
+          live={!!f?.registration}
+        >
+          <Funnel
+            steps={[
+              { label: "פתחו את ההרשמה", n: f?.registration?.steps.welcome ?? 0 },
+              { label: "פרטים אישיים", n: f?.registration?.steps.details ?? 0 },
+              { label: "שאלת העניין", n: f?.registration?.steps.interest ?? 0 },
+              { label: "מה עוצר", n: f?.registration?.steps.blockers ?? 0 },
+              { label: "סיכום", n: f?.registration?.steps.summary ?? 0 },
+              { label: "סיור", n: f?.registration?.steps.tour ?? 0 },
+              { label: "מסך הטלפון", n: f?.registration?.steps.phone ?? 0 },
+              { label: "קיבלו קוד", n: f?.registration?.otpSent ?? 0 },
+              { label: "אימתו", n: f?.registration?.otpVerified ?? 0 },
+            ]}
+            live={!!f?.registration}
+          />
+          {f?.registration && (
+            <div style={{ fontSize: 12.5, color: "#6b6558", marginTop: 8, lineHeight: 1.6 }}>
+              שליחת קוד נכשלה: {f.registration.otpSendFailed} · הזינו קוד שגוי: {f.registration.otpWrong} · ראו את עזרת ה-SMS: {f.registration.helpShown}
+            </div>
+          )}
         </Card>
 
         <Card
