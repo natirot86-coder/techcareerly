@@ -29,6 +29,7 @@ import { trackedUrl } from "@/app/api/r/route";
 import { coordinatorByLabel, calUrl as calUrlOf } from "@/lib/coordinatorLookup";
 import { heKey } from "@/lib/monday";
 import { stampFromWebhook } from "@/lib/intechHistory";
+import { guardLinkSent, PENDING_NO_COORD } from "@/lib/linkSentGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null) as {
     challenge?: string;
     event?: {
-      pulseId?: number; boardId?: number; columnId?: string;
+      pulseId?: number; boardId?: number; columnId?: string; userId?: number;
       value?: { label?: { text?: string } } | null;
       previousValue?: { label?: { text?: string } } | null;
     };
@@ -135,6 +136,15 @@ export async function POST(req: NextRequest) {
        בלי ערך קודם בגוף הבקשה לא מנחשים: הבדיקה היומית משלימה מהיומן */
     if (body.event.columnId === COL_STATUS) {
       await stampFromWebhook(itemId, body.event.previousValue?.label?.text, body.event.value?.label?.text);
+    }
+    /*
+      "נשלח קישור" בלי רכז/ת (31.10) — מי שסימן/ה משויך/ת, או מקבל/ת מייל
+      שמסביר למה לא יצא כלום. אחרי שיוך — ה-webhook של שינוי הרכז/ת הוא
+      ששולח את מייל הפתיחה; כאן לא, כדי ששני אירועים לא ישלחו פעמיים.
+    */
+    if (body.event.columnId === COL_STATUS && body.event.value?.label?.text === LINK_SENT
+        && body.event.previousValue?.label?.text !== LINK_SENT) {
+      if (await guardLinkSent(itemId, body.event.userId) === "assigned") return rebuildWa(itemId);
     }
     await maybeSendWelcome(itemId);
     return rebuildWa(itemId);
@@ -283,7 +293,7 @@ export async function rebuildWa(itemId: number) {
    אותו תנאי בדיוק כמו הוואטסאפ, כי זו אותה הודעה בשני ערוצים. */
 export async function maybeSendWelcome(itemId: number) {
   const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
-    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_STATUS}","${COL_MAIL}","${COL_COORD}","${COL_MAILED}"]) { id text } } }`
+    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_STATUS}","${COL_MAIL}","${COL_COORD}","${COL_MAILED}","${COL_MAILFAIL}"]) { id text } } }`
   );
   const item = d?.items?.[0];
   if (!item) return;
@@ -291,8 +301,14 @@ export async function maybeSendWelcome(itemId: number) {
   if (cv(COL_STATUS) !== LINK_SENT) return;
   if (cv(COL_MAILED)) return;   // כבר יצא — העובדה שמורה, לא האירוע
 
+  /*
+    ממתין — **גלוי ולא שקט** (31.10). עד היום שלוש מהסיבות נכתבו ל-console
+    בלבד, והרכז/ת היה/תה בטוח/ה שהמייל יצא. כותבים רק כשהסיבה השתנתה.
+  */
+  const pending = async (why: string) => { if (cv(COL_MAILFAIL) !== why) await markMailProblem(itemId, why); };
+
   const to = cv(COL_MAIL);
-  if (!to) return;
+  if (!to) { await pending("אין כתובת מייל — רק וואטסאפ"); return; }
 
   /*
    * ── הכתובת נבדקת לפני השליחה (נתי, 8.10) ────────────────────────────────
@@ -334,6 +350,7 @@ export async function maybeSendWelcome(itemId: number) {
    */
   if (!calUrl) {
     console.log(`[monday-webhook] welcome pending (${coordName || "ללא רכז/ת"}) — item ${itemId}`);
+    await pending(coordName ? "ממתין: לרכז/ת אין קישור יומן" : PENDING_NO_COORD);
     return;
   }
 

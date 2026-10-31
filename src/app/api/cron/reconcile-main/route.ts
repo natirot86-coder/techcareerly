@@ -17,7 +17,7 @@
  * ⚠️ **רק יוצרת, לעולם לא מוחקת ולא מעדכנת** — אותו כלל כמו ה-webhook.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { promoteFromMain } from "@/app/api/monday-webhook/route";
+import { promoteFromMain, drainPendingWelcome } from "@/app/api/monday-webhook/route";
 import { createClient } from "@supabase/supabase-js";
 import { mondayBoardAll, mondayWriteDetails, normPhone } from "@/lib/monday";
 import { syncIntechHistory } from "@/app/api/cron/intech-history/route";
@@ -117,7 +117,17 @@ export async function GET(req: NextRequest) {
   const direct = url && key
     ? await ensureAllVerifiedOnBoard(createClient(url, key, { auth: { persistSession: false } }), { dry: req.nextUrl.searchParams.has("dry") })
     : { skipped: "no db" };
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct });
+  /*
+    מיילי פתיחה שממתינים למרות שהשלישייה שלמה (31.10) — למשל שיוך אוטומטי
+    שה-webhook שלו התפספס. הבדיקה היומית היא ההגנה, לא האירוע.
+  */
+  let drained = 0;
+  if (!req.nextUrl.searchParams.has("dry") && url && key) {
+    const { data: staff } = await createClient(url, key, { auth: { persistSession: false } })
+      .from("coordinators").select("name").eq("active", true).eq("takes_participants", true);
+    for (const c of staff ?? []) drained += await drainPendingWelcome(String(c.name));
+  }
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained });
 }
 
 /*
