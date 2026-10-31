@@ -238,11 +238,15 @@ export type BoardRow = {
   /* לעריכה במסך הניהול (16.10) — הערכים כפי שהם בלוח */
   gender: string;
   city: string;
+  /** תאריך הלחיצה הראשונה על הקישור מההודעה, או "" */
+  clickedAt: string;
 };
 
 const COL_EXTRA = {
   src: "color_mm7tee80", track: "color_mm7tahjd",
   gender: "color_mm7twyz4", city: "text_mm7tafps",
+  /* "לחץ על הקישור" — נכתב מ-/api/r בלחיצה הראשונה (8.10). המדד היחיד ל"פתח" ברמת אדם */
+  clicked: "date_mm7ye5aa",
 } as const;
 
 /*
@@ -259,7 +263,7 @@ const PRE_PROGRAM_SOURCE = "בוגר שסיון דיברה איתו";
 /** כל השורות בלוח. `coordinatorName` ריק ⇒ הכל (מנהלת/owner) */
 export async function mondayBoard(coordinatorName?: string | null): Promise<BoardRow[] | null> {
   const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
-    COL_EXTRA.gender, COL_EXTRA.city]
+    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked]
     .map(c => `"${c}"`).join(", ");
   const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
     `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
@@ -281,6 +285,7 @@ export async function mondayBoard(coordinatorName?: string | null): Promise<Boar
       track: cv(it, COL_EXTRA.track),
       gender: cv(it, COL_EXTRA.gender),
       city: cv(it, COL_EXTRA.city),
+      clickedAt: cv(it, COL_EXTRA.clicked),
     }))
     /* דיווח בלבד אינו משתתף — ראה STATUS.reportOnly */
     .filter(r => r.status !== STATUS.reportOnly)
@@ -363,7 +368,7 @@ export async function mondayRow(itemId: string): Promise<BoardRow | null> {
 /** כל השורות בלי סינוני התצוגה (דיווח בלבד / בוגרי אוגוסט) — לשימוש פנימי */
 async function mondayBoardAll(): Promise<BoardRow[] | null> {
   const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
-    COL_EXTRA.gender, COL_EXTRA.city].map(c => `"${c}"`).join(", ");
+    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked].map(c => `"${c}"`).join(", ");
   const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
     `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
        column_values(ids: [${ids}]) { id text } } } } }`
@@ -373,7 +378,7 @@ async function mondayBoardAll(): Promise<BoardRow[] | null> {
     id: it.id, name: it.name.trim(), phone: normPhone(cv(it, COL.phone)), email: cv(it, COL.email),
     coordinator: cv(it, COL.coord), status: cv(it, COL.status),
     source: cv(it, COL_EXTRA.src) || cv(it, COL.source), track: cv(it, COL_EXTRA.track),
-    gender: cv(it, COL_EXTRA.gender), city: cv(it, COL_EXTRA.city),
+    gender: cv(it, COL_EXTRA.gender), city: cv(it, COL_EXTRA.city), clickedAt: cv(it, COL_EXTRA.clicked),
   }));
 }
 

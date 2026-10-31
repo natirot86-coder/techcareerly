@@ -75,6 +75,8 @@ type Funnels = {
   solutions: Record<string, number>;
   meeting: { open: number; ready: number; failed: number; booked: number };
   tasksReopened: Record<string, number>;
+  /* משפך התוכנית — אנשים ולא דפדפנים (31.10). null אם הלוח/המסד לא זמינים */
+  program: { inProgram: number; clickedLink: number; registered: number; m1: number; m2: number; m3: number } | null;
 };
 
 const SCCT_Q: Record<string, string> = {
@@ -204,22 +206,29 @@ export default function AdminAnalyticsPage() {
         <Card
           full
           title="פאנל הפגישות"
-          q="מתוך מי שהתקין את האפליקציה — כמה מגיעים לכל פגישה?"
+          q="מתוך מי שבתוכנית — כמה פותחים, נרשמים ומגיעים לכל פגישה?"
           why="האפליקציה לא רושמת אף אחד. היא מביאה אותו מוכן לפגישה, והרכזת סוגרת. זה המספר החשוב ביותר במערכת, וכל השאר במעלה הזרם ממנו."
           threshold="none"
           thresholdText="אין בנצ׳מרק — המחזור הראשון קובע את הבסיס. מה שכן נדע מיד: איפה הנשירה הגדולה."
-          needs="funnel_events · meeting_booked"
+          needs="לוח אינטק · cal_bookings · candidates.phone_verified"
           live={live}
         >
+          {/*
+            "התקינו" ספר שורות ב-candidates — 432, מהן 403 סשנים ריקים: כל פתיחה
+            בדפדפן חדש יוצרת אחד (31.10). הבסיס היה מנופח פי 20. עכשיו כל שלב
+            סופר אנשים — ראה programFunnel ב-/api/funnel. הפגישות לפי Cal, כולל
+            מי שקבע מקישור היומן בלי להירשם — ולכן המשפך אינו יורד בהכרח.
+          */}
           <Funnel
             steps={[
-              { label: "התקינו", n: s?.candidates ?? 0 },
-              { label: "השלימו שאלון", n: s?.onboarded ?? 0 },
-              { label: "פגישה 1", n: s?.meetings?.m1 ?? 0 },
-              { label: "פגישה 2", n: s?.meetings?.m2 ?? 0 },
-              { label: "פגישה 3", n: s?.meetings?.m3 ?? 0 },
+              { label: "בתוכנית (לוח אינטק)", n: f?.program?.inProgram ?? 0 },
+              { label: "לחצו על הקישור", n: f?.program?.clickedLink ?? 0 },
+              { label: "נרשמו ואימתו טלפון", n: f?.program?.registered ?? 0 },
+              { label: "קבעו פגישה 1", n: f?.program?.m1 ?? 0 },
+              { label: "קבעו פגישה 2", n: f?.program?.m2 ?? 0 },
+              { label: "קבעו פגישה 3", n: f?.program?.m3 ?? 0 },
             ]}
-            live={live}
+            live={!!f?.program}
           />
         </Card>
 

@@ -17,8 +17,55 @@
  * צבירה בלבד: אין בתשובה שום מזהה של אדם.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyCoordinator, isOwner } from "@/lib/serverCoordinatorAuth";
+import { mondayBoard } from "@/lib/monday";
+import { clusterPeople, meetingKind } from "@/lib/personIdentity";
+
+const ALUMNI_TRACK = "בוגרים — תואר בלבד";
+
+/*
+ * ── משפך התוכנית: אנשים, לא דפדפנים (נתי, 31.10) ────────────────────────────
+ * "התקינו" ספר שורות ב-candidates — ו-403 מ-432 היו ריקות: כל פתיחה של
+ * האפליקציה בדפדפן חדש (וואטסאפ ואז כרום, צוות, QA) יוצרת סשן אנונימי ושורה.
+ * הבסיס היה מנופח פי 20, וכל אחוז שנגזר ממנו נראה גרוע ממה שהוא.
+ * כאן כל שלב סופר **אנשים**: הלוח (מי בתוכנית) · הלחיצה המתועדת על הקישור ·
+ * אימות טלפון · פגישות ב-Cal לפי personIdentity — אותה זהות כמו בדשבורד.
+ * ⚠️ אינו מונוטוני בהכרח: אפשר לקבוע פגישה מקישור היומן בלי להירשם לאפליקציה.
+ */
+async function programFunnel(db: SupabaseClient, cohort: string) {
+  const board = ((await mondayBoard(null)) ?? [])
+    .filter(r => (r.track === ALUMNI_TRACK ? "alumni" : "main") === cohort);
+  const { data: cands } = await db.from("candidates")
+    .select("phone, cohort, phone_verified, is_test").eq("phone_verified", true);
+  const registered = (cands ?? []).filter(c => !c.is_test && String(c.cohort ?? "main") === cohort);
+  const { data: raw } = await db.from("cal_bookings")
+    .select("title, attendee_phone, attendee_email, trigger, uid:raw->>uid, puid:raw->payload->>uid, movedFrom:raw->payload->>rescheduleUid")
+    .neq("trigger", "BOOKING_CANCELLED");
+  type B = { title: string | null; attendee_phone: string | null; attendee_email: string | null; uid?: string | null; puid?: string | null; movedFrom?: string | null };
+  const rows = (raw ?? []) as B[];
+  const moved = new Set(rows.map(b => b.movedFrom).filter(Boolean));
+  const bookings = rows.filter(b => !moved.has(b.uid ?? b.puid ?? ""));
+
+  /* אשכול אחד לכולם: מי מהלוח/מהנרשמים קבע איזו פגישה — גם בשם אחר */
+  const items = [
+    ...board.map(r => ({ phone: r.phone, email: r.email })),
+    ...registered.map(c => ({ phone: c.phone as string, email: null })),
+    ...bookings.map(b => ({ phone: b.attendee_phone, email: b.attendee_email })),
+  ];
+  const ids = clusterPeople(items);
+  const members = new Set(ids.slice(0, board.length + registered.length));
+  const met = (k: 1 | 2 | 3) => new Set(bookings
+    .map((b, i) => (meetingKind(b.title) === k ? ids[board.length + registered.length + i] : null))
+    .filter((p): p is string => !!p && members.has(p))).size;
+
+  return {
+    inProgram: board.length,
+    clickedLink: board.filter(r => r.clickedAt).length,
+    registered: registered.length,
+    m1: met(1), m2: met(2), m3: met(3),
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -112,9 +159,14 @@ export async function GET(req: NextRequest) {
   const meetingFailed = peopleWith(events, "meeting_calendar_failed");
   const meetingBooked = peopleWith(events, "meeting_booked");
 
+  let program: Awaited<ReturnType<typeof programFunnel>> | null = null;
+  try { program = await programFunnel(db, wanted); }
+  catch (e) { console.error("[funnel] program funnel failed:", e); }
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     cohort: wanted,
+    program,
     cohortCounts,
     sampled: events.length,
     sampledAll: all.length,
