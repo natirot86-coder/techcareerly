@@ -21,6 +21,7 @@ import EventsList, { useEvents } from "@/components/ui/EventsList";
 import { useRouter } from "next/navigation";
 import { JOURNEY, journeyFor, type CohortId } from "@/data/journey";
 import { cachedCohort, signOutCandidate } from "@/lib/candidate";
+import { supabase } from "@/lib/supabase";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -52,6 +53,9 @@ function buildStages(): { stages: Stage[]; current: number } {
     return j && (j.sim || j.day || j.mystery || j.experience || j.analytics);
   });
 
+  /* וובינרים שהשתתף/ה בהם — מלוח אינטק, דרך /api/candidate/my-webinars (2.11) */
+  const webinars = (json("my-webinars") ?? []) as { topic: string; day: string | null; domain: string | null }[];
+
   const m1 = get("meeting-1-attended") === "yes";
   const m2 = get("meeting-2-attended") === "yes" || has("paths-domains");
   const m3 = flag("meeting-3-booked");
@@ -73,6 +77,10 @@ function buildStages(): { stages: Stage[]; current: number } {
       stops: [
         { label: "קבעת את פגישת ההיכרות", done: flag("meeting-1-booked"), href: "/contact?m=1" },
         { label: "עברת את המבוא לעולם ההייטק", done: has("waiting-taste"), href: "/waiting" },
+        ...webinars.map(w => ({
+          label: `השתתפת בוובינר ${w.topic}${w.day ? ` (${w.day})` : ""}`, done: true,
+          ...(w.domain ? { href: `/explore/${w.domain}` } : {}),
+        })),
         { label: "נפגשת עם הרכז/ת", done: m1, meeting: true },
       ],
     },
@@ -216,6 +224,24 @@ export default function JourneyPage() {
     await signOutCandidate();
     router.push("/login");
   }
+
+  /*
+    הוובינרים — המקור הוא מאנדיי, ולכן נמשכים מהשרת בכל כניסה ונשמרים כעותק
+    (my-webinars). המסך נבנה מיד ממה שיש, ומתעדכן כשהתשובה מגיעה (2.11).
+  */
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+        if (!token) return;
+        const r = await fetch("/api/candidate/my-webinars", { headers: { Authorization: `Bearer ${token}` } });
+        if (!r.ok) return;
+        const { webinars } = await r.json();
+        localStorage.setItem("my-webinars", JSON.stringify(webinars ?? []));
+        setData(buildStages());
+      } catch { /* ignore — המסך עובד גם בלי */ }
+    })();
+  }, []);
 
   useEffect(() => {
     setData(buildStages());

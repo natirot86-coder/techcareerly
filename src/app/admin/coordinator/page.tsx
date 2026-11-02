@@ -17,6 +17,7 @@ import Link from "next/link";
 import ParticipantEdit from "./ParticipantEdit";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { isPreProgram } from "@/data/meetings";
+import { parseWebinarColumn } from "@/lib/webinars";
 
 /*
   פגישה "עברה" — ואפשר לסמן מה קרה בה — רק כשהיא הסתיימה, לא כשהתחילה.
@@ -662,7 +663,7 @@ const NODE_COLOR: Record<Station["state"], { bg: string; border: string; icon: s
   future:  { bg: "#fbf9f5", border: "#e2ddd3", icon: "#a8a195" },
 };
 
-function JourneyMap({ p: person, onBack, onSaved }: { p: Person; onBack: () => void; onSaved: () => void }) {
+function JourneyMap({ p: person, onBack, onSaved, webinars }: { p: Person; onBack: () => void; onSaved: () => void; webinars?: string }) {
   /* עדכון אופטימי אחרי הזנת טלפון — כדי שלא צריך לטעון מחדש את כל התור */
   const [phoneOverride, setPhoneOverride] = useState<string | null>(null);
   const p = phoneOverride === null ? person : { ...person, phone: phoneOverride, phoneVerified: false };
@@ -1160,6 +1161,14 @@ function JourneyMap({ p: person, onBack, onSaved }: { p: Person; onBack: () => v
             const S = (v: unknown) => (v == null ? "" : String(v));
             const cards: { icon: string; title: string; body: string }[] = [];
 
+            // 0 — וובינרים (מהלוח, 2.11): עניין שהוא/היא הביע/ה בעצמו/ה, לפני כל דבר אחר
+            const web = parseWebinarColumn(webinars);
+            if (web.length) cards.push({
+              icon: "🎥", title: "השתתף/ה בוובינר",
+              body: web.map(w => `${w.topic}${w.day ? ` (${w.day})` : ""}`).join(" · ")
+                + (web.some(w => w.domain) ? " — נקודת פתיחה טובה: מה תפס אותו/ה שם?" : ""),
+            });
+
             // 1 — במה מתעניין/ת: פתרונות ומלגות שנפתחו, מהחדש לישן, בלי כפולים
             const interests: string[] = [];
             for (const e of evs) {
@@ -1498,6 +1507,8 @@ export default function CoordinatorPage() {
       id: string; name: string; phone: string; email: string; coordinator: string;
       status: string; source: string; track: string; inApp: boolean; nextMeeting: string | null;
       mailedAt?: string;
+      /* תגי "השתתפות בוובינרים" מהלוח, כפי שהם ("א, ב") — 2.11 */
+      webinars?: string;
       /* תקוע/ה ב"נשלח קישור" — איפה ומאז מתי (31.10). null למי שבסטטוס אחר */
       linkSent?: { stage: "noclick" | "clicked" | "arrived" | "registered"; since: string | null; days: number | null; mailFail: string; where?: string | null } | null;
     }[] | null;
@@ -1624,7 +1635,8 @@ export default function CoordinatorPage() {
         {journeyFor && data && (() => {
           const person = [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor);
           if (!person) { setJourneyFor(null); return null; }
-          return <JourneyMap p={person} onBack={() => setJourneyFor(null)} onSaved={load} />;
+          const row = data?.board?.find(r => r.phone && r.phone === String(person.phone ?? "").replace(/[^0-9]/g, ""));
+          return <JourneyMap p={person} onBack={() => setJourneyFor(null)} onSaved={load} webinars={row?.webinars} />;
         })()}
 
         {/*
@@ -1721,6 +1733,22 @@ export default function CoordinatorPage() {
           if (stuckSend.length) cards.push({
             n: stuckSend.length, label: "סומן ולא נשלח", hint: "אין רכז/ת משויך/ת",
             key: "stuck", warn: true,
+          });
+          /*
+            ליד חם (נתי, 2.11): השתתף/ה בוובינר ועוד מחכה לשיחה ראשונה. זה שיא
+            העניין, וכל יום שעובר מוריד את הסיכוי — לכן כרטיס משלו, וראש הרשימה.
+          */
+          const hot = board.filter(r => r.status === "לפני שיחה ראשונה" && parseWebinarColumn(r.webinars).length);
+          if (hot.length) cards.unshift({
+            n: hot.length, label: "🔥 השתתפו בוובינר, מחכים לשיחה", hint: "ליד חם — להתקשר קודם", key: "hot", warn: true,
+          });
+          const byWebinar = new Map<string, { topic: string; day: string | null; n: number }>();
+          for (const r of board) for (const w of parseWebinarColumn(r.webinars)) {
+            const cur = byWebinar.get(w.label);
+            byWebinar.set(w.label, { topic: w.topic, day: w.day, n: (cur?.n ?? 0) + 1 });
+          }
+          for (const [label, w] of byWebinar) cards.push({
+            n: w.n, label: `🎥 וובינר ${w.topic}`, hint: w.day ? `השתתפו ב-${w.day}` : "השתתפו", key: `web:${label}`,
           });
           const unknownSrc = board.filter(r => !r.source || r.source === "לא ידוע עדיין");
           if (unknownSrc.length) cards.push({
@@ -2198,7 +2226,11 @@ export default function CoordinatorPage() {
           מקבל את מפת המסע המלאה שלו בלחיצה (זה נשאר כפי שהיה).
         */}
         {!journeyFor && tab === "all" && data?.board && (() => {
-          const rows = bigFilter === "before"
+          const rows = bigFilter === "hot"
+            ? data.board!.filter(r => r.status === "לפני שיחה ראשונה" && parseWebinarColumn(r.webinars).length)
+            : bigFilter?.startsWith("web:")
+            ? data.board!.filter(r => parseWebinarColumn(r.webinars).some(w => w.label === bigFilter.slice(4)))
+            : bigFilter === "before"
             ? data.board!.filter(r => r.status === "לפני שיחה ראשונה")
             : bigFilter === "unknown"
             ? data.board!.filter(r => !r.source || r.source === "לא ידוע עדיין")
@@ -2223,6 +2255,8 @@ export default function CoordinatorPage() {
             r.name.toLowerCase().includes(q) || (r.phone ?? "").includes(q.replace(/\D/g, "")) ||
             (r.email ?? "").toLowerCase().includes(q));
           const sorted = [...filtered].sort((a, b) =>
+            /* ליד חם בראש "לפני שיחה ראשונה" (2.11) */
+            (bigFilter === "before" ? Number(!!parseWebinarColumn(b.webinars).length) - Number(!!parseWebinarColumn(a.webinars).length) : 0) ||
             (bigFilter?.startsWith("ls_") ? (b.linkSent?.days ?? 999) - (a.linkSent?.days ?? 999) : 0) ||
             Number(b.inApp) - Number(a.inApp) ||
             rank(a.status) - rank(b.status) ||
@@ -2280,6 +2314,13 @@ export default function CoordinatorPage() {
                     )}
                     <div style={{ fontSize: 12, color: "#8d867a", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                       {r.phone && <span dir="ltr">+{r.phone}</span>}
+                      {parseWebinarColumn(r.webinars).map(w => (
+                        <span key={w.label} style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999,
+                          background: r.status === "לפני שיחה ראשונה" ? "#fff1e6" : "rgba(2,62,138,0.07)",
+                          color: r.status === "לפני שיחה ראשונה" ? "#b45309" : NAVY }}>
+                          {r.status === "לפני שיחה ראשונה" ? "🔥 " : "🎥 "}{w.topic}{w.day ? ` · ${w.day}` : ""}
+                        </span>
+                      ))}
                       {r.source && <span>· {r.source}</span>}
                       {r.track === "בוגרים — תואר בלבד" && <span style={{ color: "#0369a1", fontWeight: 700 }}>· בוגר/ת</span>}
                       {r.nextMeeting && (
