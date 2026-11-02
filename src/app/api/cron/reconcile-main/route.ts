@@ -24,6 +24,7 @@ import { syncIntechHistory } from "@/app/api/cron/intech-history/route";
 import { ensureAllVerifiedOnBoard } from "@/lib/ensureBoardRows";
 import { flushStaleNotices } from "@/lib/linkSentGuard";
 import { scanBounces } from "@/lib/bounces";
+import { runDuplicateMarks } from "@/app/api/cron/duplicates/route";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -133,7 +134,10 @@ export async function GET(req: NextRequest) {
   const notices = req.nextUrl.searchParams.has("dry") ? 0 : await flushStaleNotices();
   /* מיילי פתיחה שחזרו — "נשלח" אינו "הגיע" (1.11) */
   const bounces = await scanBounces({ days: 3, dry: req.nextUrl.searchParams.has("dry") });
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces });
+  /* "חשד לכפילות" בשורות — רק אחרי אישור ההרצה הראשונה (2.11) */
+  const duplicates = process.env.DUP_MARK_LIVE === "1"
+    ? await runDuplicateMarks(req.nextUrl.searchParams.has("dry")) : { skipped: "DUP_MARK_LIVE not set" };
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces, duplicates });
 }
 
 /*

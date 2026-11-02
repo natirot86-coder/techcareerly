@@ -16,7 +16,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyCoordinator, canSeeEveryone } from "@/lib/serverCoordinatorAuth";
 import { mondayBoard, mondaySetCoordinator, type BoardRow } from "@/lib/monday";
-import { clusterPeople, meetingKind } from "@/lib/personIdentity";
+import { clusterPeople, meetingKind, phoneKey } from "@/lib/personIdentity";
+import { findDuplicates, type DupGroup } from "@/lib/duplicates";
 
 export const dynamic = "force-dynamic";
 
@@ -439,8 +440,22 @@ export async function GET(req: NextRequest) {
     }));
   }
 
+  /*
+    כפילויות בלוח (נתי, 2.11) — למנהלת/בעלים במסך "כל הרכזות" בלבד. האפליקציה
+    מציגה וממליצה; המחיקה במאנדיי, אחרי שהמנהלת והרכז/ת בדקו (src/lib/duplicates.ts).
+  */
+  let duplicates: DupGroup[] | null = null;
+  if (canSeeEveryone(auth.role) && !effectiveId) {
+    try {
+      const verified = new Set((candidates.data ?? [])
+        .filter(c => c.phone_verified && !c.is_test).map(c => phoneKey(c.phone)).filter(Boolean));
+      duplicates = await findDuplicates(verified);
+    } catch (e) { console.error("[coordinator] duplicates failed:", e); }
+  }
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
+    duplicates,
     board,
     unmatchedBookings: unmatched,
     myBookings,

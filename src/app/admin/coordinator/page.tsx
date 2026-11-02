@@ -1506,6 +1506,12 @@ export default function CoordinatorPage() {
       /* אצל מי הפגישה — מוצג במסך "כל הרכזות" (2.11). null = היומן לא זוהה בסגל */
       coordinatorName?: string | null;
     }[];
+    /* כפילויות בלוח — למנהלת/בעלים במסך "כל הרכזות" (2.11), ראה src/lib/duplicates.ts */
+    duplicates?: {
+      level: "sure" | "check" | "weak"; reason: string; keep: string; why: string[];
+      wouldLose: Record<string, string[]>;
+      rows: { id: string; name: string; createdAt: string; updates: number; inApp: boolean; fields: Record<string, string> }[];
+    }[] | null;
     board?: {
       id: string; name: string; phone: string; email: string; coordinator: string;
       status: string; source: string; track: string; inApp: boolean; nextMeeting: string | null;
@@ -1539,6 +1545,8 @@ export default function CoordinatorPage() {
   const [bigFilter, setBigFilter] = useState<string | null>(null);
   /* סינון הפגישות לפי רכז/ת במסך "כל הרכזות" (נתי, 2.11). null = כולם · "?" = יומן לא מזוהה */
   const [meetCoord, setMeetCoord] = useState<string | null>(null);
+  /* רשימת הכפילויות פתוחה/סגורה ב"תמונה הגדולה" */
+  const [showDups, setShowDups] = useState(false);
   /* חיפוש ברשימת המשתתפים (נתי, 8.10) — 62 שורות הן יותר מדי לגלילה */
   const [search, setSearch] = useState("");
   const [showPre, setShowPre] = useState(false);
@@ -1856,6 +1864,76 @@ export default function CoordinatorPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                );
+              })()}
+
+              {(() => {
+                /*
+                  ── כפילויות לבדיקה (נתי, 2.11) ─────────────────────────────────
+                  האפליקציה מציגה וממליצה; מאיה והרכז/ת מחליטים; המחיקה במאנדיי.
+                  "חלש" (אותו שם בלבד) מוצג בנפרד — שמות חוזרים אינם כפילות.
+                */
+                const groups = data.duplicates;
+                if (!groups?.length) return null;
+                const strong = groups.filter(g => g.level !== "weak").length;
+                const LEVEL = { sure: ["כמעט ודאי", "#a33", "#fdecea"], check: ["לבדיקה", "#8a4d00", "#fff7ec"], weak: ["חלש — לעיון", "#6b6558", "#f1efe9"] } as const;
+                const FIELD: [string, string][] = [["status", "סטטוס"], ["coord", "רכז/ת"], ["phone", "טלפון"], ["email", "מייל"],
+                  ["mailed", "מייל פתיחה"], ["clicked", "לחיצה"], ["firstCall", "שיחה ראשונה"], ["webinars", "וובינרים"], ["channel", "ערוץ"]];
+                return (
+                  <div style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)", borderRadius: 14, padding: "15px 17px" }}>
+                    <button onClick={() => setShowDups(v => !v)}
+                      style={{ all: "unset", cursor: "pointer", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "baseline", gap: 10 }}>
+                      <span style={{ fontSize: 15, fontWeight: 900, color: NAVY }}>🧬 כפילויות לבדיקה בלוח ({strong}{groups.length > strong ? ` · עוד ${groups.length - strong} לעיון` : ""})</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 800, color: NAVY }}>{showDups ? "סגירה ▲" : "פתיחה ▼"}</span>
+                    </button>
+                    <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3 }}>
+                      המלצה בלבד. אחרי שמבינים איפה הבעיה, מוחקים או מאחדים במאנדיי, והרשימה מתעדכנת מעצמה.
+                    </div>
+                    {showDups && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                        {groups.map((g, gi) => {
+                          const [lvl, fg, bg] = LEVEL[g.level];
+                          const differs = (k: string) => new Set(g.rows.map(r => r.fields[k] ?? "")).size > 1;
+                          return (
+                            <div key={gi} style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "11px 13px" }}>
+                              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                                <span style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 9px", borderRadius: 999, background: bg, color: fg }}>{lvl}</span>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "#3d3a33" }}>{g.reason}</span>
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 9 }}>
+                                {g.rows.map(r => {
+                                  const keep = r.id === g.keep;
+                                  return (
+                                    <div key={r.id} style={{ background: keep ? "rgba(15,122,82,0.06)" : "#faf9f6", borderRadius: 10, padding: "9px 11px", minWidth: 0 }}>
+                                      <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                                        <a href={`https://tech-career-team.monday.com/boards/18433888639/pulses/${r.id}`} target="_blank" rel="noopener noreferrer"
+                                          style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>{r.name || "ללא שם"}</a>
+                                        {keep && <span style={{ fontSize: 11.5, fontWeight: 800, color: "#0f7a52" }}>✓ מומלץ להשאיר — {g.why.join(" · ")}</span>}
+                                        {r.inApp && <span style={{ fontSize: 11.5, fontWeight: 800, padding: "1px 8px", borderRadius: 999, background: "rgba(15,122,82,.1)", color: "#0f7a52" }}>באפליקציה</span>}
+                                        {r.updates > 0 && <span style={{ fontSize: 11.5, color: "#6b6558" }}>💬 {r.updates} עדכונים</span>}
+                                      </div>
+                                      <div style={{ display: "flex", gap: "4px 12px", flexWrap: "wrap", marginTop: 5, fontSize: 12.5, color: "#6b6558" }}>
+                                        {FIELD.filter(([k]) => r.fields[k]).map(([k, label]) => (
+                                          <span key={k} style={differs(k) ? { color: "#8a4d00", fontWeight: 800 } : undefined}>
+                                            {label}: <span dir={k === "phone" || k === "email" ? "ltr" : undefined}>{r.fields[k]}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                      {!keep && !!g.wouldLose[r.id]?.length && (
+                                        <div style={{ marginTop: 6, fontSize: 12.5, color: "#a33", lineHeight: 1.6 }}>
+                                          <b>לפני מחיקה, להעביר:</b> {g.wouldLose[r.id].join(" · ")}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
