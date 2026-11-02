@@ -157,25 +157,43 @@ export async function findDuplicates(appPhones: Set<string>): Promise<DupGroup[]
    את האפליקציה. רק "כמעט ודאי" ו"לבדיקה" — שם זהה בלבד אינו סיבה לסמן שורה.
    כותבים רק כשהטקסט השתנה, ומנקים כשהכפילות נפתרה (שורה שנמחקה, טלפון שתוקן). */
 const COL_DUP = "text_mm8qbtb1";
+/* "כפילות" — צבע ייחודי בלוח (נתי, 2.11): סגול כהה = כמעט ודאי, סגול = לבדיקה.
+   סגול לא משמש לשום דבר אחר בלוח, אז הוא לא מתבלבל עם סטטוס */
+const COL_DUP_FLAG = "color_mm8qrhk5";
+const FLAG = { sure: "כמעט ודאי", check: "לבדיקה" } as const;
 
-export async function markDuplicates(groups: DupGroup[], opts: { dry: boolean }) {
-  const want = new Map<string, string>();
+export async function markDuplicates(groups: DupGroup[], opts: { dry: boolean; limit?: number }) {
+  const want = new Map<string, { text: string; flag: string }>();
   for (const g of groups) {
     if (g.level === "weak") continue;
     for (const r of g.rows) {
       const others = g.rows.filter(o => o.id !== r.id).map(o => o.id).join(", ");
-      want.set(r.id, `${g.level === "sure" ? "כמעט ודאי" : "לבדיקה"}: ${g.reason} · עם שורה ${others}${r.id === g.keep ? " · מומלץ להשאיר את זו" : ""}`);
+      want.set(r.id, {
+        text: `${FLAG[g.level]}: ${g.reason} · עם שורה ${others}${r.id === g.keep ? " · מומלץ להשאיר את זו" : ""}`,
+        flag: FLAG[g.level],
+      });
     }
   }
-  const d = await gql<{ boards: { items_page: { items: { id: string; column_values: { text: string | null }[] }[] } }[] }>(
-    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id column_values(ids: ["${COL_DUP}"]) { text } } } } }`);
-  const current = new Map((d?.boards?.[0]?.items_page?.items ?? []).map(i => [i.id, (i.column_values[0]?.text ?? "").trim()]));
-  const writes: { id: string; value: string }[] = [];
-  for (const [id, cur] of current) {
-    const next = want.get(id) ?? "";
-    if (cur !== next) writes.push({ id, value: next });
+  const d = await gql<{ boards: { items_page: { items: { id: string; column_values: { id: string; text: string | null }[] }[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id column_values(ids: ["${COL_DUP}","${COL_DUP_FLAG}"]) { id text } } } } }`);
+  const writes: { id: string; text: string; flag: string }[] = [];
+  for (const it of d?.boards?.[0]?.items_page?.items ?? []) {
+    const cv = (id: string) => (it.column_values.find(c => c.id === id)?.text ?? "").trim();
+    const next = want.get(it.id) ?? { text: "", flag: "" };
+    if (cv(COL_DUP) !== next.text || cv(COL_DUP_FLAG) !== next.flag) writes.push({ id: it.id, ...next });
   }
-  if (!opts.dry) for (const w of writes) await gql(
-    `mutation { change_multiple_column_values(board_id: ${BOARD}, item_id: ${w.id}, column_values: ${JSON.stringify(JSON.stringify({ [COL_DUP]: w.value }))}) { id } }`);
-  return { dry: opts.dry, writes: writes.length, sample: writes.slice(0, 5) };
+  const batch = opts.limit ? writes.slice(0, opts.limit) : writes;
+  let written = 0;
+  if (!opts.dry) for (const w of batch) {
+    const r = await fetch("https://api.monday.com/v2", {
+      method: "POST",
+      headers: { Authorization: process.env.MONDAY_TOKEN!, "Content-Type": "application/json", "API-Version": "2024-10" },
+      body: JSON.stringify({
+        query: `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
+        variables: { b: BOARD, i: w.id, v: JSON.stringify({ [COL_DUP]: w.text, [COL_DUP_FLAG]: w.flag ? { label: w.flag } : null }) },
+      }),
+    });
+    if (r.ok && !(await r.json()).errors) written++;
+  }
+  return { dry: opts.dry, writes: writes.length, written, sample: writes.slice(0, 5) };
 }

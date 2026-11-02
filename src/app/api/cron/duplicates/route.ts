@@ -11,7 +11,7 @@ import { phoneKey } from "@/lib/personIdentity";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function runDuplicateMarks(dry: boolean) {
+export async function runDuplicateMarks(dry: boolean, limit?: number) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return { error: "no db" };
   const { data } = await createClient(url, key, { auth: { persistSession: false } })
@@ -19,7 +19,7 @@ export async function runDuplicateMarks(dry: boolean) {
   const verified = new Set((data ?? []).filter(c => !c.is_test).map(c => phoneKey(c.phone)).filter(Boolean));
   const groups = await findDuplicates(verified);
   if (!groups) return { error: "monday unavailable" };
-  return markDuplicates(groups, { dry });
+  return markDuplicates(groups, { dry, limit });
 }
 
 export async function GET(req: NextRequest) {
@@ -27,5 +27,6 @@ export async function GET(req: NextRequest) {
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(await runDuplicateMarks(req.nextUrl.searchParams.has("dry")));
+  const limit = req.nextUrl.searchParams.get("limit");
+  return NextResponse.json(await runDuplicateMarks(req.nextUrl.searchParams.has("dry"), limit === null ? undefined : Number(limit) || undefined));
 }
