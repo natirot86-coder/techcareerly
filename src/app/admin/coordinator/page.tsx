@@ -1892,6 +1892,7 @@ export default function CoordinatorPage() {
                     </div>
                     {showDups && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                        <style>{`.dup-row:hover, .dup-row:focus-visible { border-color: rgba(2,62,138,0.35) !important; box-shadow: 0 1px 6px rgba(2,62,138,0.08); outline: none; }`}</style>
                         {groups.map((g, gi) => {
                           const [lvl, fg, bg] = LEVEL[g.level];
                           const differs = (k: string) => new Set(g.rows.map(r => r.fields[k] ?? "")).size > 1;
@@ -1905,10 +1906,15 @@ export default function CoordinatorPage() {
                                 {g.rows.map(r => {
                                   const keep = r.id === g.keep;
                                   return (
-                                    <div key={r.id} style={{ background: keep ? "rgba(15,122,82,0.06)" : "#faf9f6", borderRadius: 10, padding: "9px 11px", minWidth: 0 }}>
+                                    /* כל המלבן הוא קישור לשורה במאנדיי (נתי, 2.11) — שם הבדיקה והמחיקה נעשות */
+                                    <a key={r.id} href={`https://tech-career-team.monday.com/boards/18433888639/pulses/${r.id}`}
+                                      target="_blank" rel="noopener noreferrer" className="dup-row"
+                                      style={{ display: "block", textDecoration: "none", color: "inherit", cursor: "pointer",
+                                        background: keep ? "rgba(15,122,82,0.06)" : "#faf9f6", borderRadius: 10, padding: "9px 11px", minWidth: 0,
+                                        border: "1px solid transparent" }}>
                                       <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                                        <a href={`https://tech-career-team.monday.com/boards/18433888639/pulses/${r.id}`} target="_blank" rel="noopener noreferrer"
-                                          style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>{r.name || "ללא שם"}</a>
+                                        <span style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>{r.name || "ללא שם"}</span>
+                                        <span style={{ fontSize: 11.5, fontWeight: 700, color: NAVY, opacity: 0.7, marginInlineStart: "auto" }}>פתיחה במאנדיי ↗</span>
                                         {keep && <span style={{ fontSize: 11.5, fontWeight: 800, color: "#0f7a52" }}>✓ מומלץ להשאיר — {g.why.join(" · ")}</span>}
                                         {r.inApp && <span style={{ fontSize: 11.5, fontWeight: 800, padding: "1px 8px", borderRadius: 999, background: "rgba(15,122,82,.1)", color: "#0f7a52" }}>באפליקציה</span>}
                                         {r.updates > 0 && <span style={{ fontSize: 11.5, color: "#6b6558" }}>💬 {r.updates} עדכונים</span>}
@@ -1925,7 +1931,7 @@ export default function CoordinatorPage() {
                                           <b>לפני מחיקה, להעביר:</b> {g.wouldLose[r.id].join(" · ")}
                                         </div>
                                       )}
-                                    </div>
+                                    </a>
                                   );
                                 })}
                               </div>
