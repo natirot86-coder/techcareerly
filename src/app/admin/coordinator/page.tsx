@@ -18,6 +18,7 @@ import ParticipantEdit from "./ParticipantEdit";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { isPreProgram } from "@/data/meetings";
 import { parseWebinarColumn } from "@/lib/webinars";
+import { meetingKind } from "@/lib/personIdentity";
 
 /*
   פגישה "עברה" — ואפשר לסמן מה קרה בה — רק כשהיא הסתיימה, לא כשהתחילה.
@@ -1793,6 +1794,71 @@ export default function CoordinatorPage() {
                   </button>
                 ))}
               </div>
+
+              {(() => {
+                /*
+                  ── עומס הרכזים — לשיוך מושכל (נתי ומאיה, 2.11) ─────────────────
+                  פגישות ביומן הן רק חלק מהעבודה: מי שמחכה לשיחה ראשונה הוא טלפון
+                  שצריך לעשות, ומי ששויך עכשיו נכנס בדיוק לשם. לכן העמודה היא
+                  האנשים הפתוחים לפי שלב, והפגישות (כולל שלישיות — מי שעומד לסיים)
+                  בשורה לידה. למנהלת/בעלים בלבד, במסך "כל הרכזות" — זה עומס, לא
+                  ביצועים: בלי מיון לפי "מי עשה פחות". השורה האחרונה היא הבריכה
+                  שממנה משייכים.
+                */
+                if (data.viewingAs || !(data.role === "manager" || data.role === "owner") || !data.staff?.length) return null;
+                const first = (n: string) => n.trim().split(/\s+/)[0] ?? "";
+                const SEG = [
+                  { key: "call", label: "מחכים לשיחה ראשונה", color: "#d97706", test: (st: string) => st === "לפני שיחה ראשונה" },
+                  { key: "follow", label: "מעקב (נשלח קישור / אין מענה)", color: "#6c8ebf", test: (st: string) => st === "נשלח קישור" || st.startsWith("אין מענה") },
+                  { key: "active", label: "בתהליך פעיל", color: "#0f7a52", test: (st: string) => st === "בתהליך פעיל" },
+                ] as const;
+                const soon = Date.now() + 14 * 864e5;
+                const meetings = (data.myBookings ?? []).filter(b => b.trigger !== "BOOKING_CANCELLED"
+                  && +new Date(b.start_time) >= Date.now() && +new Date(b.start_time) <= soon);
+                const rowsFor = (who: string | null) => {
+                  const mine = board.filter(r => who === null ? !r.coordinator : first(r.coordinator) === who);
+                  const segs = SEG.map(g => mine.filter(r => g.test(r.status)).length);
+                  const m = who === null ? [] : meetings.filter(b => first(b.coordinatorName ?? "") === who);
+                  return { segs, total: segs.reduce((a, b) => a + b, 0), meet: m.length, third: m.filter(b => meetingKind(b.title) === 3).length };
+                };
+                const lines = [
+                  ...data.staff.map(c => ({ name: first(c.name), ...rowsFor(first(c.name)) })),
+                  { name: "ללא רכז/ת", ...rowsFor(null), pool: true },
+                ];
+                const max = Math.max(1, ...lines.map(l => l.total));
+                return (
+                  <div style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)", borderRadius: 14, padding: "15px 17px" }}>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: NAVY }}>עומס הרכזים — מי פנוי/ה לשיוך חדש</div>
+                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 6, fontSize: 12, color: "#6b6558" }}>
+                      {SEG.map(g => (
+                        <span key={g.key} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 3, background: g.color, display: "inline-block" }} />{g.label}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+                      {lines.map(l => (
+                        <div key={l.name} style={{ display: "grid", gridTemplateColumns: "72px minmax(0,1fr)", gap: 10, alignItems: "center" }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 800, color: "pool" in l ? "#8d867a" : "#3d3a33" }}>{l.name}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", height: 16, borderRadius: 5, overflow: "hidden", background: "rgba(2,62,138,0.05)", width: `${Math.max(2, (l.total / max) * 100)}%` }}>
+                              {SEG.map((g, i) => l.segs[i] ? (
+                                <div key={g.key} title={`${g.label}: ${l.segs[i]}`}
+                                  style={{ width: `${(l.segs[i] / Math.max(1, l.total)) * 100}%`, background: g.color, opacity: "pool" in l ? 0.45 : 1 }} />
+                              ) : null)}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#6b6558", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>
+                              <b style={{ color: "#3d3a33" }}>{l.total}</b> פתוחים
+                              {" · "}{l.segs[0]} שיחות לעשות · {l.segs[1]} במעקב · {l.segs[2]} בתהליך
+                              {!("pool" in l) && <> · {l.meet} פגישות ב-14 יום{l.third ? ` (${l.third} שלישיות — עומדים לסיים)` : ""}</>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {(() => {
                 /*
