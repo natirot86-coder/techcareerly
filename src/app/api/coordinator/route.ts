@@ -426,6 +426,19 @@ export async function GET(req: NextRequest) {
     myBookings = await withPersonContext(db, myBookings as Booking[]);
   } catch (e) { console.error("[coordinator] person context failed:", e); }
 
+  /*
+    אצל מי הפגישה (נתי, 2.11) — במסך "כל הרכזות" מאיה ראתה פגישות בלי לדעת
+    של מי. כל הסגל ולא רק מי שמלווה: פגישה ביומן של נתי היא בדיוק מה
+    שמנהלת צריכה לראות. מזהה שלא בסגל ⇐ null, והמסך מסמן "לא זוהה".
+  */
+  {
+    const { data: everyone } = await db.from("coordinators").select("id, name");
+    const nameOf = new Map((everyone ?? []).map(c => [c.id as string, c.name as string]));
+    myBookings = (myBookings as { coordinator_id?: string | null }[]).map(b => ({
+      ...b, coordinatorName: b.coordinator_id ? nameOf.get(b.coordinator_id) ?? null : null,
+    }));
+  }
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
     board,

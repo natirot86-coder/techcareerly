@@ -1502,6 +1502,8 @@ export default function CoordinatorPage() {
       outcome: string | null; outcome_at: string | null; outcome_note: string | null;
       /* אותו אדם בפגישות אחרות — לפי טלפון/מייל, לא לפי שם (29.10) */
       ctx?: { canonical: string | null; attempt: number; prevNoShow: boolean; metOn: string | null };
+      /* אצל מי הפגישה — מוצג במסך "כל הרכזות" (2.11). null = היומן לא זוהה בסגל */
+      coordinatorName?: string | null;
     }[];
     board?: {
       id: string; name: string; phone: string; email: string; coordinator: string;
@@ -2013,6 +2015,8 @@ export default function CoordinatorPage() {
           const pre = pastAll.filter(b => isPreProgram(b.start_time));
           const past = pastAll.filter(b => !isPreProgram(b.start_time));
 
+          /* מסך "כל הרכזות" של מנהלת/בעלים — שם לכל פגישה (2.11) */
+          const allView = !data.viewingAs && (data.role === "manager" || data.role === "owner");
           const Row = (b: NonNullable<typeof data.myBookings>[number]) => {
             const cancelled = b.trigger === "BOOKING_CANCELLED";
             const when = new Date(b.start_time);
@@ -2035,8 +2039,19 @@ export default function CoordinatorPage() {
                     {when.toLocaleString("he-IL", { weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
-                <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3, lineHeight: 1.55 }}>
-                  {b.title ? b.title.split(/ between | בין /)[0] : "—"}
+                <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3, lineHeight: 1.55, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  {/*
+                    אצל מי (נתי, 2.11) — רק כשרואים את כולם; ברכז/ת אחד/ת זה ידוע.
+                    "לא זוהה" = יומן שלא מחובר לאף אחד בסגל — שווה בדיקה.
+                  */}
+                  {allView && (
+                    <span style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 9px", borderRadius: 999,
+                      background: b.coordinatorName ? "rgba(2,62,138,0.08)" : "#fff7ec",
+                      color: b.coordinatorName ? NAVY : "#8a4d00" }}>
+                      {b.coordinatorName ? `אצל ${b.coordinatorName.split(" ")[0]}` : "⚠️ יומן לא מזוהה"}
+                    </span>
+                  )}
+                  <span>{b.title ? b.title.split(/ between | בין /)[0] : "—"}</span>
                 </div>
                 {/*
                   ההקשר שהרכז/ת צריכ/ה לפני השיחה (29.10). "כבר נפגשתם" גובר על
