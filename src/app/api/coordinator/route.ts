@@ -117,12 +117,12 @@ export async function GET(req: NextRequest) {
     ? real.filter(c => !c.coordinator_id || c.coordinator_id === effectiveId)
     : real;
 
-  let staff: { id: string; name: string }[] = [];
+  let staff: { id: string; name: string; quota_weight?: number | string | null }[] = [];
   /* נטען תמיד — גם רכזת צריכה שהמזהה יתורגם לשם על הכרטיס */
   {
     const { data } = await db.from("coordinators")
-      .select("id, name").eq("active", true).neq("takes_participants", false).neq("name", "").order("name"); /* "צופה בתור" רק מי שמלווה (QA 16.10) */
-    staff = (data ?? []) as { id: string; name: string }[];
+      .select("id, name, quota_weight").eq("active", true).neq("takes_participants", false).neq("name", "").order("name"); /* "צופה בתור" רק מי שמלווה (QA 16.10) */
+    staff = (data ?? []) as { id: string; name: string; quota_weight?: number | string | null }[];
   }
   const staffNames = new Map(staff.map(c => [c.id, c.name]));
 
@@ -447,7 +447,12 @@ export async function GET(req: NextRequest) {
     role: auth.role,
     viewingAs: effectiveId,
     /* המנהלת צריכה את הרשימה כדי לבחור את מי לצפות */
-    staff: canSeeEveryone(auth.role) ? staff : [],
+    /*
+      "צופה בתור" — רק מי שנושא/ת מכסה (נתי, 2.11). מאיה (0) קיבלה כפתור משלה
+      ומסך כמעט ריק, ועלולה הייתה לחשוב שזו התצוגה שלה כמנהלת. שמות לכרטיסים
+      (staffNames) עדיין כוללים את כולם — משתתף/ת שמשויך/ת אליה מוצג/ת עם שמה.
+    */
+    staff: canSeeEveryone(auth.role) ? staff.filter(c => Number(c.quota_weight ?? 1) > 0).map(({ id, name }) => ({ id, name })) : [],
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
     // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)

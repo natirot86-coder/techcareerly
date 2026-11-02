@@ -1536,6 +1536,8 @@ export default function CoordinatorPage() {
   */
   const [tab, setTab] = useState<"big" | "queue" | "all" | "meetings">("big");
   const [bigFilter, setBigFilter] = useState<string | null>(null);
+  /* סינון הפגישות לפי רכז/ת במסך "כל הרכזות" (נתי, 2.11). null = כולם · "?" = יומן לא מזוהה */
+  const [meetCoord, setMeetCoord] = useState<string | null>(null);
   /* חיפוש ברשימת המשתתפים (נתי, 8.10) — 62 שורות הן יותר מדי לגלילה */
   const [search, setSearch] = useState("");
   const [showPre, setShowPre] = useState(false);
@@ -2001,7 +2003,13 @@ export default function CoordinatorPage() {
           טלפון — ובשני המקרים אי אפשר להתאים והיא צריכה לדעת.
         */}
         {!journeyFor && tab === "meetings" && data && (() => {
-          const all = data.myBookings ?? [];
+          /* מסך "כל הרכזות" של מנהלת/בעלים — שם לכל פגישה וסינון לפי רכז/ת (2.11) */
+          const allView = !data.viewingAs && (data.role === "manager" || data.role === "owner");
+          const everyone = data.myBookings ?? [];
+          const coordKey = (b: (typeof everyone)[number]) => b.coordinatorName ? b.coordinatorName.split(" ")[0] : "?";
+          const coordCounts = new Map<string, number>();
+          for (const b of everyone) if (b.trigger !== "BOOKING_CANCELLED") coordCounts.set(coordKey(b), (coordCounts.get(coordKey(b)) ?? 0) + 1);
+          const all = allView && meetCoord ? everyone.filter(b => coordKey(b) === meetCoord) : everyone;
           const now = Date.now();
           const upcoming = all.filter(b => !meetingOver(b.start_time, now) && b.trigger !== "BOOKING_CANCELLED")
             .sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time));
@@ -2015,8 +2023,6 @@ export default function CoordinatorPage() {
           const pre = pastAll.filter(b => isPreProgram(b.start_time));
           const past = pastAll.filter(b => !isPreProgram(b.start_time));
 
-          /* מסך "כל הרכזות" של מנהלת/בעלים — שם לכל פגישה (2.11) */
-          const allView = !data.viewingAs && (data.role === "manager" || data.role === "owner");
           const Row = (b: NonNullable<typeof data.myBookings>[number]) => {
             const cancelled = b.trigger === "BOOKING_CANCELLED";
             const when = new Date(b.start_time);
@@ -2155,6 +2161,27 @@ export default function CoordinatorPage() {
 
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {allView && coordCounts.size > 1 && (
+                <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 800, color: "#6b6558" }}>אצל:</span>
+                  {[[null, "כולם", everyone.filter(b => b.trigger !== "BOOKING_CANCELLED").length] as const,
+                    ...[...coordCounts].sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, k === "?" ? "⚠️ לא מזוהה" : k, n] as const)]
+                    .map(([k, label, n]) => {
+                      const on = meetCoord === k;
+                      return (
+                        <button key={String(k)} onClick={() => setMeetCoord(k)}
+                          style={{
+                            fontSize: 12.5, fontWeight: 800, padding: "5px 12px", borderRadius: 999,
+                            cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                            background: on ? NAVY : "#fff", color: on ? "#fff" : "#4a463e",
+                            border: `1px solid ${on ? NAVY : "rgba(0,0,0,0.12)"}`,
+                          }}>
+                          {label} ({n})
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
               {unmarked > 0 && !onlyUnmarked && (
                 <div onClick={() => setBigFilter("unmarked")} role="button" style={{
                   cursor: "pointer",
