@@ -11,7 +11,7 @@
  * מקומית אחרי הזנה ראשונה — שכבת הגנה מינימלית עד שיהיה Auth אמיתי.
  */
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { FUNDING } from "@/data/scholarships";
 import Link from "next/link";
 import ParticipantEdit from "./ParticipantEdit";
@@ -1555,6 +1555,44 @@ export default function CoordinatorPage() {
   // מסע הלקוח: לחיצה על שם בטאב "כל המשתתפים" פותחת את המפה של האדם
   const [journeyFor, setJourneyFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  /*
+    ── ניווט שנשמר בכתובת (נתי, 4.11) ─────────────────────────────────────────
+    הלשונית, הסינון והמשתתף/ת הפתוח/ה חיו רק בזיכרון — ולכן "חזרה" של הטלפון
+    או הדפדפן יצא מהמסך במקום לחזור צעד. עכשיו כל צעד נכנס להיסטוריה
+    (?view= &f= &p=, לצד ?as=), ו"חזרה" חוזר צעד. `depth` — כמה צעדים עשינו
+    כאן, כדי שכפתור "חזרה" במסך לא יוציא אל מחוץ לאפליקציה.
+  */
+  const fromPop = useRef(false);
+  const depth = useRef(0);
+  useEffect(() => {
+    const read = (isPop: boolean) => {
+      const q = new URLSearchParams(window.location.search);
+      fromPop.current = true;
+      if (isPop) depth.current = Math.max(0, depth.current - 1);
+      const v = q.get("view");
+      setTab(v === "queue" || v === "all" || v === "meetings" ? v : "big");
+      setBigFilter(q.get("f"));
+      setJourneyFor(q.get("p"));
+    };
+    read(false);
+    const onPop = () => read(true);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    if (fromPop.current) { fromPop.current = false; return; }
+    const q = new URLSearchParams(window.location.search);
+    const put = (k: string, v: string | null) => { if (v) q.set(k, v); else q.delete(k); };
+    put("view", tab === "big" ? null : tab); put("f", bigFilter); put("p", journeyFor);
+    const next = window.location.pathname + (q.toString() ? `?${q}` : "");
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.pushState(null, "", next);
+      depth.current++;
+    }
+  }, [tab, bigFilter, journeyFor]);
+  const goHome = () => { setJourneyFor(null); setBigFilter(null); setTab("big"); };
+  const goBack = () => { if (depth.current > 0) window.history.back(); else goHome(); };
   /*
    * רשת הביטחון לשיוך שגוי (16.9, pilot-alumni-spec.md §3 דליפה ד) —
    * עדכון אופטימי מקומי כדי שלא צריך לטעון מחדש את כל התור אחרי כל תיקון.
@@ -1644,6 +1682,33 @@ export default function CoordinatorPage() {
             ) : error}
           </div>
         )}
+
+        {/* פירורי לחם + חזרה — בכל מקום שאינו "התמונה הגדולה" (4.11) */}
+        {data && (tab !== "big" || bigFilter || journeyFor) && (() => {
+          const TAB_HE = { big: "התמונה הגדולה", queue: "מי צריך אותי היום", all: "כל המשתתפים", meetings: "הפגישות שלי" } as const;
+          const F_HE: Record<string, string> = {
+            before: "לפני שיחה ראשונה", unknown: "מאיפה הגיעו?", stuck: "סומן ולא נשלח", unmarked: "ממתינות לסימון", week: "פגישות השבוע",
+            hot: "ליד חם — השתתפו בוובינר", ls_noclick: "לא לחצו על הקישור", ls_clicked: "רק לחיצה",
+            ls_arrived: "הגיעו לאפליקציה, לא נרשמו", ls_registered: "נרשמו, לא קבעו",
+          };
+          const fLabel = bigFilter ? (bigFilter.startsWith("web:") ? `וובינר: ${bigFilter.slice(4)}` : F_HE[bigFilter] ?? bigFilter) : null;
+          const person = journeyFor ? [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor) : null;
+          const crumbs = [TAB_HE[tab], fLabel, person ? `${person.firstName ?? ""} ${person.lastName ?? ""}`.trim() || "משתתף/ת" : null].filter(Boolean);
+          return (
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12,
+              position: "sticky", top: "env(safe-area-inset-top, 0px)", zIndex: 5, background: "#f5f3ef", padding: "8px 0" }}>
+              <button onClick={goBack}
+                style={{ fontSize: 13, fontWeight: 800, padding: "6px 14px", borderRadius: 999, cursor: "pointer",
+                  fontFamily: "'Heebo', sans-serif", background: NAVY, color: "#fff", border: "none" }}>
+                → חזרה
+              </button>
+              <span style={{ fontSize: 12.5, color: "#6b6558", minWidth: 0 }}>
+                <button onClick={goHome} style={{ all: "unset", cursor: "pointer", color: NAVY, fontWeight: 800 }}>התמונה הגדולה</button>
+                {crumbs.filter(c => c !== "התמונה הגדולה").map((c, i) => <span key={i}> › {c}</span>)}
+              </span>
+            </div>
+          );
+        })()}
 
         {journeyFor && data && (() => {
           const person = [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor);
@@ -2505,6 +2570,13 @@ export default function CoordinatorPage() {
                       </div>
                     )}
                     <div style={{ fontSize: 12, color: "#8d867a", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {/* אצל מי — במסך "כל הרכזות"; "ללא רכז/ת" בכתום, כי אף אחד לא יתקשר (4.11) */}
+                      {!data.viewingAs && (data.role === "manager" || data.role === "owner") && (
+                        <span style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999,
+                          background: r.coordinator ? "rgba(2,62,138,0.07)" : "#fff7ec", color: r.coordinator ? NAVY : "#b45309" }}>
+                          {r.coordinator ? `רכז/ת: ${r.coordinator.split(" ")[0]}` : "ללא רכז/ת"}
+                        </span>
+                      )}
                       {r.phone && <span dir="ltr">+{r.phone}</span>}
                       {parseWebinarColumn(r.webinars).map(w => (
                         <span key={w.label} style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999,
