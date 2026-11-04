@@ -11,7 +11,8 @@
 */
 export const ADMIN_NAV = [
   { href: "/admin/analytics", icon: "📊", label: "אנליטיקות", owner: true },
-  { href: "/admin/coordinator", icon: "🧭", label: "מי צריך אותי היום" },
+  /* "מי צריך אותי היום" הוא שם של לשונית בתוך המסך — שם המסך עצמו (4.11) */
+  { href: "/admin/coordinator", icon: "🧭", label: "מסך הרכזים" },
   { href: "/admin/program", icon: "👥", label: "סגל ושיוך" },
   { href: "/admin/events", icon: "📅", label: "לוח האירועים" },
   { href: "/admin/institutions", icon: "🏛️", label: "מוסדות" },

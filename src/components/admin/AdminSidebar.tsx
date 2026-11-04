@@ -116,11 +116,14 @@ export function AdminSidebar() {
 export function AdminTopBar() {
   const isActive = useActive();
   const { label: loginLabel, owner } = useLoginLabel();
+  /* שם המסך הנוכחי בראש — בטלפון אין סיידבר שמראה איפה נמצאים (4.11) */
+  const current = navFor(owner).find(i => isActive(i.href));
   return (
     <div dir="rtl" className="md:hidden sticky top-0 z-40" style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
       <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[14px]" style={{ color: NAVY, ...HEEBO }}>אזור ניהול</div>
+          <div className="text-[10.5px] font-bold" style={{ color: "rgba(0,0,0,0.4)" }}>אזור ניהול</div>
+          <div className="text-[16px]" style={{ color: NAVY, ...HEEBO }}>{current ? `${current.icon} ${current.label}` : "אזור ניהול"}</div>
           {/* אישור זהות אישי (16.9) — מקובץ עם ההתנתקות, אותו עיקרון כמו בסיידבר */}
           {loginLabel && (
             <div className="flex items-center gap-1.5 text-[10.5px] font-bold truncate">

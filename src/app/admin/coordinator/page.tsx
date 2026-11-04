@@ -19,6 +19,7 @@ import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { isPreProgram } from "@/data/meetings";
 import { parseWebinarColumn } from "@/lib/webinars";
 import { meetingKind } from "@/lib/personIdentity";
+import { JOURNEY } from "@/data/journey";
 
 /*
   פגישה "עברה" — ואפשר לסמן מה קרה בה — רק כשהיא הסתיימה, לא כשהתחילה.
@@ -27,6 +28,34 @@ import { meetingKind } from "@/lib/personIdentity";
 */
 const MEETING_LENGTH_MS = 60 * 60 * 1000;
 /* תקועים ב"נשלח קישור" (נתי, 31.10): מופיע אחרי יום, כתום מ-4 ימים */
+/*
+  שמות הרשימות המסוננות (נתי, 4.11) — מקום אחד לכותרת הרשימה ולפירורי הלחם,
+  כדי שמי שנכנס/ה מכרטיס יידע/תדע איפה הוא/היא ומה רואים כאן.
+*/
+const FILTER_LABEL: Record<string, { title: string; hint: string }> = {
+  before: { title: "לפני שיחה ראשונה", hint: "עוד לא דיברו איתם. מי שהשתתף/ה בוובינר מופיע/ה ראשון/ה" },
+  unknown: { title: "מאיפה הגיעו?", hint: "קבעו פגישה בלי לעבור במאנדיי — רק הרכז/ת יכול/ה לברר" },
+  stuck: { title: "סומן ולא נשלח", hint: "\"נשלח קישור\" בלי רכז/ת — המייל לא יצא" },
+  hot: { title: "ליד חם — השתתפו בוובינר", hint: "ועוד מחכים לשיחה ראשונה. להתקשר קודם" },
+  ls_noclick: { title: "לא לחצו על הקישור", hint: "קיבלו קישור ולא לחצו. כדאי לבדוק שהמייל בכלל יצא" },
+  ls_clicked: { title: "רק לחיצה", hint: "יש לחיצה ואין עדות שהגיעו לאפליקציה — ייתכן סורק או תצוגה מקדימה" },
+  ls_arrived: { title: "הגיעו לאפליקציה, לא נרשמו", hint: "ליד כל אחד/ת — איפה בהרשמה עצר/ה" },
+  ls_registered: { title: "נרשמו, לא קבעו פגישה", hint: "נתקעו ביומן — שווה להציע שעה בטלפון" },
+  unmarked: { title: "פגישות שממתינות לסימון", hint: "פגישות שעברו ולא סומן אם התקיימו" },
+  week: { title: "פגישות השבוע", hint: "שבעת הימים הקרובים" },
+};
+const filterLabel = (f: string) => f.startsWith("web:") ? { title: `וובינר: ${f.slice(4)}`, hint: "מי שמתויג/ת בלוח כמי שהשתתף/ה" } : FILTER_LABEL[f] ?? { title: f, hint: "" };
+
+/* מיקום בתהליך למי שעוד לא באפליקציה — לפי הסטטוס בלוח (4.11) */
+function preAppPosition(status: string, stage?: string): string {
+  if (status === "לפני שיחה ראשונה") return "ממתין/ה לשיחה ראשונה";
+  if (status.startsWith("אין מענה")) return "ניסו להשיג — אין מענה";
+  if (status === "נשלח קישור") return stage === "arrived" ? "הגיע/ה לאפליקציה ונעצר/ה בהרשמה"
+    : stage === "clicked" ? "לחץ/ה על הקישור, עוד לא נרשם/ה" : "קיבל/ה קישור, עוד לא לחץ/ה";
+  if (status === "בתהליך פעיל") return "קבע/ה פגישה, עוד לא נרשם/ה לאפליקציה";
+  return status || "ללא סטטוס";
+}
+
 const STUCK_SHOW_DAYS = 1;
 const STUCK_ORANGE_DAYS = 4;
 const meetingOver = (startIso: string, now: number) => +new Date(startIso) + MEETING_LENGTH_MS < now;
@@ -1686,12 +1715,7 @@ export default function CoordinatorPage() {
         {/* פירורי לחם + חזרה — בכל מקום שאינו "התמונה הגדולה" (4.11) */}
         {data && (tab !== "big" || bigFilter || journeyFor) && (() => {
           const TAB_HE = { big: "התמונה הגדולה", queue: "מי צריך אותי היום", all: "כל המשתתפים", meetings: "הפגישות שלי" } as const;
-          const F_HE: Record<string, string> = {
-            before: "לפני שיחה ראשונה", unknown: "מאיפה הגיעו?", stuck: "סומן ולא נשלח", unmarked: "ממתינות לסימון", week: "פגישות השבוע",
-            hot: "ליד חם — השתתפו בוובינר", ls_noclick: "לא לחצו על הקישור", ls_clicked: "רק לחיצה",
-            ls_arrived: "הגיעו לאפליקציה, לא נרשמו", ls_registered: "נרשמו, לא קבעו",
-          };
-          const fLabel = bigFilter ? (bigFilter.startsWith("web:") ? `וובינר: ${bigFilter.slice(4)}` : F_HE[bigFilter] ?? bigFilter) : null;
+          const fLabel = bigFilter ? filterLabel(bigFilter).title : null;
           const person = journeyFor ? [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor) : null;
           const crumbs = [TAB_HE[tab], fLabel, person ? `${person.firstName ?? ""} ${person.lastName ?? ""}`.trim() || "משתתף/ת" : null].filter(Boolean);
           return (
@@ -2536,11 +2560,19 @@ export default function CoordinatorPage() {
                 </div>
               )}
               {bigFilter && (
-                <button onClick={() => setBigFilter(null)}
-                  style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 800, color: NAVY, background: "rgba(2,62,138,0.07)",
-                    border: "none", borderRadius: 999, padding: "5px 12px", cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
-                  ✕ מסונן · הצג את כולם
-                </button>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h2 style={{ margin: 0, fontSize: 19, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>
+                      {filterLabel(bigFilter).title} ({rows.length})
+                    </h2>
+                    <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 2 }}>{filterLabel(bigFilter).hint}</div>
+                  </div>
+                  <button onClick={() => setBigFilter(null)}
+                    style={{ fontSize: 12, fontWeight: 800, color: NAVY, background: "rgba(2,62,138,0.07)",
+                      border: "none", borderRadius: 999, padding: "5px 12px", cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
+                    ✕ הצג את כולם
+                  </button>
+                </div>
               )}
               {sorted.map(r => {
                 const linked = r.phone ? byApp.get(r.phone) : undefined;
@@ -2596,6 +2628,30 @@ export default function CoordinatorPage() {
                         ? <span style={{ color: "#0f7a52", fontWeight: 700 }}>· באפליקציה ✓</span>
                         : <span style={{ color: "#8a4d00" }}>· עוד לא נכנס/ה לאפליקציה</span>}
                     </div>
+                    {/*
+                      ── איפה בתהליך (נתי, 4.11) ──────────────────────────────────
+                      באפליקציה: השלב, אבני הדרך שעבר/ה (נקודות), והצעד הבא — מאותו
+                      צ'קליסט שבמפת המסע. לפני האפליקציה: מהסטטוס בלוח, במילים.
+                    */}
+                    {(() => {
+                      if (!linked) return (
+                        <div style={{ fontSize: 12.5, color: "#6b6558" }}>📍 לפני האפליקציה · {preAppPosition(r.status, r.linkSent?.stage)}</div>
+                      );
+                      const done = linked.checklist.filter(c => c.done).length;
+                      const next = linked.checklist.find(c => !c.done)?.label;
+                      return (
+                        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 12.5, color: "#3d3a33" }}>
+                          <span style={{ fontWeight: 800 }}>📍 שלב {linked.stage} · {JOURNEY[linked.stage - 1]?.candidate ?? ""}</span>
+                          <span aria-label={`${done} מתוך ${linked.checklist.length} אבני דרך`} style={{ display: "inline-flex", gap: 3 }}>
+                            {linked.checklist.map((c, i) => (
+                              <span key={i} title={c.label} style={{ width: 8, height: 8, borderRadius: 999,
+                                background: c.done ? "#0f7a52" : "rgba(0,0,0,0.12)" }} />
+                            ))}
+                          </span>
+                          <span style={{ color: "#6b6558" }}>{done}/{linked.checklist.length}{next ? ` · הבא: ${next}` : " · הכל הושלם"}</span>
+                        </div>
+                      );
+                    })()}
                     <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                     <button onClick={() => setEditRow(r.id)}
                       style={{ fontSize: 12, fontWeight: 800, color: "#6b6558", background: "none", border: "none",
