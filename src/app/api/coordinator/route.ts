@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
   const [candidates, events, tasks, scct, ranks] = await Promise.all([
     db.from("candidates")
-      .select("id, first_name, last_name, gender, age, status, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, phone_verified, onboarding_completed_at, is_test")
+      .select("id, first_name, last_name, gender, age, status, region, current_stage, last_active_at, created_at, chosen_domain, coordinator_id, cohort, phone, phone_verified, onboarding_completed_at, is_test, tag")
       .order("last_active_at", { ascending: false }),
     db.from("funnel_events")
       .select("candidate_id, name, props, created_at")
@@ -273,6 +273,8 @@ export async function GET(req: NextRequest) {
       coordinatorName: staffNames.get(c.coordinator_id ?? "") ?? null,
       /* false = הוקלד ביד ולא אומת ב-SMS. ראה מיגרציה 014 */
       phoneVerified: !!c.phone_verified,
+      /* מאיפה/איך האדם נכנס — למשל אינטייק פרונטלי. ריק = ברירת המחדל (020) */
+      tag: c.tag ?? null,
       /* בוגרי טק-קריירה מדלגים על שלב הטעימות — בלי זה הם ייראו לרכזת
          תקועים לנצח בתחנה שאינה שלהם, ותור החילוץ יתמלא ברעש */
       cohort: c.cohort ?? "main",

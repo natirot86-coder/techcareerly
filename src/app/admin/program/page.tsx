@@ -43,6 +43,7 @@ const ASSIGN_KEY = "admin-assignments";
 type Person = {
   id: string; name: string; stage: number; seenAt: string | null;
   anonymous: boolean; region: string | null; domain: string | null; phone: string | null;
+  tag: string | null;
 };
 
 export default function ProgramAdmin() {
@@ -170,9 +171,11 @@ export default function ProgramAdmin() {
       setPeople(all.map((q: {
         id: string; name: string; stage?: number; lastActive?: string | null;
         anonymous?: boolean; region?: string | null; domain?: string | null; phone?: string | null;
+        tag?: string | null;
       }) => ({
         id: q.id, name: q.name || "ללא שם", stage: q.stage ?? 0, seenAt: q.lastActive ?? null,
         anonymous: !!q.anonymous, region: q.region ?? null, domain: q.domain ?? null, phone: q.phone ?? null,
+        tag: q.tag ?? null,
       })));
       // השיוך שכבר במסד גובר על מה שבדפדפן
       const fromDb: Record<string, string> = {};
@@ -391,7 +394,7 @@ export default function ProgramAdmin() {
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="חיפוש — שם, טלפון, אזור או תחום"
+                placeholder="חיפוש — שם, טלפון, אזור, תחום או תג"
                 className="px-3 py-1.5 rounded-lg text-[12.5px] w-full sm:w-[260px]"
                 style={{ border: "1px solid rgba(0,0,0,0.15)" }}
               />
@@ -415,7 +418,8 @@ export default function ProgramAdmin() {
               p.id.toLowerCase().includes(q) ||
               (p.phone ?? "").toLowerCase().includes(q) ||
               (p.region ?? "").toLowerCase().includes(q) ||
-              (p.domain ?? "").toLowerCase().includes(q)
+              (p.domain ?? "").toLowerCase().includes(q) ||
+              (p.tag ?? "").toLowerCase().includes(q)
             );
             return (
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(0,0,0,0.1)" }}>
@@ -427,14 +431,14 @@ export default function ProgramAdmin() {
               <table className="w-full text-[12.5px]" style={{ background: "#fff" }}>
                 <thead>
                   <tr style={{ background: "rgba(2,62,138,0.05)", color: NAVY }}>
-                    {["מזהה", "טלפון", "אזור · תחום", "שלב", "נראה לאחרונה", "רכזת"].map(h => (
+                    {["מזהה", "טלפון", "אזור · תחום", "שלב", "נראה לאחרונה", "תג", "רכזת"].map(h => (
                       <th key={h} className="text-right px-3 py-2.5 font-black">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
-                    <tr><td colSpan={6} className="px-3 py-4 text-center" style={{ color: "rgba(0,0,0,0.4)" }}>אין תוצאות ל"{search}"</td></tr>
+                    <tr><td colSpan={7} className="px-3 py-4 text-center" style={{ color: "rgba(0,0,0,0.4)" }}>אין תוצאות ל"{search}"</td></tr>
                   )}
                   {filtered.map(p => (
                     <tr key={p.id} style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
@@ -452,6 +456,9 @@ export default function ProgramAdmin() {
                       <td className="px-3 py-2">{p.stage || "—"}</td>
                       <td className="px-3 py-2" style={{ color: "rgba(0,0,0,0.5)" }}>
                         {p.seenAt ? new Date(p.seenAt).toLocaleDateString("he-IL") : "—"}
+                      </td>
+                      <td className="px-3 py-2" style={{ color: "rgba(0,0,0,0.55)" }}>
+                        {p.tag || "—"}
                       </td>
                       <td className="px-2 py-1.5">
                         <select
