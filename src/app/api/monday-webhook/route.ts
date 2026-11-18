@@ -20,7 +20,7 @@
  * במסע הבוגרים לא מוחזר ל-main אוטומטית — זה משנה לו את מספר השלבים על
  * המסך באמצע, וזו החלטה של רכזת.
  */
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/candidate";
 import { waLink } from "@/lib/waLink";
@@ -28,8 +28,12 @@ import { sendMail, welcomeEmail, emailLooksWrong } from "@/lib/mail";
 import { trackedUrl } from "@/app/api/r/route";
 import { coordinatorByLabel, calUrl as calUrlOf } from "@/lib/coordinatorLookup";
 import { heKey } from "@/lib/monday";
+import { stampFromWebhook } from "@/lib/intechHistory";
+import { guardLinkSent, flushNotices, NOTICE_QUIET_MS, PENDING_NO_COORD } from "@/lib/linkSentGuard";
 
 export const dynamic = "force-dynamic";
+/* ההמתנה לשקט לפני הודעת "נשלח קישור" (45 שניות) רצה אחרי התשובה למאנדיי */
+export const maxDuration = 60;
 
 const BOARD = process.env.MONDAY_INTECH_BOARD ?? "18433888639";
 const COL_PHONE = "text_mm7tmnqc";
@@ -90,7 +94,11 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null) as {
     challenge?: string;
-    event?: { pulseId?: number; boardId?: number; columnId?: string };
+    event?: {
+      pulseId?: number; boardId?: number; columnId?: string; userId?: number;
+      value?: { label?: { text?: string } } | null;
+      previousValue?: { label?: { text?: string } } | null;
+    };
   } | null;
 
   /* לחיצת היד של מאנדיי ברישום — חייבת לחזור כמו שהיא, ולפני בדיקת הסוד
@@ -126,6 +134,26 @@ export async function POST(req: NextRequest) {
    */
   if (body?.event?.columnId === COL_STATUS || body?.event?.columnId === COL_COORD) {
     if (body.event.columnId === COL_COORD) await syncCoordinatorToApp(itemId);
+    /* "שיחה ראשונה" — נחתם ברגע שהסטטוס יוצא מ"לפני שיחה ראשונה" (נתי, 29.10).
+       בלי ערך קודם בגוף הבקשה לא מנחשים: הבדיקה היומית משלימה מהיומן */
+    if (body.event.columnId === COL_STATUS) {
+      await stampFromWebhook(itemId, body.event.previousValue?.label?.text, body.event.value?.label?.text);
+    }
+    /*
+      "נשלח קישור" בלי רכז/ת (31.10) — מי שסימן/ה משויך/ת, או מקבל/ת מייל
+      שמסביר למה לא יצא כלום. אחרי שיוך — ה-webhook של שינוי הרכז/ת הוא
+      ששולח את מייל הפתיחה; כאן לא, כדי ששני אירועים לא ישלחו פעמיים.
+    */
+    if (body.event.columnId === COL_STATUS && body.event.value?.label?.text === LINK_SENT
+        && body.event.previousValue?.label?.text !== LINK_SENT) {
+      const g = await guardLinkSent(itemId, body.event.userId);
+      if (g.result === "assigned") return rebuildWa(itemId);
+      /* התשובה למאנדיי לא מחכה; ההודעה המאוחדת יוצאת אחרי 45 שניות של שקט */
+      if (g.result === "queued") {
+        const email = g.email;
+        after(async () => { await new Promise(r => setTimeout(r, NOTICE_QUIET_MS)); await flushNotices(email); });
+      }
+    }
     await maybeSendWelcome(itemId);
     return rebuildWa(itemId);
   }
@@ -273,7 +301,7 @@ export async function rebuildWa(itemId: number) {
    אותו תנאי בדיוק כמו הוואטסאפ, כי זו אותה הודעה בשני ערוצים. */
 export async function maybeSendWelcome(itemId: number) {
   const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
-    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_STATUS}","${COL_MAIL}","${COL_COORD}","${COL_MAILED}"]) { id text } } }`
+    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_STATUS}","${COL_MAIL}","${COL_COORD}","${COL_MAILED}","${COL_MAILFAIL}"]) { id text } } }`
   );
   const item = d?.items?.[0];
   if (!item) return;
@@ -281,8 +309,14 @@ export async function maybeSendWelcome(itemId: number) {
   if (cv(COL_STATUS) !== LINK_SENT) return;
   if (cv(COL_MAILED)) return;   // כבר יצא — העובדה שמורה, לא האירוע
 
+  /*
+    ממתין — **גלוי ולא שקט** (31.10). עד היום שלוש מהסיבות נכתבו ל-console
+    בלבד, והרכז/ת היה/תה בטוח/ה שהמייל יצא. כותבים רק כשהסיבה השתנתה.
+  */
+  const pending = async (why: string) => { if (cv(COL_MAILFAIL) !== why) await markMailProblem(itemId, why); };
+
   const to = cv(COL_MAIL);
-  if (!to) return;
+  if (!to) { await pending("אין כתובת מייל — רק וואטסאפ"); return; }
 
   /*
    * ── הכתובת נבדקת לפני השליחה (נתי, 8.10) ────────────────────────────────
@@ -324,6 +358,7 @@ export async function maybeSendWelcome(itemId: number) {
    */
   if (!calUrl) {
     console.log(`[monday-webhook] welcome pending (${coordName || "ללא רכז/ת"}) — item ${itemId}`);
+    await pending(coordName ? "ממתין: לרכז/ת אין קישור יומן" : PENDING_NO_COORD);
     return;
   }
 

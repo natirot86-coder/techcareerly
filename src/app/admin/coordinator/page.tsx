@@ -11,12 +11,54 @@
  * מקומית אחרי הזנה ראשונה — שכבת הגנה מינימלית עד שיהיה Auth אמיתי.
  */
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { FUNDING } from "@/data/scholarships";
 import Link from "next/link";
 import ParticipantEdit from "./ParticipantEdit";
 import { coordinatorAuthHeaders } from "@/lib/coordinatorAuth";
 import { isPreProgram } from "@/data/meetings";
+import { parseWebinarColumn } from "@/lib/webinars";
+import { meetingKind } from "@/lib/personIdentity";
+import { JOURNEY } from "@/data/journey";
+
+/*
+  פגישה "עברה" — ואפשר לסמן מה קרה בה — רק כשהיא הסתיימה, לא כשהתחילה.
+  אחרת פגישה שמתקיימת עכשיו נספרת "ממתינה לסימון" באמצע השיחה (29.10).
+  שעה = הפגישה הארוכה ביומנים של הרכזים.
+*/
+const MEETING_LENGTH_MS = 60 * 60 * 1000;
+/* תקועים ב"נשלח קישור" (נתי, 31.10): מופיע אחרי יום, כתום מ-4 ימים */
+/*
+  שמות הרשימות המסוננות (נתי, 4.11) — מקום אחד לכותרת הרשימה ולפירורי הלחם,
+  כדי שמי שנכנס/ה מכרטיס יידע/תדע איפה הוא/היא ומה רואים כאן.
+*/
+const FILTER_LABEL: Record<string, { title: string; hint: string }> = {
+  before: { title: "לפני שיחה ראשונה", hint: "עוד לא דיברו איתם. מי שהשתתף/ה בוובינר מופיע/ה ראשון/ה" },
+  unknown: { title: "מאיפה הגיעו?", hint: "קבעו פגישה בלי לעבור במאנדיי — רק הרכז/ת יכול/ה לברר" },
+  stuck: { title: "סומן ולא נשלח", hint: "\"נשלח קישור\" בלי רכז/ת — המייל לא יצא" },
+  hot: { title: "ליד חם — השתתפו בוובינר", hint: "ועוד מחכים לשיחה ראשונה. להתקשר קודם" },
+  ls_noclick: { title: "לא לחצו על הקישור", hint: "קיבלו קישור ולא לחצו. כדאי לבדוק שהמייל בכלל יצא" },
+  ls_clicked: { title: "רק לחיצה", hint: "יש לחיצה ואין עדות שהגיעו לאפליקציה — ייתכן סורק או תצוגה מקדימה" },
+  ls_arrived: { title: "הגיעו לאפליקציה, לא נרשמו", hint: "ליד כל אחד/ת — איפה בהרשמה עצר/ה" },
+  ls_registered: { title: "נרשמו, לא קבעו פגישה", hint: "נתקעו ביומן — שווה להציע שעה בטלפון" },
+  unmarked: { title: "פגישות שממתינות לסימון", hint: "פגישות שעברו ולא סומן אם התקיימו" },
+  week: { title: "פגישות השבוע", hint: "שבעת הימים הקרובים" },
+};
+const filterLabel = (f: string) => f.startsWith("web:") ? { title: `וובינר: ${f.slice(4)}`, hint: "מי שמתויג/ת בלוח כמי שהשתתף/ה" } : FILTER_LABEL[f] ?? { title: f, hint: "" };
+
+/* מיקום בתהליך למי שעוד לא באפליקציה — לפי הסטטוס בלוח (4.11) */
+function preAppPosition(status: string, stage?: string): string {
+  if (status === "לפני שיחה ראשונה") return "ממתין/ה לשיחה ראשונה";
+  if (status.startsWith("אין מענה")) return "ניסו להשיג — אין מענה";
+  if (status === "נשלח קישור") return stage === "arrived" ? "הגיע/ה לאפליקציה ונעצר/ה בהרשמה"
+    : stage === "clicked" ? "לחץ/ה על הקישור, עוד לא נרשם/ה" : "קיבל/ה קישור, עוד לא לחץ/ה";
+  if (status === "בתהליך פעיל") return "קבע/ה פגישה, עוד לא נרשם/ה לאפליקציה";
+  return status || "ללא סטטוס";
+}
+
+const STUCK_SHOW_DAYS = 1;
+const STUCK_ORANGE_DAYS = 4;
+const meetingOver = (startIso: string, now: number) => +new Date(startIso) + MEETING_LENGTH_MS < now;
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const NAVY = "#023e8a";
@@ -651,7 +693,7 @@ const NODE_COLOR: Record<Station["state"], { bg: string; border: string; icon: s
   future:  { bg: "#fbf9f5", border: "#e2ddd3", icon: "#a8a195" },
 };
 
-function JourneyMap({ p: person, onBack, onSaved }: { p: Person; onBack: () => void; onSaved: () => void }) {
+function JourneyMap({ p: person, onBack, onSaved, webinars }: { p: Person; onBack: () => void; onSaved: () => void; webinars?: string }) {
   /* עדכון אופטימי אחרי הזנת טלפון — כדי שלא צריך לטעון מחדש את כל התור */
   const [phoneOverride, setPhoneOverride] = useState<string | null>(null);
   const p = phoneOverride === null ? person : { ...person, phone: phoneOverride, phoneVerified: false };
@@ -1149,6 +1191,14 @@ function JourneyMap({ p: person, onBack, onSaved }: { p: Person; onBack: () => v
             const S = (v: unknown) => (v == null ? "" : String(v));
             const cards: { icon: string; title: string; body: string }[] = [];
 
+            // 0 — וובינרים (מהלוח, 2.11): עניין שהוא/היא הביע/ה בעצמו/ה, לפני כל דבר אחר
+            const web = parseWebinarColumn(webinars);
+            if (web.length) cards.push({
+              icon: "🎥", title: "השתתף/ה בוובינר",
+              body: web.map(w => `${w.topic}${w.day ? ` (${w.day})` : ""}`).join(" · ")
+                + (web.some(w => w.domain) ? " — נקודת פתיחה טובה: מה תפס אותו/ה שם?" : ""),
+            });
+
             // 1 — במה מתעניין/ת: פתרונות ומלגות שנפתחו, מהחדש לישן, בלי כפולים
             const interests: string[] = [];
             for (const e of evs) {
@@ -1480,10 +1530,25 @@ export default function CoordinatorPage() {
       id: number; title: string; start_time: string; attendee_name: string;
       attendee_phone: string; attendee_email: string; trigger: string; candidate_id: string | null;
       outcome: string | null; outcome_at: string | null; outcome_note: string | null;
+      /* אותו אדם בפגישות אחרות — לפי טלפון/מייל, לא לפי שם (29.10) */
+      ctx?: { canonical: string | null; attempt: number; prevNoShow: boolean; metOn: string | null };
+      /* אצל מי הפגישה — מוצג במסך "כל הרכזות" (2.11). null = היומן לא זוהה בסגל */
+      coordinatorName?: string | null;
     }[];
+    /* כפילויות בלוח — למנהלת/בעלים במסך "כל הרכזות" (2.11), ראה src/lib/duplicates.ts */
+    duplicates?: {
+      level: "sure" | "check" | "weak"; reason: string; keep: string; why: string[];
+      wouldLose: Record<string, string[]>;
+      rows: { id: string; name: string; createdAt: string; updates: number; inApp: boolean; fields: Record<string, string> }[];
+    }[] | null;
     board?: {
       id: string; name: string; phone: string; email: string; coordinator: string;
       status: string; source: string; track: string; inApp: boolean; nextMeeting: string | null;
+      mailedAt?: string;
+      /* תגי "השתתפות בוובינרים" מהלוח, כפי שהם ("א, ב") — 2.11 */
+      webinars?: string;
+      /* תקוע/ה ב"נשלח קישור" — איפה ומאז מתי (31.10). null למי שבסטטוס אחר */
+      linkSent?: { stage: "noclick" | "clicked" | "arrived" | "registered"; since: string | null; days: number | null; mailFail: string; where?: string | null } | null;
     }[] | null;
     role?: "coordinator" | "manager" | "owner";
     viewingAs?: string | null;
@@ -1491,6 +1556,11 @@ export default function CoordinatorPage() {
   } | null>(null);
   /* מנהלת בלבד: באיזו רכזת היא צופה כרגע. ריק = כולן יחד */
   const [viewAs, setViewAs] = useState<string>("");
+  /* קישור ישיר לתצוגה של רכז/ת: ?as=<מזהה>. השרת בודק שהצופה מנהל/ת או בעלים */
+  useEffect(() => {
+    const as = new URLSearchParams(window.location.search).get("as");
+    if (as) setViewAs(as);
+  }, []);
   /* עריכת שורה מהלוח — גם למי שעוד לא נכנס לאפליקציה (16.10) */
   const [editRow, setEditRow] = useState<string | null>(null);
   // ברירת המחדל היא תור החילוץ — ההחלטה מ-14.8. הרשימה המלאה היא טאב, לא הבית
@@ -1502,6 +1572,10 @@ export default function CoordinatorPage() {
   */
   const [tab, setTab] = useState<"big" | "queue" | "all" | "meetings">("big");
   const [bigFilter, setBigFilter] = useState<string | null>(null);
+  /* סינון הפגישות לפי רכז/ת במסך "כל הרכזות" (נתי, 2.11). null = כולם · "?" = יומן לא מזוהה */
+  const [meetCoord, setMeetCoord] = useState<string | null>(null);
+  /* רשימת הכפילויות פתוחה/סגורה ב"תמונה הגדולה" */
+  const [showDups, setShowDups] = useState(false);
   /* חיפוש ברשימת המשתתפים (נתי, 8.10) — 62 שורות הן יותר מדי לגלילה */
   const [search, setSearch] = useState("");
   const [showPre, setShowPre] = useState(false);
@@ -1510,6 +1584,44 @@ export default function CoordinatorPage() {
   // מסע הלקוח: לחיצה על שם בטאב "כל המשתתפים" פותחת את המפה של האדם
   const [journeyFor, setJourneyFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  /*
+    ── ניווט שנשמר בכתובת (נתי, 4.11) ─────────────────────────────────────────
+    הלשונית, הסינון והמשתתף/ת הפתוח/ה חיו רק בזיכרון — ולכן "חזרה" של הטלפון
+    או הדפדפן יצא מהמסך במקום לחזור צעד. עכשיו כל צעד נכנס להיסטוריה
+    (?view= &f= &p=, לצד ?as=), ו"חזרה" חוזר צעד. `depth` — כמה צעדים עשינו
+    כאן, כדי שכפתור "חזרה" במסך לא יוציא אל מחוץ לאפליקציה.
+  */
+  const fromPop = useRef(false);
+  const depth = useRef(0);
+  useEffect(() => {
+    const read = (isPop: boolean) => {
+      const q = new URLSearchParams(window.location.search);
+      fromPop.current = true;
+      if (isPop) depth.current = Math.max(0, depth.current - 1);
+      const v = q.get("view");
+      setTab(v === "queue" || v === "all" || v === "meetings" ? v : "big");
+      setBigFilter(q.get("f"));
+      setJourneyFor(q.get("p"));
+    };
+    read(false);
+    const onPop = () => read(true);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    if (fromPop.current) { fromPop.current = false; return; }
+    const q = new URLSearchParams(window.location.search);
+    const put = (k: string, v: string | null) => { if (v) q.set(k, v); else q.delete(k); };
+    put("view", tab === "big" ? null : tab); put("f", bigFilter); put("p", journeyFor);
+    const next = window.location.pathname + (q.toString() ? `?${q}` : "");
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.pushState(null, "", next);
+      depth.current++;
+    }
+  }, [tab, bigFilter, journeyFor]);
+  const goHome = () => { setJourneyFor(null); setBigFilter(null); setTab("big"); };
+  const goBack = () => { if (depth.current > 0) window.history.back(); else goHome(); };
   /*
    * רשת הביטחון לשיוך שגוי (16.9, pilot-alumni-spec.md §3 דליפה ד) —
    * עדכון אופטימי מקומי כדי שלא צריך לטעון מחדש את כל התור אחרי כל תיקון.
@@ -1600,10 +1712,33 @@ export default function CoordinatorPage() {
           </div>
         )}
 
+        {/* פירורי לחם + חזרה — בכל מקום שאינו "התמונה הגדולה" (4.11) */}
+        {data && (tab !== "big" || bigFilter || journeyFor) && (() => {
+          const TAB_HE = { big: "התמונה הגדולה", queue: "מי צריך אותי היום", all: "כל המשתתפים", meetings: "הפגישות שלי" } as const;
+          const fLabel = bigFilter ? filterLabel(bigFilter).title : null;
+          const person = journeyFor ? [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor) : null;
+          const crumbs = [TAB_HE[tab], fLabel, person ? `${person.firstName ?? ""} ${person.lastName ?? ""}`.trim() || "משתתף/ת" : null].filter(Boolean);
+          return (
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12,
+              position: "sticky", top: "env(safe-area-inset-top, 0px)", zIndex: 5, background: "#f5f3ef", padding: "8px 0" }}>
+              <button onClick={goBack}
+                style={{ fontSize: 13, fontWeight: 800, padding: "6px 14px", borderRadius: 999, cursor: "pointer",
+                  fontFamily: "'Heebo', sans-serif", background: NAVY, color: "#fff", border: "none" }}>
+                → חזרה
+              </button>
+              <span style={{ fontSize: 12.5, color: "#6b6558", minWidth: 0 }}>
+                <button onClick={goHome} style={{ all: "unset", cursor: "pointer", color: NAVY, fontWeight: 800 }}>התמונה הגדולה</button>
+                {crumbs.filter(c => c !== "התמונה הגדולה").map((c, i) => <span key={i}> › {c}</span>)}
+              </span>
+            </div>
+          );
+        })()}
+
         {journeyFor && data && (() => {
           const person = [...data.needsAttention, ...(data.quietList ?? [])].find(q => q.id === journeyFor);
           if (!person) { setJourneyFor(null); return null; }
-          return <JourneyMap p={person} onBack={() => setJourneyFor(null)} onSaved={load} />;
+          const row = data?.board?.find(r => r.phone && r.phone === String(person.phone ?? "").replace(/[^0-9]/g, ""));
+          return <JourneyMap p={person} onBack={() => setJourneyFor(null)} onSaved={load} webinars={row?.webinars} />;
         })()}
 
         {/*
@@ -1678,7 +1813,7 @@ export default function CoordinatorPage() {
           const bk = (data.myBookings ?? []).filter(b => b.trigger !== "BOOKING_CANCELLED");
           const live = bk.filter(b => !isPreProgram(b.start_time));
           const thisWeek = bk.filter(b => +new Date(b.start_time) >= now && +new Date(b.start_time) <= week);
-          const unmarked = live.filter(b => +new Date(b.start_time) < now && !b.outcome);
+          const unmarked = live.filter(b => meetingOver(b.start_time, now) && !b.outcome);
           const by = (s: string) => board.filter(r => r.status === s);
 
           const cards: { n: number; label: string; hint: string; key: string; warn?: boolean }[] = [
@@ -1700,6 +1835,22 @@ export default function CoordinatorPage() {
           if (stuckSend.length) cards.push({
             n: stuckSend.length, label: "סומן ולא נשלח", hint: "אין רכז/ת משויך/ת",
             key: "stuck", warn: true,
+          });
+          /*
+            ליד חם (נתי, 2.11): השתתף/ה בוובינר ועוד מחכה לשיחה ראשונה. זה שיא
+            העניין, וכל יום שעובר מוריד את הסיכוי — לכן כרטיס משלו, וראש הרשימה.
+          */
+          const hot = board.filter(r => r.status === "לפני שיחה ראשונה" && parseWebinarColumn(r.webinars).length);
+          if (hot.length) cards.unshift({
+            n: hot.length, label: "🔥 השתתפו בוובינר, מחכים לשיחה", hint: "ליד חם — להתקשר קודם", key: "hot", warn: true,
+          });
+          const byWebinar = new Map<string, { topic: string; day: string | null; n: number }>();
+          for (const r of board) for (const w of parseWebinarColumn(r.webinars)) {
+            const cur = byWebinar.get(w.label);
+            byWebinar.set(w.label, { topic: w.topic, day: w.day, n: (cur?.n ?? 0) + 1 });
+          }
+          for (const [label, w] of byWebinar) cards.push({
+            n: w.n, label: `🎥 וובינר ${w.topic}`, hint: w.day ? `השתתפו ב-${w.day}` : "השתתפו", key: `web:${label}`,
           });
           const unknownSrc = board.filter(r => !r.source || r.source === "לא ידוע עדיין");
           if (unknownSrc.length) cards.push({
@@ -1740,6 +1891,191 @@ export default function CoordinatorPage() {
                   </button>
                 ))}
               </div>
+
+              {(() => {
+                /*
+                  ── עומס הרכזים — לשיוך מושכל (נתי ומאיה, 2.11) ─────────────────
+                  פגישות ביומן הן רק חלק מהעבודה: מי שמחכה לשיחה ראשונה הוא טלפון
+                  שצריך לעשות, ומי ששויך עכשיו נכנס בדיוק לשם. לכן העמודה היא
+                  האנשים הפתוחים לפי שלב, והפגישות (כולל שלישיות — מי שעומד לסיים)
+                  בשורה לידה. למנהלת/בעלים בלבד, במסך "כל הרכזות" — זה עומס, לא
+                  ביצועים: בלי מיון לפי "מי עשה פחות". השורה האחרונה היא הבריכה
+                  שממנה משייכים.
+                */
+                if (data.viewingAs || !(data.role === "manager" || data.role === "owner") || !data.staff?.length) return null;
+                const first = (n: string) => n.trim().split(/\s+/)[0] ?? "";
+                const SEG = [
+                  { key: "call", label: "מחכים לשיחה ראשונה", color: "#d97706", test: (st: string) => st === "לפני שיחה ראשונה" },
+                  { key: "follow", label: "מעקב (נשלח קישור / אין מענה)", color: "#6c8ebf", test: (st: string) => st === "נשלח קישור" || st.startsWith("אין מענה") },
+                  { key: "active", label: "בתהליך פעיל", color: "#0f7a52", test: (st: string) => st === "בתהליך פעיל" },
+                ] as const;
+                const soon = Date.now() + 14 * 864e5;
+                const meetings = (data.myBookings ?? []).filter(b => b.trigger !== "BOOKING_CANCELLED"
+                  && +new Date(b.start_time) >= Date.now() && +new Date(b.start_time) <= soon);
+                const rowsFor = (who: string | null) => {
+                  const mine = board.filter(r => who === null ? !r.coordinator : first(r.coordinator) === who);
+                  const segs = SEG.map(g => mine.filter(r => g.test(r.status)).length);
+                  const m = who === null ? [] : meetings.filter(b => first(b.coordinatorName ?? "") === who);
+                  return { segs, total: segs.reduce((a, b) => a + b, 0), meet: m.length, third: m.filter(b => meetingKind(b.title) === 3).length };
+                };
+                const lines = [
+                  ...data.staff.map(c => ({ name: first(c.name), ...rowsFor(first(c.name)) })),
+                  { name: "ללא רכז/ת", ...rowsFor(null), pool: true },
+                ];
+                const max = Math.max(1, ...lines.map(l => l.total));
+                return (
+                  <div style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)", borderRadius: 14, padding: "15px 17px" }}>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: NAVY }}>עומס הרכזים — מי פנוי/ה לשיוך חדש</div>
+                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 6, fontSize: 12, color: "#6b6558" }}>
+                      {SEG.map(g => (
+                        <span key={g.key} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 3, background: g.color, display: "inline-block" }} />{g.label}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+                      {lines.map(l => (
+                        <div key={l.name} style={{ display: "grid", gridTemplateColumns: "72px minmax(0,1fr)", gap: 10, alignItems: "center" }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 800, color: "pool" in l ? "#8d867a" : "#3d3a33" }}>{l.name}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", height: 16, borderRadius: 5, overflow: "hidden", background: "rgba(2,62,138,0.05)", width: `${Math.max(2, (l.total / max) * 100)}%` }}>
+                              {SEG.map((g, i) => l.segs[i] ? (
+                                <div key={g.key} title={`${g.label}: ${l.segs[i]}`}
+                                  style={{ width: `${(l.segs[i] / Math.max(1, l.total)) * 100}%`, background: g.color, opacity: "pool" in l ? 0.45 : 1 }} />
+                              ) : null)}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#6b6558", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>
+                              <b style={{ color: "#3d3a33" }}>{l.total}</b> פתוחים
+                              {" · "}{l.segs[0]} שיחות לעשות · {l.segs[1]} במעקב · {l.segs[2]} בתהליך
+                              {!("pool" in l) && <> · {l.meet} פגישות ב-14 יום{l.third ? ` (${l.third} שלישיות — עומדים לסיים)` : ""}</>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {(() => {
+                /*
+                  ── כפילויות לבדיקה (נתי, 2.11) ─────────────────────────────────
+                  האפליקציה מציגה וממליצה; מאיה והרכז/ת מחליטים; המחיקה במאנדיי.
+                  "חלש" (אותו שם בלבד) מוצג בנפרד — שמות חוזרים אינם כפילות.
+                */
+                const groups = data.duplicates;
+                if (!groups?.length) return null;
+                const strong = groups.filter(g => g.level !== "weak").length;
+                const LEVEL = { sure: ["כמעט ודאי", "#a33", "#fdecea"], check: ["לבדיקה", "#8a4d00", "#fff7ec"], weak: ["חלש — לעיון", "#6b6558", "#f1efe9"] } as const;
+                const FIELD: [string, string][] = [["status", "סטטוס"], ["coord", "רכז/ת"], ["phone", "טלפון"], ["email", "מייל"],
+                  ["mailed", "מייל פתיחה"], ["clicked", "לחיצה"], ["firstCall", "שיחה ראשונה"], ["webinars", "וובינרים"], ["channel", "ערוץ"]];
+                return (
+                  <div style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)", borderRadius: 14, padding: "15px 17px" }}>
+                    <button onClick={() => setShowDups(v => !v)}
+                      style={{ all: "unset", cursor: "pointer", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "baseline", gap: 10 }}>
+                      <span style={{ fontSize: 15, fontWeight: 900, color: NAVY }}>🧬 כפילויות לבדיקה בלוח ({strong}{groups.length > strong ? ` · עוד ${groups.length - strong} לעיון` : ""})</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 800, color: NAVY }}>{showDups ? "סגירה ▲" : "פתיחה ▼"}</span>
+                    </button>
+                    <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3 }}>
+                      המלצה בלבד. אחרי שמבינים איפה הבעיה, מוחקים או מאחדים במאנדיי, והרשימה מתעדכנת מעצמה.
+                    </div>
+                    {showDups && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                        <style>{`.dup-row:hover, .dup-row:focus-visible { border-color: rgba(2,62,138,0.35) !important; box-shadow: 0 1px 6px rgba(2,62,138,0.08); outline: none; }`}</style>
+                        {groups.map((g, gi) => {
+                          const [lvl, fg, bg] = LEVEL[g.level];
+                          const differs = (k: string) => new Set(g.rows.map(r => r.fields[k] ?? "")).size > 1;
+                          return (
+                            <div key={gi} style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "11px 13px" }}>
+                              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                                <span style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 9px", borderRadius: 999, background: bg, color: fg }}>{lvl}</span>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "#3d3a33" }}>{g.reason}</span>
+                              </div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 9 }}>
+                                {g.rows.map(r => {
+                                  const keep = r.id === g.keep;
+                                  return (
+                                    /* כל המלבן הוא קישור לשורה במאנדיי (נתי, 2.11) — שם הבדיקה והמחיקה נעשות */
+                                    <a key={r.id} href={`https://tech-career-team.monday.com/boards/18433888639/pulses/${r.id}`}
+                                      target="_blank" rel="noopener noreferrer" className="dup-row"
+                                      style={{ display: "block", textDecoration: "none", color: "inherit", cursor: "pointer",
+                                        background: keep ? "rgba(15,122,82,0.06)" : "#faf9f6", borderRadius: 10, padding: "9px 11px", minWidth: 0,
+                                        border: "1px solid transparent" }}>
+                                      <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                                        <span style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>{r.name || "ללא שם"}</span>
+                                        <span style={{ fontSize: 11.5, fontWeight: 700, color: NAVY, opacity: 0.7, marginInlineStart: "auto" }}>פתיחה במאנדיי ↗</span>
+                                        {keep && <span style={{ fontSize: 11.5, fontWeight: 800, color: "#0f7a52" }}>✓ מומלץ להשאיר — {g.why.join(" · ")}</span>}
+                                        {r.inApp && <span style={{ fontSize: 11.5, fontWeight: 800, padding: "1px 8px", borderRadius: 999, background: "rgba(15,122,82,.1)", color: "#0f7a52" }}>באפליקציה</span>}
+                                        {r.updates > 0 && <span style={{ fontSize: 11.5, color: "#6b6558" }}>💬 {r.updates} עדכונים</span>}
+                                      </div>
+                                      <div style={{ display: "flex", gap: "4px 12px", flexWrap: "wrap", marginTop: 5, fontSize: 12.5, color: "#6b6558" }}>
+                                        {FIELD.filter(([k]) => r.fields[k]).map(([k, label]) => (
+                                          <span key={k} style={differs(k) ? { color: "#8a4d00", fontWeight: 800 } : undefined}>
+                                            {label}: <span dir={k === "phone" || k === "email" ? "ltr" : undefined}>{r.fields[k]}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                      {!keep && !!g.wouldLose[r.id]?.length && (
+                                        <div style={{ marginTop: 6, fontSize: 12.5, color: "#a33", lineHeight: 1.6 }}>
+                                          <b>לפני מחיקה, להעביר:</b> {g.wouldLose[r.id].join(" · ")}
+                                        </div>
+                                      )}
+                                    </a>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {(() => {
+                /*
+                  ── תקועים ב"נשלח קישור" (נתי, 31.10) ──────────────────────────
+                  הרכז/ת חשב/ה שהוא מתאים ושלח/ה — ואין עדות שהתקדם. שלוש קבוצות כי
+                  לכל אחת פעולה אחרת. ספים (נתי): מופיע אחרי יום, כתום מ-4 ימים.
+                  ימים לא ידועים (עבר ל"נשלח קישור" לפני שההיסטוריה נשמרה) — מופיע.
+                */
+                const stuck = board.filter(r => r.linkSent && (r.linkSent.days === null || r.linkSent.days >= STUCK_SHOW_DAYS));
+                const groups = ([
+                  ["noclick", "לא לחצו על הקישור", "ההודעה לא נראתה — או לא נשלחה"],
+                  ["clicked", "רק לחיצה", "ייתכן סורק מייל או תצוגה מקדימה"],
+                  ["arrived", "הגיעו לאפליקציה, לא נרשמו", "נעצרו בהרשמה"],
+                  ["registered", "נרשמו, לא קבעו", "נתקעו ביומן"],
+                ] as const).map(([stage, label, hint]) => {
+                  const list = stuck.filter(r => r.linkSent!.stage === stage);
+                  return { key: `ls_${stage}`, label, hint, n: list.length, old: list.filter(r => (r.linkSent!.days ?? 0) >= STUCK_ORANGE_DAYS).length };
+                });
+                if (!stuck.length) return null;
+                return (
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 900, color: NAVY, marginBottom: 7 }}>
+                      תקועים ב״נשלח קישור״ ({stuck.length})
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 9 }}>
+                      {groups.map(g => (
+                        <button key={g.key} disabled={!g.n}
+                          onClick={() => { setBigFilter(g.key); setTab("all"); }}
+                          style={{
+                            background: g.old ? "#fff7ec" : "#fff", textAlign: "right", cursor: g.n ? "pointer" : "default",
+                            border: `1px solid ${g.old ? "rgba(180,83,9,0.25)" : "rgba(2,62,138,0.12)"}`,
+                            borderRadius: 14, padding: "13px 15px", fontFamily: "'Heebo', sans-serif", opacity: g.n ? 1 : 0.55,
+                          }}>
+                          <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.1, color: g.old ? "#b45309" : NAVY }}>{g.n}</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: "#3d3a33", marginTop: 2 }}>{g.label}</div>
+                          <div style={{ fontSize: 11.5, color: "#8d867a", marginTop: 1 }}>
+                            {g.old ? `${g.old} מהם ${STUCK_ORANGE_DAYS}+ ימים` : g.hint}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)", borderRadius: 14, padding: "15px 17px" }}>
                 <div style={{ fontSize: 13.5, fontWeight: 900, color: NAVY, marginBottom: 2 }}>המסע שלהם</div>
@@ -1906,9 +2242,15 @@ export default function CoordinatorPage() {
           טלפון — ובשני המקרים אי אפשר להתאים והיא צריכה לדעת.
         */}
         {!journeyFor && tab === "meetings" && data && (() => {
-          const all = data.myBookings ?? [];
+          /* מסך "כל הרכזות" של מנהלת/בעלים — שם לכל פגישה וסינון לפי רכז/ת (2.11) */
+          const allView = !data.viewingAs && (data.role === "manager" || data.role === "owner");
+          const everyone = data.myBookings ?? [];
+          const coordKey = (b: (typeof everyone)[number]) => b.coordinatorName ? b.coordinatorName.split(" ")[0] : "?";
+          const coordCounts = new Map<string, number>();
+          for (const b of everyone) if (b.trigger !== "BOOKING_CANCELLED") coordCounts.set(coordKey(b), (coordCounts.get(coordKey(b)) ?? 0) + 1);
+          const all = allView && meetCoord ? everyone.filter(b => coordKey(b) === meetCoord) : everyone;
           const now = Date.now();
-          const upcoming = all.filter(b => +new Date(b.start_time) >= now && b.trigger !== "BOOKING_CANCELLED")
+          const upcoming = all.filter(b => !meetingOver(b.start_time, now) && b.trigger !== "BOOKING_CANCELLED")
             .sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time));
           /*
             פגישות שקדמו לתוכנית (אוגוסט) — סבב השיחות עם בוגרי הקורס.
@@ -1916,7 +2258,7 @@ export default function CoordinatorPage() {
             חלק מהמסע, ו-15 שורות "ממתינות לסימון" שאיש לא יסמן הופכות את
             המונה לרעש שמלמדים להתעלם ממנו. ראה PROGRAM_START ב-meetings.ts.
           */
-          const pastAll = all.filter(b => +new Date(b.start_time) < now || b.trigger === "BOOKING_CANCELLED");
+          const pastAll = all.filter(b => meetingOver(b.start_time, now) || b.trigger === "BOOKING_CANCELLED");
           const pre = pastAll.filter(b => isPreProgram(b.start_time));
           const past = pastAll.filter(b => !isPreProgram(b.start_time));
 
@@ -1930,15 +2272,49 @@ export default function CoordinatorPage() {
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
                   <span style={{ fontSize: 14.5, fontWeight: 800, color: NAVY, textDecoration: cancelled ? "line-through" : "none" }}>
-                    {b.attendee_name || "ללא שם"}
+                    {b.ctx?.canonical || b.attendee_name || "ללא שם"}
+                    {/* השם בלוח הוא הקנוני; מה שהוקלד ב-Cal — לידו, כדי שיהיה ברור שזה אותו אדם */}
+                    {b.ctx?.canonical && b.attendee_name && b.ctx.canonical.trim() !== b.attendee_name.trim() && (
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#8d867a", marginInlineStart: 6 }}>
+                        (בהזמנה: {b.attendee_name})
+                      </span>
+                    )}
                   </span>
                   <span style={{ fontSize: 12.5, color: "#6b6558", fontWeight: 700 }}>
                     {when.toLocaleString("he-IL", { weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
-                <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3, lineHeight: 1.55 }}>
-                  {b.title ? b.title.split(/ between | בין /)[0] : "—"}
+                <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 3, lineHeight: 1.55, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  {/*
+                    אצל מי (נתי, 2.11) — רק כשרואים את כולם; ברכז/ת אחד/ת זה ידוע.
+                    "לא זוהה" = יומן שלא מחובר לאף אחד בסגל — שווה בדיקה.
+                  */}
+                  {allView && (
+                    <span style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 9px", borderRadius: 999,
+                      background: b.coordinatorName ? "rgba(2,62,138,0.08)" : "#fff7ec",
+                      color: b.coordinatorName ? NAVY : "#8a4d00" }}>
+                      {b.coordinatorName ? `אצל ${b.coordinatorName.split(" ")[0]}` : "⚠️ יומן לא מזוהה"}
+                    </span>
+                  )}
+                  <span>{b.title ? b.title.split(/ between | בין /)[0] : "—"}</span>
                 </div>
+                {/*
+                  ההקשר שהרכז/ת צריכ/ה לפני השיחה (29.10). "כבר נפגשתם" גובר על
+                  "ניסיון שני": מי שכבר נפגש/ה ונכנס/ה ליומן של פגישה 1 כנראה
+                  התכוון/ה לפגישה הבאה — ואת זה צריך לתקן, לא רק לדעת.
+                */}
+                {!cancelled && b.ctx && (b.ctx.metOn || b.ctx.attempt > 1) && (
+                  <div style={{
+                    marginTop: 6, fontSize: 12, fontWeight: 800, padding: "4px 10px", borderRadius: 8,
+                    display: "inline-block",
+                    background: b.ctx.metOn ? "#fff7ec" : "rgba(2,62,138,0.07)",
+                    color: b.ctx.metOn ? "#8a4d00" : NAVY,
+                  }}>
+                    {b.ctx.metOn
+                      ? `⚠️ כבר נפגשתם ב-${new Date(b.ctx.metOn).toLocaleDateString("he-IL", { day: "numeric", month: "numeric" })} — אולי התכוון/ה לפגישה הבאה?`
+                      : `ניסיון ${b.ctx.attempt} לפגישה 1${b.ctx.prevNoShow ? " · בקודם לא הגיע/ה" : ""}`}
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 7, marginTop: 7, flexWrap: "wrap", alignItems: "center" }}>
                   {/*
                     ⚠️ **זה אינו כפתור "שליחת הקישור"** (נתי, 5.10). ההודעה הראשונה —
@@ -2009,17 +2385,51 @@ export default function CoordinatorPage() {
             לא כדי לנדנד, אלא כי בלי הסימון אי אפשר להבדיל בין מי שנפגש
             והתקדם למי שנפגש ונעלם.
           */
-          const unmarked = past.filter(b => b.trigger !== "BOOKING_CANCELLED" && !b.outcome).length;
+          const unmarkedList = past.filter(b => b.trigger !== "BOOKING_CANCELLED" && !b.outcome);
+          const unmarked = unmarkedList.length;
+          /*
+            סינון "רק מה שמחכה לסימון" (נתי, 29.10). בלעדיו היה צריך לגלול
+            ולחפש — וגרוע מזה: הרשימה מציגה רק את 30 האחרונות, אז פגישה ישנה
+            שלא סומנה **נספרה במונה ולא הופיעה בשום מקום**. במצב הסינון אין
+            תקרה, והסדר מהוותיקה — היא זו שהכי קרוב שתישכח.
+          */
+          const onlyUnmarked = bigFilter === "unmarked";
+          const pastShown = onlyUnmarked
+            ? [...unmarkedList].sort((a, b) => +new Date(a.start_time) - +new Date(b.start_time))
+            : [...past].sort((a, b) => +new Date(b.start_time) - +new Date(a.start_time)).slice(0, 30);
 
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {unmarked > 0 && (
-                <div style={{
+              {allView && coordCounts.size > 1 && (
+                <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 800, color: "#6b6558" }}>אצל:</span>
+                  {[[null, "כולם", everyone.filter(b => b.trigger !== "BOOKING_CANCELLED").length] as const,
+                    ...[...coordCounts].sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, k === "?" ? "⚠️ לא מזוהה" : k, n] as const)]
+                    .map(([k, label, n]) => {
+                      const on = meetCoord === k;
+                      return (
+                        <button key={String(k)} onClick={() => setMeetCoord(k)}
+                          style={{
+                            fontSize: 12.5, fontWeight: 800, padding: "5px 12px", borderRadius: 999,
+                            cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                            background: on ? NAVY : "#fff", color: on ? "#fff" : "#4a463e",
+                            border: `1px solid ${on ? NAVY : "rgba(0,0,0,0.12)"}`,
+                          }}>
+                          {label} ({n})
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
+              {unmarked > 0 && !onlyUnmarked && (
+                <div onClick={() => setBigFilter("unmarked")} role="button" style={{
+                  cursor: "pointer",
                   background: "#fff7ec", border: "1px solid rgba(180,83,9,0.22)",
                   borderRadius: 12, padding: "10px 13px", fontSize: 13.5, lineHeight: 1.6, color: "#8a4d00",
                 }}>
                   <b>{unmarked} פגישות שעברו וטרם סומנו.</b> שתי לחיצות לכל אחת —
                   התקיימה או לא הגיע/ה — ומי שנפגש ונעלם מפסיק להיראות כמו מי שנפגש אתמול.
+                  <span style={{ fontWeight: 900, marginInlineStart: 6 }}>להציג רק אותן ←</span>
                 </div>
               )}
               <MondayCard />
@@ -2036,12 +2446,30 @@ export default function CoordinatorPage() {
 
               {past.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#8d867a", marginBottom: 8 }}>
-                    שהיו ({past.length})
+                  <div style={{ display: "flex", gap: 7, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+                    {([[false, `שהיו (${past.length})`], [true, `ממתינות לסימון (${unmarked})`]] as const).map(([v, label]) => {
+                      const on = onlyUnmarked === v;
+                      return (
+                        <button key={String(v)} onClick={() => setBigFilter(v ? "unmarked" : null)}
+                          style={{
+                            fontSize: 12.5, fontWeight: 800, padding: "5px 12px", borderRadius: 999,
+                            cursor: "pointer", fontFamily: "'Heebo', sans-serif",
+                            background: on ? (v ? "#b45309" : NAVY) : "#fff", color: on ? "#fff" : "#4a463e",
+                            border: `1px solid ${on ? "transparent" : "rgba(0,0,0,0.12)"}`,
+                          }}>
+                          {label}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {past.sort((a, b) => +new Date(b.start_time) - +new Date(a.start_time)).slice(0, 30).map(Row)}
-                  </div>
+                  {onlyUnmarked && !unmarked ? (
+                    <div style={{ fontSize: 13.5, color: "#0f7a52", fontWeight: 700 }}>הכל מסומן ✓</div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{pastShown.map(Row)}</div>
+                  )}
+                  {!onlyUnmarked && past.length > 30 && (
+                    <div style={{ fontSize: 12, color: "#8d867a", marginTop: 6 }}>מוצגות 30 האחרונות.</div>
+                  )}
                 </div>
               )}
 
@@ -2079,12 +2507,19 @@ export default function CoordinatorPage() {
           מקבל את מפת המסע המלאה שלו בלחיצה (זה נשאר כפי שהיה).
         */}
         {!journeyFor && tab === "all" && data?.board && (() => {
-          const rows = bigFilter === "before"
+          const rows = bigFilter === "hot"
+            ? data.board!.filter(r => r.status === "לפני שיחה ראשונה" && parseWebinarColumn(r.webinars).length)
+            : bigFilter?.startsWith("web:")
+            ? data.board!.filter(r => parseWebinarColumn(r.webinars).some(w => w.label === bigFilter.slice(4)))
+            : bigFilter === "before"
             ? data.board!.filter(r => r.status === "לפני שיחה ראשונה")
             : bigFilter === "unknown"
             ? data.board!.filter(r => !r.source || r.source === "לא ידוע עדיין")
             : bigFilter === "stuck"
             ? data.board!.filter(r => r.status === "נשלח קישור" && !r.coordinator)
+            : bigFilter?.startsWith("ls_")
+            ? data.board!.filter(r => r.linkSent && `ls_${r.linkSent.stage}` === bigFilter
+                && (r.linkSent.days === null || r.linkSent.days >= STUCK_SHOW_DAYS))
             : data.board!;
           const byApp = new Map((data.quietList ?? []).concat(data.needsAttention)
             .map(p => [(p.phone ?? "").replace(/\D/g, ""), p]));
@@ -2101,6 +2536,9 @@ export default function CoordinatorPage() {
             r.name.toLowerCase().includes(q) || (r.phone ?? "").includes(q.replace(/\D/g, "")) ||
             (r.email ?? "").toLowerCase().includes(q));
           const sorted = [...filtered].sort((a, b) =>
+            /* ליד חם בראש "לפני שיחה ראשונה" (2.11) */
+            (bigFilter === "before" ? Number(!!parseWebinarColumn(b.webinars).length) - Number(!!parseWebinarColumn(a.webinars).length) : 0) ||
+            (bigFilter?.startsWith("ls_") ? (b.linkSent?.days ?? 999) - (a.linkSent?.days ?? 999) : 0) ||
             Number(b.inApp) - Number(a.inApp) ||
             rank(a.status) - rank(b.status) ||
             a.name.localeCompare(b.name, "he"));
@@ -2122,11 +2560,19 @@ export default function CoordinatorPage() {
                 </div>
               )}
               {bigFilter && (
-                <button onClick={() => setBigFilter(null)}
-                  style={{ alignSelf: "flex-start", fontSize: 12, fontWeight: 800, color: NAVY, background: "rgba(2,62,138,0.07)",
-                    border: "none", borderRadius: 999, padding: "5px 12px", cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
-                  ✕ מסונן · הצג את כולם
-                </button>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h2 style={{ margin: 0, fontSize: 19, fontWeight: 900, color: NAVY, fontFamily: "'Heebo', sans-serif" }}>
+                      {filterLabel(bigFilter).title} ({rows.length})
+                    </h2>
+                    <div style={{ fontSize: 12.5, color: "#8d867a", marginTop: 2 }}>{filterLabel(bigFilter).hint}</div>
+                  </div>
+                  <button onClick={() => setBigFilter(null)}
+                    style={{ fontSize: 12, fontWeight: 800, color: NAVY, background: "rgba(2,62,138,0.07)",
+                      border: "none", borderRadius: 999, padding: "5px 12px", cursor: "pointer", fontFamily: "'Heebo', sans-serif" }}>
+                    ✕ הצג את כולם
+                  </button>
+                </div>
               )}
               {sorted.map(r => {
                 const linked = r.phone ? byApp.get(r.phone) : undefined;
@@ -2139,8 +2585,38 @@ export default function CoordinatorPage() {
                         background: r.status === "בתהליך פעיל" ? "rgba(15,122,82,.1)" : "rgba(2,62,138,0.07)",
                         color: r.status === "בתהליך פעיל" ? "#0f7a52" : NAVY }}>{r.status || "ללא סטטוס"}</span>
                     </div>
+                    {r.linkSent && (r.linkSent.days === null || r.linkSent.days >= STUCK_SHOW_DAYS) && (
+                      <div style={{ fontSize: 12, fontWeight: 700, display: "flex", gap: 8, flexWrap: "wrap",
+                        color: (r.linkSent.days ?? 0) >= STUCK_ORANGE_DAYS ? "#b45309" : "#6b6558" }}>
+                        <span>
+                          {r.linkSent.days === null ? "ב״נשלח קישור״ — לא ידוע ממתי" : `${r.linkSent.days} ימים ב״נשלח קישור״`}
+                          {" · "}{r.linkSent.stage === "registered" ? "נרשם/ה ולא קבע/ה" : r.linkSent.stage === "arrived" ? "הגיע/ה לאפליקציה ולא נרשם/ה" : r.linkSent.stage === "clicked" ? "לחיצה בלבד, בלי עדות להגעה" : "לא לחץ/ה על הקישור"}
+                        </span>
+                        {/* איפה בהרשמה עצר/ה — מאירועי ההרשמה (31.10) */}
+                        {r.linkSent.where && <span style={{ color: "#8a4d00" }}>{r.linkSent.where}</span>}
+                        {r.linkSent.stage === "noclick" && (
+                          <span style={{ color: r.linkSent.mailFail ? "#a33" : "#8d867a" }}>
+                            {r.linkSent.mailFail ? `⚠️ מייל הפתיחה לא יצא: ${r.linkSent.mailFail}` : r.mailedAt ? "מייל הפתיחה יצא" : "מייל הפתיחה לא יצא"}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div style={{ fontSize: 12, color: "#8d867a", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {/* אצל מי — במסך "כל הרכזות"; "ללא רכז/ת" בכתום, כי אף אחד לא יתקשר (4.11) */}
+                      {!data.viewingAs && (data.role === "manager" || data.role === "owner") && (
+                        <span style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999,
+                          background: r.coordinator ? "rgba(2,62,138,0.07)" : "#fff7ec", color: r.coordinator ? NAVY : "#b45309" }}>
+                          {r.coordinator ? `רכז/ת: ${r.coordinator.split(" ")[0]}` : "ללא רכז/ת"}
+                        </span>
+                      )}
                       {r.phone && <span dir="ltr">+{r.phone}</span>}
+                      {parseWebinarColumn(r.webinars).map(w => (
+                        <span key={w.label} style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999,
+                          background: r.status === "לפני שיחה ראשונה" ? "#fff1e6" : "rgba(2,62,138,0.07)",
+                          color: r.status === "לפני שיחה ראשונה" ? "#b45309" : NAVY }}>
+                          {r.status === "לפני שיחה ראשונה" ? "🔥 " : "🎥 "}{w.topic}{w.day ? ` · ${w.day}` : ""}
+                        </span>
+                      ))}
                       {r.source && <span>· {r.source}</span>}
                       {r.track === "בוגרים — תואר בלבד" && <span style={{ color: "#0369a1", fontWeight: 700 }}>· בוגר/ת</span>}
                       {r.nextMeeting && (
@@ -2152,6 +2628,30 @@ export default function CoordinatorPage() {
                         ? <span style={{ color: "#0f7a52", fontWeight: 700 }}>· באפליקציה ✓</span>
                         : <span style={{ color: "#8a4d00" }}>· עוד לא נכנס/ה לאפליקציה</span>}
                     </div>
+                    {/*
+                      ── איפה בתהליך (נתי, 4.11) ──────────────────────────────────
+                      באפליקציה: השלב, אבני הדרך שעבר/ה (נקודות), והצעד הבא — מאותו
+                      צ'קליסט שבמפת המסע. לפני האפליקציה: מהסטטוס בלוח, במילים.
+                    */}
+                    {(() => {
+                      if (!linked) return (
+                        <div style={{ fontSize: 12.5, color: "#6b6558" }}>📍 לפני האפליקציה · {preAppPosition(r.status, r.linkSent?.stage)}</div>
+                      );
+                      const done = linked.checklist.filter(c => c.done).length;
+                      const next = linked.checklist.find(c => !c.done)?.label;
+                      return (
+                        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 12.5, color: "#3d3a33" }}>
+                          <span style={{ fontWeight: 800 }}>📍 שלב {linked.stage} · {JOURNEY[linked.stage - 1]?.candidate ?? ""}</span>
+                          <span aria-label={`${done} מתוך ${linked.checklist.length} אבני דרך`} style={{ display: "inline-flex", gap: 3 }}>
+                            {linked.checklist.map((c, i) => (
+                              <span key={i} title={c.label} style={{ width: 8, height: 8, borderRadius: 999,
+                                background: c.done ? "#0f7a52" : "rgba(0,0,0,0.12)" }} />
+                            ))}
+                          </span>
+                          <span style={{ color: "#6b6558" }}>{done}/{linked.checklist.length}{next ? ` · הבא: ${next}` : " · הכל הושלם"}</span>
+                        </div>
+                      );
+                    })()}
                     <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                     <button onClick={() => setEditRow(r.id)}
                       style={{ fontSize: 12, fontWeight: 800, color: "#6b6558", background: "none", border: "none",

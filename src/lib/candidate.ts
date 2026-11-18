@@ -211,6 +211,19 @@ export async function saveOnboarding(input: OnboardingInput): Promise<void> {
   });
 
   if (error) console.error("saveOnboarding failed", error);
+
+  /*
+   * מי שנרשם/ה ישירות (קישור שהועבר, לא מהלוח) — מקבל/ת שורה בלוח אינטק,
+   * אחרת הרכז/ת לא רואה אותו/ה (31.10). לא חוסם את ההרשמה: נכשל ⇒ בדיקת הבוקר.
+   */
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      void fetch("/api/candidate/ensure-board-row", {
+        method: "POST", headers: { Authorization: `Bearer ${session.access_token}` },
+      }).catch(() => { /* הבדיקה היומית תשלים */ });
+    }
+  } catch { /* ignore */ }
 }
 
 export async function updateCurrentStage(stage: number): Promise<void> {

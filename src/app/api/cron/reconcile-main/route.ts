@@ -17,9 +17,14 @@
  * ⚠️ **רק יוצרת, לעולם לא מוחקת ולא מעדכנת** — אותו כלל כמו ה-webhook.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { promoteFromMain } from "@/app/api/monday-webhook/route";
+import { promoteFromMain, drainPendingWelcome } from "@/app/api/monday-webhook/route";
 import { createClient } from "@supabase/supabase-js";
 import { mondayBoardAll, mondayWriteDetails, normPhone } from "@/lib/monday";
+import { syncIntechHistory } from "@/app/api/cron/intech-history/route";
+import { ensureAllVerifiedOnBoard } from "@/lib/ensureBoardRows";
+import { flushStaleNotices } from "@/lib/linkSentGuard";
+import { scanBounces } from "@/lib/bounces";
+import { runDuplicateMarks } from "@/app/api/cron/duplicates/route";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -108,7 +113,31 @@ export async function GET(req: NextRequest) {
     מזהה. הוא נשאר ברשימה הזאת כל יום, וזה בכוונה: מישהו צריך להשלים לו פרטים.
   */
   const mirror = await mirrorAppToBoard(req.nextUrl.searchParams.has("dry"));
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror });
+  /* היסטוריית הלוח: יומן הפעילות נשמר במאנדיי 90 יום בלבד — נקלט כל בוקר */
+  const history = await syncIntechHistory({ dry: req.nextUrl.searchParams.has("dry") });
+  /* מי שנרשם/ה ישירות ואימת/ה טלפון — שורה בלוח, גם אם הקריאה אחרי ההרשמה התפספסה (31.10) */
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SECRET_KEY;
+  const direct = url && key
+    ? await ensureAllVerifiedOnBoard(createClient(url, key, { auth: { persistSession: false } }), { dry: req.nextUrl.searchParams.has("dry") })
+    : { skipped: "no db" };
+  /*
+    מיילי פתיחה שממתינים למרות שהשלישייה שלמה (31.10) — למשל שיוך אוטומטי
+    שה-webhook שלו התפספס. הבדיקה היומית היא ההגנה, לא האירוע.
+  */
+  let drained = 0;
+  if (!req.nextUrl.searchParams.has("dry") && url && key) {
+    const { data: staff } = await createClient(url, key, { auth: { persistSession: false } })
+      .from("coordinators").select("name").eq("active", true).eq("takes_participants", true);
+    for (const c of staff ?? []) drained += await drainPendingWelcome(String(c.name));
+  }
+  /* הודעות "נשלח קישור בלי רכז/ת" שהשליחה הדחויה שלהן נקטעה */
+  const notices = req.nextUrl.searchParams.has("dry") ? 0 : await flushStaleNotices();
+  /* מיילי פתיחה שחזרו — "נשלח" אינו "הגיע" (1.11) */
+  const bounces = await scanBounces({ days: 3, dry: req.nextUrl.searchParams.has("dry") });
+  /* "חשד לכפילות" בשורות — רק אחרי אישור ההרצה הראשונה (2.11) */
+  const duplicates = process.env.DUP_MARK_LIVE === "1"
+    ? await runDuplicateMarks(req.nextUrl.searchParams.has("dry")) : { skipped: "DUP_MARK_LIVE not set" };
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces, duplicates });
 }
 
 /*

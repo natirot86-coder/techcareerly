@@ -75,6 +75,10 @@ type Funnels = {
   solutions: Record<string, number>;
   meeting: { open: number; ready: number; failed: number; booked: number };
   tasksReopened: Record<string, number>;
+  /* משפך התוכנית — אנשים ולא דפדפנים (31.10). null אם הלוח/המסד לא זמינים */
+  program: { inProgram: number; clickedLink: number; registered: number; m1: number; m2: number; m3: number } | null;
+  /* איפה נעצרים בהרשמה — נמדד מ-31.10 */
+  registration?: { steps: Record<string, number>; otpSent: number; otpSendFailed: number; otpWrong: number; otpVerified: number; helpShown: number };
 };
 
 const SCCT_Q: Record<string, string> = {
@@ -204,23 +208,61 @@ export default function AdminAnalyticsPage() {
         <Card
           full
           title="פאנל הפגישות"
-          q="מתוך מי שהתקין את האפליקציה — כמה מגיעים לכל פגישה?"
+          q="מתוך מי שבתוכנית — כמה פותחים, נרשמים ומגיעים לכל פגישה?"
           why="האפליקציה לא רושמת אף אחד. היא מביאה אותו מוכן לפגישה, והרכזת סוגרת. זה המספר החשוב ביותר במערכת, וכל השאר במעלה הזרם ממנו."
           threshold="none"
           thresholdText="אין בנצ׳מרק — המחזור הראשון קובע את הבסיס. מה שכן נדע מיד: איפה הנשירה הגדולה."
-          needs="funnel_events · meeting_booked"
+          needs="לוח אינטק · cal_bookings · candidates.phone_verified"
           live={live}
+        >
+          {/*
+            "התקינו" ספר שורות ב-candidates — 432, מהן 403 סשנים ריקים: כל פתיחה
+            בדפדפן חדש יוצרת אחד (31.10). הבסיס היה מנופח פי 20. עכשיו כל שלב
+            סופר אנשים — ראה programFunnel ב-/api/funnel. הפגישות לפי Cal, כולל
+            מי שקבע מקישור היומן בלי להירשם — ולכן המשפך אינו יורד בהכרח.
+          */}
+          <Funnel
+            steps={[
+              { label: "בתוכנית (לוח אינטק)", n: f?.program?.inProgram ?? 0 },
+              { label: "לחצו על הקישור", n: f?.program?.clickedLink ?? 0 },
+              { label: "נרשמו ואימתו טלפון", n: f?.program?.registered ?? 0 },
+              { label: "קבעו פגישה 1", n: f?.program?.m1 ?? 0 },
+              { label: "קבעו פגישה 2", n: f?.program?.m2 ?? 0 },
+              { label: "קבעו פגישה 3", n: f?.program?.m3 ?? 0 },
+            ]}
+            live={!!f?.program}
+          />
+        </Card>
+
+        <Card
+          full
+          title="איפה נעצרים בהרשמה"
+          q="מי שפתח את ההרשמה — עד איזה מסך הגיע, ומה קרה עם קוד ה-SMS?"
+          why="8 מתוך 24 שקיבלו קישור לחצו ולא נרשמו, ולא ידענו איפה עצרו. כל נקודה דורשת תיקון אחר: שאלה מרתיעה, חשש למסור טלפון, או קוד שלא הגיע או לא הוזן."
+          threshold="none"
+          thresholdText="נמדד מ-31.10. אנשים = סשנים שונים: מי שפתח בשני דפדפנים נספר פעמיים, עד שיאמת טלפון."
+          needs="funnel_events · onboarding_step · otp_*"
+          live={!!f?.registration}
         >
           <Funnel
             steps={[
-              { label: "התקינו", n: s?.candidates ?? 0 },
-              { label: "השלימו שאלון", n: s?.onboarded ?? 0 },
-              { label: "פגישה 1", n: s?.meetings?.m1 ?? 0 },
-              { label: "פגישה 2", n: s?.meetings?.m2 ?? 0 },
-              { label: "פגישה 3", n: s?.meetings?.m3 ?? 0 },
+              { label: "פתחו את ההרשמה", n: f?.registration?.steps.welcome ?? 0 },
+              { label: "פרטים אישיים", n: f?.registration?.steps.details ?? 0 },
+              { label: "שאלת העניין", n: f?.registration?.steps.interest ?? 0 },
+              { label: "מה עוצר", n: f?.registration?.steps.blockers ?? 0 },
+              { label: "סיכום", n: f?.registration?.steps.summary ?? 0 },
+              { label: "סיור", n: f?.registration?.steps.tour ?? 0 },
+              { label: "מסך הטלפון", n: f?.registration?.steps.phone ?? 0 },
+              { label: "קיבלו קוד", n: f?.registration?.otpSent ?? 0 },
+              { label: "אימתו", n: f?.registration?.otpVerified ?? 0 },
             ]}
-            live={live}
+            live={!!f?.registration}
           />
+          {f?.registration && (
+            <div style={{ fontSize: 12.5, color: "#6b6558", marginTop: 8, lineHeight: 1.6 }}>
+              שליחת קוד נכשלה: {f.registration.otpSendFailed} · הזינו קוד שגוי: {f.registration.otpWrong} · ראו את עזרת ה-SMS: {f.registration.helpShown}
+            </div>
+          )}
         </Card>
 
         <Card

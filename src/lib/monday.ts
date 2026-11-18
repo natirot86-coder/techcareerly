@@ -217,6 +217,67 @@ export async function mondayMarkActive(p: {
   return ok ? "created" : null;
 }
 
+/**
+ * ── מי שנרשם/ה ישירות באפליקציה מקבל/ת שורה בלוח (נתי, 31.10) ──────────────
+ *
+ * עד היום שורה נוצרה רק מהלוח הראשי ("חשיפה") או מקביעת פגישה ב-Cal
+ * (`mondayMarkActive`). מי שנכנס/ה מקישור שהועבר ישירות, נרשם/ה, אימת/ה
+ * טלפון **ולא קבע/ה** — לא היה/תה בשום לוח. ומסך הרכז/ת נבנה מהלוח, אז
+ * היא הייתה בלתי נראית בדיוק ברגע שבו צריך להרים אליה טלפון (פקדו, 26.10).
+ *
+ * נקרא אחרי שמירת ההרשמה **וגם** בבדיקת הבוקר — אותה פונקציה, כי כל אירוע
+ * יכול להתפספס. לא נוגע/ת בשורה קיימת: מרגע שיש שורה, הלוח הוא הבית שלה.
+ */
+export const CHANNEL_DIRECT = "נרשם ישירות מהאפליקציה";
+
+export async function mondayEnsureParticipant(p: {
+  phone: string; email?: string | null; name?: string | null;
+  coordinatorName?: string | null; gender?: string | null; city?: string | null; when?: string | null;
+  /** בודק בדיוק כמו היצירה האמיתית, בלי לכתוב */
+  dry?: boolean;
+}): Promise<{ result: "exists" | "created" | "skipped" | "would-create"; itemId?: string } | null> {
+  if (!process.env.MONDAY_TOKEN) return null;
+  const phone = normPhone(p.phone);
+  const email = (p.email ?? "").trim().toLowerCase();
+  if (!phone) return { result: "skipped" };
+
+  const data = await gql<{ boards: { items_page: { cursor: string | null; items: Item[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { cursor items { id name
+       column_values(ids: ["${COL.phone}","${COL.email}"]) { id text } } } } }`
+  );
+  const page = data?.boards?.[0]?.items_page;
+  /* לוח שלא נקרא במלואו ⇒ לא יוצרים: "לא מצאתי" בחצי לוח הוא כפילות שמחכה */
+  if (!page || page.cursor) return null;
+  const hit = page.items.find(it => normPhone(cv(it, COL.phone)) === phone
+    || (email && cv(it, COL.email).toLowerCase() === email));
+  if (hit) return { result: "exists", itemId: hit.id };
+  if (p.dry) return { result: "would-create" };
+
+  const coord = await resolveCoordLabel(p.coordinatorName);
+  const name = (p.name ?? "").trim();
+  const vals: Record<string, unknown> = {
+    [COL.status]: { label: STATUS.beforeCall },
+    [COL.channel]: { label: CHANNEL_DIRECT },
+    [COL.source]: `נרשם/ה באפליקציה${p.when ? " · " + p.when.slice(0, 10) : ""}`,
+    [COL.phone]: phone,
+  };
+  if (email) vals[COL.email] = email;
+  if (coord) vals[COL.coord] = { label: coord };
+  if (p.city?.trim()) vals[COL_EXTRA.city] = p.city.trim();
+  const g = p.gender === "male" ? "זכר" : p.gender === "female" ? "נקבה" : null;
+  if (g) vals[COL_EXTRA.gender] = { label: g };
+  /* כמו ב-mondayMarkActive: שורה שנולדת עם רכז/ת לא מפיקה אירוע שינוי, אז הקישור נבנה כאן */
+  const wa = waLink({ phone, participant: name, coordinator: coord });
+  if (wa) vals[COL.wa] = { url: wa, text: `וואטסאפ ל${name.split(/\s+/)[0]}` };
+
+  const r = await gql<{ create_item: { id: string } }>(
+    `mutation ($b: ID!, $n: String!, $v: JSON!) { create_item(board_id: $b, item_name: $n,
+       column_values: $v, create_labels_if_missing: true) { id } }`,
+    { b: BOARD, n: name || phone, v: JSON.stringify(vals) }
+  );
+  return r ? { result: "created", itemId: r.create_item.id } : null;
+}
+
 /* ── הרשימה של הרכזת מגיעה מהלוח (נתי, 5.10) ──────────────────────────────────
  *
  * עד היום מסך הרכזת שאב את רשימת המשתתפים מ-`candidates`, כלומר **רק ממי
@@ -238,11 +299,25 @@ export type BoardRow = {
   /* לעריכה במסך הניהול (16.10) — הערכים כפי שהם בלוח */
   gender: string;
   city: string;
+  /** תאריך הלחיצה הראשונה על הקישור מההודעה, או "" */
+  clickedAt: string;
+  /** מתי יצא מייל הפתיחה, או "" */
+  mailedAt: string;
+  /** למה מייל הפתיחה לא יצא, או "" */
+  mailFail: string;
+  /** תגי הוובינרים כפי שהם בלוח ("א, ב"), או "" */
+  webinars: string;
 };
 
 const COL_EXTRA = {
   src: "color_mm7tee80", track: "color_mm7tahjd",
   gender: "color_mm7twyz4", city: "text_mm7tafps",
+  /* "לחץ על הקישור" — נכתב מ-/api/r בלחיצה הראשונה (8.10). המדד היחיד ל"פתח" ברמת אדם */
+  clicked: "date_mm7ye5aa",
+  /* מייל הפתיחה: מתי יצא, ולמה לא (ריק = תקין) — "לא לחץ" אינו "לא קיבל" (31.10) */
+  mailed: "date_mm7tvfnx", mailFail: "text_mm7yz6ar",
+  /* "השתתפות בוובינרים" — תגים, כמה לכל אדם (2.11). ראה src/lib/webinars.ts */
+  webinars: "dropdown_mm8qn0gc",
 } as const;
 
 /*
@@ -259,7 +334,7 @@ const PRE_PROGRAM_SOURCE = "בוגר שסיון דיברה איתו";
 /** כל השורות בלוח. `coordinatorName` ריק ⇒ הכל (מנהלת/owner) */
 export async function mondayBoard(coordinatorName?: string | null): Promise<BoardRow[] | null> {
   const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
-    COL_EXTRA.gender, COL_EXTRA.city]
+    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked, COL_EXTRA.mailed, COL_EXTRA.mailFail, COL_EXTRA.webinars]
     .map(c => `"${c}"`).join(", ");
   const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
     `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
@@ -281,6 +356,10 @@ export async function mondayBoard(coordinatorName?: string | null): Promise<Boar
       track: cv(it, COL_EXTRA.track),
       gender: cv(it, COL_EXTRA.gender),
       city: cv(it, COL_EXTRA.city),
+      clickedAt: cv(it, COL_EXTRA.clicked),
+      mailedAt: cv(it, COL_EXTRA.mailed),
+      mailFail: cv(it, COL_EXTRA.mailFail),
+      webinars: cv(it, COL_EXTRA.webinars),
     }))
     /* דיווח בלבד אינו משתתף — ראה STATUS.reportOnly */
     .filter(r => r.status !== STATUS.reportOnly)
@@ -363,7 +442,7 @@ export async function mondayRow(itemId: string): Promise<BoardRow | null> {
 /** כל השורות בלי סינוני התצוגה (דיווח בלבד / בוגרי אוגוסט) — לשימוש פנימי */
 async function mondayBoardAll(): Promise<BoardRow[] | null> {
   const ids = [COL.phone, COL.email, COL.coord, COL.status, COL.source, COL_EXTRA.src, COL_EXTRA.track,
-    COL_EXTRA.gender, COL_EXTRA.city].map(c => `"${c}"`).join(", ");
+    COL_EXTRA.gender, COL_EXTRA.city, COL_EXTRA.clicked, COL_EXTRA.mailed, COL_EXTRA.mailFail, COL_EXTRA.webinars].map(c => `"${c}"`).join(", ");
   const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
     `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
        column_values(ids: [${ids}]) { id text } } } } }`
@@ -373,7 +452,9 @@ async function mondayBoardAll(): Promise<BoardRow[] | null> {
     id: it.id, name: it.name.trim(), phone: normPhone(cv(it, COL.phone)), email: cv(it, COL.email),
     coordinator: cv(it, COL.coord), status: cv(it, COL.status),
     source: cv(it, COL_EXTRA.src) || cv(it, COL.source), track: cv(it, COL_EXTRA.track),
-    gender: cv(it, COL_EXTRA.gender), city: cv(it, COL_EXTRA.city),
+    gender: cv(it, COL_EXTRA.gender), city: cv(it, COL_EXTRA.city), clickedAt: cv(it, COL_EXTRA.clicked),
+    mailedAt: cv(it, COL_EXTRA.mailed), mailFail: cv(it, COL_EXTRA.mailFail),
+    webinars: cv(it, COL_EXTRA.webinars),
   }));
 }
 

@@ -59,6 +59,15 @@ export async function GET(req: NextRequest) {
   const item = (q.get("i") ?? "").replace(/\D/g, "");
   const target = q.get("t") === "cal" ? "cal" : "app";
   const via = CHANNEL[q.get("c") ?? ""] ?? "";
+  /*
+    ── לא כל בקשה היא לחיצה של אדם (31.10) ──────────────────────────────────
+    וואטסאפ מושך את הקישור כדי לבנות תצוגה מקדימה — אצל מי ששולח, לפני
+    שהנמען ראה משהו. סורקי אבטחה של מייל (Safe Links ודומיו) לוחצים על
+    קישורים לפני שהמייל מגיע לתיבה. בלי הסינון "לחץ/ה על הקישור" יכול
+    להיות עדות לבוט ולא לאדם. ההפניה ממשיכה כרגיל; רק הרישום מדולג.
+  */
+  const ua = req.headers.get("user-agent") ?? "";
+  const isBot = !ua || /bot|crawl|spider|preview|whatsapp|facebookexternalhit|telegram|slack|discord|skype|microsoft office|msoffice|outlook|safelinks|bingpreview|googleimageproxy|curl|wget|python|headless/i.test(ua);
 
   /* ה-redirect נבנה לפני כל רישום — הוא חייב לקרות גם אם הכל למטה נופל */
   let dest = APP_URL;
@@ -83,6 +92,12 @@ export async function GET(req: NextRequest) {
         const c = await coordinatorByLabel(db, coordName);
         if (c) dest = `${APP_URL}/?coord=${encodeURIComponent(c.id)}`;
       }
+      /*
+       * מזהה השורה בלוח נוסע עם הקישור (31.10). עד שהאדם מאמת טלפון אין לנו
+       * דרך לדעת מי הוא — ו"לחץ ולא נרשם" נשאר בלי תשובה לשאלה איפה עצר.
+       * עם ref, אירועי ההרשמה מתחברים לשורה שלו. מזהה פריט בלבד, בלי פרטים.
+       */
+      dest += (dest.includes("?") ? "&" : "/?") + `ref=${encodeURIComponent(String(item))}`;
     }
 
     if (item && target === "cal") {
@@ -99,7 +114,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    if (item) {
+    if (item && !isBot) {
       const today = new Date().toISOString().slice(0, 10);
       /* הראשונה בלבד — רוצים לדעת **אם** נכנס ומאיפה, לא לספור קליקים */
       const cur = await monday<{ items: { column_values: { id: string; text: string | null }[] }[] }>(

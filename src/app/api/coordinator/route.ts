@@ -13,9 +13,11 @@
  * לכולם (אחרת שיוך חסר = מועמד/ת שנעלם/ת בלי שאיש רואה).
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyCoordinator, canSeeEveryone } from "@/lib/serverCoordinatorAuth";
 import { mondayBoard, mondaySetCoordinator, type BoardRow } from "@/lib/monday";
+import { clusterPeople, meetingKind, phoneKey } from "@/lib/personIdentity";
+import { findDuplicates, type DupGroup } from "@/lib/duplicates";
 
 export const dynamic = "force-dynamic";
 
@@ -116,12 +118,12 @@ export async function GET(req: NextRequest) {
     ? real.filter(c => !c.coordinator_id || c.coordinator_id === effectiveId)
     : real;
 
-  let staff: { id: string; name: string }[] = [];
+  let staff: { id: string; name: string; quota_weight?: number | string | null }[] = [];
   /* נטען תמיד — גם רכזת צריכה שהמזהה יתורגם לשם על הכרטיס */
   {
     const { data } = await db.from("coordinators")
-      .select("id, name").eq("active", true).neq("takes_participants", false).neq("name", "").order("name"); /* "צופה בתור" רק מי שמלווה (QA 16.10) */
-    staff = (data ?? []) as { id: string; name: string }[];
+      .select("id, name, quota_weight").eq("active", true).neq("takes_participants", false).neq("name", "").order("name"); /* "צופה בתור" רק מי שמלווה (QA 16.10) */
+    staff = (data ?? []) as { id: string; name: string; quota_weight?: number | string | null }[];
   }
   const staffNames = new Map(staff.map(c => [c.id, c.name]));
 
@@ -311,15 +313,30 @@ export async function GET(req: NextRequest) {
 
   let myBookings: unknown[] = [];
   try {
-    let qb = db
-      .from("cal_bookings")
-      .select("id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, candidate_id, coordinator_id, outcome, outcome_at, outcome_note")
-      .order("start_time", { ascending: false })
-      .limit(200);
-    /* רכזת רואה את שלה; מנהל התוכנית (בלי זיהוי רכזת) רואה הכל */
-    if (effectiveId) qb = qb.eq("coordinator_id", effectiveId);
-    const { data } = await qb;
-    myBookings = data ?? [];
+    const BASE = "id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, candidate_id, coordinator_id, outcome, outcome_at, outcome_note";
+    const query = (cols: string) => {
+      let qb = db.from("cal_bookings").select(cols).order("start_time", { ascending: false }).limit(200);
+      /* רכזת רואה את שלה; מנהל התוכנית (בלי זיהוי רכזת) רואה הכל */
+      if (effectiveId) qb = qb.eq("coordinator_id", effectiveId);
+      return qb;
+    };
+    let { data, error } = await query(`${BASE}, uid:raw->>uid, puid:raw->payload->>uid, movedFrom:raw->payload->>rescheduleUid`);
+    /* אם שליפת השדות מה-raw נכשלת — בלי סינון המעברים, אבל לא מסך פגישות ריק */
+    if (error) {
+      console.error("[coordinator] bookings with uids failed:", error.message);
+      ({ data, error } = await query(BASE));
+    }
+    /*
+      שינוי מועד ב-Cal מגיע כשורה **חדשה** (BOOKING_RESCHEDULED) שמצביעה על
+      הישנה, והישנה נשארת עם המועד הקודם. בלי הסינון הזה היא הופכת ל"פגישה
+      שעברה ולא סומנה" — פגישה שמעולם לא התקיימה, ואין מה לסמן בה (29.10).
+    */
+    type B = { uid?: string | null; puid?: string | null; movedFrom?: string | null };
+    const rows = (data ?? []) as B[];
+    const moved = new Set(rows.map(b => b.movedFrom).filter(Boolean));
+    myBookings = rows
+      .filter(b => !moved.has(b.uid ?? b.puid ?? ""))
+      .map(({ uid: _u, puid: _p, movedFrom: _m, ...rest }) => rest);
   } catch { /* הטבלה או העמודה עוד לא קיימות — לא שוברים את המסך */ }
 
   let unmatched: unknown[] = [];
@@ -347,7 +364,7 @@ export async function GET(req: NextRequest) {
    *
    * ⚠️ בלי MONDAY_TOKEN מחזיר null והמסך נופל חזרה להתנהגות הקודמת בדיוק.
    */
-  let board: (BoardRow & { inApp: boolean; nextMeeting: string | null })[] | null = null;
+  let board: (BoardRow & { inApp: boolean; nextMeeting: string | null; linkSent: LinkSent | null })[] | null = null;
   try {
     /*
      * ⚠️ **הבורר "צפייה בתור" לא הגיע עד לכאן** (נתי, 11.10). הפגישות סוננו
@@ -370,23 +387,89 @@ export async function GET(req: NextRequest) {
         const cur = nextBy.get(ph);
         if (!cur || b.start_time < cur) nextBy.set(ph, b.start_time);
       }
-      board = rows.map(r => ({
-        ...r,
-        inApp: !!r.phone && appPhones.has(r.phone),
-        nextMeeting: nextBy.get(r.phone) ?? null,
-      }));
+      const sentIds = rows.filter(r => r.status === "נשלח קישור").map(r => r.id);
+      const [sentAt, stoppedAt] = await Promise.all([linkSentDates(db, sentIds), registrationStops(db, sentIds)]);
+      board = rows.map(r => {
+        const inApp = !!r.phone && appPhones.has(r.phone);
+        const ls = linkSentState(r, inApp, sentAt.get(r.id));
+        const where = inApp ? null : stoppedAt.get(r.id) ?? null;
+        /* אירוע הרשמה עם מזהה השורה = אדם הגיע לאפליקציה (31.10). לחיצה בלבד
+           יכולה להיות סורק מייל או תצוגה מקדימה של וואטסאפ */
+        const stage = ls && where && ls.stage !== "registered" ? "arrived" as const : ls?.stage;
+        return { ...r, inApp, nextMeeting: nextBy.get(r.phone) ?? null, linkSent: ls && { ...ls, stage: stage!, where } };
+      });
     }
   } catch { /* מאנדיי לא זמין — המסך ממשיך בלעדיו */ }
 
+  /*
+   * ── אותו אדם, שמות שונים (נתי, 29.10) ──────────────────────────────────────
+   * "נתן" ו"נתן קבדה" קבעו שתי פגישות 1 — אותו טלפון. בדיקה ב-29.10: ל-7
+   * מתוך 22 אנשים יש פגישה 1 כפולה, ורובן אינן טעות: לא הגיע/ה וקבע/ה שוב,
+   * או **כבר נפגשו ונכנס/ה ליומן של פגישה 1 במקום 2**. הרכז/ת צריכ/ה לדעת
+   * את זה לפני השיחה. הזהות לפי טלפון/מייל (personIdentity), על **כל**
+   * הפגישות — גם אצל רכז/ת אחר/ת — והשם הקנוני מלוח אינטק.
+   * ⚠️ לא ממזגים ולא מוחקים. התגית אומרת "זה אותו אדם"; ההחלטה של הרכז/ת.
+   */
+  /*
+   * נרשם/ה ולא קבע/ה, ב"נשלח קישור" יום או יותר — סיגנל בתור "מי צריך אותי
+   * היום" (31.10). הכרטיסים מראים את התמונה; התור הוא מה שגורם להרים טלפון.
+   * רק מי שבאפליקציה נמצא בתור, ולכן רק השלב הזה — את השאר מראים הכרטיסים.
+   */
+  for (const r of board ?? []) {
+    const ls = r.linkSent;
+    if (!ls || ls.stage !== "registered" || ls.days === null || ls.days < 1) continue;
+    const q = queue.find(x => String(x.phone ?? "").replace(/[^0-9]/g, "") === r.phone);
+    if (!q) continue;
+    q.signals.push({ severity: ls.days >= 4 ? 1 : 2, reason: `קיבל/ה קישור לפני ${ls.days} ימים, נרשם/ה ולא קבע/ה פגישה`, action: "call" });
+    q.signals.sort((a, b) => a.severity - b.severity);
+    q.topSeverity = Math.min(...q.signals.map(s => s.severity));
+  }
+
+  try {
+    myBookings = await withPersonContext(db, myBookings as Booking[]);
+  } catch (e) { console.error("[coordinator] person context failed:", e); }
+
+  /*
+    אצל מי הפגישה (נתי, 2.11) — במסך "כל הרכזות" מאיה ראתה פגישות בלי לדעת
+    של מי. כל הסגל ולא רק מי שמלווה: פגישה ביומן של נתי היא בדיוק מה
+    שמנהלת צריכה לראות. מזהה שלא בסגל ⇐ null, והמסך מסמן "לא זוהה".
+  */
+  {
+    const { data: everyone } = await db.from("coordinators").select("id, name");
+    const nameOf = new Map((everyone ?? []).map(c => [c.id as string, c.name as string]));
+    myBookings = (myBookings as { coordinator_id?: string | null }[]).map(b => ({
+      ...b, coordinatorName: b.coordinator_id ? nameOf.get(b.coordinator_id) ?? null : null,
+    }));
+  }
+
+  /*
+    כפילויות בלוח (נתי, 2.11) — למנהלת/בעלים במסך "כל הרכזות" בלבד. האפליקציה
+    מציגה וממליצה; המחיקה במאנדיי, אחרי שהמנהלת והרכז/ת בדקו (src/lib/duplicates.ts).
+  */
+  let duplicates: DupGroup[] | null = null;
+  if (canSeeEveryone(auth.role) && !effectiveId) {
+    try {
+      const verified = new Set((candidates.data ?? [])
+        .filter(c => c.phone_verified && !c.is_test).map(c => phoneKey(c.phone)).filter(Boolean));
+      duplicates = await findDuplicates(verified);
+    } catch (e) { console.error("[coordinator] duplicates failed:", e); }
+  }
+
   return NextResponse.json({
     generatedAt: new Date().toISOString(),
+    duplicates,
     board,
     unmatchedBookings: unmatched,
     myBookings,
     role: auth.role,
     viewingAs: effectiveId,
     /* המנהלת צריכה את הרשימה כדי לבחור את מי לצפות */
-    staff: canSeeEveryone(auth.role) ? staff : [],
+    /*
+      "צופה בתור" — רק מי שנושא/ת מכסה (נתי, 2.11). מאיה (0) קיבלה כפתור משלה
+      ומסך כמעט ריק, ועלולה הייתה לחשוב שזו התצוגה שלה כמנהלת. שמות לכרטיסים
+      (staffNames) עדיין כוללים את כולם — משתתף/ת שמשויך/ת אליה מוצג/ת עם שמה.
+    */
+    staff: canSeeEveryone(auth.role) ? staff.filter(c => Number(c.quota_weight ?? 1) > 0).map(({ id, name }) => ({ id, name })) : [],
     needsAttention: queue.filter(q => q.signals.length > 0),
     quiet: queue.filter(q => q.signals.length === 0).length,
     // הרשימה המלאה — לטאב ״כל המשתתפים״ ולדף מנהל התוכנית (20.8)
@@ -563,4 +646,138 @@ export async function PATCH(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
+}
+
+/* ── הקשר אדם לכל פגישה (ראה ההערה ב-GET) ───────────────────────────────── */
+
+type Booking = {
+  id: number; title?: string | null; start_time: string; attendee_name?: string | null;
+  attendee_phone?: string | null; attendee_email?: string | null; trigger?: string | null;
+  outcome?: string | null;
+};
+type AllBooking = Booking & { uid?: string | null; puid?: string | null; movedFrom?: string | null };
+
+export type PersonContext = {
+  /** השם בלוח אינטק, כשנמצאה התאמה בטלפון/מייל */
+  canonical: string | null;
+  /** פגישה 1 בפעם ה-N של אותו אדם (1 = רגיל) */
+  attempt: number;
+  /** בניסיון הקודם לפגישה 1 — סומן "לא הגיע/ה" */
+  prevNoShow: boolean;
+  /** כבר נפגשו לפני הפגישה הזו — אולי התכוון/ה לפגישה הבאה */
+  metOn: string | null;
+};
+
+async function withPersonContext(db: SupabaseClient, mine: Booking[]) {
+  if (!mine.length) return mine;
+  const { data, error } = await db.from("cal_bookings")
+    .select("id, title, start_time, attendee_name, attendee_phone, attendee_email, trigger, outcome, uid:raw->>uid, puid:raw->payload->>uid, movedFrom:raw->payload->>rescheduleUid")
+    .neq("trigger", "BOOKING_CANCELLED");
+  if (error) throw new Error(error.message);
+  const raw = (data ?? []) as AllBooking[];
+  const moved = new Set(raw.map(b => b.movedFrom).filter(Boolean));
+  const all = raw.filter(b => !moved.has(b.uid ?? b.puid ?? ""));
+  const board = (await mondayBoard(null)) ?? [];
+
+  /* פגישות ושורות לוח באותו אשכול — השורה בלוח נותנת את השם הקנוני */
+  const ids = clusterPeople([
+    ...all.map(b => ({ phone: b.attendee_phone, email: b.attendee_email })),
+    ...board.map(r => ({ phone: r.phone, email: r.email })),
+  ]);
+  const personOf = new Map(all.map((b, i) => [b.id, ids[i]]));
+  const nameOf = new Map<string, string>();
+  board.forEach((r, j) => { if (r.name) nameOf.set(ids[all.length + j], r.name); });
+  const byPerson = new Map<string, AllBooking[]>();
+  all.forEach((b, i) => byPerson.set(ids[i], [...(byPerson.get(ids[i]) ?? []), b]));
+
+  return mine.map(b => {
+    const person = personOf.get(b.id);
+    if (!person) return b;
+    const prior = (byPerson.get(person) ?? []).filter(x => x.id !== b.id && x.start_time < b.start_time);
+    const kind = meetingKind(b.title);
+    const priorM1 = prior.filter(x => meetingKind(x.title) === 1);
+    const met = prior.filter(x => x.outcome === "happened" || (meetingKind(x.title) ?? 0) > 1)
+      .sort((a, c) => a.start_time.localeCompare(c.start_time))[0];
+    const ctx: PersonContext = {
+      canonical: nameOf.get(person) ?? null,
+      attempt: kind === 1 ? priorM1.length + 1 : 1,
+      prevNoShow: kind === 1 && priorM1.at(-1)?.outcome === "no_show",
+      metOn: kind === 1 && met ? met.start_time : null,
+    };
+    return { ...b, ctx };
+  });
+}
+
+/* ── תקועים ב"נשלח קישור" (נתי, 31.10) ─────────────────────────────────────
+ * מי שקבע פגישה עובר ל"בתהליך פעיל" מעצמו (webhook של Cal), ולכן כל מי
+ * שנשאר ב"נשלח קישור" לא קבע. השאלה היא **איפה** נתקע — וכל שלב דורש פעולה
+ * אחרת: לא לחץ (ההודעה לא נראתה/לא נשלחה) · לחץ ולא נרשם (חסם בהרשמה) ·
+ * נרשם ולא קבע (חסם ביומן). ⚠️ נרשם גובר על "לא לחץ": הלחיצה נמדדת רק
+ * מ-8.10 ורק בקישורים המתועדים. ספים (נתי): יום כדי להופיע, 4 לכתום.
+ */
+type LinkSent = {
+  stage: "noclick" | "clicked" | "arrived" | "registered"; since: string | null; days: number | null; mailFail: string;
+  /** איפה בהרשמה עצר/ה — מאירועי ההרשמה שנושאים את מזהה השורה (31.10). null = אין עדות */
+  where?: string | null;
+};
+
+/** הפעם האחרונה שהסטטוס הפך ל"נשלח קישור", מההיסטוריה (intech_status_log) */
+async function linkSentDates(db: SupabaseClient, itemIds: string[]) {
+  const out = new Map<string, string>();
+  if (!itemIds.length) return out;
+  const { data } = await db.from("intech_status_log").select("item_id, changed_at")
+    .eq("column_id", "color_mm7t1s7a").eq("to_value", "נשלח קישור")
+    .in("item_id", itemIds.map(Number)).order("changed_at");
+  for (const r of data ?? []) out.set(String(r.item_id), r.changed_at as string);
+  return out;
+}
+
+function linkSentState(r: BoardRow, inApp: boolean, loggedAt: string | undefined): LinkSent | null {
+  if (r.status !== "נשלח קישור") return null;
+  /* ההיסטוריה נקלטת כל בוקר — שינוי של היום עוד לא בה, ואז מייל הפתיחה הוא העדות */
+  const since = [loggedAt, r.mailedAt].filter(Boolean).sort().at(-1) ?? null;
+  const days = since ? Math.floor((Date.now() - Date.parse(since)) / 864e5) : null;
+  return {
+    stage: inApp ? "registered" : r.clickedAt ? "clicked" : "noclick",
+    since, days, mailFail: r.mailFail,
+  };
+}
+
+/*
+ * איפה בהרשמה עצר/ה מי שלחץ/ה ולא נרשם/ה (31.10). האירועים נושאים `ref` =
+ * מזהה השורה בלוח (הגיע דרך /api/r). הקוד והתוצאה שלו גוברים על מספר השלב:
+ * "קיבל/ה קוד ולא הזין/ה" אומר לרכז/ת הרבה יותר מ"הגיע/ה למסך 6".
+ */
+const STEP_LABEL: Record<string, string> = {
+  welcome: "מסך הפתיחה", details: "פרטים אישיים", interest: "שאלת העניין",
+  blockers: "מה עוצר אותך", summary: "הסיכום", tour: "הסיור באפליקציה", phone: "מסך הטלפון",
+};
+async function registrationStops(db: SupabaseClient, itemIds: string[]) {
+  const out = new Map<string, string>();
+  if (!itemIds.length) return out;
+  const { data } = await db.from("funnel_events").select("name, props, created_at")
+    .in("name", ["onboarding_step", "otp_sent", "otp_failed", "otp_help_shown"])
+    .in("props->>ref", itemIds).order("created_at");
+  const by = new Map<string, { name: string; props: Record<string, unknown> }[]>();
+  for (const e of (data ?? []) as { name: string; props: Record<string, unknown> }[]) {
+    const ref = String(e.props?.ref ?? "");
+    by.set(ref, [...(by.get(ref) ?? []), e]);
+  }
+  for (const [ref, evs] of by) {
+    const sent = evs.filter(e => e.name === "otp_sent");
+    const lastSent = sent.at(-1);
+    let where: string;
+    if (evs.some(e => e.name === "otp_failed")) where = "הזין/ה קוד שגוי";
+    else if (lastSent && lastSent.props?.ok === false) where = "שליחת הקוד נכשלה";
+    else if (lastSent) where = "קיבל/ה קוד ולא הזין/ה";
+    else {
+      const steps = evs.filter(e => e.name === "onboarding_step").map(e => Number(e.props?.step) || 0);
+      const max = Math.max(...steps, 0);
+      const name = evs.find(e => e.name === "onboarding_step" && Number(e.props?.step) === max)?.props?.name as string | undefined;
+      where = `עצר/ה ב: ${STEP_LABEL[name ?? ""] ?? `שלב ${max}`}`;
+    }
+    if (evs.some(e => e.name === "otp_help_shown")) where += " · ראה/תה את עזרת ה-SMS";
+    out.set(ref, where);
+  }
+  return out;
 }

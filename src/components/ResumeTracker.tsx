@@ -60,6 +60,9 @@ export default function ResumeTracker() {
        נשמר — וההרשמה תשייך את המועמד אליה מהרגע הראשון (יומן, וואטסאפ) */
     const coord = search.get("coord");
     if (coord) { try { localStorage.setItem("assigned-coord", coord); } catch { /* ignore */ } }
+    /* מאיזו שורה בלוח הגיע/ה (31.10) — מחבר את אירועי ההרשמה לאדם לפני אימות הטלפון */
+    const ref = search.get("ref");
+    if (ref && /^[0-9]+$/.test(ref)) { try { localStorage.setItem("board-ref", ref); } catch { /* ignore */ } }
 
     // ?reset ו-?demo הם מצבי בדיקה — לא מיקום אמיתי ולא פעילות אמיתית
     const qs = search.toString();

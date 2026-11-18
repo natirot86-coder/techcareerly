@@ -1791,27 +1791,30 @@ function CoordView({
   const included = lines.filter(l => !excluded.includes(l.id));
   const message = `עדכון מהאפליקציה:\n\n${included.map(l => l.text).join("\n")}`;
   /*
-   * ישירות לרכזת — המספר נמשך מסגל הרכזות לפי השיוך של המועמד במסד
-   * (coordinator_id, מיגרציה 003). בלי שיוך — הרכזת הפעילה הראשונה.
+   * ישירות לרכז/ת של המשתתף/ת — myCoordinator() ⇐ השרת (שיוך · טלפון בלוח
+   * אינטק · רכז/ת קליטה). ריק עד שהשרת עונה, ולא ממלאים מרשימה קשיחה (11.10).
+   * ⚠️ הכפתור כבוי עד התשובה: לחיצה מוקדמת פתחה wa.me בלי מספר — בוחר אנשי
+   * קשר, בזמן שהכפתור אמר "לרכזת". בלי רכז/ת בכלל — כן בוחר, אבל אומרים את זה.
    */
-  /* ריק עד שהשרת עונה — לא ממלאים מראש מרשימה קשיחה (11.10) */
-  const [coordPhone, setCoordPhone] = useState("");
+  const [coord, setCoord] = useState<{ first: string; phone: string } | null>(null);
+  const [coordLoaded, setCoordLoaded] = useState(false);
   useEffect(() => {
-    // המספר האמיתי מגיע מטבלת הרכזות ב-DB, לפי השיוך של המועמד
     myCoordinator()
-      .then(c => { if (c?.phone) setCoordPhone(c.phone); })
-      .catch(() => { /* ignore */ });
+      .then(c => { if (c?.phone) setCoord({ first: c.name.split(" ")[0], phone: c.phone }); })
+      .catch(() => { /* ignore */ })
+      .finally(() => setCoordLoaded(true));
   }, []);
-  const waLink = coordPhone
-    ? `https://wa.me/${coordPhone}?text=${encodeURIComponent(message)}`
+  const waLink = coord
+    ? `https://wa.me/${coord.phone}?text=${encodeURIComponent(message)}`
     : `https://wa.me/?text=${encodeURIComponent(message)}`;
+  const canSend = included.length > 0 && coordLoaded;
 
   return (
     <div className="pt-4 px-4 pb-6 flex flex-col gap-4">
       <div className="px-1">
-        <h1 className="text-[22px] font-extrabold" style={{ color: NAVY }}>עדכון לרכזת</h1>
+        <h1 className="text-[22px] font-extrabold" style={{ color: NAVY }}>{coord ? `עדכון ל${coord.first}` : "עדכון לרכז/ת"}</h1>
         <p className="text-[15px] mt-1.5" style={{ color: "#5c574e", lineHeight: 1.55 }}>
-          נבנה מעצמו ממה שסימנת. אתה רואה בדיוק מה יישלח, ויכול להוריד שורות.
+          נבנה מעצמו ממה שסימנת. רואים בדיוק מה יישלח, ואפשר להוריד שורות.
         </p>
       </div>
 
@@ -1904,12 +1907,14 @@ function CoordView({
           localStorage.setItem(LS.sent, new Date().toISOString());
         }}
         className="w-full py-4 rounded-[14px] text-[17px] font-extrabold text-white text-center"
-        style={{ background: included.length ? GREEN : "#c9c3b8", pointerEvents: included.length ? "auto" : "none" }}
+        style={{ background: canSend ? GREEN : "#c9c3b8", pointerEvents: canSend ? "auto" : "none" }}
       >
-        לשלוח לרכזת בוואטסאפ
+        {coord ? `לשלוח ל${coord.first} בוואטסאפ` : "לשלוח בוואטסאפ"}
       </a>
       <div className="text-center text-[13px] -mt-2" style={{ color: "#8a8377" }}>
-        נפתח אצלך בוואטסאפ. אתה בוחר את הרכזת ואתה שולח.
+        {!coordLoaded ? "רגע…"
+          : coord ? `נפתח אצלך בוואטסאפ, בצ'אט עם ${coord.first}. השליחה בידיים שלך.`
+          : "עוד אין לנו מספר של רכז/ת בשבילך — בוואטסאפ בוחרים למי לשלוח."}
       </div>
     </div>
   );
