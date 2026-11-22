@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
+import { completedTastes, TASTES_FOR_MEETING_2 } from "@/lib/tastes";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const ORANGE = "#fb8500";
@@ -21,7 +22,7 @@ const DOMAINS = [
 ];
 
 function MeetingCard({ doneCount }: { doneCount: number }) {
-  const unlocked = doneCount >= 2;
+  const unlocked = doneCount >= TASTES_FOR_MEETING_2;
 
   const copyByState = [
     "שיחה בלי טעימות = 20 דקות של 'לא יודע מה אני רוצה'. שיחה אחרי לפחות 2 טעימות = שיחה שמגיעה לאיפשהו — וכל טעימה נוספת מחדדת.",
@@ -113,7 +114,7 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
           className="py-3.5 text-center text-[12.5px] font-bold"
           style={{ background: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.22)" }}
         >
-          נפתח אחרי {Math.max(0, 2 - doneCount)} טעימות נוספות
+          נפתח אחרי {Math.max(0, TASTES_FOR_MEETING_2 - doneCount)} טעימות נוספות
         </div>
       )}
     </div>
@@ -124,13 +125,7 @@ export default function ExplorePage() {
   const [completed, setCompleted] = useState<string[]>([]);
 
   useEffect(() => {
-    const done = DOMAINS
-      .filter(d => {
-        try { return JSON.parse(localStorage.getItem(`${d.id}-journey`) || "{}").experience === true; }
-        catch { return false; }
-      })
-      .map(d => d.id);
-    setCompleted(done);
+    setCompleted(completedTastes(localStorage));
   }, []);
 
   return (

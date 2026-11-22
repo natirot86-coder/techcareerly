@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { JOURNEY, journeyFor, type CohortId } from "@/data/journey";
 import { cachedCohort, signOutCandidate } from "@/lib/candidate";
 import { supabase } from "@/lib/supabase";
+import { completedTastes, startedTastes, TASTES_FOR_MEETING_2 } from "@/lib/tastes";
 
 const NAVY = "#023e8a";
 const ORANGE = "#fb8500";
@@ -48,10 +49,9 @@ function buildStages(): { stages: Stage[]; current: number } {
   const { get, has, flag, json } = reader();
 
   // אילו תחומים באמת נגע בהם — התחנות האישיות של שלב 3
-  const tasted = Object.keys(DOMAIN_HE).filter(d => {
-    const j = json(`${d}-journey`);
-    return j && (j.sim || j.day || j.mystery || j.experience || j.analytics);
-  });
+  /* טעימה נספרת רק כשהגיע/ה לשאלון החוויה — אותה הגדרה כמו נעילת פגישה 2 (22.11) */
+  const tasted = completedTastes(localStorage);
+  const started = startedTastes(localStorage);
 
   /* וובינרים שהשתתף/ה בהם — מלוח אינטק, דרך /api/candidate/my-webinars (2.11) */
   const webinars = (json("my-webinars") ?? []) as { topic: string; day: string | null; domain: string | null }[];
@@ -88,8 +88,9 @@ function buildStages(): { stages: Stage[]; current: number } {
       id: "tasting", n: 3, title: JOURNEY[2].candidate,
       stops: [
         ...tasted.map(d => ({ label: `טעמת ${DOMAIN_HE[d]}`, done: true, href: `/explore/${d}` })),
-        ...(tasted.length < 2
-          ? [{ label: `עוד ${2 - tasted.length} טעימות והפגישה נפתחת`, done: false, href: "/explore" }]
+        ...started.map(d => ({ label: `התחלת לטעום ${DOMAIN_HE[d]} — נשאר לסיים`, done: false, href: `/explore/${d}` })),
+        ...(tasted.length < TASTES_FOR_MEETING_2
+          ? [{ label: `עוד ${TASTES_FOR_MEETING_2 - tasted.length} טעימות שלמות והפגישה נפתחת`, done: false, href: "/explore" }]
           : []),
         { label: "סיכמת את הטעימות", done: has("explore-results"), href: "/explore/results" },
       ],

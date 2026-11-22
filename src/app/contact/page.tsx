@@ -5,7 +5,8 @@ import Cal, { getCalApi } from "@calcom/embed-react";
 import BottomNav from "@/components/ui/BottomNav";
 import Link from "next/link";
 import { currentMeeting, MEETING_META, genderMeetingWhat, type MeetingNum } from "@/data/meetings";
-import { logEvent, myCoordinator } from "@/lib/candidate";
+import { logEvent, myCoordinator, cachedCohort } from "@/lib/candidate";
+import { completedTastes, TASTES_FOR_MEETING_2 } from "@/lib/tastes";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 
@@ -45,12 +46,28 @@ export default function ContactPage() {
    * כדי לא לטעון יומן של רכזת אחת ואז להחליף לשנייה מול העיניים.
    */
   const [assignedCal, setAssignedCal] = useState<string | null>(null);
+  /**
+   * נעילת פגישה 2 (נתי, 22.11): היומן לא נפתח לפני 2 טעימות שלמות. עד היום
+   * זו הייתה נעילה רכה — הכפתור במסך הטעימות הופיע רק אחרי 2, אבל טאב
+   * "רכז/ת" שלח ליומן של פגישה 2 כבר אחרי טעימה אחת או אחרי שאלון המסלולים.
+   * null = לא נעול; מספר = כמה טעימות חסרות.
+   * לא נועל: מי שכבר קבע/ה (קביעה מחדש אחרי פספוס), בוגרים (אין להם
+   * טעימות), ותצוגת דמו.
+   */
+  const [tastesMissing, setTastesMissing] = useState<number | null>(null);
 
   useEffect(() => {
     const param = new URLSearchParams(window.location.search).get("m");
     const n = param && ["1", "2", "3"].includes(param)
       ? (Number(param) as MeetingNum)
       : currentMeeting(localStorage);
+    const q = new URLSearchParams(window.location.search);
+    const missing = TASTES_FOR_MEETING_2 - completedTastes(localStorage).length;
+    if (n === 2 && missing > 0 && cachedCohort() !== "alumni" && !q.has("demo")
+        && localStorage.getItem("meeting-2-booked") !== "true") {
+      setTastesMissing(missing);
+      logEvent("meeting_locked", { n: "2", missing: String(missing) });
+    }
     setMeeting(n);
     try {
       const ob = JSON.parse(localStorage.getItem("onboarding") || "{}");
@@ -69,7 +86,7 @@ export default function ContactPage() {
   }, []);
 
   useEffect(() => {
-    if (!meeting) return;
+    if (!meeting || tastesMissing !== null) return;
     (async () => {
       /*
        * מדידת מסך התיאום — עד היום נרשמה רק ההצלחה.
@@ -144,7 +161,7 @@ export default function ContactPage() {
         },
       });
     })();
-  }, [router, meeting]);
+  }, [router, meeting, tastesMissing]);
 
   /**
    * "כבר קבעתי" — מעבר בלי לתפוס תור ביומן.
@@ -274,7 +291,24 @@ export default function ContactPage() {
           לבטל, ולהסביר, ואת האמון אי אפשר להחזיר. השרת כבר נופל לרכז/ת הקליטה,
           אז ריק כאן אומר "לרכז/ת שלך עוד אין יומן לפגישה הזאת" — ונאמר במילים.
         */}
-        {meeting && assignedCal === "" && (
+        {meeting && tastesMissing !== null && (
+          <div className="rounded-2xl px-5 py-6 text-center"
+            style={{ background: "#fff", border: "1.5px solid rgba(251,133,0,0.35)" }}>
+            <div className="text-[28px]" aria-hidden="true">🔒</div>
+            <div className="text-[16px] font-extrabold mt-1" style={{ color: "#023e8a" }}>
+              {tastesMissing === 1 ? "עוד טעימה אחת והיומן נפתח" : `עוד ${tastesMissing} טעימות והיומן נפתח`}
+            </div>
+            <div className="text-[13.5px] mt-2 leading-[1.7]" style={{ color: "rgba(0,0,0,0.6)" }}>
+              בפגישה הזאת בוחרים תחום, ובשביל זה צריך לפחות שתי טעימות להשוות ביניהן.
+              טעימה נספרת כשמגיעים לסופה — לשאלון הקצר על החוויה.
+            </div>
+            <Link href="/explore" className="block mt-4 py-3 rounded-xl text-[14px] font-black text-white"
+              style={{ background: "#fb8500" }}>
+              לטעימות ←
+            </Link>
+          </div>
+        )}
+        {meeting && tastesMissing === null && assignedCal === "" && (
           <div className="rounded-2xl px-5 py-6 text-center"
             style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.12)" }}>
             <div className="text-[16px] font-extrabold" style={{ color: "#023e8a" }}>
@@ -287,7 +321,7 @@ export default function ContactPage() {
             </div>
           </div>
         )}
-        {meeting && assignedCal && (
+        {meeting && tastesMissing === null && assignedCal && (
           <Cal
             namespace="contact"
             calLink={assignedCal}
@@ -304,11 +338,13 @@ export default function ContactPage() {
               className="w-full py-3 rounded-xl text-[14px] font-bold"
               style={{ background: "rgba(2,62,138,0.06)", color: "#023e8a" }}
             >
-              כבר קבעתי פגישה — להמשיך ←
+              {tastesMissing !== null ? "הרכז/ת כבר קבע/ה איתי את הפגישה ←" : "כבר קבעתי פגישה — להמשיך ←"}
             </button>
-            <div className="text-[11.5px] leading-[1.7] mt-2 text-center" style={{ color: "rgba(0,0,0,0.4)" }}>
-              לא נשריין לך תור ביומן. אם עוד לא קבעת — בחר/י תאריך למעלה.
-            </div>
+            {tastesMissing === null && (
+              <div className="text-[11.5px] leading-[1.7] mt-2 text-center" style={{ color: "rgba(0,0,0,0.4)" }}>
+                לא נשריין לך תור ביומן. אם עוד לא קבעת — בחר/י תאריך למעלה.
+              </div>
+            )}
           </div>
         )}
       </div>

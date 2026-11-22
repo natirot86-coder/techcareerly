@@ -1318,7 +1318,7 @@ export default function PathsPage() {
             חקר התחומים מאחוריך — מכאן מתחילים לבנות את הדרך
           </div>
           <div className="text-[13px] leading-[1.8] mb-6" style={{ color: "rgba(0,0,0,0.58)" }}>
-            מה הכיוון שלך? <b>אפשר להוסיף עוד אחד שמעניין אותך.</b>
+            מה הכיוון הראשי שלך? <b>ואם יש עוד אחד — סמן/י אותו כגיבוי.</b>
           </div>
 
           <div className="flex flex-col gap-2.5 mb-6">
@@ -1340,13 +1340,13 @@ export default function PathsPage() {
                       <span className="text-[14px] font-black" style={{ color: on ? NAVY : "rgba(0,0,0,0.7)" }}>
                         {DOMAIN_LABEL[d]}
                       </span>
-                      {/* הסדר מוצהר — ולא נקבע בשקט לפי סדר הלחיצה */}
+                      {/* הסדר מוצהר — ולא נקבע בשקט לפי סדר הלחיצה. "ראשי / גיבוי" — נתי 22.11 */}
                       {on && (
                         <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
                           style={pickedDomains[0] === d
                             ? { background: NAVY, color: "#fff" }
                             : { background: "rgba(2,62,138,0.1)", color: NAVY }}>
-                          {pickedDomains[0] === d ? "הכיוון העיקרי" : "מעניין אותי גם"}
+                          {pickedDomains[0] === d ? "ראשי" : "גיבוי"}
                         </span>
                       )}
                     </span>
@@ -1374,7 +1374,7 @@ export default function PathsPage() {
               className="w-full mb-4 py-2.5 rounded-xl text-[12.5px] font-bold"
               style={{ background: "#fff", border: "1px solid rgba(2,62,138,0.2)", color: NAVY }}
             >
-              ⇅ להחליף — {DOMAIN_LABEL[pickedDomains[1]]} יהיה הכיוון העיקרי
+              ⇅ להחליף — {DOMAIN_LABEL[pickedDomains[1]]} יהיה הראשי
             </button>
           )}
 
