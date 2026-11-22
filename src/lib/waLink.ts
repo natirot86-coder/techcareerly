@@ -46,7 +46,8 @@ export function waMessage(p: {
   */
   const lines = [
     /* בלי אימוג׳ים (נתי, 8.10) — ההודעה מרכזת ולא שיווקית */
-    `היי${them ? " " + them : ""}, זו ${me || "הרכזת"} מתוכנית אינטק של טק-קריירה.`,
+    /* "כאן X" ולא "זו X" — הרכזים הם לא רק רכזות (שי, 22.11) */
+    `היי${them ? " " + them : ""}, ${me ? `כאן ${me} מתוכנית` : "כאן תוכנית"} אינטק של טק-קריירה.`,
     "",
     `נעים להכיר! זה הקישור לאפליקציה שדיברנו עליה — נכנסים עם מספר הטלפון הזה:`,
     p.appUrl || APP_URL,
@@ -58,6 +59,37 @@ export function waMessage(p: {
   }
   lines.push("מחכה לראות אותך בפנים");
   return lines.join("\n");
+}
+
+/* ── "ניסיתי להתקשר" (נתי, 22.11) ─────────────────────────────────────────────
+   אחרי שיחה שלא נענתה — וואטסאפ מיד. הקישור מוכן בעמודה נפרדת בלוח, כדי
+   שהצעד הזה יעלה לחיצה אחת ולא ניסוח. הנוסח משתנה לפי הסטטוס: מי שכבר
+   ב"אין מענה 1…" מקבל/ת את נוסח הניסיון השני. בלי קישורים — המטרה כאן
+   היא שיחה, לא הרשמה. */
+export function waNoAnswerMessage(p: { participant: string; coordinator?: string | null; attempt: 1 | 2 }): string {
+  const them = firstName(p.participant);
+  const me = (p.coordinator ?? "").trim();
+  return [
+    `היי${them ? " " + them : ""}, ${me ? `כאן ${me} מתוכנית` : "כאן תוכנית"} אינטק של טק-קריירה — ליווי אישי בבחירת לימודים להייטק.`,
+    "",
+    p.attempt === 2
+      ? "ניסיתי שוב להתקשר אליך ולא הצלחתי לתפוס."
+      : "ניסיתי להתקשר אליך עכשיו ולא הצלחתי לתפוס.",
+    "מתי נוח לך שנדבר? אפשר גם פשוט לענות כאן.",
+  ].join("\n");
+}
+
+const CLOSED_STATUSES = ["סיימ/ה תהליך", "נרשמ/ה ללימודים", "נרשמו ללימודים", "לא מעוניין", "לא רלוונטי", "הופנה לגורם חיצוני"];
+
+export function waNoAnswerLink(p: { phone: unknown; participant: string; coordinator?: string | null; status?: string | null }): string {
+  const phone = waPhone(p.phone);
+  if (!phone) return "";
+  /* הניסיון השני רק אחרי שהראשון באמת יצא — "אין מענה 1" לבד עוד לא נשלח */
+  const s = p.status ?? "";
+  /* למי שסיים/ה, נרשם/ה או יצא/ה מהתהליך אין למי להתקשר — העמודה נשארת ריקה */
+  if (CLOSED_STATUSES.some(c => s.startsWith(c))) return "";
+  const attempt = s.startsWith("אין מענה") && s.includes("נשלח ווטסאפ") ? 2 : 1;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(waNoAnswerMessage({ ...p, attempt }))}`;
 }
 
 /** הקישור המלא, או מחרוזת ריקה אם אין טלפון שאפשר לפתוח איתו צ'אט */

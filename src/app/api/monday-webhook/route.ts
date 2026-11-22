@@ -23,7 +23,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizePhone } from "@/lib/candidate";
-import { waLink } from "@/lib/waLink";
+import { waLink, waNoAnswerLink } from "@/lib/waLink";
 import { sendMail, welcomeEmail, emailLooksWrong } from "@/lib/mail";
 import { trackedUrl } from "@/app/api/r/route";
 import { coordinatorByLabel, calUrl as calUrlOf } from "@/lib/coordinatorLookup";
@@ -42,6 +42,8 @@ const ALUMNI_LABEL = "בוגרים — תואר בלבד";
 const NOTE = "סומן על ידי הרכזת בלוח אינטק";
 const COL_COORD = "color_mm7t74m3";
 const COL_WA = "link_mm7t82dd";
+/** "ניסיתי להתקשר" — נבנה יחד עם קישור הפתיחה, באותם אירועים (22.11) */
+export const COL_WA_NOANSWER = "link_mm9bzt99";
 const COL_STATUS = "color_mm7t1s7a";
 const COL_MAIL = "text_mm7tase7";
 /*
@@ -250,6 +252,8 @@ export async function promoteFromMain(itemId: number) {
   /* הקישור נולד עם השורה, עדיין בלי שם רכזת — ומתמלא כשהיא משוייכת */
   const wa = waLink({ phone, participant: name });
   if (wa) vals[COL_WA] = { url: wa, text: `וואטסאפ ל${name.trim().split(/\s+/)[0]}` };
+  const noAnswer = waNoAnswerLink({ phone, participant: name });
+  if (noAnswer) vals[COL_WA_NOANSWER] = { url: noAnswer, text: "ניסיתי להתקשר" };
 
   const made = await monday<{ create_item: { id: string } }>(
     `mutation ($b: ID!, $n: String!, $v: JSON!) { create_item(board_id: $b, item_name: $n, column_values: $v) { id } }`,
@@ -263,7 +267,7 @@ export async function promoteFromMain(itemId: number) {
    פעם אחת בלבד הייתה שולחת מועמד ליומן של מישהי אחרת. */
 export async function rebuildWa(itemId: number) {
   const d = await monday<{ items: { name: string; column_values: { id: string; text: string | null }[] }[] }>(
-    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_PHONE}","${COL_COORD}"]) { id text } } }`
+    `{ items(ids: [${itemId}]) { name column_values(ids: ["${COL_PHONE}","${COL_COORD}","${COL_STATUS}"]) { id text } } }`
   );
   const item = d?.items?.[0];
   if (!item) return NextResponse.json({ ok: true, skipped: "item not found" });
@@ -287,13 +291,16 @@ export async function rebuildWa(itemId: number) {
   const value = link
     ? { url: link, text: `וואטסאפ ל${item.name.trim().split(/\s+/)[0]}` }
     : {};   // בלי טלפון תקין אין קישור — ולא קישור שבור
+  /* "ניסיתי להתקשר" — לא תלוי ביומן, רק בטלפון; הנוסח לפי הסטטוס */
+  const noAnswer = waNoAnswerLink({ phone: cv(COL_PHONE), participant: item.name, coordinator: coordName, status: cv(COL_STATUS) });
+  const noAnswerValue = noAnswer ? { url: noAnswer, text: "ניסיתי להתקשר" } : {};
 
   const ok = await monday(
     `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b,
        item_id: $i, column_values: $v) { id } }`,
-    { b: BOARD, i: itemId, v: JSON.stringify({ [COL_WA]: value }) }
+    { b: BOARD, i: itemId, v: JSON.stringify({ [COL_WA]: value, [COL_WA_NOANSWER]: noAnswerValue }) }
   );
-  return NextResponse.json({ ok: !!ok, link: !!link, coordinator: coordName || null });
+  return NextResponse.json({ ok: !!ok, link: !!link, noAnswer: !!noAnswer, coordinator: coordName || null });
 }
 
 /* ── מייל הפתיחה ─────────────────────────────────────────────────────────────

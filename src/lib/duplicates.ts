@@ -56,7 +56,7 @@ const LABEL: Record<Key, string> = {
   phone: "טלפון", email: "מייל", status: "סטטוס", coord: "רכז/ת", channel: "ערוץ", source: "איך הגיע/ה",
   city: "עיר", mailed: "מייל פתיחה נשלח", clicked: "לחץ/ה על הקישור", firstCall: "שיחה ראשונה", webinars: "וובינרים",
 };
-const STATUS_RANK = ["נרשמ/ה ללימודים", "סיימ/ה תהליך", "בתהליך פעיל", "נשלח קישור", "אין מענה 1", "לפני שיחה ראשונה"];
+const STATUS_RANK = ["נרשמ/ה ללימודים", "סיימ/ה תהליך", "בתהליך פעיל", "נשלח קישור", "אין מענה 2 - נשלח ווטסאפ", "אין מענה 1 - נשלח ווטסאפ", "אין מענה 1", "לפני שיחה ראשונה"];
 
 function score(r: DupRow): { n: number; why: string[] } {
   const why: string[] = []; let n = 0;
