@@ -723,7 +723,7 @@ export default function MarketingMysteryPage() {
           <button onClick={() => saveAndGo("/explore/marketing/experience")}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3 text-white"
             style={{ background: MKT, fontFamily: "'Heebo', sans-serif" }}>
-            מיציתי את הטעימה — לכלי עיבוד החוויה ←
+            מיציתי — לסיכום, ועוד 5 דקות הטעימה נספרת ←
           </button>
           <button onClick={() => saveAndGo("/explore/marketing")}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"

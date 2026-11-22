@@ -600,7 +600,7 @@ export default function AiMysteryPage() {
           <button onClick={() => saveAndGo("/explore/ai/experience")}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3 text-white"
             style={{ background: AI, fontFamily: "'Heebo', sans-serif" }}>
-            לכלי עיבוד החוויה ←
+            לסיכום — עוד 5 דקות והטעימה נספרת ←
           </button>
           <button onClick={() => saveAndGo("/explore")}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"

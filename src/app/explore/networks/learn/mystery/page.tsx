@@ -487,7 +487,7 @@ export default function NetworksMysteryPage() {
           <button onClick={() => saveAndGo("/explore/networks/experience")}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3 text-white"
             style={{ background: BLUE, fontFamily: "'Heebo', sans-serif" }}>
-            לכלי עיבוד החוויה ←
+            לסיכום — עוד 5 דקות והטעימה נספרת ←
           </button>
           <button onClick={() => saveAndGo("/explore")}
             className="block w-full text-center py-[14px] rounded-xl font-bold text-[15px] mb-3"

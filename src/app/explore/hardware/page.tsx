@@ -459,8 +459,8 @@ export default function HardwareDomainPage() {
               },
               {
                 num: "4", emoji: "💭",
-                title: "כלי עיבוד החוויה",
-                sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+                title: "הסיכום שלך — כאן הטעימה נספרת",
+                sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2",
                 href: "/explore/hardware/experience",
                 doneKey: "experience" as const, lockedBy: "mystery" as const,
               },

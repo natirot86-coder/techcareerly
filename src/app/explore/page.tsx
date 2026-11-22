@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/ui/BottomNav";
 import JourneyStrip from "@/components/ui/JourneyStrip";
-import { completedTastes, TASTES_FOR_MEETING_2 } from "@/lib/tastes";
+import { completedTastes, startedTastes, TASTES_FOR_MEETING_2 } from "@/lib/tastes";
 
 const HEEBO = { fontFamily: "'Heebo', sans-serif", fontWeight: 900 };
 const ORANGE = "#fb8500";
@@ -123,9 +123,17 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
 
 export default function ExplorePage() {
   const [completed, setCompleted] = useState<string[]>([]);
+  /** מי שהתחיל/ה ולא סיים/ה — "נשאר רק הסיכום" אחרי התעלומה, אחרת "התחלת" (22.11) */
+  const [partial, setPartial] = useState<Record<string, "summary" | "started">>({});
 
   useEffect(() => {
     setCompleted(completedTastes(localStorage));
+    const p: Record<string, "summary" | "started"> = {};
+    for (const d of startedTastes(localStorage)) {
+      try { p[d] = JSON.parse(localStorage.getItem(`${d}-journey`) || "{}").mystery ? "summary" : "started"; }
+      catch { p[d] = "started"; }
+    }
+    setPartial(p);
   }, []);
 
   return (
@@ -205,9 +213,12 @@ export default function ExplorePage() {
                     <div className="text-[11px] leading-[1.5] flex-1" style={{ color: "rgba(0,0,0,0.45)" }}>{domain.desc}</div>
                     <div
                       className="text-[11px] font-bold"
-                      style={{ color: isDone ? domain.color : "rgba(0,0,0,0.22)" }}
+                      style={{ color: isDone ? domain.color : partial[domain.id] ? "#c2410c" : "rgba(0,0,0,0.22)" }}
                     >
-                      {isDone ? "✓ עשית — כניסה חוזרת" : "לטעימה →"}
+                      {isDone ? "✓ עשית — כניסה חוזרת"
+                        : partial[domain.id] === "summary" ? "נשאר רק הסיכום — 5 דק' ←"
+                        : partial[domain.id] === "started" ? "התחלת — להמשיך ←"
+                        : "לטעימה →"}
                     </div>
                   </div>
                 </div>

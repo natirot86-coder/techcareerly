@@ -530,7 +530,7 @@ export default function UxMysteryPage() {
         <Link href="/explore/ux/experience"
           className="block w-full py-[14px] rounded-xl font-bold text-[15px] text-white mb-3 text-center"
           style={{ background: PINK, fontFamily: "'Heebo', sans-serif" }}>
-          להמשך — מה זה עשה לך? כלי עיבוד החוויה ←
+          להמשך — לסיכום, ועוד 5 דקות הטעימה נספרת ←
         </Link>
         <Link href="/explore/ux"
           className="block w-full py-[13px] rounded-xl font-bold text-[14px] text-center"

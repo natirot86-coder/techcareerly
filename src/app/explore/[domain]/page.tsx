@@ -419,8 +419,8 @@ function CodeContent() {
             },
             {
               num: "4", emoji: "💭",
-              title: "כלי עיבוד החוויה",
-              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              title: "הסיכום שלך — כאן הטעימה נספרת",
+              sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2",
               href: "/explore/code/experience",
               doneKey: "experience" as const, lockedBy: "mystery" as const,
             },
@@ -771,8 +771,8 @@ function CyberContent() {
             },
             {
               num: "4", emoji: "💭",
-              title: "כלי עיבוד החוויה",
-              sub: "שש שאלות · ~5 דק'",
+              title: "הסיכום שלך — כאן הטעימה נספרת",
+              sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2",
               href: "/explore/cyber/experience",
               doneKey: "experience" as const, lockedBy: "mystery" as const,
             },
@@ -986,7 +986,7 @@ function AIContent() {
           { emoji: "🤖", title: "טעימה — אמני מודל בעצמך", sub: "ללמד מודל להבדיל ביקורת חיובית משלילית · ~10 דק'", href: "/explore/ai/sim", doneKey: "sim", lockedBy: null },
           { emoji: "🥐", title: "יום בחיי מיישמ/ת AI", sub: "הצ'אטבוט של המאפייה — תדריך, הזיות, גדרות · ~15 דק'", href: "/explore/ai/learn/day", doneKey: "day", lockedBy: "sim" },
           { emoji: "🛠️", title: "מיני-פרויקט — העוזר של המרפאה", sub: "שלוש הגדרות שהופכות AI כללי לעוזר אמיתי · ~20 דק'", href: "/explore/ai/learn/mystery", doneKey: "mystery", lockedBy: "day" },
-          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/ai/experience", doneKey: "experience", lockedBy: "mystery" },
+          { emoji: "💭", title: "הסיכום שלך — כאן הטעימה נספרת", sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2", href: "/explore/ai/experience", doneKey: "experience", lockedBy: "mystery" },
         ]}
       />
 
@@ -1123,7 +1123,7 @@ function UXContent() {
           { emoji: "🎨", title: "טעימה — תקני את ה-wireframe", sub: "שלוש בעיות UX באפליקציית זימון תורים · ~10 דק'", href: "/explore/ux/sim", doneKey: "sim", lockedBy: null },
           { emoji: "🛒", title: "יום בחיי מעצב/ת מוצר", sub: "60% נוטשים בשדה הטלפון — למצוא למה ולתקן · ~15 דק'", href: "/explore/ux/learn/day", doneKey: "day", lockedBy: "sim" },
           { emoji: "🛠️", title: "מיני-פרויקט — עצבי את מסך הקבלה", sub: "מסך לגמ\"ח שכונתי שגם רחל בת ה-72 מבינה · ~20 דק'", href: "/explore/ux/learn/mystery", doneKey: "mystery", lockedBy: "day" },
-          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/ux/experience", doneKey: "experience", lockedBy: "mystery" },
+          { emoji: "💭", title: "הסיכום שלך — כאן הטעימה נספרת", sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2", href: "/explore/ux/experience", doneKey: "experience", lockedBy: "mystery" },
         ]}
       />
 
@@ -1354,8 +1354,8 @@ function DataContent() {
             {
               num: "4",
               emoji: "💭",
-              title: "כלי עיבוד החוויה",
-              sub: "6 שאלות קצרות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              title: "הסיכום שלך — כאן הטעימה נספרת",
+              sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2",
               href: "/explore/data/experience",
               doneKey: "experience" as const,
               lockedBy: "mystery" as const,
@@ -1595,7 +1595,7 @@ function MarketingContent() {
           { emoji: "📢", title: "טעימה — פצלי את התקציב", sub: "2,000 ₪ · שלושה ערוצים · יעד 500 לידים · ~10 דק'", href: "/explore/marketing/sim", doneKey: "sim", lockedBy: null },
           { emoji: "🏋️", title: "יום בחיי מנהל/ת שיווק", sub: "הסטודיו של מיכל — 667 ₪ לפנייה, ואיך מורידים ל-91 · ~15 דק'", href: "/explore/marketing/learn/day", doneKey: "day", lockedBy: "sim" },
           { emoji: "🛠️", title: "מיני-פרויקט — קמפיין ב-300 ₪", sub: "המספרה של יוסי — קהל, מסר, תמונה, ואיטרציה · ~20 דק'", href: "/explore/marketing/learn/mystery", doneKey: "mystery", lockedBy: "day" },
-          { emoji: "💭", title: "כלי עיבוד החוויה", sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'", href: "/explore/marketing/experience", doneKey: "experience", lockedBy: "mystery" },
+          { emoji: "💭", title: "הסיכום שלך — כאן הטעימה נספרת", sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2", href: "/explore/marketing/experience", doneKey: "experience", lockedBy: "mystery" },
         ]}
       />
 
@@ -1924,8 +1924,8 @@ function NetworksContent() {
             },
             {
               num: "4", emoji: "💭",
-              title: "כלי עיבוד החוויה",
-              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              title: "הסיכום שלך — כאן הטעימה נספרת",
+              sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2",
               href: "/explore/networks/experience",
               doneKey: "experience" as const, lockedBy: "mystery" as const,
             },
@@ -2227,8 +2227,8 @@ function QAContent() {
             },
             {
               num: "4", emoji: "💭",
-              title: "כלי עיבוד החוויה",
-              sub: "שש שאלות — מה הרגשת? מה הדליק? מה אחר כך? · ~5 דק'",
+              title: "הסיכום שלך — כאן הטעימה נספרת",
+              sub: "6 שאלות · ~5 דק'. התשובות מחכות לך ולרכז/ת בפגישה 2",
               href: "/explore/qa/experience",
               doneKey: "experience" as const, lockedBy: "mystery" as const,
             },

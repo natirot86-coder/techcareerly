@@ -235,7 +235,7 @@ export default function DataCoursesPage() {
             className="w-full py-[14px] rounded-xl font-bold text-[15px] text-white"
             style={{ background: TEAL, fontFamily: "'Heebo', sans-serif" }}
           >
-            קדימה לכלי עיבוד החוויה ←
+            קדימה לסיכום — עוד 5 דקות והטעימה נספרת ←
           </button>
         </div>
 

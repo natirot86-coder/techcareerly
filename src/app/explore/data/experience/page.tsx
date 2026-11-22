@@ -474,7 +474,7 @@ export default function ExperiencePage() {
       <div className="min-h-screen" style={{ background: "#fbf9f5" }} dir="rtl">
         <div className="text-white px-[22px] pt-[26px] pb-[30px]" style={{ background: NAVY }}>
           <div className="max-w-[720px] mx-auto">
-            <div className="text-[12px] mb-2" style={{ opacity: 0.55 }}>כלי עיבוד החוויה · דאטה ואנליטיקס</div>
+            <div className="text-[12px] mb-2" style={{ opacity: 0.55 }}>הסיכום שלך · דאטה ואנליטיקס</div>
             <div className="text-[26px] font-black leading-tight" style={HEEBO}>רגע לפני שנתחיל</div>
           </div>
         </div>
@@ -485,7 +485,7 @@ export default function ExperiencePage() {
               שש שאלות קצרות יעזרו לך להבין מה זה אמר לך — על העניין שלך, על הביטחון שלך, ועל האופן שבו את רואה את עצמך בתחום.
             </div>
             <div className="mt-2 text-[11.5px]" style={{ color: "rgba(0,0,0,0.38)" }}>
-              התשובות יגיעו לרכז/ת לפני הפגישה הבאה · לוקח כחמש דקות
+              כאן הטעימה נספרת · התשובות יגיעו לרכז/ת לפני הפגישה הבאה · כחמש דקות
             </div>
           </div>
           <div className="text-[20px] font-black mb-2" style={{ color: NAVY, ...HEEBO }}>איך לפנות אליך?</div>
@@ -521,7 +521,7 @@ export default function ExperiencePage() {
       <div className="min-h-screen" style={{ background: "#fbf9f5" }} dir="rtl">
         <div className="text-white px-[22px] pt-[26px] pb-[30px]" style={{ background: NAVY }}>
           <div className="max-w-[720px] mx-auto">
-            <div className="text-[12px] mb-2" style={{ opacity: 0.55 }}>כלי עיבוד החוויה · דאטה ואנליטיקס</div>
+            <div className="text-[12px] mb-2" style={{ opacity: 0.55 }}>הסיכום שלך · דאטה ואנליטיקס</div>
             <div className="text-[26px] font-black leading-tight" style={HEEBO}>הסיכום שלך ✓</div>
           </div>
         </div>

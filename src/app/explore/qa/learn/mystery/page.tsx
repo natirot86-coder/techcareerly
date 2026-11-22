@@ -169,7 +169,7 @@ function QAMysteryInner() {
           <Link href="/explore/qa/experience"
             className="block w-full py-4 rounded-2xl text-center text-[14.5px] font-black mb-3 transition-all active:scale-[0.98]"
             style={{ background: AMBER, color: "#fff", ...HEEBO }}>
-            לכלי עיבוד החוויה ←
+            לסיכום — עוד 5 דקות והטעימה נספרת ←
           </Link>
           <Link href="/explore/qa"
             className="block w-full py-3.5 rounded-2xl text-center text-[13px] font-bold"
