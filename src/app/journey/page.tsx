@@ -90,7 +90,7 @@ function buildStages(): { stages: Stage[]; current: number } {
         ...tasted.map(d => ({ label: `טעמת ${DOMAIN_HE[d]}`, done: true, href: `/explore/${d}` })),
         ...started.map(d => ({ label: `התחלת לטעום ${DOMAIN_HE[d]} — נשאר לסיים`, done: false, href: `/explore/${d}` })),
         ...(tasted.length < TASTES_FOR_MEETING_2
-          ? [{ label: `עוד ${TASTES_FOR_MEETING_2 - tasted.length} טעימות שלמות והפגישה נפתחת`, done: false, href: "/explore" }]
+          ? [{ label: TASTES_FOR_MEETING_2 - tasted.length === 1 ? "עוד טעימה שלמה אחת והפגישה נפתחת" : `עוד ${TASTES_FOR_MEETING_2 - tasted.length} טעימות שלמות והפגישה נפתחת`, done: false, href: "/explore" }]
           : []),
         { label: "סיכמת את הטעימות", done: has("explore-results"), href: "/explore/results" },
       ],
