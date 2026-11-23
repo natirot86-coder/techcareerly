@@ -173,6 +173,20 @@ html { scroll-behavior: smooth; }
 .shots img { width: 200px; max-width: 100%; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
 .shots figcaption { font-size: 13px; color: var(--muted); line-height: 1.5; }
 </style>
+<style>
+.calguide { display: flex; flex-direction: column; gap: 22px; margin-block-start: 8px; }
+.cstep { display: flex; flex-direction: column; gap: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.cstep h4 { margin: 0; font-size: 17px; color: var(--navy); }
+.cstep ul { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 6px; }
+.anno { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.anno.narrow { max-width: 360px; }
+.anno img { display: block; width: 100%; height: auto; }
+.anno i { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%; background: #e26a00; color: #fff; font: 900 15px/30px var(--font-body); font-style: normal; text-align: center; border: 3px solid #fff; box-shadow: 0 0 0 3px rgba(226,106,0,.35), 0 2px 8px rgba(0,0,0,.3); }
+.cap { font-size: 15px; }
+.titles li { font-size: 14.5px; background: var(--navy-soft); border-radius: 8px; padding: 6px 10px; list-style: none; }
+.titles { padding-inline-start: 0 !important; }
+@media (max-width: 520px) { .anno i { width: 22px; height: 22px; font-size: 12px; line-height: 22px; border-width: 2px; } }
+</style>
 <div class="wrap" dir="rtl" lang="he">
   <header>
     <div class="eyebrow">אינטק · טק-קריירה · טיוטה לעיון של מאיה</div>
@@ -186,7 +200,7 @@ html { scroll-behavior: smooth; }
     <a href="#m1">פגישה 1</a><a href="#b12">בין 1 ל-2</a><a href="#m2">פגישה 2</a><a href="#b23">בין 2 ל-3</a>
     <a href="#m3">פגישה 3</a><a href="#after3">עד ההרשמה</a><a href="#screen">מסך הרכזים ושגרת בוקר</a>
     <a href="#monday">מאנדיי</a><a href="#events">אירועים</a><a href="#whatif">מה עושים במקרה כזה?</a>
-    <a href="#fix">איך פותרים את הבעיה?</a><a href="#setup">הקמה טכנית</a><a href="#practice">תרגול חובה</a><a href="#ask">את מי שואלים</a>
+    <a href="#fix">איך פותרים את הבעיה?</a><a href="#setup">הקמה טכנית</a><a href="#cal">מדריך Cal</a><a href="#practice">תרגול חובה</a><a href="#ask">את מי שואלים</a>
   </nav>
 
   <div class="part" id="who">
@@ -989,14 +1003,89 @@ html { scroll-behavior: smooth; }
     <div class="table-wrap"><table>
       <thead><tr><th>מה</th><th>מי</th></tr></thead>
       <tbody>
-        <tr><td><b>חשבון Cal</b> עם מייל העבודה (כניסה עם Microsoft), חיבור יומן Outlook, ושלוש פגישות: "פגישה 1: …", "פגישה 2: …", "פגישה 3: …". כל אחת עם שדה טלפון חובה. פגישות 2 ו-3 מוסתרות מדף הפרופיל. מגבלת הזמנות</td><td>הרכז/ת, לפי המדריך שבהמשך</td></tr>
+        <tr><td><b>חשבון Cal</b> עם מייל העבודה (כניסה עם Microsoft), יומן Outlook, Zoom Pro, ושלוש פגישות שהכותרת שלהן כוללת "ראשונה", "שנייה" ו"שלישית". טלפון חובה, ופגישות 2 ו-3 מוסתרות מדף הפרופיל</td><td>הרכז/ת, לפי <a href="#cal">המדריך שבהמשך</a></td></tr>
         <tr><td><b>webhook ב-Cal</b>, עם הסוד המשותף. כך הפגישות נכנסות למערכת</td><td>נתי</td></tr>
         <tr><td><b>רשומה בסגל:</b> שם כמו בתווית במאנדיי, מייל זהה למייל של ה-Cal, טלפון, "מלווה משתתפים", משקל במכסה, ושלושת קישורי היומן</td><td>נתי</td></tr>
         <tr><td><b>מאנדיי:</b> גישה ללוח, תווית בעמודת "רכז/ת אחראי", ותצוגה שמורה</td><td>מאיה, ונתי לתצוגה</td></tr>
         <tr><td><b>כניסה למסך הרכזים</b> עם הטלפון (הטלפון בסגל)</td><td>נבדק יחד ביום הראשון</td></tr>
       </tbody>
     </table></div>
-    <p class="shot">מדריך Cal שלב אחרי שלב, עם צילומי מסך מסומנים, יתווסף כאן</p>
+    <div class="calguide" id="cal">
+      <h3>מדריך Cal: פתיחת יומן לרכז/ת חדש/ה</h3>
+      <p class="note">כ-30 דקות, פעם אחת. העיגולים הכתומים על הצילומים מסמנים איפה לוחצים, לפי המספר בטקסט. הצילומים מחשבון דמו, ולכן כתוב בהם "שם הרכז/ת".</p>
+
+      <div class="cstep">
+        <h4>1. פותחים חשבון עם Microsoft</h4>
+        <p>נכנסים ל-<b>app.cal.com</b> ← <b>①</b> "צור חשבון" ← <b>②</b> "המשך עם Microsoft" (נראה כמו הכפתור בצילום) ← המייל של העבודה (למשל mimif@tech-career.org). <b>לא Google ולא מייל אישי:</b> המייל של חשבון ה-Cal חייב להיות זהה למייל בסגל, אחרת הפגישות שלך לא יזוהו.</p>
+        <div class="anno"><img src="img/cal-01-login.jpg" alt="מסך הכניסה של Cal" loading="lazy"><i style="left:55.5%;top:88%">1</i><i style="left:50%;top:34%">2</i></div>
+        <div class="anno"><img src="img/cal-02-microsoft.jpg" alt="כניסה למיקרוסופט" loading="lazy"><i style="left:50%;top:39%">3</i></div>
+        <p class="cap">③ המייל של העבודה, ואחריו הסיסמה הרגילה של המחשב בעמותה.</p>
+      </div>
+
+      <div class="cstep">
+        <h4>2. סוג החשבון: "לשימוש אישי · חינם"</h4>
+        <div class="anno"><img src="img/cal-03-plan.jpg" alt="בחירת סוג חשבון" loading="lazy"><i style="left:78%;top:35.6%">1</i><i style="left:64.2%;top:89.8%">2</i></div>
+        <p class="cap">① לשימוש אישי ← ② המשך. לא האפשרויות בתשלום.</p>
+      </div>
+
+      <div class="cstep">
+        <h4>3. השם והקישור</h4>
+        <div class="anno"><img src="img/cal-04-profile.jpg" alt="שם וקישור" loading="lazy"><i style="left:78%;top:47%">1</i><i style="left:78%;top:59%">2</i><i style="left:64%;top:90%">3</i></div>
+        <p class="cap">① <b>השם המלא</b>, כמו שהוא מופיע בעמודת "רכז/ת אחראי" במאנדיי. ② <b>הקישור באנגלית</b>, שם פרטי ושם משפחה, למשל <span dir="ltr">mimi-pardo</span>. קישור בעברית נראה בוואטסאפ כמו רצף סימנים. תמונת פרופיל מומלצת: המשתתפים רואים אותה כשהם קובעים. ③ המשך.</p>
+      </div>
+
+      <div class="cstep">
+        <h4>4. חיבור יומן Outlook</h4>
+        <div class="anno"><img src="img/cal-05-calendar.jpg" alt="חיבור יומן" loading="lazy"><i style="left:86%;top:56%">1</i><i style="left:64.8%;top:88.6%">2</i></div>
+        <p class="cap">① <b>Outlook Calendar</b> ← להתחבר, עד שכתוב "מחובר". כך Cal לא יקבע פגישה על זמן תפוס, והפגישות ייכנסו ל-Outlook שלך. ② המשך. לא מחברים את Google.</p>
+      </div>
+
+      <div class="cstep">
+        <h4>5. כלי הפגישות</h4>
+        <div class="anno"><img src="img/cal-06-video.jpg" alt="בחירת כלי וידאו" loading="lazy"><i style="left:65.9%;top:67.2%">1</i><i style="left:62.9%;top:90.9%">2</i></div>
+        <p class="cap">① <b>Zoom Video</b> ← להתחבר, עם <b>חשבון Zoom Pro</b>. ב-Zoom חינמי הפגישה נחתכת אחרי 40 דקות, והפגישות שלנו 60. ② סיום. <span class="v">⏳</span> אין עדיין Zoom Pro? עד שיגיע, Microsoft Teams עם מייל העבודה (שלב 8).</p>
+      </div>
+
+      <div class="cstep">
+        <h4>6. לאשר את המייל, ולהגדיר זמינות</h4>
+        <ul>
+          <li>בראש המסך מופיע פס כתום, "יש לאמת את כתובת הדוא"ל". <b>לוחצים על הקישור שהגיע לתיבה.</b> בלי זה Cal לא שולח לך התראות על פגישות</li>
+          <li><b>זמינות</b> (בתפריט): ברירת המחדל היא שני עד שישי. <b>מכבים שישי, מדליקים ראשון</b>, ומשאירים רק את השעות שבהן באמת אפשר לקבוע. <span class="v">📷 צילום יתווסף</span></li>
+        </ul>
+      </div>
+
+      <div class="cstep">
+        <h4>7. שלוש הפגישות</h4>
+        <p>בתפריט "קישורים" ← "חדש", שלוש פעמים. <b>הכותרת חייבת לכלול "ראשונה", "שנייה" או "שלישית"</b>. לפי המילה הזו המערכת יודעת איזו פגישה נקבעה. הכי פשוט להעתיק את הכותרות של סיון:</p>
+        <ul class="titles">
+          <li>פגישה ראשונה עם רכז/ת החשיפה - היכרות, תוכנית עבודה ויציאה לחקר תחומי הייטק</li>
+          <li>פגישה שנייה עם רכז/ת החשיפה - בחירת תחום הייטק ויציאה לחקר מסלולי לימוד</li>
+          <li>פגישה שלישית עם רכז/ת החשיפה - בחירת מסלול לימודים והכנה להרשמה ללימודים</li>
+        </ul>
+        <div class="anno"><img src="img/cal-07-event.jpg" alt="הגדרות פגישה" loading="lazy"><i style="left:73%;top:13%">1</i><i style="left:73%;top:40.4%">2</i><i style="left:73%;top:51.2%">3</i><i style="left:73.5%;top:65.8%">4</i><i style="left:73%;top:88%">5</i><i style="left:97%;top:25.2%">6</i><i style="left:96.8%;top:51.2%">7</i></div>
+        <p class="cap">① הכותרת. ② כתובת באנגלית: <span dir="ltr">meeting-1</span>, <span dir="ltr">meeting-2</span>, <span dir="ltr">meeting-3</span>. ③ משך: <b>60 דקות</b>. ④ מיקום: <b>Zoom</b>. ⑤ "הוספה ללוח השנה": ה-Outlook שלך. בסוף לוחצים "שמירה" (למעלה משמאל).</p>
+        <p class="cap">⑥ <b>טופס הזמנה:</b> שדה הטלפון כחובה. ⑦ <b>מגבלות ומרווחים:</b> לפחות 15 שעות מראש, ומגבלת הזמנה אחת פעילה לכל מזמין/ה. <b>את המגבלה הזו מגדירים רק כאן.</b> <span class="v">📷 צילומים יתווספו</span></p>
+        <p class="cap"><b>פגישות 2 ו-3 מסתירים מדף הפרופיל:</b> ברשימת "קישורים", המתג שליד הפגישה. הקישורים הישירים ממשיכים לעבוד. ההסתרה רק מונעת ממשתתף/ת לקבוע פגישה 2 לפני הטעימות דרך דף הפרופיל.</p>
+      </div>
+
+      <div class="cstep">
+        <h4>8. חיבור Zoom (אם לא חובר בשלב 5)</h4>
+        <div class="anno"><img src="img/cal-08-apps.jpg" alt="חנות אפליקציות" loading="lazy"><i style="left:43.9%;top:34.7%">1</i><i style="left:15.5%;top:34.7%">T</i></div>
+        <p class="cap">"אפליקציות" ← "חנות אפליקציות" ← Conferencing ← ① <b>Zoom Video</b> ← פרטים. <b>Ⓣ</b> אין Zoom Pro? <b>Microsoft 365/Teams</b>: אין בו מגבלת זמן, ואת/ה המארח/ת.</p>
+        <div class="anno"><img src="img/cal-09-zoom.jpg" alt="התקנת Zoom" loading="lazy"><i style="left:34%;top:26.5%">2</i></div>
+        <div class="anno narrow"><img src="img/cal-10-zoom-login.jpg" alt="כניסה ל-Zoom" loading="lazy"><i style="left:48%;top:22.5%">3</i></div>
+        <p class="cap">② התקנת האפליקציה ← ③ נכנסים ל-Zoom כמו שנכנסים אליו תמיד ← Allow. אחר כך בוחרים Zoom כמיקום <b>בכל אחת משלוש הפגישות</b>.</p>
+      </div>
+
+      <div class="cstep">
+        <h4>9. מה שולחים לנתי</h4>
+        <ul>
+          <li><b>שלושת הקישורים</b> לפגישות: אייקון השרשרת ליד כל פגישה ברשימת "קישורים"</li>
+          <li><b>מפתח API:</b> הגדרות ← מפתחים ← API Keys ← יצירה. <b>לא שולחים אותו בוואטסאפ או במייל.</b> נותנים לנתי בשיחה, והוא שומר אותו</li>
+          <li>נתי מגדיר את ה-webhook ומפעיל אותך בסגל. עד שזה נעשה, משתתפים לא יראו את היומן שלך</li>
+        </ul>
+      </div>
+    </div>
     <h3>כשרכז/ת יוצא/ת לחופשה</h3>
     <p><span class="v">⏳ לאימות</span> מי מחליף/ה ברכזות הקליטה, למי עוברים המשתתפים הפתוחים, ומאיזה תאריך נסגר היומן (נשאל במייל למאיה).</p>
   </div>
