@@ -146,6 +146,35 @@ async function resolveCoordLabel(name: string | null | undefined): Promise<strin
  *
  * מחזיר `"updated" | "created" | "skipped" | null` (null = האינטגרציה כבויה).
  */
+/**
+ * אישור לימודים הועלה באפליקציה ⇐ "נרשמ/ה ללימודים" בלוח (נתי, 23.11).
+ * לפי טלפון או מייל. לא נוגע במי שכבר "נרשמ/ה" או "דיווח בלבד". גובר על
+ * כל סטטוס אחר — אישור לימודים הוא עובדה, לא הצהרה. לא יוצר שורה: מי
+ * שמעלה אישור כבר אימת/ה טלפון, ו-ensureBoardRows דואג/ת לשורה.
+ */
+export async function mondayMarkEnrolled(p: { phone?: string | null; email?: string | null; dry?: boolean }):
+  Promise<{ result: "updated" | "would-update" | "already" | "no-row" | "skipped"; item?: string; from?: string } | null> {
+  const phone = normPhone(p.phone);
+  const email = (p.email ?? "").trim().toLowerCase();
+  if (!phone && !email) return { result: "skipped" };
+  const data = await gql<{ boards: { items_page: { items: Item[] } }[] }>(
+    `{ boards(ids: ${BOARD}) { items_page(limit: 500) { items { id name
+       column_values(ids: ["${COL.phone}","${COL.email}","${COL.status}"]) { id text } } } } }`
+  );
+  if (!data) return null;
+  const hit = (data.boards?.[0]?.items_page?.items ?? []).find(it =>
+    (phone && normPhone(cv(it, COL.phone)) === phone) || (email && cv(it, COL.email).toLowerCase() === email));
+  if (!hit) return { result: "no-row" };
+  const now = cv(hit, COL.status);
+  if (now === STATUS.enrolled || now === STATUS.reportOnly) return { result: "already", item: hit.id, from: now };
+  if (p.dry) return { result: "would-update", item: hit.id, from: now };
+  const ok = await gql(
+    `mutation ($b: ID!, $i: ID!, $v: JSON!) { change_multiple_column_values(board_id: $b, item_id: $i, column_values: $v) { id } }`,
+    { b: BOARD, i: hit.id, v: JSON.stringify({ [COL.status]: { label: STATUS.enrolled } }) }
+  );
+  return ok ? { result: "updated", item: hit.id, from: now } : null;
+}
+
 export async function mondayMarkActive(p: {
   phone?: string;
   email?: string;

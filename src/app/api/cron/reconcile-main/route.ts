@@ -26,6 +26,7 @@ import { flushStaleNotices } from "@/lib/linkSentGuard";
 import { scanBounces } from "@/lib/bounces";
 import { runDuplicateMarks } from "@/app/api/cron/duplicates/route";
 import { syncAdminLinks } from "@/lib/adminLinks";
+import { syncEnrollments } from "@/app/api/candidate/enrollment-uploaded/route";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -142,7 +143,10 @@ export async function GET(req: NextRequest) {
   const adminLinks = process.env.ADMIN_LINKS_LIVE === "1" && url && key
     ? await syncAdminLinks(createClient(url, key, { auth: { persistSession: false } }), { dry: req.nextUrl.searchParams.has("dry") })
     : { skipped: "ADMIN_LINKS_LIVE not set" };
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces, duplicates, adminLinks });
+  /* אישור לימודים באפליקציה ⇐ "נרשמ/ה ללימודים" — אם הקריאה אחרי ההעלאה נכשלה (23.11) */
+  const enrollments = process.env.ENROLL_SYNC_LIVE === "1"
+    ? await syncEnrollments(req.nextUrl.searchParams.has("dry")) : { skipped: "ENROLL_SYNC_LIVE not set" };
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces, duplicates, adminLinks, enrollments });
 }
 
 /*

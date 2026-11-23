@@ -755,6 +755,14 @@ export async function uploadEnrollmentDoc(file: File): Promise<string | null> {
   if (error) { console.error("uploadEnrollmentDoc failed", error); return null; }
   logEvent("enrollment_doc_uploaded", {});
   try { localStorage.setItem("enrollment-doc-path", path); } catch { }
+  /* "נרשמ/ה ללימודים" בלוח — השרת בודק בעצמו שהקובץ קיים (23.11). לא חוסם */
+  void (async () => {
+    try {
+      const { data: { session } } = await supabase!.auth.getSession();
+      if (session?.access_token) await fetch("/api/candidate/enrollment-uploaded", {
+        method: "POST", headers: { Authorization: `Bearer ${session.access_token}` } });
+    } catch { /* בדיקת הבוקר משלימה (ENROLL_SYNC_LIVE) */ }
+  })();
   return path;
 }
 
