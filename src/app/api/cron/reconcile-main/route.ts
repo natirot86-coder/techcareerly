@@ -25,6 +25,7 @@ import { ensureAllVerifiedOnBoard } from "@/lib/ensureBoardRows";
 import { flushStaleNotices } from "@/lib/linkSentGuard";
 import { scanBounces } from "@/lib/bounces";
 import { runDuplicateMarks } from "@/app/api/cron/duplicates/route";
+import { syncAdminLinks } from "@/lib/adminLinks";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -137,7 +138,11 @@ export async function GET(req: NextRequest) {
   /* "חשד לכפילות" בשורות — רק אחרי אישור ההרצה הראשונה (2.11) */
   const duplicates = process.env.DUP_MARK_LIVE === "1"
     ? await runDuplicateMarks(req.nextUrl.searchParams.has("dry")) : { skipped: "DUP_MARK_LIVE not set" };
-  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces, duplicates });
+  /* "פתח במסך הרכזים" בשורה של כל מי שנרשם/ה (23.11) — רק אחרי אישור ההרצה הראשונה */
+  const adminLinks = process.env.ADMIN_LINKS_LIVE === "1" && url && key
+    ? await syncAdminLinks(createClient(url, key, { auth: { persistSession: false } }), { dry: req.nextUrl.searchParams.has("dry") })
+    : { skipped: "ADMIN_LINKS_LIVE not set" };
+  return NextResponse.json({ ok: true, checked: main.length, created, skipped, mirror, history, direct, drained, notices, bounces, duplicates, adminLinks });
 }
 
 /*

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { ensureBoardRowFor } from "@/lib/ensureBoardRows";
+import { syncAdminLinks } from "@/lib/adminLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -25,5 +26,7 @@ export async function POST(req: NextRequest) {
 
   const db = createClient(url, secret, { auth: { persistSession: false } });
   const res = await ensureBoardRowFor(db, user.id);
+  /* קישור למסך הרכזים בשורה — מיד, ולא רק בבוקר (23.11) */
+  if (process.env.ADMIN_LINKS_LIVE === "1") await syncAdminLinks(db, { dry: false, candidateId: user.id });
   return NextResponse.json({ ok: !!res, ...(res ?? { result: "monday unavailable" }) });
 }
