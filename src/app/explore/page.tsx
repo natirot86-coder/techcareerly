@@ -47,7 +47,7 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
           <div className="flex items-center gap-2">
             <span className="text-[18px]">{unlocked ? "🎯" : "🔒"}</span>
             <div className="text-[14px]" style={{ ...HEEBO, color: unlocked ? "#92400e" : "rgba(0,0,0,0.55)" }}>
-              שיחה עם הרכזת
+              שיחה עם הרכז/ת
             </div>
           </div>
           {/*
@@ -107,14 +107,14 @@ function MeetingCard({ doneCount }: { doneCount: number }) {
           className="block w-full py-3.5 text-center font-black text-[14px] text-white transition-all active:scale-[0.98]"
           style={{ background: ORANGE, ...HEEBO }}
         >
-          הכנה לפגישה עם הרכזת ←
+          הכנה לפגישה עם הרכז/ת ←
         </Link>
       ) : (
         <div
           className="py-3.5 text-center text-[12.5px] font-bold"
           style={{ background: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.22)" }}
         >
-          נפתח אחרי {Math.max(0, TASTES_FOR_MEETING_2 - doneCount)} טעימות נוספות
+          {TASTES_FOR_MEETING_2 - doneCount === 1 ? "נפתח אחרי עוד טעימה אחת" : `נפתח אחרי ${Math.max(0, TASTES_FOR_MEETING_2 - doneCount)} טעימות נוספות`}
         </div>
       )}
     </div>
