@@ -271,6 +271,11 @@ export default function JourneyPage() {
           <div className="h-2 rounded-full mt-3 overflow-hidden" style={{ background: "rgba(255,255,255,0.18)" }}>
             <div className="h-full rounded-full" style={{ width: `${(doneCount / allStops.length) * 100}%`, background: ORANGE, transition: "width .6s" }} />
           </div>
+          {/* מפת המסע ברמה גבוהה — מה באפליקציה ומה עם הרכז/ת (23.11) */}
+          <Link href={cachedCohort() === "alumni" ? "/how-it-works?cohort=alumni" : "/how-it-works"}
+            className="inline-block text-[12.5px] font-bold mt-3" style={{ color: "#fff", opacity: 0.8 }}>
+            איך בנוי המסע? ←
+          </Link>
         </div>
       </div>
 

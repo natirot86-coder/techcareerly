@@ -46,7 +46,7 @@ function deriveStage(): number {
     : 1;
 }
 
-const SKIP = ["/admin", "/map", "/reset", "/login", "/api"];
+const SKIP = ["/admin", "/map", "/reset", "/login", "/api", "/how-it-works"];
 export const LAST_LOCATION_KEY = "last-location";
 
 export default function ResumeTracker() {
