@@ -44,6 +44,17 @@ export async function POST(req: NextRequest) {
   const db = createClient(url, secret, { auth: { persistSession: false } });
   /* הטלפון הגיע מ-OTP ⇒ מאומת. עד 12.10 אף קוד לא כתב true, ומסך הרכזת הראה "הוקלד ידנית" למי שאימת */
   await db.from("candidates").update({ phone_verified: true }).eq("id", user.id);
+  /*
+    טלפון של מישהו/י מהסגל ⇒ משתמש/ת בדיקה (23.11). רכזים מתרגלים את המסע
+    כמשתתפים; בלי זה כל אחד/ת קיבל/ה שורה בלוח ("נרשם ישירות") ונספר/ה
+    במספרים — קרה עם שי ומאיה. כאן ולא בכל צרכן בנפרד: is_test כבר מסונן
+    בלוח, באנליטיקות ובקישורים. לפי הסגל כולו, גם רשומה כבויה (רכזת בהקמה).
+  */
+  if (phone) {
+    const { data: staff } = await db.from("coordinators").select("phone");
+    const staffPhones = new Set((staff ?? []).map(s => normalizePhone(String(s.phone ?? ""))).filter(Boolean));
+    if (staffPhones.has(phone)) await db.from("candidates").update({ is_test: true }).eq("id", user.id);
+  }
 
   const { data: rosterRow, error: rosterError } = await db
     .from("alumni_roster")
