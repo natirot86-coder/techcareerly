@@ -1581,6 +1581,13 @@ export default function CoordinatorPage() {
   const [showPre, setShowPre] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  /*
+    "מי צריך אותי היום" אצל מאיה (נתי, 23.11): של מי כל אחד/ת, סינון לפי רכז/ת,
+    ומיון חלופי. ברירת המחדל נשארת דחיפות — היא משלבת את כל הסיגנלים, וימים
+    בלי כניסה לבד היו מקדימים "נעלם/ה חודש" על "לא הגיע/ה לפגישה אתמול".
+  */
+  const [queueSort, setQueueSort] = useState<"urgency" | "idle" | "stuck">("urgency");
+  const [queueCoord, setQueueCoord] = useState<string | null>(null);
   // מסע הלקוח: לחיצה על שם בטאב "כל המשתתפים" פותחת את המפה של האדם
   const [journeyFor, setJourneyFor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -2131,7 +2138,41 @@ export default function CoordinatorPage() {
           </div>
         )}
 
-        {!journeyFor && tab === "queue" && data?.needsAttention.map(p => {
+        {!journeyFor && tab === "queue" && data && data.needsAttention.length > 0 && (() => {
+          const allView = !data.viewingAs && (data.role === "manager" || data.role === "owner");
+          const coords = Array.from(new Set(data.needsAttention.map(p => p.coordinatorName ?? "")));
+          const chip = (on: boolean) => ({ border: "none", cursor: "pointer", fontSize: 12.5, fontWeight: 800, borderRadius: 999, padding: "5px 12px",
+            background: on ? NAVY : "rgba(2,62,138,0.07)", color: on ? "#fff" : NAVY, fontFamily: "'Heebo', sans-serif" });
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", fontWeight: 700 }}>מיון:</span>
+                {([["urgency", "דחיפות"], ["idle", "הכי הרבה ימים בלי כניסה"], ["stuck", "הכי הרבה ימים בלי התקדמות"]] as const).map(([k, l]) => (
+                  <button key={k} onClick={() => setQueueSort(k)} style={chip(queueSort === k)}>{l}</button>
+                ))}
+              </div>
+              {allView && coords.length > 1 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  <span style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", fontWeight: 700 }}>אצל מי:</span>
+                  <button onClick={() => setQueueCoord(null)} style={chip(queueCoord === null)}>כולם ({data.needsAttention.length})</button>
+                  {coords.map(c => (
+                    <button key={c || "none"} onClick={() => setQueueCoord(c)} style={chip(queueCoord === c)}>
+                      {c ? c.split(" ")[0] : "ללא רכז/ת"} ({data.needsAttention.filter(p => (p.coordinatorName ?? "") === c).length})
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {!journeyFor && tab === "queue" && data && (() => {
+          const t = (x: string | null) => x ? new Date(x).getTime() : 0;
+          const list = data.needsAttention.filter(p => queueCoord === null || (p.coordinatorName ?? "") === queueCoord);
+          return queueSort === "idle" ? [...list].sort((a, b) => t(a.lastActive) - t(b.lastActive))
+            : queueSort === "stuck" ? [...list].sort((a, b) => t(a.lastAction) - t(b.lastAction))
+            : list;
+        })().map(p => {
           const sev = SEV_META[p.signals[0]?.severity ?? 3];
           const isOpen = open === p.id;
           const grouped = groupSignals(p.signals);
@@ -2147,8 +2188,16 @@ export default function CoordinatorPage() {
                     {p.anonymous && <span style={{ fontWeight: 700, color: "rgba(0,0,0,0.3)" }}> #{p.id.slice(-4)}</span>}
                   </span>
                   {p.anonymous && <span style={{ fontSize: 10.5, color: "rgba(0,0,0,0.35)" }}>עוד לא השלים/ה שאלון</span>}
+                  {/* של מי — רק אצל מי שרואה את כולם; "ללא רכז/ת" בכתום (23.11) */}
+                  {!data.viewingAs && (data.role === "manager" || data.role === "owner") && (
+                    <span style={{ fontSize: 11.5, fontWeight: 800, padding: "2px 8px", borderRadius: 999,
+                      background: p.coordinatorName ? "rgba(2,62,138,0.07)" : "#fff7ec", color: p.coordinatorName ? NAVY : "#b45309" }}>
+                      {p.coordinatorName ? `רכז/ת: ${p.coordinatorName.split(" ")[0]}` : "ללא רכז/ת"}
+                    </span>
+                  )}
                   <span style={{ fontSize: 11.5, color: "rgba(0,0,0,0.4)" }}>
                     שלב {p.stage}{p.region ? ` · ${p.region}` : ""}{p.domain ? ` · ${p.domain}` : ""}
+                    {` · נכנס/ה ${ago(p.lastActive)}`}
                   </span>
                 </div>
                 <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
