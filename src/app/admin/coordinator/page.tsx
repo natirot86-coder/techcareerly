@@ -34,7 +34,7 @@ const MEETING_LENGTH_MS = 60 * 60 * 1000;
 */
 const FILTER_LABEL: Record<string, { title: string; hint: string }> = {
   before: { title: "לפני שיחה ראשונה", hint: "עוד לא דיברו איתם. מי שהשתתף/ה בוובינר מופיע/ה ראשון/ה" },
-  unknown: { title: "מאיפה הגיעו?", hint: "קבעו פגישה בלי לעבור במאנדיי — רק הרכז/ת יכול/ה לברר" },
+  unknown: { title: "מאיפה הגיעו?", hint: "שורות בלוח בלי \"מאיפה הגיע/ה\" — חלקן נוצרו מעצמן כשמישהו/י קבע/ה ביומן בלי שורה, חלקן נוספו ידנית. כדאי להשלים" },
   stuck: { title: "סומן ולא נשלח", hint: "\"נשלח קישור\" בלי רכז/ת — המייל לא יצא" },
   hot: { title: "ליד חם — השתתפו בוובינר", hint: "ועוד מחכים לשיחה ראשונה. להתקשר קודם" },
   ls_noclick: { title: "לא לחצו על הקישור", hint: "קיבלו קישור ולא לחצו. כדאי לבדוק שהמייל בכלל יצא" },
@@ -1854,7 +1854,7 @@ export default function CoordinatorPage() {
           });
           const unknownSrc = board.filter(r => !r.source || r.source === "לא ידוע עדיין");
           if (unknownSrc.length) cards.push({
-            n: unknownSrc.length, label: "מאיפה הגיעו?", hint: "קבעו פגישה בלי לעבור במאנדיי",
+            n: unknownSrc.length, label: "מאיפה הגיעו?", hint: "חסר \"מאיפה הגיע/ה\" בלוח",
             key: "unknown", warn: true,
           });
 
