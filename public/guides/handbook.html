@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>תיק חפיפה אינטק</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column; a proportional 60-minute strip is the spine, each block below it keyed to its colour. */
+:root {
+  --bg: #f7f5f0;
+  --paper: #ffffff;
+  --ink: #1c2431;
+  --muted: #5d6573;
+  --line: #e4dfd5;
+  --navy: #023e8a;
+  --orange: #e27600;
+  --orange-soft: #fff1e0;
+  --navy-soft: #e9f0fa;
+  --verify: #8a5a00;
+  --verify-bg: #fff6d6;
+  --red: #b42318;
+  --red-soft: #fdecea;
+  --b1: #023e8a; --b2: #2f6db5; --b3: #e27600; --b4: #f2a541; --b5: #6b7a90;
+  --font-body: "Heebo", "Arial Hebrew", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161f; --paper: #19202c; --ink: #e8ebf0; --muted: #a2abb9; --line: #2c3544;
+    --navy: #8db8f2; --orange: #ffa64d; --orange-soft: #33261a; --navy-soft: #1c2a40;
+    --verify: #f5cf6b; --verify-bg: #2f2812; --red: #ff8f85; --red-soft: #3a1d1b;
+    --b1: #4f8de0; --b2: #7aa9e6; --b3: #ff9a33; --b4: #f5bd6b; --b5: #8d9ab0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161f; --paper: #19202c; --ink: #e8ebf0; --muted: #a2abb9; --line: #2c3544;
+  --navy: #8db8f2; --orange: #ffa64d; --orange-soft: #33261a; --navy-soft: #1c2a40;
+  --verify: #f5cf6b; --verify-bg: #2f2812; --red: #ff8f85; --red-soft: #3a1d1b;
+  --b1: #4f8de0; --b2: #7aa9e6; --b3: #ff9a33; --b4: #f5bd6b; --b5: #8d9ab0;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; }
+.wrap { max-width: 760px; margin-inline: auto; padding-inline: 18px; padding-block: 28px 64px; display: flex; flex-direction: column; gap: 34px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h2 { font-size: 21px; font-weight: 900; color: var(--navy); }
+h3 { font-size: 16px; font-weight: 700; }
+p { margin: 0; }
+section { display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; color: var(--orange); }
+
+/* header */
+header { display: flex; flex-direction: column; gap: 10px; padding-block-end: 22px; border-block-end: 2px solid var(--navy); }
+header h1 { font-size: clamp(28px, 6vw, 38px); font-weight: 900; line-height: 1.2; color: var(--ink); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 700; }
+.goal { background: var(--navy-soft); border-radius: 12px; padding: 14px 16px; font-size: 16.5px; }
+.goal b { color: var(--navy); }
+
+/* verify chip */
+.v { display: inline-block; font-size: 12.5px; font-weight: 700; color: var(--verify); background: var(--verify-bg); border-radius: 6px; padding: 1px 8px; white-space: nowrap; }
+.legend { font-size: 13.5px; color: var(--muted); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+
+/* checklist */
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.checks li { display: flex; gap: 10px; align-items: baseline; }
+.checks li::before { content: ""; flex: none; width: 14px; height: 14px; border: 2px solid var(--navy); border-radius: 4px; transform: translateY(2px); }
+.checks b { font-weight: 700; }
+
+/* the 60-minute strip */
+.strip { display: flex; height: 46px; border-radius: 10px; overflow: hidden; }
+.strip a { color: #fff; text-decoration: none; display: flex; flex-direction: column; justify-content: center; padding-inline: 8px; font-size: 12px; line-height: 1.25; min-width: 0; }
+.strip a span { font-family: var(--font-mono); opacity: .85; font-size: 11px; }
+.strip a b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+.strip a:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
+.s1 { background: var(--b1); flex: 10; } .s2 { background: var(--b2); flex: 20; } .s3 { background: var(--b3); flex: 15; }
+.s4 { background: var(--b4); flex: 10; color: #3a2600 !important; } .s5 { background: var(--b5); flex: 5; }
+.ticks { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); margin-block-start: -8px; direction: rtl; }
+
+.blocks { display: flex; flex-direction: column; gap: 12px; }
+.block { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 4px 16px; scroll-margin-top: 16px; }
+.block .t { font-family: var(--font-mono); font-size: 13px; color: var(--muted); padding-block-start: 3px; display: flex; flex-direction: column; gap: 6px; }
+.block .t i { display: block; width: 28px; height: 6px; border-radius: 3px; }
+.block h3 { grid-column: 2; }
+.block p, .block ul { grid-column: 2; }
+.block ul { margin: 0; padding-inline-start: 20px; }
+.key { font-weight: 700; color: var(--orange); }
+
+/* questions */
+.qs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.qs li { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 15.5px; }
+.qs small { display: block; color: var(--muted); font-size: 13px; margin-block-start: 4px; }
+
+.donts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.donts li { padding-inline-start: 26px; position: relative; }
+.donts li::before { content: "✕"; position: absolute; inset-inline-start: 0; color: var(--red); font-weight: 900; }
+
+/* zoom vs frontal */
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.mode { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.mode h3 { color: var(--navy); font-size: 17px; }
+.mode ul { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+/* after */
+.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+.steps li::before { content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: var(--paper); display: grid; place-items: center; font-weight: 900; font-size: 14px; }
+
+.template { background: var(--paper); border: 1px solid var(--line); border-inline-start: 4px solid var(--orange); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.template .body { white-space: pre-line; font-size: 15.5px; }
+.ph { background: var(--orange-soft); color: var(--orange); border-radius: 4px; padding: 0 4px; font-weight: 700; }
+.copy { align-self: flex-start; font: inherit; font-size: 14px; font-weight: 700; background: var(--navy); color: var(--paper); border: 0; border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+.copy:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+.note { font-size: 13.5px; color: var(--muted); }
+
+/* red flags */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 15px; }
+th { text-align: start; background: var(--red-soft); color: var(--red); font-size: 13px; letter-spacing: .03em; padding: 10px 14px; }
+td { padding: 12px 14px; border-block-start: 1px solid var(--line); vertical-align: top; }
+td:first-child { font-weight: 700; width: 38%; }
+
+.block > *:not(.t) { grid-column: 2; }
+.links { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-block; text-decoration: none; font-weight: 700; font-size: 14.5px; background: var(--navy); color: var(--paper); border-radius: 8px; padding: 8px 16px; }
+.btn.ghost { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); }
+.btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+a { color: var(--navy); }
+.qs-inline { display: flex; flex-direction: column; gap: 8px; margin-block-start: 6px; }
+.qs-title { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .03em; }
+.qs-inline .qs { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.qs-inline .qs li { background: var(--bg); font-size: 15px; }
+details { background: var(--navy-soft); border-radius: 10px; padding: 10px 14px; }
+summary { cursor: pointer; font-weight: 700; color: var(--navy); }
+.details-body { display: flex; flex-direction: column; gap: 8px; padding-block-start: 10px; font-size: 15px; }
+.minimum { background: var(--orange-soft); border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; gap: 4px; }
+.minimum h3 { color: var(--orange); }
+.shot { display: block; margin-block-start: 8px; border: 1.5px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; font-size: 13.5px; color: var(--muted); }
+
+footer { font-size: 13.5px; color: var(--muted); border-block-start: 1px solid var(--line); padding-block-start: 16px; display: flex; flex-direction: column; gap: 4px; }
+
+@media (max-width: 520px) {
+  .block { grid-template-columns: 1fr; }
+  .block .t { flex-direction: row; align-items: center; }
+  .block h3, .block p, .block ul, .block > *:not(.t) { grid-column: 1; }
+  .strip a b { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<style>
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 8px; flex-wrap: wrap; padding-block: 10px; border-block-end: 1px solid var(--line); }
+.tabs a { text-decoration: none; font-weight: 700; font-size: 14px; color: var(--navy); border: 1.5px solid var(--navy); border-radius: 999px; padding: 4px 14px; }
+.part { display: flex; flex-direction: column; gap: 34px; padding-block-start: 10px; scroll-margin-top: 64px; }
+.part > header { border-block-end-color: var(--orange); }
+.status-table td:first-child { white-space: nowrap; }
+.pill { display: inline-block; font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 1px 10px; background: var(--navy-soft); color: var(--navy); white-space: nowrap; }
+.pill.hand { background: var(--orange-soft); color: var(--orange); }
+.script { background: var(--paper); border: 1px solid var(--line); border-inline-start: 4px solid var(--navy); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.script .say { font-size: 15.5px; }
+.script .say b { color: var(--navy); }
+.script .cue { font-size: 13.5px; color: var(--muted); }
+</style>
+<style>
+.toc { display: flex; flex-wrap: wrap; gap: 6px 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.toc a { text-decoration: none; font-size: 14px; font-weight: 700; color: var(--navy); background: var(--navy-soft); border-radius: 999px; padding: 3px 12px; }
+.part > h2 { font-size: 26px; padding-block-end: 8px; border-block-end: 2px solid var(--orange); }
+.part h3 { color: var(--navy); }
+</style>
+<style>
+.shots { display: flex; gap: 14px; overflow-x: auto; padding-block: 4px 10px; }
+.shots figure { margin: 0; flex: 0 0 200px; display: flex; flex-direction: column; gap: 6px; }
+.shots img { width: 200px; max-width: 100%; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.shots figcaption { font-size: 13px; color: var(--muted); line-height: 1.5; }
+</style>
+
+<style>body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<div class="wrap" dir="rtl" lang="he">
+  <header>
+    <div class="eyebrow">אינטק · טק-קריירה · טיוטה לעיון של מאיה</div>
+    <h1>תיק חפיפה לרכזי/ות אינטק</h1>
+    <p class="goal"><b>למי:</b> רכז/ת שמתחיל/ה לעבוד באינטק. <b>מה בפנים:</b> מה התוכנית, איך נראה המסע של משתתף/ת, מערך לכל שיחה ופגישה, איך עובדים עם האפליקציה, מסך הרכזים ומאנדיי, ומה עושים כשמשהו לא מסתדר.</p>
+    <p class="legend"><span class="v">⏳ לאימות</span> הצעה או פרט שעוד לא אושר. מה שלא מסומן נבדק מול המערכת או נקבע על ידי נתי. התיק לקהל הרחב. בוגר/ת טק-קריירה שהגיע/ה אלייך? יש מסלול נפרד: לשאול את מאיה.</p>
+  </header>
+
+  <nav class="toc" aria-label="תוכן העניינים">
+    <a href="#who">מי אנחנו</a><a href="#map">המסע במבט אחד</a><a href="#call">שיחת טלפון ראשונה</a>
+    <a href="#m1">פגישה 1</a><a href="#b12">בין 1 ל-2</a><a href="#m2">פגישה 2</a><a href="#b23">בין 2 ל-3</a>
+    <a href="#m3">פגישה 3</a><a href="#after3">עד ההרשמה</a><a href="#screen">מסך הרכזים ושגרת בוקר</a>
+    <a href="#monday">מאנדיי</a><a href="#events">אירועים</a><a href="#whatif">מה עושים במקרה כזה?</a>
+    <a href="#fix">איך פותרים את הבעיה?</a><a href="#setup">הקמה טכנית</a><a href="#practice">תרגול חובה</a><a href="#ask">את מי שואלים</a>
+  </nav>
+
+  <div class="part" id="who">
+    <h2>מי אנחנו</h2>
+    <p><b>טק-קריירה</b> היא עמותה שבונה דרך ליוצאי ויוצאות העדה האתיופית אל ההייטק. יותר מעשרים שנה היא מכשירה צעירים ומשבצת אותם בעבודה, ורובם הראשונים במשפחה שעובדים בהייטק. <span class="note">(מקור: דף ההצגה של טק-קריירה, אוגוסט 2026)</span></p>
+    <p><b>אינטק</b> היא תוכנית של ליווי אישי בבחירת לימודים להייטק. כל משתתף/ת עובר/ת שלוש פגישות עם רכז/ת, ובין הפגישות עובד/ת באפליקציה. בסוף התהליך המשתתף/ת יודע/ת איזה תחום, איזה מסלול לימודים, באיזה מוסד, ואיך מממנים.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>מה</th><th>מה נקבע</th></tr></thead>
+      <tbody>
+        <tr><td>למי התוכנית</td><td>יוצאי ויוצאות העדה האתיופית, גילאי 20–44. אין דרישה לשירות, להשכלה או לאזור מגורים</td></tr>
+        <tr><td>עלות</td><td>התוכנית ללא עלות. אנחנו עוזרים בחיבור למלגות, אבל לא מתחייבים: הגשת הבקשות היא העבודה של המשתתף/ת</td></tr>
+        <tr><td>היעד השנתי</td><td>1,600 מתחילים ו-800 נרשמים ללימודים, בשנה שהתחילה ב-1.7.2026. היעד הוא של הצוות כולו, וכל רכז/ת מקבל/ת חלק ממנו</td></tr>
+        <tr><td>איך מגיעים אלינו</td><td>מלוח המועמדים של טק-קריירה, מוובינרים (כולל סדרת הוובינרים עם אקסנצ'ר), או ישירות דרך האפליקציה</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note"><b>מה נחשב "התחיל/ה":</b> הפגישה הראשונה התקיימה. <b>מה נחשב "נרשם/ה":</b> סטטוס "נרשמ/ה ללימודים" בלוח, או אישור לימודים שהועלה באפליקציה.</p>
+  </div>
+
+  <div class="part" id="map">
+    <h2>המסע במבט אחד</h2>
+    <p>את אותו מסע, בשפה של המשתתף/ת, רואים ב<a href="https://hasifaapp.vercel.app/how-it-works" target="_blank" rel="noopener">"מה מחכה לך"</a>. כאן הוא מוצג מהצד שלך.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>תחנה</th><th>מה המשתתף/ת חווה</th><th>מה את/ה עושה</th><th>סטטוס בלוח</th></tr></thead>
+      <tbody>
+        <tr><td>ליד חדש</td><td>עוד כלום</td><td>מתקשר/ת</td><td><span class="pill">לפני שיחה ראשונה</span></td></tr>
+        <tr><td>שיחת טלפון</td><td>שיחה ראשונה, ואחריה וואטסאפ ומייל עם קישור</td><td>שולח/ת וואטסאפ, ואחר כך מסמנ/ת</td><td><span class="pill hand">נשלח קישור</span></td></tr>
+        <tr><td>הרשמה</td><td>נרשם/ה עם הטלפון ונכנס/ת ליומן</td><td>עוקב/ת: לחץ/ה? נרשם/ה? קבע/ה?</td><td><span class="pill hand">נשלח קישור</span></td></tr>
+        <tr><td>קבע/ה פגישה 1</td><td>מרחב המתנה: שאלון ומבוא להייטק</td><td>מתכונ/ת לפגישה</td><td><span class="pill">בתהליך פעיל</span> (לבד)</td></tr>
+        <tr><td>פגישה 1</td><td>היכרות, ויציאה לטעימות</td><td>מסמנ/ת "התקיימה"</td><td><span class="pill">בתהליך פעיל</span></td></tr>
+        <tr><td>טעימות</td><td>לפחות 2 טעימות שלמות. היומן של פגישה 2 נעול עד אז</td><td>עוקב/ת במסך הרכזים</td><td><span class="pill">בתהליך פעיל</span></td></tr>
+        <tr><td>פגישה 2</td><td>בוחר/ת תחום ראשי וגיבוי</td><td>מסמנ/ת "התקיימה". זה פותח את שלב 4</td><td><span class="pill">בתהליך פעיל</span></td></tr>
+        <tr><td>בחירת מסלול</td><td>שאלון, תואר/הכשרה/מה״ט, מוסדות, חסמים</td><td>עוקב/ת</td><td><span class="pill">בתהליך פעיל</span></td></tr>
+        <tr><td>פגישה 3</td><td>מסלול, מוסד וגיבוי, כסף ומלגות</td><td>מסמנ/ת "התקיימה"</td><td><span class="pill hand">סיימ/ה תהליך</span></td></tr>
+        <tr><td>עד ההרשמה</td><td>הרשמה, מלגות, אישור לימודים</td><td>מעקב כל שבועיים־שלושה</td><td><span class="pill">נרשמ/ה ללימודים</span> (לבד, כשמעלים אישור)</td></tr>
+      </tbody>
+    </table></div>
+    <div class="shots">
+      <figure><img src="handbook-img/00-how-it-works.png" alt=""מה מחכה לך": המסע בשפת המשתתף/ת. נפתח בלי כניסה" loading="lazy"><figcaption>"מה מחכה לך": המסע בשפת המשתתף/ת. נפתח בלי כניסה</figcaption></figure>
+      <figure><img src="handbook-img/01-waiting.png" alt="מרחב ההמתנה עד פגישה 1" loading="lazy"><figcaption>מרחב ההמתנה עד פגישה 1</figcaption></figure>
+      <figure><img src="handbook-img/08-journey.png" alt="מסך המסע: איפה המשתתף/ת עומד/ת" loading="lazy"><figcaption>מסך המסע: איפה המשתתף/ת עומד/ת</figcaption></figure>
+    </div>
+    <p class="note"><span class="pill">כחול</span> נכתב לבד. <span class="pill hand">כתום</span> את/ה מסמנ/ת. <b>הכלל:</b> קודם עושים, ורק אחר כך מעדכנים סטטוס. כך הלוח תמיד מתאר את מה שקרה באמת.</p>
+  </div>
+<div class="part" id="call">
+    <header>
+      <div class="eyebrow">לפני פגישה 1 · טיוטה ראשונה</div>
+      <h1>שיחת הטלפון הראשונה</h1>
+      <div class="meta">
+        <span><b>משך:</b> 10–15 דקות</span>
+        <span><b>מתי:</b> כשמישהו/י נכנס/ה ללוח אינטק בסטטוס "לפני שיחה ראשונה"</span>
+      </div>
+      <p class="goal"><b>המטרה במשפט:</b> לבדוק שהתוכנית מתאימה, ליצור קשר אישי ראשון, ולצאת עם <b>"נשלח קישור"</b>: האדם יודע שיגיע אליו קישור לאפליקציה, ושדרכה קובעים את הפגישה הראשונה.</p>
+    </header>
+
+    <section aria-labelledby="call-prep">
+      <h2 id="call-prep">לפני השיחה · 2 דקות</h2>
+      <ul class="checks">
+        <li><span><b>מאיפה הגיע/ה:</b> עמודת "מאיפה הגיע/ה" בלוח. לוח המועמדים, וובינר, או נרשם/ה ישירות באפליקציה</span></li>
+        <li><span><b>וובינר:</b> מי שהשתתף/ה בוובינר וממתין/ה לשיחה הוא ליד חם. <b>מתקשרים קודם למי שהראה עניין לאחרונה</b>, כי עניין טרי נשחק תוך ימים</span></li>
+        <li><span><b>השם שלך בעמודת הרכז/ת.</b> בלי רכז/ת, מייל הפתיחה לא יוצא</span></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="call-flow">
+      <h2 id="call-flow">מהלך השיחה</h2>
+      <div class="script">
+        <div class="say"><b>פתיחה:</b> "היי {שם}, כאן {שם הרכז/ת} מתוכנית אינטק של טק-קריירה. השארת פרטים / היית בוובינר, ורציתי להכיר. זה זמן טוב לדבר כמה דקות?"</div>
+        <div class="cue">לא זמן טוב? לקבוע מתי לחזור, ולסמן "לחזור בהמשך לבקשתם".</div>
+      </div>
+      <div class="blocks">
+        <article class="block">
+          <div class="t"><i style="background:var(--b1)"></i>2 דק'</div>
+          <h3>מה זה אינטק, בקצרה</h3>
+          <p>ליווי אישי בבחירת לימודים להייטק: שלוש פגישות איתי, ואפליקציה שמלווה בין פגישה לפגישה. בסוף יודעים איזה תחום, איזה מסלול, איפה, ואיך מממנים.</p>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b2)"></i>4 דק'</div>
+          <h3>היכרות ובדיקת התאמה</h3>
+          <ul>
+            <li>"מה הביא אותך להתעניין?" · "מה את/ה עושה היום?"</li>
+            <li><b>תנאי התוכנית:</b> גילאי 20–44, ומוצא אתיופי הוא תנאי הכרחי. אין דרישה לשירות, להשכלה או לאזור מגורים</li>
+            <li><b>קודם בודקים בלוח:</b> לרוב תאריך הלידה כבר שם, ומי שהגיע/ה מלוח המועמדים של טק-קריירה כבר עבר/ה את השאלה על מוצא. שואלים רק מה שחסר</li>
+            <li><b>גיל, אם חסר:</b> "בן/בת כמה את/ה? התוכנית בנויה לגילאי 20 עד 44." הסיבה נאמרת יחד עם השאלה, כדי שלא תישמע כבדיקה</li>
+            <li><b>מוצא, אם חסר:</b> "התוכנית של טק-קריירה מיועדת ליוצאי ויוצאות העדה האתיופית. זה מתאים לך?" שואלים על התוכנית, לא על הזהות של האדם, ומקבלים את התשובה כמו שהיא</li>
+            <li><b>לא מתאים/ה?</b> אומרים את זה בכבוד, ואם יש מענה אחר, מפנים אליו. <span class="v">⏳ הצעה</span> הניסוחים לתיקון אחרי שתעברו עליהם</li>
+          </ul>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b3)"></i>3 דק'</div>
+          <h3>מה קורה עכשיו</h3>
+          <ul>
+            <li>"מיד אחרי השיחה אשלח לך קישור לאפליקציה, בוואטסאפ ובמייל. נכנסים עם מספר הטלפון הזה."</li>
+            <li>"בסוף ההרשמה נפתח יומן, ושם קובעים את הפגישה הראשונה שלנו, בזום או פנים אל פנים."</li>
+            <li><b>לוודא את כתובת המייל</b>, כי מייל הפתיחה יוצא אליה</li>
+            <li>"לפגישות עדיף להגיע עם מחשב. יש לך?"</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="call-after">
+      <h2 id="call-after">אחרי השיחה: קודם שולחים, אחר כך סטטוס</h2>
+      <div class="minimum">
+        <h3>מתאים/ה ורוצה? בסדר הזה</h3>
+        <ol class="steps">
+          <li><span><b>לוודא שהשם שלך בעמודה "רכז/ת אחראי".</b> בלי רכז/ת אין הודעה מוכנה</span></li>
+          <li><span><b>לשלוח וואטסאפ מהעמודה "וואטסאפ — שליחת הקישור"</b> (בתא כתוב "וואטסאפ ל{שם}"). נפתח צ'אט עם ההודעה כבר כתובה, עם הקישור לאפליקציה וליומן שלך. קוראים, ולוחצים שליחה</span></li>
+          <li><span><b>רק אחרי השליחה: לסמן "נשלח קישור".</b> הסימון מוציא גם מייל פתיחה, כך שהמשתתף/ת מקבל/ת את הקישור בשני ערוצים</span></li>
+        </ol>
+      </div>
+      <p class="note"><b>למה בסדר הזה:</b> "נשלח קישור" אומר שהקישור באמת יצא. על הסטטוס הזה נבנה כל המעקב במסך הרכזים ("לא לחץ/ה", "לחץ/ה ולא נרשם/ה"), ואם הוא מסומן לפני ששלחת, המעקב מתחיל לספור ימים על הודעה שלא נשלחה.</p>
+      <p class="note"><b>שלושה דברים שכדאי לדעת:</b> (1) הקישור נפתח בוואטסאפ של המכשיר שממנו לחצת. לוחצים מהטלפון של העבודה, או מ-WhatsApp Web שמחובר למספר הזה. (2) אם השם שלך נכנס לעמודת הרכז/ת עכשיו, ההודעה נבנית תוך כמה שניות, ולכן מרעננים את השורה. (3) לא מעתיקים את הקישור למקום אחר. הקישור בהודעה סופר לחיצות, ומזה המסך יודע אם האדם לחץ.</p>
+      <div class="table-wrap">
+        <table class="status-table">
+          <thead><tr><th>מה קרה בשיחה</th><th>סטטוס</th><th>מה קורה אחרי</th></tr></thead>
+          <tbody>
+            <tr><td>מתאים/ה ורוצה</td><td><span class="pill hand">נשלח קישור</span></td><td><b>אחרי</b> ששלחת וואטסאפ מ"וואטסאפ — שליחת הקישור" (למעלה). הסימון מוציא מייל פתיחה עם אותו קישור</td></tr>
+            <tr><td>קבע/ה פגישה ביומן</td><td><span class="pill">בתהליך פעיל</span></td><td>נכתב לבד מ-Cal. לא משנים ידנית</td></tr>
+            <tr><td>לא ענה/תה</td><td><span class="pill hand">אין מענה 1 - נשלח ווטסאפ</span></td><td>קודם שולחים וואטסאפ מהעמודה "וואטסאפ — אין מענה", ורק אז מעדכנים סטטוס</td></tr>
+            <tr><td>לא ענה/תה שוב</td><td><span class="pill hand">אין מענה 2 - נשלח ווטסאפ</span></td><td>וואטסאפ שני (הנוסח משתנה לבד ל"ניסיתי שוב"), ומשאירים בסטטוס הזה</td></tr>
+            <tr><td>לא מעוניין/ת</td><td><span class="pill hand">לא מעוניין בתוכנית</span></td><td>לרשום בבועית למה</td></tr>
+            <tr><td>לא עומד/ת בתנאים</td><td><span class="pill hand">לא רלוונטי</span></td><td>לרשום בבועית למה</td></tr>
+            <tr><td>יש מענה אחר שאינו אינטק</td><td><span class="pill hand">הופנה לגורם חיצוני</span></td><td>למשל הישגים, למי שרוצה משהו שאינו הייטק</td></tr>
+            <tr><td>ביקש/ה שנחזור</td><td><span class="pill hand">לחזור בהמשך לבקשתם</span></td><td>לרשום מתי לחזור. <span class="v">⏳ הצעה</span> עמודת "קשר הבא" בלוח</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note"><span class="v">⏳ לאימות</span> "מעוניין/ת בוובינר" ו"בתהליך/מעקב": מתי משתמשים בהם (נשאל במייל למאיה). <span class="v">⏳ לאימות</span> הסטטוס "אין מענה 2 - נשלח ווטסאפ" עוד לא קיים בלוח.</p>
+      <ol class="steps">
+        <li><span><b>בועית במאנדיי:</b> מה עלה בשיחה, ומה חשוב לדעת לפני פגישה 1</span></li>
+        <li><span><b>אחרי "נשלח קישור" עוקבים במסך הרכזים</b>, בכרטיסי "תקועים בנשלח קישור": לא לחץ/ה על הקישור, לחץ/ה ולא נרשם/ה, נרשם/ה ולא קבע/ה. מופיעים אחרי יום, בכתום אחרי 4 ימים. לכל מצב שיחה אחרת</span></li>
+      </ol>
+    </section>
+  </div>
+
+  <div class="part" id="m1">
+<header>
+    <div class="eyebrow">פגישה 1 מתוך 3 · ✅ אושר על ידי נתי</div>
+    <h1>פגישה 1: היכרות, מיפוי ויציאה לדרך באפליקציה</h1>
+    <div class="meta">
+      <span><b>משך:</b> שעה</span>
+      <span><b>מתי:</b> אחרי שיחת הטלפון הראשונה, כשהמשתתף/ת קבע/ה ביומן</span>
+      <span><b>מקור:</b> מערך הליווי האישי של אינטק</span>
+    </div>
+    <p class="goal"><b>המטרה במשפט:</b> שהמשתתף/ת ייצא/תצא עם תחושה שיש לו/ה מישהו בדרך, ועם משימה אחת ברורה: <b>שתי טעימות שלמות באפליקציה.</b></p>
+    <p class="legend"><span class="v">⏳ לאימות</span> הצעה שעוד לא אושרה על ידי סיון או מאיה.</p>
+  </header>
+
+  <section aria-labelledby="prep">
+    <h2 id="prep">לפני הפגישה · 5 דקות</h2>
+    <div class="links">
+      <a class="btn" href="https://hasifaapp.vercel.app/admin/coordinator?view=all" target="_blank" rel="noopener">מסך הרכזים · כל המשתתפים ←</a>
+      <a class="btn ghost" href="https://hasifaapp.vercel.app/admin/coordinator?view=meetings" target="_blank" rel="noopener">הפגישות שלי ←</a>
+    </div>
+    <p>מוצאים את המשתתף/ת ברשימה, לוחצים על השם ובודקים:</p>
+    <ul class="checks">
+      <li><span><b>"לקראת השיחה":</b> במה מתעניין/ת, איפה הסתובב/ה באפליקציה, כמה זמן בפנים</span></li>
+      <li><span><b>איפה בתהליך:</b> נרשם/ה? מילא/ה את השאלון במרחב ההמתנה? עבר/ה את המבוא לעולם ההייטק?</span></li>
+      <li><span><b>פרטים:</b> גיל, יישוב, שירות. גילאי התוכנית 20–44, ומוצא אתיופי הוא תנאי הכרחי</span></li>
+      <li><span><b>הבועית במאנדיי:</b> מה נכתב בשיחת הטלפון הראשונה</span></li>
+      <li><span><b>וובינר:</b> אם השתתף/ה, זו פתיחה טבעית ("ראיתי שהיית בוובינר הסייבר")</span></li>
+      <li><span><b>פרטים חסרים</b> (מייל, עיר, מגדר): משלימים ב"עריכת פרטים" באותו מסך, או שואלים בפגישה</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="flow">
+    <h2 id="flow">מהלך הפגישה · 60 דקות</h2>
+    <nav class="strip" aria-label="חלוקת הזמן">
+      <a class="s1" href="#b1"><span>0–10</span><b>אמון</b></a>
+      <a class="s2" href="#b2"><span>10–30</span><b>מיפוי</b></a>
+      <a class="s3" href="#b3"><span>30–45</span><b>האפליקציה יחד</b></a>
+      <a class="s4" href="#b4"><span>45–55</span><b>מה הלאה</b></a>
+      <a class="s5" href="#b5"><span>55</span><b>סגירה</b></a>
+    </nav>
+    <div class="ticks" aria-hidden="true"><span>0</span><span>15</span><span>30</span><span>45</span><span>60</span></div>
+
+    <div class="blocks">
+      <article class="block" id="b1">
+        <div class="t"><i style="background:var(--b1)"></i>0–10</div>
+        <h3>פתיחה ובניית אמון</h3>
+        <ul>
+          <li><b>לחייך.</b> זה הדבר הראשון שהמשתתף/ת רואה, וגם בזום רואים אותו</li>
+          <li><b>לפתוח בדוגמה אישית שלך</b>, עם פרטים: איך הגעת לתחום, התלבטות שהייתה לך. 2–3 דקות, ואז מעבירים אליו/ה. מי ששומע/ת שיתוף אמיתי מרגיש/ה בנוח לשתף בעצמו/ה</li>
+          <li>מה זה אינטק: ליווי אישי בבחירת לימודים להייטק. שלוש פגישות, ואפליקציה שמלווה בין פגישה לפגישה. <span class="key">האפליקציה לא מחליפה אותי, היא משלימה.</span></li>
+        </ul>
+        <div class="qs-inline">
+          <div class="qs-title">שאלות שפותחות</div>
+          <ul class="qs">
+            <li>"איך הגעת אלינו?"</li>
+            <li>"מה ציפית שיקרה בשיחה הזו?"<small>עוזר לכוון, ומגלה ציפיות שאולי לא נוכל לעמוד בהן</small></li>
+            <li>"ספר/י לי קצת עלייך. מה את/ה אוהב/ת לעשות כשיש לך זמן?"<small>מתחילים מהאדם, לא מהקריירה</small></li>
+          </ul>
+        </div>
+      </article>
+      <article class="block" id="b2">
+        <div class="t"><i style="background:var(--b2)"></i>10–30</div>
+        <h3>מיפוי</h3>
+        <p>רקע (לימודים, עבודה, שירות), מה מושך להייטק, חששות ואילוצים. <span class="key">הקשבה לפני מידע.</span></p>
+        <div class="qs-inline">
+          <div class="qs-title">שאלות שעוזרות במיפוי</div>
+          <ul class="qs">
+            <li>"מה הביא אותך לחשוב על הייטק דווקא עכשיו?"</li>
+            <li>"מה עשית בשנתיים האחרונות?"<small>ולא "מה ההשכלה שלך", שנשמע כמו מבחן</small></li>
+            <li>"מה הכי מדאיג אותך בכל הסיפור הזה?"</li>
+            <li>"כמה שעות בשבוע, בכנות, יש לך לזה עכשיו?"</li>
+            <li>"מי בבית יודע/ת שאת/ה בודק/ת את זה? מה הם חושבים?"</li>
+            <li>"יש לך מחשב ואינטרנט יציב בבית?"</li>
+          </ul>
+        </div>
+      </article>
+      <article class="block" id="b3">
+        <div class="t"><i style="background:var(--b3)"></i>30–45</div>
+        <h3>האפליקציה, יחד</h3>
+        <ul>
+          <li>לוודא שנכנס/ה (עם מספר הטלפון)</li>
+          <li><b>התמונה הגדולה, דקה אחת:</b> פותחים את <a href="https://hasifaapp.vercel.app/how-it-works" target="_blank" rel="noopener">"מה מחכה לך"</a> (נפתח בלי כניסה, אפשר לשתף מסך). "שלוש פגישות, ובין כל שתיים משהו שעושים באפליקציה. עכשיו טעימות, בפגישה הבאה בוחרים תחום, ואחריה מסלול ומוסד." <span class="key">רק המפה, לא הפרטים.</span> מלגות והרשמה יגיעו בזמן שלהם, ופירוט עכשיו רק מעמיס</li>
+          <li><b>לומר בגלוי מה את/ה רואה:</b> "אני רואה באפליקציה איפה את/ה עומד/ת ומה ענית בסיכומים, כדי שאוכל לעזור, לא כדי לבדוק." מי שיודע/ת את זה מראש לא מרגיש/ה מאוחר יותר שעקבו אחריו/ה</li>
+          <li>מסך הטעימות: לבחור יחד 2–3 תחומים לטעום, לפי מה שעלה במיפוי</li>
+          <li>אם אפשר, להתחיל ביחד את הצעד הראשון של טעימה אחת</li>
+        </ul>
+      </article>
+      <article class="block" id="b4">
+        <div class="t"><i style="background:var(--b4)"></i>45–55</div>
+        <h3>מה הלאה</h3>
+        <p>המשימה: <b>לפחות 2 טעימות שלמות.</b> טעימה היא כ-20 דקות של עשייה, ובסופה סיכום קצר של 5 דקות. <span class="key">הטעימה נספרת רק כשמגיעים לסיכום.</span> אחרי שתיים נפתח באפליקציה היומן לפגישה 2.</p>
+        <p><b>על הסיכום, במשפט אחד למשתתף/ת:</b> "בסוף כל טעימה יש 6 שאלות קצרות על מה הרגשת. התשובות מגיעות אליי, ואיתן נבחר יחד תחום בפגישה הבאה."</p>
+        <details>
+          <summary>למה הסיכום חשוב, ומה את/ה רואה ממנו</summary>
+          <div class="details-body">
+            <p>שש השאלות בודקות שלושה דברים על כל תחום: <b>כמה זה עניין</b>, <b>כמה הרגיש/ה שמסוגל/ת</b>, ו<b>מה מצפה שהתחום ייתן</b>. בלי הסיכום, בפגישה 2 נשארים עם "היה נחמד", ואין במה להשוות בין שני תחומים.</p>
+            <p>במסך הרכזים, תחת "לקראת השיחה", רואים במה הוא/היא מתעניין/ת. כשהעניין גבוה והתחושה שמסוגל/ת נמוכה, המסך מסמן את זה, כי זה בדיוק מי שצריך/ה שיחה מחזקת ולא עוד מידע.</p>
+            <p>באפליקציה התחנה נקראת "הסיכום שלך". במסך הרכזים ובאנליטיקות היא עדיין "כלי עיבוד החוויה". זה אותו דבר.</p>
+          </div>
+        </details>
+        <p><b>לסכם תאריך יעד יחד</b> לשתי הטעימות. <span class="v">⏳ לאימות</span> תוך כמה ימים להתקשר אם עוד לא התחיל/ה. הצעה: שבוע</p>
+      </article>
+      <article class="block" id="b5">
+        <div class="t"><i style="background:var(--b5)"></i>55–60</div>
+        <h3>סגירה</h3>
+        <p>לבקש שיחזור/תחזור על המשימה במילים שלו/ה. לשאול <b>"מה עלול לעצור אותך?"</b> ולתת מענה כבר עכשיו. להזכיר שאפשר לכתוב בוואטסאפ.</p>
+        <p><span class="v">⏳ לאימות</span> להזמין לקבוצת הקהילה של אינטק בוואטסאפ?</p>
+      </article>
+    </div>
+
+    <div class="minimum">
+      <h3>אם הזמן נגמר, זה המינימום</h3>
+      <p>נכנס/ה לאפליקציה מהטלפון שלו/ה · נבחרו שני תחומים לטעום · המשימה ברורה, כולל הסיכום בסוף כל טעימה. כל השאר אפשר להשלים בוואטסאפ.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="noshow">
+    <h2 id="noshow">אם לא הגיע/ה</h2>
+    <ol class="steps">
+      <li><span>מחכים 10 דקות, ואז <b>מתקשרים</b></span></li>
+      <li><span>אין מענה? <b>וואטסאפ מיד.</b> בלוח אינטק יש בשורה קישור מוכן, "ניסיתי להתקשר"</span></li>
+      <li><span>מסמנים <b>"לא הגיע/ה"</b> בהפגישות שלי</span></li>
+      <li><span>שעה אחרי מועד הפגישה, האפליקציה שואלת את המשתתף/ת בעצמה "איך היה?". מי שעונה "לא הצלחתי להגיע" מקבל/ת מיד אפשרות לקבוע מחדש, ומסומן/ת אצלך כדורש/ת תשומת לב</span></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="faq">
+    <h2 id="faq">שאלות שכדאי שתהיה לך תשובה עליהן</h2>
+    <p class="note">משתתפים שואלים את אלה כמעט בכל פגישה ראשונה. איפה שאין עדיין תשובה מאושרת, היא לא כתובה.</p>
+    <ul class="qs">
+      <li>"כמה זה עולה לי?"<small><b>התוכנית ללא עלות.</b> אנחנו עוזרים בחיבור למלגות, אבל לא מתחייבים: הגשת הבקשות היא העבודה של המשתתף/ת</small></li>
+      <li>"מה קורה אם לא אתקבל/ת ללימודים?"<small><span class="v">⏳ לאימות</span> מאיה</small></li>
+      <li>"כמה זמן לוקח כל התהליך?"<small><span class="v">⏳ לאימות</span> מאיה</small></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="donts">
+    <h2 id="donts">מה לא עושים</h2>
+    <ul class="donts">
+      <li><b>לא מבטיחים</b> קבלה ללימודים, מלגה או משרה</li>
+      <li><b>לא דוחפים להחלטה.</b> בפגישה הזו לא בוחרים תחום, בוחרים מה לטעום</li>
+      <li><b>לא מקלידים במקומו/ה</b> באפליקציה. הידיים שלו/ה, גם בזום</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="modes">
+    <h2 id="modes">זום או פרונטלי</h2>
+    <div class="modes">
+      <div class="mode">
+        <h3>בזום</h3>
+        <ul>
+          <li><b>לבקש מראש להתחבר ממחשב</b>, כדי לשתף מסך ולעבור יחד על האפליקציה</li>
+          <li>התחבר/ה מהטלפון? ממשיכים. את חלק האפליקציה עושים בשיתוף <b>המסך שלך</b>, והוא/היא עוקב/ת בטלפון</li>
+          <li>מצלמה פתוחה מהצד שלך. <span class="v">⏳ לאימות</span> האם לבקש מצלמה פתוחה גם מהמשתתף/ת</li>
+          <li>10 הדקות הראשונות בלי מסך משותף: פנים, לא מצגת</li>
+          <li>שתיקה בזום מרגישה ארוכה יותר. לתת לה זמן</li>
+          <li>תקלת חיבור: עוברים לשיחת טלפון, לא מוותרים על הפגישה</li>
+        </ul>
+      </div>
+      <div class="mode">
+        <h3>פרונטלי</h3>
+        <ul>
+          <li><b>מחשב זמין</b>, של המשתתף/ת או שלך. <span class="v">⏳ לאימות</span> האם יש מחשב בחדר הפגישות</li>
+          <li><b>הכניסה לאפליקציה מהטלפון שלו/ה</b>, כדי שימשיך/תמשיך בבית מאותה נקודה</li>
+          <li>בחלק של האפליקציה, לשבת <b>לצד</b> ולא מול</li>
+          <li>לבדוק את הקליטה ואת הרשת בחדר מראש. הכניסה היא עם SMS</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="after">
+    <h2 id="after">אחרי הפגישה · 10 דקות</h2>
+    <ol class="steps">
+      <li><span><b>לסמן שהפגישה התקיימה:</b> <a href="https://hasifaapp.vercel.app/admin/coordinator?view=meetings" target="_blank" rel="noopener">הפגישות שלי</a> ← "התקיימה" או "לא הגיע/ה". ב-Cal אין דרך לדעת אם פגישה התקיימה, ולכן רק הסימון שלך אומר את זה.
+        <span class="shot">צילום מסך של הכפתורים יתווסף כאן, עם שמות המשתתפים מטושטשים</span></span></li>
+      <li><span><b>סיכום למשתתף/ת</b> בוואטסאפ או במייל (הנוסח למטה)</span></li>
+      <li><span><b>בועית במאנדיי</b> בשורה של המשתתף/ת: מה עלה, מה סוכם, דגלים. <a href="https://tech-career-team.monday.com/boards/18433888639/pulses/13201559938/posts/5693882212" target="_blank" rel="noopener">דוגמה לסיכום של סיון</a></span></li>
+      <li><span><b>הסטטוס בלוח</b> מתעדכן לבד ל"בתהליך פעיל" כשהפגישה נקבעת ב-Cal. לא צריך לשנות ידנית</span></li>
+    </ol>
+
+    <div class="template">
+      <h3>נוסח הסיכום <span class="note">· מבוסס על הנוסח של סיון</span></h3>
+      <div class="body tpl">היי <span class="ph">שם</span>,
+שמחתי מאוד לפגוש אותך היום. מסכמ/ת:
+
+<b>האפליקציה:</b> hasifaapp.vercel.app. נכנסים עם מספר הטלפון, וחוזרים בדיוק למקום שעצרת.
+<b>המשימה:</b> לפחות שתי טעימות שלמות, עד הסיכום הקצר בסוף כל אחת. סיכמנו להתחיל ב<span class="ph">תחום</span> וב<span class="ph">תחום</span>.
+<b>אחרי שתי טעימות</b> ייפתח לך באפליקציה היומן לפגישה השנייה. שם נבחר יחד תחום ראשי ותחום גיבוי.
+<b>כל הדרך במבט אחד:</b> hasifaapp.vercel.app/how-it-works
+<b>לפגישות</b> עדיף להגיע עם מחשב. לאפליקציה עצמה, מה שנוח לך.
+
+אני כאן לכל שאלה, גם בוואטסאפ.
+<span class="ph">שם הרכז/ת</span></div>
+      <button class="copy" type="button">העתקת הנוסח</button>
+    </div>
+  </section>
+
+  <section aria-labelledby="flags">
+    <h2 id="flags">דגלים אדומים · לרשום בבועית ולטפל</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>דגל</th><th>מה עושים</th></tr></thead>
+        <tbody>
+          <tr><td>אין מחשב או אינטרנט בבית</td><td><span class="v">⏳ לאימות</span> איזה מענה יש. שאלה למאיה</td></tr>
+          <tr><td>מחוץ לגילאי 20–44, או לא מוצא אתיופי</td><td>לא מתאים/ה לאינטק ⇐ "לא רלוונטי". אם יש מענה אחר ⇐ "הופנה לגורם חיצוני"</td></tr>
+          <tr><td>רוצה משהו שאינו הייטק</td><td>"הופנה לגורם חיצוני", למשל הישגים</td></tr>
+          <tr><td>אילוצי זמן או משפחה כבדים</td><td>לא מבטלים, רושמים. בשביל זה בדיוק נבנה מסך החסמים בשלב 4</td></tr>
+          <tr><td>מצוקה רגשית</td><td>לא מטפלים בפגישה ולא באפליקציה. <span class="v">⏳ לאימות</span> למי מפנים (מאיה)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+  <div class="part" id="b12">
+    <h2>בין פגישה 1 ל-2: הטעימות</h2>
+    <ul class="checks">
+      <li><span><b>תשעה תחומים לטעימה:</b> פיתוח תוכנה, דאטה, רשתות, חומרה, סייבר, AI, עיצוב UX/UI, שיווק דיגיטלי ובדיקות תוכנה. כל טעימה היא כ-20 דקות של עשייה: סימולציה, יום עבודה, תעלומה, ובסוף סיכום</span></li>
+      <li><span><b>טעימה נספרת רק כשמגיעים לסיכום</b> ("הסיכום שלך"). מי שעצר/ה באמצע רואה בכרטיס "נשאר רק הסיכום"</span></li>
+      <li><span><b>היומן של פגישה 2 נעול</b> עד שתי טעימות שלמות. זו נעילה אמיתית באפליקציה. אם קבעת פגישה בטלפון, המשתתף/ת לוחץ/ת "הרכז/ת כבר קבע/ה איתי את הפגישה"</span></li>
+      <li><span><b>מה את/ה רואה:</b> במסך הרכזים, אילו טעימות הושלמו, מה ענה/תה בסיכומים, והתראה כשמישהו/י שקט/ה או תקוע/ה</span></li>
+    </ul>
+    <div class="shots">
+      <figure><img src="handbook-img/02-explore.png" alt="מסך הטעימות: כרטיס הפגישה נעול עד שתי טעימות" loading="lazy"><figcaption>מסך הטעימות: כרטיס הפגישה נעול עד שתי טעימות</figcaption></figure>
+      <figure><img src="handbook-img/02b-explore-cards.png" alt=""נשאר רק הסיכום" למי שעצר/ה לפני הסוף" loading="lazy"><figcaption>"נשאר רק הסיכום" למי שעצר/ה לפני הסוף</figcaption></figure>
+      <figure><img src="handbook-img/03-taste-map.png" alt="פתיחה של טעימה (סייבר)" loading="lazy"><figcaption>פתיחה של טעימה (סייבר)</figcaption></figure>
+    </div>
+  </div>
+<div class="part" id="m2">
+    <header>
+      <div class="eyebrow">פגישה 2 מתוך 3</div>
+      <h1>פגישה 2: חקר הטעימות ובחירת תחום</h1>
+      <div class="meta">
+        <span><b>משך:</b> שעה</span>
+        <span><b>מתי:</b> אחרי לפחות שתי טעימות שלמות. היומן באפליקציה נעול עד אז</span>
+        <span><b>מקור:</b> מערך הליווי האישי של אינטק</span>
+      </div>
+      <p class="goal"><b>המטרה במשפט:</b> לצאת עם <b>תחום ראשי</b>, ואם יש, <b>תחום גיבוי</b>, שנבחרו מתוך התאמה אמיתית, ולא מתוך טרנד או לחץ. ומשם, לחקר מסלולים ומוסדות באפליקציה.</p>
+    </header>
+
+    <section aria-labelledby="m2-prep">
+      <h2 id="m2-prep">לפני הפגישה · 5 דקות</h2>
+      <div class="links">
+        <a class="btn" href="https://hasifaapp.vercel.app/admin/coordinator?view=all" target="_blank" rel="noopener">מסך הרכזים ←</a>
+      </div>
+      <ul class="checks">
+        <li><span><b>אילו טעימות הושלמו</b>, ומה ענה/תה בסיכום של כל אחת</span></li>
+        <li><span><b>"לקראת השיחה":</b> במה מתעניין/ת יותר. <b>עניין גבוה עם תחושת מסוגלות נמוכה</b> מסומן במסך, וזה הסימן לשיחה מחזקת</span></li>
+        <li><span><b>"הכנה לפגישה":</b> המשתתף/ת מתבקש/ת להכין באפליקציה סיכום של הטעימות ולהביא אותו</span></li>
+        <li><span><b>שאלון המסלולים:</b> פתוח לפני הפגישה. אם כבר מילא/ה, רואים את האילוצים (זמן, כסף, מה יש ביד)</span></li>
+        <li><span><b>הבועית מפגישה 1:</b> חששות ודגלים שעלו</span></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="m2-flow">
+      <h2 id="m2-flow">מהלך הפגישה · 60 דקות</h2>
+      <div class="blocks">
+        <article class="block">
+          <div class="t"><i style="background:var(--b1)"></i>0–5</div>
+          <h3>פתיחה</h3>
+          <p>לחייך. "איך היה לטעום?" <span class="key">להכיר במאמץ</span>: שתי טעימות שלמות הן עבודה אמיתית, ורוב האנשים לא מגיעים לזה.</p>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b2)"></i>5–25</div>
+          <h3>שיקוף הטעימות</h3>
+          <p>עוברים על כל טעימה. <span class="key">מה עשית, לא רק מה הרגשת.</span> מסננים רעשי רקע: "זה גדול עליי", "איך אני אתקבל", "אמרו לי ש..."</p>
+          <div class="qs-inline">
+            <div class="qs-title">שאלות שעוזרות</div>
+            <ul class="qs">
+              <li>"באיזה רגע בטעימה הזמן עף?"</li>
+              <li>"מה היה הכי מתסכל? ומה עשית כשזה קרה?"</li>
+              <li>"למה התחברת יותר לזה מאשר לשני?"</li>
+              <li>"אם היית עושה את זה כל יום, מה היה מעייף אותך?"</li>
+              <li>"כתבת שזה עניין אותך מאוד אבל לא הרגשת שאת/ה מסוגל/ת. מה גרם לזה?"<small>רק כשהמסך מסמן עניין גבוה ומסוגלות נמוכה</small></li>
+            </ul>
+          </div>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b3)"></i>25–40</div>
+          <h3>צמצום: ראשי וגיבוי</h3>
+          <ul>
+            <li>מצמצמים ל<b>תחום ראשי</b>, ואם יש, <b>תחום גיבוי</b>. הגיבוי הוא רשות, לא חובה</li>
+            <li><b>מלכודת הטרנדים:</b> לבדוק שהבחירה באה מהתאמה למיומנויות ולאופי, ולא מ"אמרו לי" או "זה נחשב"</li>
+            <li><b>בדיקת מציאות:</b> מה התחום דורש כדי להיכנס. את הפירוט רואים בשלב הבא באפליקציה, כאן רק כיוון</li>
+            <li>אם עדיין מתלבט/ת בין שניים: הם הראשי והגיבוי. אם אף אחד לא מדבר אליו/ה: טעימה נוספת, ופגישה קצרה אחריה</li>
+          </ul>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b4)"></i>40–50</div>
+          <h3>רשת הביטחון</h3>
+          <p>לבדוק שהסביבה הקרובה מבינה מה המשמעות: לוח זמנים, כסף, שעות. "מי בבית יצטרך לעזור כשתלמד/י? הם יודעים?" זה גם מכין לשאלון המסלולים באפליקציה, שבודק זמן, כסף ומה יש ביד.</p>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b5)"></i>50–60</div>
+          <h3>מה הלאה</h3>
+          <ul>
+            <li><b>לבחור את התחום באפליקציה ביחד, עכשיו:</b> "בחירת מסלול" ← "ראשי" ו"גיבוי". הבחירה פתוחה רק אחרי שהפגישה סומנה כ"התקיימה"</li>
+            <li>המשימה עד פגישה 3: שאלון קצר, היכרות עם שלוש הדרכים (תואר, הכשרה, מה"ט), רשימת מוסדות, ושאלות מוכנות לפגישה</li>
+            <li>את פגישה 3 קובעים מהאפליקציה, כשהרשימה מוכנה</li>
+          </ul>
+        </article>
+      </div>
+      <div class="minimum">
+        <h3>אם הזמן נגמר, זה המינימום</h3>
+        <p>נבחר תחום ראשי · ברור מה עושים באפליקציה עד פגישה 3 · הפגישה מסומנת "התקיימה", כדי שהשלב הבא ייפתח לו/ה.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="m2-dont">
+      <h2 id="m2-dont">מה לא עושים</h2>
+      <ul class="donts">
+        <li><b>לא בוחרים במקומו/ה.</b> מותר להגיד מה את/ה רואה, ההחלטה שלו/ה</li>
+        <li><b>לא נכנסים עכשיו למוסדות ולמלגות.</b> זה השלב הבא, והוא בנוי כך שיגיע/תגיע אליו עם האילוצים שלו/ה</li>
+        <li><b>לא מבטלים חשש</b> ב"יהיה בסדר". שואלים מה עומד מאחוריו</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="m2-modes">
+      <h2 id="m2-modes">זום או פרונטלי</h2>
+      <div class="modes">
+        <div class="mode">
+          <h3>בזום</h3>
+          <ul>
+            <li>לבקש לשתף מסך מהמחשב שלו/ה ולפתוח את סיכום הטעימות. מה שהוא/היא כתב/ה חזק יותר ממה שאת/ה מספר/ת</li>
+            <li>את בחירת התחום באפליקציה עושים בשיתוף המסך שלו/ה, והוא/היא לוחץ/ת</li>
+          </ul>
+        </div>
+        <div class="mode">
+          <h3>פרונטלי</h3>
+          <ul>
+            <li>הסיכום והבחירה על המחשב או הטלפון שלו/ה, לא שלך, כדי שהבחירה תישמר אצלו/ה</li>
+            <li>לשבת לצד, מול המסך המשותף</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="m2-after">
+      <h2 id="m2-after">אחרי הפגישה · 10 דקות</h2>
+      <ol class="steps">
+        <li><span><b>לסמן "התקיימה"</b> ב<a href="https://hasifaapp.vercel.app/admin/coordinator?view=meetings" target="_blank" rel="noopener">הפגישות שלי</a>. <span class="key">הסימון הזה פותח למשתתף/ת את שלב 4.</span> בלעדיו האפליקציה שואלת אותו/ה בעצמה "הפגישה כבר הייתה?"</span></li>
+        <li><span><b>סיכום למשתתף/ת</b> (נוסח למטה)</span></li>
+        <li><span><b>בועית במאנדיי:</b> התחום הראשי והגיבוי, ולמה. דגלים</span></li>
+      </ol>
+      <div class="template">
+        <h3>נוסח הסיכום</h3>
+        <div class="body tpl">היי <span class="ph">שם</span>,
+היה כיף לעבור איתך על הטעימות. מסכמ/ת:
+
+<b>התחום הראשי:</b> <span class="ph">תחום</span>. <b>תחום גיבוי:</b> <span class="ph">תחום</span>.
+<b>עכשיו באפליקציה:</b> שלב "בחירת מסלול". שאלון קצר, השוואה בין תואר, הכשרה ומה״ט, ורשימת מוסדות. בסוף יש מקום לשאלות לפגישה הבאה.
+<b>את הפגישה השלישית</b> קובעים מהאפליקציה כשהרשימה מוכנה. בה נבחר יחד מסלול ומוסד.
+
+אני כאן לכל שאלה, גם בוואטסאפ.
+<span class="ph">שם הרכז/ת</span></div>
+        <button class="copy" type="button">העתקת הנוסח</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="m2-flags">
+      <h2 id="m2-flags">דגלים אדומים</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>דגל</th><th>מה עושים</th></tr></thead>
+          <tbody>
+            <tr><td>בחר/ה תחום כי "זה נחשב" או כי אמרו לו/ה</td><td>חוזרים לטעימות: מה עשה/תה שם, ומה הרגיש/ה תוך כדי</td></tr>
+            <tr><td>עניין גבוה, מסוגלות נמוכה</td><td>שיחה מחזקת: מה כבר הצליח/ה בטעימה. לא עוד מידע</td></tr>
+            <tr><td>המשפחה לא יודעת או מתנגדת</td><td>לרשום. לחזור לזה בפגישה 3, כשיש מספרים ותוכנית</td></tr>
+            <tr><td>אף תחום לא מדבר אליו/ה</td><td>טעימה נוספת, ופגישה קצרה. לא לסגור תחום בכוח</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+    <div class="part" id="b23">
+    <h2>בין פגישה 2 ל-3: בחירת מסלול</h2>
+    <ul class="checks">
+      <li><span><b>בחירת כיוון:</b> תחום ראשי, ואם יש, גיבוי. נפתח רק אחרי שפגישה 2 סומנה "התקיימה"</span></li>
+      <li><span><b>שאלון קצר</b> על החיים: זמן, כסף, מה יש ביד (בגרות, מתמטיקה, אנגלית, פסיכומטרי), ומה חשוב: להתחיל מוקדם או לפתוח יותר אפשרויות</span></li>
+      <li><span><b>שלוש דרכים זו לצד זו:</b> תואר, הכשרה ומה״ט. האפליקציה ממליצה על אחת עם נימוק אישי. <b>העמדה שלנו: ממליצים על תואר</b>, יחד עם המקרים הכנים שבהם הוא לא נכון</span></li>
+      <li><span><b>מסך החסמים:</b> לכל חסם יש פתרון. מוסדות, רשימה קצרה, ושאלות מוכנות לפגישה 3</span></li>
+      <li><span><b>מה את/ה רואה:</b> את ההמלצה ואת הבחירה. בחירה במסלול אחר מההמלצה מסומנת. זו שאלה לפגישה, לא בעיה</span></li>
+    </ul>
+    <div class="shots">
+      <figure><img src="handbook-img/04-domain.png" alt="בחירת כיוון: ראשי וגיבוי" loading="lazy"><figcaption>בחירת כיוון: ראשי וגיבוי</figcaption></figure>
+      <figure><img src="handbook-img/05-result.png" alt="ההמלצה: תואר, הכשרה או מה״ט, עם נימוק אישי" loading="lazy"><figcaption>ההמלצה: תואר, הכשרה או מה״ט, עם נימוק אישי</figcaption></figure>
+      <figure><img src="handbook-img/06-blockers.png" alt="מסך החסמים: לכל חסם יש פתרון" loading="lazy"><figcaption>מסך החסמים: לכל חסם יש פתרון</figcaption></figure>
+      <figure><img src="handbook-img/07-institutions.png" alt="בחירת מוסדות לפי תחום ומסלול" loading="lazy"><figcaption>בחירת מוסדות לפי תחום ומסלול</figcaption></figure>
+    </div>
+  </div>
+<div class="part" id="m3">
+    <header>
+      <div class="eyebrow">פגישה 3 מתוך 3</div>
+      <h1>פגישה 3: מקצוע, מסלול, מוסד ומלגות</h1>
+      <div class="meta">
+        <span><b>משך:</b> שעה</span>
+        <span><b>מתי:</b> אחרי שלב "בחירת מסלול" באפליקציה, כשיש רשימת מוסדות ושאלות</span>
+        <span><b>מקור:</b> מערך הליווי האישי של אינטק</span>
+      </div>
+      <p class="goal"><b>המטרה במשפט:</b> לצאת עם <b>מסלול אחד, מוסד אחד ומוסד גיבוי</b>, תמונה כספית ברורה, ותחושה שהדלת שלך נשארת פתוחה עד שמתחילים ללמוד.</p>
+    </header>
+
+    <section aria-labelledby="m3-prep">
+      <h2 id="m3-prep">לפני הפגישה · 5 דקות</h2>
+      <ul class="checks">
+        <li><span><b>המסלול שהאפליקציה המליצה, והמסלול שבחר/ה.</b> אם בחר/ה מסלול אחר מההמלצה, המסך מסמן את זה. זו שאלה לפגישה, לא בעיה</span></li>
+        <li><span><b>תשובות השאלון:</b> שעות פנויות, כסף, מה יש ביד (בגרות, מתמטיקה, אנגלית, פסיכומטרי)</span></li>
+        <li><span><b>מסך החסמים:</b> מה עלה, ואיזה פתרון פתח/ה</span></li>
+        <li><span><b>רשימת המוסדות</b> והשאלות שהכין/ה לפגישה</span></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="m3-flow">
+      <h2 id="m3-flow">מהלך הפגישה · 60 דקות</h2>
+      <div class="blocks">
+        <article class="block">
+          <div class="t"><i style="background:var(--b1)"></i>0–5</div>
+          <h3>פתיחה</h3>
+          <p>"עברת דרך ארוכה מאז הפגישה הראשונה." להכיר במה שנעשה. לעבור על השאלות שהכין/ה, ולהגיד שנענה על כולן עד הסוף.</p>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b2)"></i>5–20</div>
+          <h3>המסלול</h3>
+          <ul>
+            <li><b>העמדה שלנו:</b> אנחנו ממליצים על תואר במפורש. הוא מעלה את הסיכוי להתקבל לעבודה, פותח יותר משרות, ומשרת סטודנט אפשרית כבר במהלך הלימודים. יחד עם זה, יש מקרים כנים שבהם הוא לא נכון</li>
+            <li>בחר/ה מסלול אחר מההמלצה? <span class="key">לגיטימי.</span> לשאול מה הכריע, ולוודא שהבחירה לא נובעת מפחד שאפשר לפתור</li>
+            <li>מדברים על <b>מתי מתחילה הכנסה</b>, ולא על כמה. אין לנו נתון מאומת על שכר סטודנטים</li>
+          </ul>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b3)"></i>20–35</div>
+          <h3>המוסד</h3>
+          <ul>
+            <li>מהרשימה ל<b>מוסד אחד ומוסד גיבוי מסומן</b>. שני מוסדות שקולים הם החלטה שעוד לא התקבלה</li>
+            <li>תנאי הקבלה: מה יש לו/ה ביד מול מה המוסד דורש. אם חסר משהו, מסך החסמים מציע דרכים</li>
+            <li><b>מפנים ליחידת התמיכה במוסד, לא למדור הרישום.</b> מדור רישום עונה "אינך עומד בתנאים" ולא מכיר מסלולי קבלה חלופיים</li>
+          </ul>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b4)"></i>35–50</div>
+          <h3>הכסף</h3>
+          <ul>
+            <li>פותחים יחד באפליקציה את <b>החשבון</b> בשלב "מלגות והרשמה": שכר לימוד פחות מלגות, וכמה נשאר. <span class="key">מספר ולא הרגעה</span></li>
+            <li>עוברים על המלגות הרלוונטיות. <b>שימו לב לשעות:</b> חלק מהמלגות דורשות שעות התנדבות, ומי שצובר/ת שלוש מלגות עלול/ה להתחייב ליותר שעות ממה שיש לו/ה. האפליקציה משווה למה שענה/תה בשאלון</li>
+            <li>מלגה שהמועד שלה עבר השנה מסומנת "לשנה הבאה" ולא נספרת בחשבון</li>
+            <li><b>מה אנחנו נותנים ומה לא:</b> התוכנית ללא עלות. אנחנו עוזרים בחיבור למלגות, <span class="key">אבל לא מתחייבים</span>: הגשת הבקשות היא העבודה של המשתתף/ת</li>
+            <li><b>שוברים של משרד העבודה:</b> לפעמים אפשר לעזור, אבל זה עוד לא סגור. לא מבטיחים. יעודכן כאן כשיהיה מידע סופי</li>
+          </ul>
+        </article>
+        <article class="block">
+          <div class="t"><i style="background:var(--b5)"></i>50–60</div>
+          <h3>הרשמה, ודלת פתוחה</h3>
+          <ul>
+            <li><b>משימת ההרשמה היא הראשונה ברשימה באפליקציה:</b> בלי הרשמה למוסד אין מלגות</li>
+            <li><b>אישור הלימודים:</b> כבר נרשם/ה? מעלים עכשיו באפליקציה. עוד לא? הנחיה ברורה: להעלות באפליקציה או לשלוח לך. <span class="key">זה הנתון שהתוכנית מדווחת עליו למשרד העבודה</span></li>
+            <li>"שלוש פגישות הן לא תורה מסיני." אפשר לכתוב, להתקשר ולקבוע פגישה נוספת. אני ממשיך/ה לבדוק איתך מדי פעם עד שמתחילים</li>
+          </ul>
+        </article>
+      </div>
+      <div class="minimum">
+        <h3>אם הזמן נגמר, זה המינימום</h3>
+        <p>מסלול ומוסד נבחרו · ברור מה הצעד הראשון בהרשמה · ברור איך מעבירים את אישור הלימודים.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="m3-dont">
+      <h2 id="m3-dont">מה לא עושים</h2>
+      <ul class="donts">
+        <li><b>לא ממציאים</b> סכום, מועד או תנאי של מלגה. אם זה לא באפליקציה, בודקים ומחזירים תשובה</li>
+        <li><b>לא מבטיחים קבלה</b> למוסד או מלגה</li>
+        <li><b>לא סוגרים את הקשר.</b> אחרי פגישה 3 המעקב ממשיך</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="m3-modes">
+      <h2 id="m3-modes">זום או פרונטלי</h2>
+      <div class="modes">
+        <div class="mode">
+          <h3>בזום</h3>
+          <ul>
+            <li>החשבון והמלגות בשיתוף המסך שלו/ה. מספרים נקראים טוב יותר על המסך מאשר בעל פה</li>
+            <li>להעלות את אישור הלימודים בזמן הפגישה, אם כבר יש</li>
+          </ul>
+        </div>
+        <div class="mode">
+          <h3>פרונטלי</h3>
+          <ul>
+            <li>אם יש אישור לימודים מודפס או בטלפון: מצלמים ומעלים לאפליקציה יחד, עכשיו</li>
+            <li>החשבון על המכשיר שלו/ה, כדי שיישאר אצלו/ה</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="m3-after">
+      <h2 id="m3-after">אחרי הפגישה, ועד ההרשמה</h2>
+      <ol class="steps">
+        <li><span><b>לסמן "התקיימה"</b> ב<a href="https://hasifaapp.vercel.app/admin/coordinator?view=meetings" target="_blank" rel="noopener">הפגישות שלי</a></span></li>
+        <li><span><b>סטטוס בלוח:</b> "סיימ/ה תהליך". <b>כשהמשתתף/ת מעלה אישור לימודים באפליקציה, הסטטוס מתעדכן לבד ל"נרשמ/ה ללימודים".</b> אם האישור נשלח אלייך בוואטסאפ או במייל, מעדכנים ידנית</span></li>
+        <li><span><b>בועית במאנדיי:</b> מסלול, מוסד וגיבוי, מלגות, ומה נשאר לסגור</span></li>
+        <li><span><b>מעקב כל שבועיים־שלושה</b> עד ההרשמה בפועל: לוודא שמתקדם, ולתת דחיפה ועידוד. <span class="v">⏳ הצעה</span> תאריך "קשר הבא" בלוח, ותזכורת במסך הרכזים</span></li>
+      </ol>
+      <div class="template">
+        <h3>נוסח הסיכום</h3>
+        <div class="body tpl">היי <span class="ph">שם</span>,
+איזו דרך עשית. מסכמ/ת את מה שהחלטנו:
+
+<b>המסלול:</b> <span class="ph">מסלול</span> ב<span class="ph">מוסד</span>. <b>גיבוי:</b> <span class="ph">מוסד</span>.
+<b>הצעד הראשון:</b> ההרשמה. היא ראשונה ברשימה באפליקציה, כי בלעדיה אין מלגות.
+<b>מלגות:</b> סימנו את <span class="ph">מלגות</span>. החשבון המלא מחכה לך באפליקציה.
+<b>כשתקבל/י אישור לימודים</b>, להעלות אותו באפליקציה או לשלוח לי.
+
+אני ממשיכ/ה להיות כאן, עד שמתחילים ללמוד ואחרי.
+<span class="ph">שם הרכז/ת</span></div>
+        <button class="copy" type="button">העתקת הנוסח</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="part" id="after3">
+    <h2>מפגישה 3 ועד ההרשמה</h2>
+    <ul class="checks">
+      <li><span><b>מעקב כל שבועיים־שלושה:</b> לוודא שההרשמה מתקדמת, ולתת דחיפה ועידוד. <span class="v">⏳ הצעה</span> עמודת "קשר הבא" בלוח, ותזכורת "לחזור היום" במסך הרכזים</span></li>
+      <li><span><b>אישור הלימודים</b> הוא הנתון שהתוכנית מדווחת עליו למשרד העבודה. המשתתף/ת מעלה אותו באפליקציה, והסטטוס בלוח מתעדכן לבד ל"נרשמ/ה ללימודים". נשלח אלייך בוואטסאפ או במייל? מעדכנים ידנית</span></li>
+      <li><span><b>את הקובץ עצמו</b> מורידים מהדף של המשתתף/ת במסך הרכזים</span></li>
+      <li><span><b>הדלת נשארת פתוחה.</b> שלוש פגישות הן לא תורה מסיני: אפשר פגישה נוספת או שיחת טלפון</span></li>
+    </ul>
+  </div>
+
+  <div class="part" id="screen">
+    <h2>מסך הרכזים, ושגרת הבוקר</h2>
+    <div class="links">
+      <a class="btn" href="https://hasifaapp.vercel.app/admin/coordinator" target="_blank" rel="noopener">מסך הרכזים ←</a>
+    </div>
+    <p>נכנסים עם מספר הטלפון שלך וקוד ב-SMS. כל רכז/ת רואה רק את המשתתפים שלו/ה. בתוך המסך יש ארבע לשוניות:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>לשונית</th><th>מה יש בה</th></tr></thead>
+      <tbody>
+        <tr><td>התמונה הגדולה</td><td>כרטיסים עם מספרים. לחיצה על כרטיס פותחת את הרשימה שמאחוריו</td></tr>
+        <tr><td>מי צריך אותי היום</td><td>רק מי שתקוע/ה או שקט/ה, ממוין לפי דחיפות. כל שורה: מי, מה קרה במילים, ומה כדאי לעשות</td></tr>
+        <tr><td>כל המשתתפים</td><td>כל השורות שלך בלוח. בכל שורה רואים איפה האדם בתהליך ומה הצעד הבא</td></tr>
+        <tr><td>הפגישות שלי</td><td>הפגישות מ-Cal. כאן מסמנים "התקיימה" או "לא הגיע/ה"</td></tr>
+      </tbody>
+    </table></div>
+    <p class="shot">צילומי מסך של ארבע הלשוניות יתווספו כאן, עם שמות המשתתפים מטושטשים</p>
+
+    <h3>שגרת הבוקר · 10 דקות, באותו סדר כל יום</h3>
+    <ol class="steps">
+      <li><span><b>🔥 לידים חמים</b> (בהתמונה הגדולה): מי שהשתתף/ה בוובינר וממתין/ה לשיחה. מתקשרים אליהם קודם</span></li>
+      <li><span><b>מי צריך אותי היום:</b> עוברים מלמעלה למטה (הטבלה למטה)</span></li>
+      <li><span><b>תקועים ב"נשלח קישור":</b> לא לחצו · לחצו ולא נרשמו · נרשמו ולא קבעו. מופיעים אחרי יום, ובכתום אחרי 4 ימים</span></li>
+      <li><span><b>פגישות שממתינות לסימון:</b> לסמן כל פגישה שעברה</span></li>
+      <li><span><b>הפגישות של היום:</b> 5 דקות הכנה לכל אחת, לפי המערך</span></li>
+    </ol>
+
+    <h3>מה אומרים הסימנים בתור "מי צריך אותי היום"</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>מה כתוב</th><th>מה זה אומר</th><th>מה עושים</th></tr></thead>
+      <tbody>
+        <tr><td>"לא הצלחתי להגיע" לפגישה</td><td>המשתתף/ת סימן/ה בעצמו/ה באפליקציה שלא הגיע/ה</td><td>מתקשרים וקובעים מחדש</td></tr>
+        <tr><td>לא נכנס/ה X ימים</td><td>שלושה ימים או יותר בלי כניסה לאפליקציה</td><td>וואטסאפ קצר</td></tr>
+        <tr><td>נכנס/ה ולא התחיל/ה כלום</td><td>נכנס/ה, אבל לא עשה/תה שום דבר</td><td>שיחה: כנראה לא ברור מאיפה מתחילים</td></tr>
+        <tr><td>נכנס/ה ולא התקדם/ה X ימים</td><td>נכנס/ה לאחרונה, ולא עשה/תה כלום חמישה ימים או יותר</td><td>שיחה. <b>זה דחוף יותר מ"נעלם/ה"</b>: מי שתקוע/ה לא יבקש/תבקש עזרה לבד</td></tr>
+        <tr><td>הגיע/ה לבחירת הכיוון ולא בחר/ה</td><td>עומד/ת מול בחירת התחום בשלב 4</td><td>שיחה על התחום</td></tr>
+        <tr><td>דדליין עבר / משימה נפתחה 3 פעמים בלי להיסגר</td><td>בשלב המלגות וההרשמה</td><td>שיחה. פחד נמדד בהתנהגות, ואין בו שאלון</td></tr>
+        <tr><td>עניין גבוה ומסוגלות נמוכה</td><td>מהסיכום של טעימה</td><td>שיחה מחזקת, ולא עוד מידע</td></tr>
+        <tr><td>נרשם/ה ולא קבע/ה פגישה</td><td>קיבל/ה קישור, נרשם/ה, ונתקע/ה ביומן</td><td>להציע שעה בטלפון</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>הדף של משתתף/ת</h3>
+    <p>לחיצה על שם פותחת: פרטים (גיל, יישוב, שירות), מפה של כל התחנות ואיפה הוא/היא עכשיו, ו<b>"לקראת השיחה"</b> (במה מתעניין/ת, לאן חוזר/ת, כמה זמן בפנים). מהלוח מגיעים לדף הזה ישירות, דרך העמודה "פתח במסך הרכזים".</p>
+    <p><b>עריכת פרטים</b> (שם, מגדר, עיר, טלפון, מייל) נעשית כאן ולא בלוח. אחרי שהמשתתף/ת אימת/ה טלפון, האפליקציה היא המקור לפרטים, והלוח מקבל מהאפליקציה עותק. טלפון מאומת נעול, כי הוא הזהות של המשתתף/ת. רכז/ת עורך/ת רק את המשתתפים שלו/ה. שיוך לרכז/ת אחר/ת: רק מאיה.</p>
+  </div>
+
+  <div class="part" id="monday">
+    <h2>מאנדיי: לוח אינטק</h2>
+    <p><b>החלוקה:</b> הלוח הוא המקום שבו מתחילים: שורה, רכז/ת, סטטוס. מרגע שהמשתתף/ת נרשם/ה, ההתקדמות נמצאת באפליקציה, והלוח מקבל ממנה עדכונים.</p>
+    <h3>העמודות שעובדים איתן</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>עמודה</th><th>מה בה</th><th>מי כותב</th></tr></thead>
+      <tbody>
+        <tr><td>רכז/ת אחראי</td><td>של מי המשתתף/ת</td><td>מאיה משייכת</td></tr>
+        <tr><td>סטטוס</td><td>איפה בתהליך (הטבלה למטה)</td><td>את/ה, וחלק לבד</td></tr>
+        <tr><td>וואטסאפ — שליחת הקישור</td><td>הודעת פתיחה מוכנה, עם קישור לאפליקציה ולפגישה</td><td>לבד. נבנית כשיש רכז/ת עם יומן</td></tr>
+        <tr><td>וואטסאפ — אין מענה</td><td>"ניסיתי להתקשר", ובפעם השנייה "ניסיתי שוב"</td><td>לבד</td></tr>
+        <tr><td>פתח במסך הרכזים</td><td>קישור לדף של המשתתף/ת</td><td>לבד, אחרי ההרשמה</td></tr>
+        <tr><td>מייל פתיחה נשלח · תקלת מייל</td><td>מתי יצא מייל הפתיחה, ולמה לא יצא</td><td>לבד</td></tr>
+        <tr><td>לחץ על הקישור</td><td>מתי לחץ/ה לראשונה</td><td>לבד</td></tr>
+        <tr><td>שיחה ראשונה</td><td>מתי הסטטוס יצא מ"לפני שיחה ראשונה"</td><td>לבד</td></tr>
+        <tr><td>השתתפות בוובינרים</td><td>תג לכל וובינר, למשל "וובינר סייבר 1.11.26"</td><td>מי שמארגן/ת את הוובינר</td></tr>
+        <tr><td>כפילות · חשד לכפילות</td><td>סגול: אותו אדם בשתי שורות, ועם איזו שורה</td><td>לבד. מוחקים רק אחרי בדיקה</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>הסטטוסים</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>סטטוס</th><th>מתי</th><th>מי</th></tr></thead>
+      <tbody>
+        <tr><td>לפני שיחה ראשונה</td><td>ליד חדש</td><td>לבד</td></tr>
+        <tr><td>נשלח קישור</td><td>אחרי ששלחת את הוואטסאפ. מוציא מייל פתיחה</td><td>את/ה</td></tr>
+        <tr><td>אין מענה 1 - נשלח ווטסאפ · אין מענה 2 - נשלח ווטסאפ</td><td>אחרי וואטסאפ "ניסיתי להתקשר". אחרי השני משאירים בסטטוס</td><td>את/ה</td></tr>
+        <tr><td>אין מענה 1</td><td>מצב ביניים: התקשרת ועוד לא שלחת וואטסאפ</td><td>את/ה</td></tr>
+        <tr><td>בתהליך פעיל</td><td>קבע/ה פגישה ב-Cal</td><td>לבד</td></tr>
+        <tr><td>סיימ/ה תהליך</td><td>אחרי פגישה 3</td><td>את/ה</td></tr>
+        <tr><td>נרשמ/ה ללימודים</td><td>יש אישור לימודים</td><td>לבד מהאפליקציה, או את/ה</td></tr>
+        <tr><td>לא מעוניין בתוכנית · לא רלוונטי · הופנה לגורם חיצוני</td><td>לפי השיחה. "הופנה" = יש מענה אחר, למשל הישגים</td><td>את/ה</td></tr>
+        <tr><td>לחזור בהמשך לבקשתם</td><td>ביקש/ה שנחזור</td><td>את/ה</td></tr>
+        <tr><td>מעוניין/ת בוובינר · בתהליך/מעקב</td><td><span class="v">⏳ לאימות</span> מתי משתמשים בהם</td><td></td></tr>
+        <tr><td>נרשמו ללימודים — דיווח בלבד</td><td>לא משתתפים: בלוח רק בשביל הדיווח למשרד העבודה. לא מתקשרים, ולא מופיעים באפליקציה</td><td>מאיה</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note"><b>לא עורכים בלוח</b> שם, טלפון, מגדר ועיר של מי שכבר באפליקציה. עורכים במסך הרכזים, והלוח מתעדכן משם. <b>סיכום של כל שיחה ופגישה</b> נכתב בבועית (Updates) בשורה. <b>תצוגות שמורות:</b> לכל רכז/ת תצוגה עם המשתתפים שלו/ה, ויש גם "לשיוך" ו"ליד חם".</p>
+  </div>
+
+  <div class="part" id="events">
+    <h2>אירועים</h2>
+    <p>ימים פתוחים, פאנלים וירידי לימודים מופיעים למשתתפים באפליקציה, ב"אירועים קרובים". <b>מאיה מזינה אותם</b> ומלמדת את הרכזים איך, בלוח <a href="https://hasifaapp.vercel.app/admin/events" target="_blank" rel="noopener">האירועים</a> באזור הניהול. אירוע שעבר נעלם מהמשתתפים לבד.</p>
+  </div>
+
+  <div class="part" id="whatif">
+    <h2>מה עושים במקרה כזה?</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>מקרה</th><th>מה עושים</th></tr></thead>
+      <tbody>
+        <tr><td>לא הגיע/ה לפגישה</td><td>10 דקות המתנה, שיחה, וואטסאפ "ניסיתי להתקשר", ולסמן "לא הגיע/ה". האפליקציה תציע לו/ה לקבוע מחדש</td></tr>
+        <tr><td>קבע/ה שוב פגישה 1 במקום 2</td><td>"הפגישות שלי" מסמן את זה: "כבר נפגשתם ב-X". לברר ולהעביר ליומן הנכון</td></tr>
+        <tr><td>לא עומד/ת בתנאים (גיל, מוצא)</td><td>לומר בכבוד. אם יש מענה אחר: "הופנה לגורם חיצוני", ואם לא: "לא רלוונטי"</td></tr>
+        <tr><td>רוצה משהו שאינו הייטק</td><td>"הופנה לגורם חיצוני", למשל הישגים</td></tr>
+        <tr><td>אין מחשב או אינטרנט בבית</td><td><span class="v">⏳ לאימות</span> איזה מענה יש (מאיה). את האפליקציה אפשר לעבור גם בטלפון</td></tr>
+        <tr><td>המשפחה מתנגדת</td><td>לרשום בבועית. בפגישה 3, כשיש מספרים ותוכנית, השיחה עם המשפחה קלה יותר</td></tr>
+        <tr><td>בחר/ה מסלול שהאפליקציה לא המליצה עליו</td><td>לגיטימי. בפגישה 3 שואלים מה הכריע, ומוודאים שזו לא החלטה מפחד שאפשר לפתור</td></tr>
+        <tr><td>תקוע/ה בבחירת התחום בשלב 4</td><td>מופיע בתור אחרי יומיים. שיחה. אין אפשרות "עוד לא סגור"</td></tr>
+        <tr><td>מצוקה רגשית</td><td>לא מטפלים בפגישה ולא באפליקציה. <span class="v">⏳ לאימות</span> למי מפנים (מאיה)</td></tr>
+        <tr><td>בוגר/ת טק-קריירה</td><td>יש מסלול נפרד. לשאול את מאיה</td></tr>
+        <tr><td>שואל/ת על מלגה, סכום או תנאי שלא מופיעים באפליקציה</td><td>לא ממציאים. בודקים ומחזירים תשובה</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="part" id="fix">
+    <h2>איך פותרים את הבעיה?</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>בעיה</th><th>מה בודקים ומה עושים</th></tr></thead>
+      <tbody>
+        <tr><td>קוד ה-SMS לא מגיע</td><td>אחרי 45 שניות האפליקציה מציעה למשתתף/ת לכתוב לך בוואטסאפ, ואת/ה מקבל/ת מייל עם הטלפון שהקליד/ה. לבדוק שהמספר נכון. אם זה לא עוזר: נתי</td></tr>
+        <tr><td>"נכנסתי ממכשיר אחר והכל נעלם"</td><td>נכנסים עם אותו מספר טלפון. ההתקדמות שמורה בשרת, וחוזרים בדיוק לאותו מקום</td></tr>
+        <tr><td>"היומן לפגישה הזאת עוד לא פתוח"</td><td>לרכז/ת אין קישור יומן לפגישה הזו בסגל: נתי</td></tr>
+        <tr><td>היומן של פגישה 2 נעול</td><td>עוד לא הושלמו 2 טעימות עד הסיכום. אם קבעתם בטלפון: "הרכז/ת כבר קבע/ה איתי את הפגישה"</td></tr>
+        <tr><td>שלב 4 נעול אחרי פגישה 2</td><td>לסמן "התקיימה" בהפגישות שלי. גם המשתתף/ת יכול/ה לענות בעצמו/ה "כן, נפגשנו"</td></tr>
+        <tr><td>וואטסאפ — שליחת הקישור ריק</td><td>אין רכז/ת בשורה, אין טלפון תקין, או שלרכז/ת אין יומן לפגישה 1</td></tr>
+        <tr><td>מייל הפתיחה לא יצא</td><td>העמודה "תקלת מייל" אומרת למה: אין כתובת · אין רכז/ת · אין יומן · הכתובת שגויה. מתקנים, ומוחקים את התאריך ב"מייל פתיחה נשלח" כדי שהמייל יישלח שוב</td></tr>
+        <tr><td>אותו אדם בשתי שורות</td><td>העמודה "כפילות" מסומנת בסגול, ו"חשד לכפילות" מראה עם איזו שורה ולמה. מאיה מחליטה ומוחקת</td></tr>
+        <tr><td>משתתף/ת שלא מופיע/ה בלוח</td><td>מי שנרשם/ה ישירות באפליקציה מקבל/ת שורה לבד, עם הערוץ "נרשם ישירות מהאפליקציה"</td></tr>
+        <tr><td>שם או טלפון שגויים</td><td>"עריכת פרטים" במסך הרכזים. טלפון מאומת נעול</td></tr>
+        <tr><td>משהו אחר באפליקציה לא עובד</td><td>צילום מסך ותיאור קצר לנתי</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="part" id="setup">
+    <h2>הקמה טכנית לרכז/ת חדש/ה</h2>
+    <p>בלי ההקמה הזו מייל הפתיחה לא יוצא, הוואטסאפ לא נבנה, והמשתתפים רואים יומן של מישהו אחר. <b>היא באה לפני השיחה הראשונה.</b></p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>מה</th><th>מי</th></tr></thead>
+      <tbody>
+        <tr><td><b>חשבון Cal</b> עם מייל העבודה (כניסה עם Microsoft), חיבור יומן Outlook, ושלוש פגישות: "פגישה 1: …", "פגישה 2: …", "פגישה 3: …". כל אחת עם שדה טלפון חובה. פגישות 2 ו-3 מוסתרות מדף הפרופיל. מגבלת הזמנות</td><td>הרכז/ת, לפי המדריך שבהמשך</td></tr>
+        <tr><td><b>webhook ב-Cal</b>, עם הסוד המשותף. כך הפגישות נכנסות למערכת</td><td>נתי</td></tr>
+        <tr><td><b>רשומה בסגל:</b> שם כמו בתווית במאנדיי, מייל זהה למייל של ה-Cal, טלפון, "מלווה משתתפים", משקל במכסה, ושלושת קישורי היומן</td><td>נתי</td></tr>
+        <tr><td><b>מאנדיי:</b> גישה ללוח, תווית בעמודת "רכז/ת אחראי", ותצוגה שמורה</td><td>מאיה, ונתי לתצוגה</td></tr>
+        <tr><td><b>כניסה למסך הרכזים</b> עם הטלפון (הטלפון בסגל)</td><td>נבדק יחד ביום הראשון</td></tr>
+      </tbody>
+    </table></div>
+    <p class="shot">מדריך Cal שלב אחרי שלב, עם צילומי מסך מסומנים, יתווסף כאן</p>
+    <h3>כשרכז/ת יוצא/ת לחופשה</h3>
+    <p><span class="v">⏳ לאימות</span> מי מחליף/ה ברכזות הקליטה, למי עוברים המשתתפים הפתוחים, ומאיזה תאריך נסגר היומן (נשאל במייל למאיה).</p>
+  </div>
+
+  <div class="part" id="practice">
+    <h2>תרגול חובה: לעבור את המסע כמשתתף/ת</h2>
+    <p>בשבוע השני של החפיפה, כל רכז/ת עובר/ת את האפליקציה כמשתתף/ת, עם הטלפון שלו/ה. הטלפון מסומן מראש כ"בדיקה", כדי שלא ייספר במספרים.</p>
+    <ol class="steps">
+      <li><span>הרשמה, ומרחב ההמתנה (שאלון ומבוא להייטק)</span></li>
+      <li><span>קביעת פגישה 1 אמיתית ביומן של סיון. <span class="v">⏳ בבנייה</span> סינון של הפגישות האלה מהדשבורד ומהלוח</span></li>
+      <li><span>שתי טעימות שלמות, עד הסיכום</span></li>
+      <li><span>פגישה 2, ואחריה שלב "בחירת מסלול" עד הסוף</span></li>
+      <li><span>שלב "מלגות והרשמה": בחירת מוסד, החשבון והמלגות</span></li>
+    </ol>
+    <p><span class="v">⏳ הצעה</span> מאיה רואה את ההתקדמות של כל רכז/ת, ובסוף יש כעשר שאלות של מקרים, כמו "משתתפת כתבה שה-SMS לא הגיע. מה עושים?".</p>
+  </div>
+
+  <div class="part" id="ask">
+    <h2>את מי שואלים</h2>
+    <div class="table-wrap"><table>
+      <tbody>
+        <tr><td><b>תוכן ותהליך</b>: התאמה לתוכנית, פגישות, מלגות, שיוך, מקרים חריגים</td><td>מאיה</td></tr>
+        <tr><td><b>האפליקציה והמערכות</b>: תקלות, יומנים, הלוח, מסך הרכזים</td><td>נתי</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">בהמשך: צ'טבוט באזור הניהול שעונה מתוך התיק הזה בלבד. כשאין לו ודאות, הוא אומר את זה ומפנה למאיה או לנתי.</p>
+  </div>
+  <footer>
+    <span>טיוטה · 23.11.2026 · לעיון של מאיה ולאישור: נתי, מאיה, סיון</span>
+    <span>מקורות: מערך הליווי האישי של אינטק, תוכנית החפיפה לדצמבר 2026, ומה שהאפליקציה עושה בפועל.</span>
+  </footer>
+</div>
+<script>
+document.querySelectorAll(".template").forEach(function (box) {
+  var btn = box.querySelector(".copy"), tpl = box.querySelector(".tpl");
+  if (!btn || !tpl) return;
+  btn.addEventListener("click", function () {
+    var done = function () { btn.textContent = "הועתק ✓"; setTimeout(function () { btn.textContent = "העתקת הנוסח"; }, 1800); };
+    var fallback = function () { var r = document.createRange(); r.selectNodeContents(tpl); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "הטקסט מסומן. אפשר להעתיק"; };
+    try { navigator.clipboard.writeText(tpl.innerText).then(done, fallback); } catch (e) { fallback(); }
+  });
+});
+</script>
+</body>
+</html>
