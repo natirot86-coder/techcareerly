@@ -193,10 +193,47 @@ html { scroll-behavior: smooth; }
 .titles { padding-inline-start: 0 !important; }
 @media (max-width: 520px) { .anno i { width: 22px; height: 22px; font-size: 12px; line-height: 22px; border-width: 2px; } }
 </style>
+<style>
+.side { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 20px); inset-inline-start: 16px; width: 210px; max-height: calc(100vh - 40px); overflow-y: auto; display: none; flex-direction: column; gap: 2px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 12px 10px; z-index: 20; }
+.side-title { font-size: 12px; font-weight: 900; letter-spacing: .04em; color: var(--orange); padding: 2px 8px 8px; }
+.side a { text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 500; padding: 5px 8px; border-radius: 8px; line-height: 1.4; }
+.side a:hover { background: var(--navy-soft); }
+.side a[aria-current="true"] { background: var(--navy); color: var(--paper); font-weight: 700; }
+.tocbtn { position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); inset-inline-start: 16px; z-index: 21; font: 700 15px var(--font-body); background: var(--navy); color: var(--paper); border: 0; border-radius: 999px; padding: 10px 18px; box-shadow: 0 4px 14px rgba(0,0,0,.25); cursor: pointer; }
+@media (min-width: 1240px) { .side { display: flex; } .tocbtn { display: none; } }
+@media (max-width: 1239px) {
+  .side.open { display: flex; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 70px); inset-inline-end: 16px; width: auto; max-height: 65vh; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+}
+.part, #cal { scroll-margin-top: 16px; }
+</style>
 
 <style>body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
+<div dir="rtl" lang="he">
+<nav class="side" id="side" aria-label="ניווט בתיק">
+  <div class="side-title">תיק חפיפה</div>
+  <a href="#who">מי אנחנו</a>
+  <a href="#map">המסע במבט אחד</a>
+  <a href="#call">שיחת טלפון ראשונה</a>
+  <a href="#m1">פגישה 1</a>
+  <a href="#b12">בין 1 ל-2</a>
+  <a href="#m2">פגישה 2</a>
+  <a href="#b23">בין 2 ל-3</a>
+  <a href="#m3">פגישה 3</a>
+  <a href="#after3">עד ההרשמה</a>
+  <a href="#screen">מסך הרכזים ושגרת בוקר</a>
+  <a href="#monday">מאנדיי</a>
+  <a href="#events">אירועים</a>
+  <a href="#whatif">מה עושים במקרה כזה?</a>
+  <a href="#fix">איך פותרים את הבעיה?</a>
+  <a href="#setup">הקמה טכנית</a>
+  <a href="#cal">מדריך Cal</a>
+  <a href="#practice">תרגול חובה</a>
+  <a href="#ask">את מי שואלים</a>
+</nav>
+<button class="tocbtn" id="tocbtn" type="button" aria-controls="side" aria-expanded="false">☰ תוכן</button>
+</div>
 <div class="wrap" dir="rtl" lang="he">
   <header>
     <div class="eyebrow">אינטק · טק-קריירה · טיוטה לעיון של מאיה</div>
@@ -329,16 +366,16 @@ html { scroll-behavior: smooth; }
           <tbody>
             <tr><td>מתאים/ה ורוצה</td><td><span class="pill hand">נשלח קישור</span></td><td><b>אחרי</b> ששלחת וואטסאפ מ"וואטסאפ — שליחת הקישור" (למעלה). הסימון מוציא מייל פתיחה עם אותו קישור</td></tr>
             <tr><td>קבע/ה פגישה ביומן</td><td><span class="pill">בתהליך פעיל</span></td><td>נכתב לבד מ-Cal. לא משנים ידנית</td></tr>
-            <tr><td>לא ענה/תה</td><td><span class="pill hand">אין מענה 1 - נשלח ווטסאפ</span></td><td>קודם שולחים וואטסאפ מהעמודה "וואטסאפ — אין מענה", ורק אז מעדכנים סטטוס</td></tr>
-            <tr><td>לא ענה/תה שוב</td><td><span class="pill hand">אין מענה 2 - נשלח ווטסאפ</span></td><td>וואטסאפ שני (הנוסח משתנה לבד ל"ניסיתי שוב"), ומשאירים בסטטוס הזה</td></tr>
-            <tr><td>לא מעוניין/ת</td><td><span class="pill hand">לא מעוניין בתוכנית</span></td><td>לרשום בבועית למה</td></tr>
-            <tr><td>לא עומד/ת בתנאים</td><td><span class="pill hand">לא רלוונטי</span></td><td>לרשום בבועית למה</td></tr>
+            <tr><td>לא ענה/תה</td><td><span class="pill hand">אין מענה 1 - נשלח ווטסאפ</span></td><td><b>חובה לשלוח קודם וואטסאפ</b> מהעמודה "וואטסאפ — אין מענה", ורק אחרי זה לסמן. הסטטוס אומר שהוואטסאפ יצא. לא ענה/תה שוב? שולחים שוב מאותה עמודה (הנוסח כבר "ניסיתי שוב"), והסטטוס נשאר</td></tr>
+            <tr><td>לא מעוניין/ת בתוכנית עצמה</td><td><span class="pill hand">לא מעוניין בתוכנית</span></td><td>אין למה לחזור. לרשום בבועית למה</td></tr>
+            <tr><td>לא עומד/ת בתנאים, או שכרגע זה לא מתאים</td><td><span class="pill hand">לא רלוונטי</span></td><td>לרשום בבועית את הסיבה. אם זה עניין של עיתוי, לכתוב גם מתי אולי כן</td></tr>
+            <tr><td>מקרה חריג: לא בתהליך כרגע, אבל חשוב לא לאבד</td><td><span class="pill hand">חריגים למעקב</span></td><td>לרשום בבועית מה החריג, ומתי לבדוק שוב</td></tr>
             <tr><td>יש מענה אחר שאינו אינטק</td><td><span class="pill hand">הופנה לגורם חיצוני</span></td><td>למשל הישגים, למי שרוצה משהו שאינו הייטק</td></tr>
             <tr><td>ביקש/ה שנחזור</td><td><span class="pill hand">לחזור בהמשך לבקשתם</span></td><td>לרשום מתי לחזור. <span class="v">⏳ הצעה</span> עמודת "קשר הבא" בלוח</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="note"><span class="v">⏳ לאימות</span> "מעוניין/ת בוובינר" ו"בתהליך/מעקב": מתי משתמשים בהם (נשאל במייל למאיה). <span class="v">⏳ לאימות</span> הסטטוס "אין מענה 2 - נשלח ווטסאפ" עוד לא קיים בלוח.</p>
+      <p class="note"><span class="v">⏳ לאימות</span> "מעוניין/ת בוובינר": מתי משתמשים בו (נשאל במייל למאיה).</p>
       <ol class="steps">
         <li><span><b>בועית במאנדיי:</b> מה עלה בשיחה, ומה חשוב לדעת לפני פגישה 1</span></li>
         <li><span><b>אחרי "נשלח קישור" עוקבים במסך הרכזים</b>, בכרטיסי "תקועים בנשלח קישור": לא לחץ/ה על הקישור, לחץ/ה ולא נרשם/ה, נרשם/ה ולא קבע/ה. מופיעים אחרי יום, בכתום אחרי 4 ימים. לכל מצב שיחה אחרת</span></li>
@@ -948,14 +985,16 @@ html { scroll-behavior: smooth; }
       <tbody>
         <tr><td>לפני שיחה ראשונה</td><td>ליד חדש</td><td>לבד</td></tr>
         <tr><td>נשלח קישור</td><td>אחרי ששלחת את הוואטסאפ. מוציא מייל פתיחה</td><td>את/ה</td></tr>
-        <tr><td>אין מענה 1 - נשלח ווטסאפ · אין מענה 2 - נשלח ווטסאפ</td><td>אחרי וואטסאפ "ניסיתי להתקשר". אחרי השני משאירים בסטטוס</td><td>את/ה</td></tr>
-        <tr><td>אין מענה 1</td><td>מצב ביניים: התקשרת ועוד לא שלחת וואטסאפ</td><td>את/ה</td></tr>
+        <tr><td>אין מענה 1 - נשלח ווטסאפ</td><td><b>רק אחרי</b> ששלחת וואטסאפ "ניסיתי להתקשר". גם אחרי ניסיון שני נשאר בסטטוס הזה</td><td>את/ה</td></tr>
         <tr><td>בתהליך פעיל</td><td>קבע/ה פגישה ב-Cal</td><td>לבד</td></tr>
         <tr><td>סיימ/ה תהליך</td><td>אחרי פגישה 3</td><td>את/ה</td></tr>
         <tr><td>נרשמ/ה ללימודים</td><td>יש אישור לימודים</td><td>לבד מהאפליקציה, או את/ה</td></tr>
-        <tr><td>לא מעוניין בתוכנית · לא רלוונטי · הופנה לגורם חיצוני</td><td>לפי השיחה. "הופנה" = יש מענה אחר, למשל הישגים</td><td>את/ה</td></tr>
+        <tr><td>לא מעוניין בתוכנית</td><td>לא מעוניין/ת בתוכנית עצמה. אין למה לחזור</td><td>את/ה</td></tr>
+        <tr><td>לא רלוונטי</td><td>לא עומד/ת בתנאים, או שכרגע זה לא מתאים</td><td>את/ה</td></tr>
+        <tr><td>הופנה לגורם חיצוני</td><td>יש מענה אחר שאינו אינטק, למשל הישגים</td><td>את/ה</td></tr>
+        <tr><td>חריגים למעקב</td><td>מקרה חריג: לא בתהליך כרגע, אבל חשוב להישאר במעקב</td><td>את/ה</td></tr>
         <tr><td>לחזור בהמשך לבקשתם</td><td>ביקש/ה שנחזור</td><td>את/ה</td></tr>
-        <tr><td>מעוניין/ת בוובינר · בתהליך/מעקב</td><td><span class="v">⏳ לאימות</span> מתי משתמשים בהם</td><td></td></tr>
+        <tr><td>מעוניין/ת בוובינר</td><td><span class="v">⏳ לאימות</span> מתי משתמשים בו</td><td></td></tr>
         <tr><td>נרשמו ללימודים — דיווח בלבד</td><td>לא משתתפים: בלוח רק בשביל הדיווח למשרד העבודה. לא מתקשרים, ולא מופיעים באפליקציה</td><td>מאיה</td></tr>
       </tbody>
     </table></div>
@@ -1139,5 +1178,30 @@ document.querySelectorAll(".template").forEach(function (box) {
   });
 });
 </script>
+<script>
+(function () {
+  var side = document.getElementById("side"), btn = document.getElementById("tocbtn");
+  if (!side || !btn) return;
+  btn.addEventListener("click", function () {
+    var open = side.classList.toggle("open");
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  side.addEventListener("click", function (e) {
+    if (e.target.tagName === "A") { side.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); }
+  });
+  var links = {};
+  side.querySelectorAll("a").forEach(function (a) { links[a.getAttribute("href").slice(1)] = a; });
+  if (!("IntersectionObserver" in window)) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting || !links[en.target.id]) return;
+      Object.keys(links).forEach(function (k) { links[k].removeAttribute("aria-current"); });
+      links[en.target.id].setAttribute("aria-current", "true");
+    });
+  }, { rootMargin: "-20% 0px -70% 0px" });
+  Object.keys(links).forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
+})();
+</script>
+
 </body>
 </html>

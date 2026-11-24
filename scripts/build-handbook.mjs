@@ -6,7 +6,8 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 const src = readFileSync("docs/handbook/handbook.html", "utf8");
-const i = src.indexOf('<div class="wrap"');
+/* הגוף מתחיל ב-div הראשון (התפריט הקבוע, ואחריו התוכן) — לא ב-wrap, אחרת התפריט נוחת ב-head */
+const i = src.search(/<div[ >]/);
 const head = src.slice(0, i), body = src.slice(i).replaceAll('src="img/', 'src="handbook-img/');
 writeFileSync("public/guides/handbook.html", `<!doctype html>
 <html lang="he" dir="rtl">
